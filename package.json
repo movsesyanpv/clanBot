@@ -1,0 +1,8 @@
+{
+"name": "SoTbot",
+"version": "1.0.0",
+"description": "Reset info for SoT clan",
+"main": "bot.js",
+"author": "Pavel Movsesian",
+"dependencies": "discord.js"
+}
