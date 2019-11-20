@@ -333,7 +333,7 @@ async def on_ready():
     bungiedata = await upd()
 
     table = []
-    msg = '#Spider sells this on ' + datetime.today().strftime('%d.%m.%Y') + ':\n```'
+    msg = 'Spider sells this:\n```'
     for item in bungiedata['spiderinventory']:
         table.append([item['name'],item['cost']])
     msg = msg + str(tabulate(table, tablefmt="fancy_grid")) + "```"
@@ -353,7 +353,7 @@ async def on_ready():
                         last = await channel.fetch_message(hist['spiderProd'])
                         await last.delete()
                     message = await channel.send(msg)
-                    hist['spider'] = message.id
+                    hist['spiderProd'] = message.id
 
     f = open('history.json', 'w')
     f.write(json.dumps(hist))
