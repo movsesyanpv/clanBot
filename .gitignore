@@ -131,3 +131,6 @@ dmypy.json
 /charstat.json
 /hashes.json
 /token.json
+/api.json
+/char.json
+/databack.json
