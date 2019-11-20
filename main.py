@@ -349,7 +349,11 @@ async def on_ready():
                 print('yay ', message.id)
             if '--production' in sys.argv:
                 if channel.name == 'd2resetpreview':
-                    await client.send(channel, msg)
+                    if hist['spiderProd']:
+                        last = await channel.fetch_message(hist['spiderProd'])
+                        await last.delete()
+                    message = await channel.send(msg)
+                    hist['spider'] = message.id
 
     f = open('history.json', 'w')
     f.write(json.dumps(hist))
@@ -414,7 +418,8 @@ try:
         hist = json.load(json_file)
 except FileNotFoundError:
     hist = {
-        "spider" : False
+        "spider": False,
+        "spiderProd": False
     }
 
 discordPost()
