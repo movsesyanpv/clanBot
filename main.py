@@ -81,6 +81,7 @@ def refreshtoken(retoken):
     return resp['access_token']
 
 async def getdata(token):
+    print('hmmmmmmm')
     headers = {
         'X-API-Key': apidata['key'],
         'Authorization': 'Bearer ' + token
@@ -108,8 +109,8 @@ async def getdata(token):
             platform = int(input())
             if platform <= 3 and platform >= 1:
                 validinput = True
-        if platform == 3:
-            platform = 4
+        # if platform == 3:
+        #     platform = 4
         platform = str(platform)
         charinfo['platform'] = platform
         
@@ -330,20 +331,29 @@ def updaterepo(data):
 @client.event
 async def on_ready():
     bungiedata = await upd()
+
     table = []
-    msg = 'Spider sells this:\n```'
+    msg = '#Spider sells this on ' + datetime.today().strftime('%d.%m.%Y') + ':\n```'
     for item in bungiedata['spiderinventory']:
         table.append([item['name'],item['cost']])
     msg = msg + str(tabulate(table, tablefmt="fancy_grid")) + "```"
-    for server in client.servers:
+
+    for server in client.guilds:
         for channel in server.channels:
             if channel.name == 'resetbot':
-                await client.send_message(channel, msg)
-                print('yay')
+                if hist['spider']:
+                    last = await channel.fetch_message(hist['spider'])
+                    await last.delete()
+                message = await channel.send(msg)
+                hist['spider'] = message.id
+                print('yay ', message.id)
             if '--production' in sys.argv:
                 if channel.name == 'd2resetpreview':
-                    await client.send_message(channel, msg)
-    client.logout()
+                    await client.send(channel, msg)
+
+    f = open('history.json', 'w')
+    f.write(json.dumps(hist))
+    await client.logout()
     await client.close()
 
 def discordPost():
@@ -398,5 +408,13 @@ async def upd():
 #     loop = asyncio.get_event_loop()
 #     loop.run_until_complete(discordPost())
 #     loop.close()
+
+try:
+    with open('history.json') as json_file:
+        hist = json.load(json_file)
+except FileNotFoundError:
+    hist = {
+        "spider" : False
+    }
 
 discordPost()
