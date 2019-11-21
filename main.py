@@ -16,129 +16,135 @@ from tabulate import tabulate
 app = Flask(__name__)
 client = discord.Client()
 
-apidatafile = open('api.json', 'r')
-apidata = json.loads(apidatafile.read())
+api_data_file = open('api.json', 'r')
+api_data = json.loads(api_data_file.read())
 
-#redirect to the static html page with the link
+# redirect to the static html page with the link
 @app.route('/')
 def main():
-    return '<a href="https://www.bungie.net/en/oauth/authorize?client_id=' + apidata['id'] + '&response_type=code&state=asdf">Click me to authorize the script</a>'
+    return '<a href="https://www.bungie.net/en/oauth/authorize?client_id=' + api_data[
+        'id'] + '&response_type=code&state=asdf">Click me to authorize the script</a>'
 
-#catch the oauth redirect
+
+# catch the oauth redirect
 @app.route('/redirect')
-def oauthredirect():
-    #get the token/refreshtoken/expiration
+def oauth_redirect():
+    # get the token/refresh_token/expiration
     code = request.args.get('code')
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded'
     }
     params = {
         'grant_type': 'authorization_code',
-        'client_id': apidata['id'],
-        'client_secret': apidata['secret'],
+        'client_id': api_data['id'],
+        'client_secret': api_data['secret'],
         'code': code
     }
     r = requests.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
     resp = r.json()
-    
-    #save refreshtoken/expiration in token.json
+
+    # save refresh_token/expiration in token.json
     token = {
         'refresh': resp['refresh_token'],
         'expires': time.time() + resp['refresh_expires_in']
     }
-    tokenfile = open('token.json', 'w')
-    tokenfile.write(json.dumps(token))
+    token_file = open('token.json', 'w')
+    token_file.write(json.dumps(token))
     return 'Got it, rerun the script!'
 
-#spin up the flask server so we can oauth authenticate
-def getoauth():
+
+# spin up the flask server so we can oauth authenticate
+def get_oauth():
     print('No tokens saved, please authorize the app by going to localhost:4200')
     app.run(port=4200)
 
-#refresh the saved token
-def refreshtoken(retoken):
+
+# refresh the saved token
+def refresh_token(re_token):
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded'
     }
     params = {
         'grant_type': 'refresh_token',
-        'refresh_token': retoken,
-        'client_id': apidata['id'],
-        'client_secret': apidata['secret']
+        'refresh_token': re_token,
+        'client_id': api_data['id'],
+        'client_secret': api_data['secret']
     }
     r = requests.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
     resp = r.json()
 
-    #save new refreshtoken/expiration in token.json
+    # save new refresh_token/expiration in token.json
     token = {
         'refresh': resp['refresh_token'],
         'expires': time.time() + resp['refresh_expires_in']
     }
-    tokenfile = open('token.json', 'w')
-    tokenfile.write(json.dumps(token))
+    token_file = open('token.json', 'w')
+    token_file.write(json.dumps(token))
 
-    #get data with new token
+    # get data with new token
     return resp['access_token']
 
-async def getdata(token):
+
+async def get_data(token):
     print('hmmmmmmm')
     headers = {
-        'X-API-Key': apidata['key'],
+        'X-API-Key': api_data['key'],
         'Authorization': 'Bearer ' + token
     }
 
     lang = "en"
 
-    charinfo = {}
+    char_info = {}
     platform = 0
-    membershipid = ''
-    charid = ''
+    membership_id = ''
+    char_id = ''
     try:
-        charfile = open('char.json', 'r')
-        charinfo = json.loads(charfile.read())
-        platform = charinfo['platform']
-        membershipid = charinfo['membershipid']
-        charid = charinfo['charid']
+        char_file = open('char.json', 'r')
+        char_info = json.loads(char_file.read())
+        platform = char_info['platform']
+        membership_id = char_info['membershipid']
+        char_id = char_info['charid']
     except FileNotFoundError:
-        validinput = False
-        while not validinput:
+        valid_input = False
+        while not valid_input:
             print("What platform are you playing on?")
             print("1. Xbox")
             print("2. Playstation")
             print("3. Battle.net")
             platform = int(input())
-            if platform <= 3 and platform >= 1:
-                validinput = True
+            if 3 >= platform >= 1:
+                valid_input = True
         # if platform == 3:
         #     platform = 4
         platform = str(platform)
-        charinfo['platform'] = platform
-        
-        validinput = False
-        while not validinput:
-            name = input("What's the name of your account on there? (include # numbers): ")
-            searchurl = 'https://www.bungie.net/platform/Destiny2/SearchDestinyPlayer/' + str(platform) + '/' + quote(name) + '/'
-            searchresp = requests.get(searchurl, headers=headers)
-            search = searchresp.json()['Response']
-            if len(search) > 0:
-                validinput = True
-                membershipid = search[0]['membershipId']
-                charinfo['membershipid'] = membershipid
+        char_info['platform'] = platform
 
-        #get the first character and just roll with that
-        charsearchurl = 'https://www.bungie.net/platform/Destiny2/' + platform + '/Profile/' + membershipid + '/'
-        charsearchparams = {
+        valid_input = False
+        while not valid_input:
+            name = input("What's the name of your account on there? (include # numbers): ")
+            search_url = 'https://www.bungie.net/platform/Destiny2/SearchDestinyPlayer/' + str(platform) + '/' + quote(
+                name) + '/'
+            search_resp = requests.get(search_url, headers=headers)
+            search = search_resp.json()['Response']
+            if len(search) > 0:
+                valid_input = True
+                membership_id = search[0]['membershipId']
+                char_info['membershipid'] = membership_id
+
+        # get the first character and just roll with that
+        char_search_url = 'https://www.bungie.net/platform/Destiny2/' + platform + '/Profile/' + membership_id + '/'
+        char_search_params = {
             'components': '200'
         }
-        charsearchresp = requests.get(charsearchurl, params=charsearchparams, headers=headers)
-        chars = charsearchresp.json()['Response']['characters']['data']
-        charid = chars[sorted(chars.keys())[0]]['characterId']
-        charinfo['charid'] = charid
+        char_search_resp = requests.get(char_search_url, params=char_search_params, headers=headers)
+        chars = char_search_resp.json()['Response']['characters']['data']
+        char_id = chars[sorted(chars.keys())[0]]['characterId']
+        char_info['charid'] = char_id
 
-        charfile = open('char.json', 'w')
-        charfile.write(json.dumps(charinfo))
+        char_file = open('char.json', 'w')
+        char_file.write(json.dumps(char_info))
 
-    #create data.json dict
+    # create data.json dict
     data = {
         'spiderinventory': [],
         'bansheeinventory': [],
@@ -147,113 +153,118 @@ async def getdata(token):
         'guidedgamenightfall': []
     }
 
-    destiny = pydest.Pydest(apidata['key'])
+    destiny = pydest.Pydest(api_data['key'])
 
-    #get spider's inventory
-    vendorparams = {
+    # get spider's inventory
+    vendor_params = {
         'components': '401,402'
     }
-    spiderurl = 'https://www.bungie.net/platform/Destiny2/' + platform + '/Profile/' + membershipid + '/Character/' + charid + '/Vendors/863940356'
-    spiderresp = requests.get(spiderurl, params=vendorparams, headers=headers)
-    spidercats = spiderresp.json()['Response']['categories']['data']['categories']
-    spidersales = spiderresp.json()['Response']['sales']['data']
+    spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356'.\
+        format(platform, membership_id, char_id)
+    spider_resp = requests.get(spider_url, params=vendor_params, headers=headers)
+    spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
+    spider_sales = spider_resp.json()['Response']['sales']['data']
 
-    #if spider inventory breaks, look here
-    itemstoget = spidercats[0]['itemIndexes']
-    
-    #iterate through keys in spidersales, except masterwork cores (everyone knows about those)
-    for key in itemstoget:
-        item = spidersales[str(key)]
-        itemhash = item['itemHash']
-        if not itemhash == 1812969468:
+    # if spider inventory breaks, look here
+    items_to_get = spider_cats[0]['itemIndexes']
+
+    # iterate through keys in spidersales, except masterwork cores (everyone knows about those)
+    for key in items_to_get:
+        item = spider_sales[str(key)]
+        item_hash = item['itemHash']
+        if not item_hash == 1812969468:
             currency = item['costs'][0]
             definition = 'DestinyInventoryItemDefinition'
-            itemresp = await destiny.decode_hash(itemhash, definition, language=lang)
-            currencyresp = await destiny.decode_hash(currency['itemHash'], definition, language=lang)
+            item_resp = await destiny.decode_hash(item_hash, definition, language=lang)
+            currency_resp = await destiny.decode_hash(currency['itemHash'], definition, language=lang)
 
-            #query bungie api for name of item and name of currency
-            itemnamelist = itemresp['displayProperties']['name'].split()[1:]
-            itemname = ' '.join(itemnamelist)
-            currencycost = str(currency['quantity'])
-            currencyitem = currencyresp['displayProperties']['name']
+            # query bungie api for name of item and name of currency
+            item_name_list = item_resp['displayProperties']['name'].split()[1:]
+            item_name = ' '.join(item_name_list)
+            currency_cost = str(currency['quantity'])
+            currency_item = currency_resp['displayProperties']['name']
 
-            #put result in a well formatted string in the data dict
-            itemdata = {
-                'name': itemname,
-                'cost': currencycost + ' ' + currencyitem
+            # put result in a well formatted string in the data dict
+            item_data = {
+                'name': item_name,
+                'cost': currency_cost + ' ' + currency_item
             }
-            data['spiderinventory'].append(itemdata)
+            data['spiderinventory'].append(item_data)
 
-    #this is gonna break monday-thursday
-    #get xur inventory
-    xururl = 'https://www.bungie.net/platform/Destiny2/' + platform + '/Profile/' + membershipid + '/Character/' + charid + '/Vendors/534869653'
-    xurresp = requests.get(xururl, params=vendorparams, headers=headers)
-    if not xurresp.json()['ErrorCode'] == 1627:
+    # this is gonna break monday-thursday
+    # get xur inventory
+    xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/534869653'.\
+        format(platform, membership_id, char_id)
+    xur_resp = requests.get(xur_url, params=vendor_params, headers=headers)
+    if not xur_resp.json()['ErrorCode'] == 1627:
         data['xur'] = {
             'xurweapon': '',
             'xurarmor': []
         }
-        xursales = xurresp.json()['Response']['sales']['data']
+        xur_sales = xur_resp.json()['Response']['sales']['data']
 
-        #go through keys in xur inventory (except the first one, that's 5 of swords and is there every week)
-        for key in sorted(xursales.keys()):
-            itemhash = xursales[key]['itemHash']
-            if not itemhash == 4285666432:
-                itemdefurl = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/' + str(itemhash) + '/'
-                itemresp = requests.get(itemdefurl, headers=headers)
-                itemname = itemresp.json()['Response']['displayProperties']['name']
-                if itemresp.json()['Response']['itemType'] == 2:
-                    itemsockets = itemresp.json()['Response']['sockets']['socketEntries']
+        # go through keys in xur inventory (except the first one, that's 5 of swords and is there every week)
+        for key in sorted(xur_sales.keys()):
+            item_hash = xur_sales[key]['itemHash']
+            if not item_hash == 4285666432:
+                item_def_url = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/{}'.\
+                    format(item_hash)
+                item_resp = requests.get(item_def_url, headers=headers)
+                item_name = item_resp.json()['Response']['displayProperties']['name']
+                if item_resp.json()['Response']['itemType'] == 2:
+                    item_sockets = item_resp.json()['Response']['sockets']['socketEntries']
                     plugs = []
-                    for s in itemsockets:
+                    for s in item_sockets:
                         if len(s['reusablePlugItems']) > 0 and s['plugSources'] == 2:
                             plugs.append(s['reusablePlugItems'][0]['plugItemHash'])
 
                     perks = []
 
                     for p in plugs[2:]:
-                        plugurl = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/' + str(p) + '/'
-                        plugresp = requests.get(plugurl, headers=headers)
+                        plug_url = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/{}'.\
+                            format(item_hash)
+                        plug_resp = requests.get(plug_url, headers=headers)
                         perk = {
-                            'name': plugresp.json()['Response']['displayProperties']['name'],
-                            'desc': plugresp.json()['Response']['displayProperties']['description']
+                            'name': plug_resp.json()['Response']['displayProperties']['name'],
+                            'desc': plug_resp.json()['Response']['displayProperties']['description']
                         }
                         perks.append(perk)
-                    
+
                     exotic = {
-                        'name': itemname,
+                        'name': item_name,
                         'perks': perks
                     }
 
-                    if itemresp.json()['Response']['classType'] == 0:
+                    if item_resp.json()['Response']['classType'] == 0:
                         exotic['class'] = 'Titan'
-                    elif itemresp.json()['Response']['classType'] == 1:
+                    elif item_resp.json()['Response']['classType'] == 1:
                         exotic['class'] = 'Hunter'
-                    elif itemresp.json()['Response']['classType'] == 2:
+                    elif item_resp.json()['Response']['classType'] == 2:
                         exotic['class'] = 'Warlock'
 
                     data['xur']['xurarmor'].append(exotic)
                 else:
-                    data['xur']['xurweapon'] = itemname
+                    data['xur']['xurweapon'] = item_name
     else:
-        #do something if xur isn't here
+        # do something if xur isn't here
         pass
 
-    bansheeurl = 'https://www.bungie.net/platform/Destiny2/' + platform + '/Profile/' + membershipid + '/Character/' + charid + '/Vendors/672118013'
-    bansheeresp = requests.get(bansheeurl, params=vendorparams, headers=headers)
-    bansheesales = bansheeresp.json()['Response']['sales']['data']
+    banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013'.\
+        format(platform, membership_id, char_id)
+    banshee_resp = requests.get(banshee_url, params=vendor_params, headers=headers)
+    banshee_sales = banshee_resp.json()['Response']['sales']['data']
 
-    for key in sorted(bansheesales):
-        itemhash = bansheesales[key]['itemHash']
+    for key in sorted(banshee_sales):
+        item_hash = banshee_sales[key]['itemHash']
         definition = 'DestinyInventoryItemDefinition'
-        
-        if not itemhash == 2731650749 and not itemhash == 1493877378:
-            rjson = await destiny.decode_hash(itemhash, definition, language=lang)
 
-            #query bungie api for name of item and name of currency
-            itemname = rjson['displayProperties']['name']
+        if not item_hash == 2731650749 and not item_hash == 1493877378:
+            r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+
+            # query bungie api for name of item and name of currency
+            item_name = r_json['displayProperties']['name']
             try:
-                itemperkhash = rjson['perks'][0]['perkHash']
+                itemperkhash = r_json['perks'][0]['perkHash']
                 definition = 'DestinySandboxPerkDefinition'
                 perkresp = await destiny.decode_hash(itemperkhash, definition, language=lang)
                 itemdesc = perkresp['displayProperties']['description']
@@ -261,48 +272,51 @@ async def getdata(token):
                 itemdesc = ""
 
             mod = {
-                'name': itemname,
+                'name': item_name,
                 'desc': itemdesc
             }
 
-            #put result in a well formatted string in the data dict
+            # put result in a well formatted string in the data dict
             data['bansheeinventory'].append(mod)
 
-    adaurl = 'https://www.bungie.net/platform/Destiny2/' + platform + '/Profile/' + membershipid + '/Character/' + charid + '/Vendors/2917531897'
-    adaresp = requests.get(adaurl, params=vendorparams, headers=headers)
-    adacats = adaresp.json()['Response']['categories']['data']['categories']
-    adasales = adaresp.json()['Response']['sales']['data']
+    ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2917531897'.\
+        format(platform, membership_id, char_id)
+    ada_resp = requests.get(ada_url, params=vendor_params, headers=headers)
+    ada_cats = ada_resp.json()['Response']['categories']['data']['categories']
+    ada_sales = ada_resp.json()['Response']['sales']['data']
 
-    itemstoget = adacats[0]['itemIndexes']
+    items_to_get = ada_cats[0]['itemIndexes']
 
-    for key in itemstoget:
-        itemhash = adasales[str(key)]['itemHash']
-        itemdefurl = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/' + str(itemhash) + '/'
-        itemresp = requests.get(itemdefurl, headers=headers)
+    for key in items_to_get:
+        item_hash = ada_sales[str(key)]['itemHash']
+        item_def_url = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/' + str(
+            item_hash) + '/'
+        item_resp = requests.get(item_def_url, headers=headers)
 
-        #query bungie api for name of item and name of currency
-        itemnamelist = itemresp.json()['Response']['displayProperties']['name'].split()
-        if 'Powerful' in itemnamelist:
-            itemnamelist = itemnamelist[1:]
-        itemname = ' '.join(itemnamelist)
+        # query bungie api for name of item and name of currency
+        item_name_list = item_resp.json()['Response']['displayProperties']['name'].split()
+        if 'Powerful' in item_name_list:
+            item_name_list = item_name_list[1:]
+        item_name = ' '.join(item_name_list)
 
-        data['adainventory'].append(itemname)
+        data['adainventory'].append(item_name)
 
-    nightfallurl = 'https://www.bungie.net/platform/Destiny2/' + platform + '/Profile/' + membershipid + '/Character/' + charid + '?components=204'
-    nightfallresp = requests.get(nightfallurl, headers=headers)
+    nightfall_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/?components=204'.\
+        format(platform, membership_id, char_id)
+    nightfall_resp = requests.get(nightfall_url, headers=headers)
     # print(json.dumps(nightfallresp.json()['Response']['activities']['data']['availableActivities'], indent = 4, sort_keys=True)+"\n")
 
-    for key in nightfallresp.json()['Response']['activities']['data']['availableActivities']:
-        itemhash = key['activityHash']
+    for key in nightfall_resp.json()['Response']['activities']['data']['availableActivities']:
+        item_hash = key['activityHash']
         try:
-            recommendedLight = key['recommendedLight']
-            if recommendedLight == 820:
+            recommended_light = key['recommendedLight']
+            if recommended_light == 820:
                 definition = 'DestinyActivityDefinition'
-                rjson = await destiny.decode_hash(itemhash, definition, language=lang)
-                if rjson['matchmaking']['requiresGuardianOath']:
-                    data['guidedgamenightfall'].append(rjson['displayProperties']['name'])
+                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                if r_json['matchmaking']['requiresGuardianOath']:
+                    data['guidedgamenightfall'].append(r_json['displayProperties']['name'])
                 else:
-                    data['activenightfalls'].append(rjson['displayProperties']['name'])
+                    data['activenightfalls'].append(r_json['displayProperties']['name'])
                 # print(itemhash," ",rjson['displayProperties']['name'])
                 # print(json.dumps(rjson, indent = 4, sort_keys=True)+"\n")
         except KeyError:
@@ -312,30 +326,15 @@ async def getdata(token):
 
     return data
 
-def updaterepo(data):
-    repo = None
-    try:
-        repo = Repo('wherethefuckisxur')
-        repo.remote().pull()
-    except:
-        repo = Repo.clone_from('https://github.com/dorkthrone/wherethefuckisxur.git', 'wherethefuckisxur')
-
-    f = open('wherethefuckisxur/data.json', 'w')
-    f.write(json.dumps(data))
-    f.close()
-    index = repo.index
-    index.add(['data.json'])
-    index.commit('Update data for ' + datetime.today().strftime('%I:%M %p %m/%d'))
-    repo.remote().push()
 
 @client.event
 async def on_ready():
-    bungiedata = await upd()
+    bungie_data = await upd()
 
     table = []
     msg = 'Spider sells this:\n```'
-    for item in bungiedata['spiderinventory']:
-        table.append([item['name'],item['cost']])
+    for item in bungie_data['spiderinventory']:
+        table.append([item['name'], item['cost']])
     msg = msg + str(tabulate(table, tablefmt="fancy_grid")) + "```"
 
     for server in client.guilds:
@@ -360,20 +359,22 @@ async def on_ready():
     await client.logout()
     await client.close()
 
-def discordPost():
+
+def discord_post():
     with open('auth.json') as json_file:
         data = json.load(json_file)
-    TOKEN = data['token']
+    token = data['token']
     print('hmm')
-    client.run(TOKEN)
+    client.run(token)
+
 
 async def upd():
-    #check to see if token.json exists, if not we have to start with oauth
+    # check to see if token.json exists, if not we have to start with oauth
     try:
         f = open('token.json', 'r')
     except FileNotFoundError:
         if '--oauth' in sys.argv:
-            getoauth()
+            get_oauth()
         else:
             print('token file not found!  run the script with --oauth or add a valid token.js file!')
             return
@@ -382,32 +383,32 @@ async def upd():
         token = json.loads(f.read())
     except json.decoder.JSONDecodeError:
         if '--oauth' in sys.argv:
-            getoauth()
+            get_oauth()
         else:
             print('token file invalid!  run the script with --oauth or add a valid token.js file!')
             return
 
-
-    #check if token has expired, if so we have to oauth, if not just refresh the token
+    # check if token has expired, if so we have to oauth, if not just refresh the token
     if token['expires'] < time.time():
         if '--oauth' in sys.argv:
-            getoauth()
+            get_oauth()
         else:
             print('refresh token expired!  run the script with --oauth or add a valid token.js file!')
             return
     else:
-        refresh = refreshtoken(token['refresh'])
-        data = await getdata(refresh)
+        refresh = refresh_token(token['refresh'])
+        data = await get_data(refresh)
 
         print(json.dumps(data, ensure_ascii=False))
-    
+
         if '--update-repo' in sys.argv:
-            #write data dict to the data.json file
+            # write data dict to the data.json file
             f = open('databack.json', 'w')
             f.write(json.dumps(data, ensure_ascii=False))
 
-            # updaterepo(data)
     return data
+
+
 # if __name__ == '__main__':
 #     loop = asyncio.get_event_loop()
 #     loop.run_until_complete(discordPost())
@@ -422,4 +423,4 @@ except FileNotFoundError:
         "spiderProd": False
     }
 
-discordPost()
+discord_post()
