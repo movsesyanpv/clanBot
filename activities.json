@@ -1,0 +1,16 @@
+{
+    "ru": {
+        "forge": "Кузница",
+        "heroicstory": "Ежедневная героическая сюжетная миссия: ",
+        "ordeal": "Сумрачный налет: Побоище",
+        "nightmare": "Охота на кошмаров:",
+        "adept": ": Адепт"
+    },
+    "en": {
+        "forge": "Forge",
+        "heroicstory": "Daily Heroic Story Mission: ",
+        "ordeal": "Nightfall: The Ordeal",
+        "nightmare": "Nightmare Hunt:",
+        "adept": ": Adept"
+    }
+}

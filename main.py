@@ -72,6 +72,14 @@ def refresh_token(re_token):
         'client_secret': api_data['secret']
     }
     r = requests.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
+    while not r:
+        r = requests.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
+        print("re_token get error", json.dumps(r.json(), indent = 4, sort_keys=True)+"\n")
+        if not r.json()['error_description'] == 'DestinyThrottledByGameServer':
+            break
+        time.sleep(5)
+    if not r:
+        print("re_token get error", json.dumps(r.json(), indent = 4, sort_keys=True)+"\n")
     resp = r.json()
 
     # save new refresh_token/expiration in token.json
@@ -86,14 +94,14 @@ def refresh_token(re_token):
     return resp['access_token']
 
 
-async def get_data(token):
+async def get_data(token, activity_types, lang):
     print('hmmmmmmm')
     headers = {
         'X-API-Key': api_data['key'],
         'Authorization': 'Bearer ' + token
     }
 
-    lang = "en"
+    wait_codes = [1672, 1652]
 
     char_info = {}
     platform = 0
@@ -150,8 +158,12 @@ async def get_data(token):
         'spiderinventory': [],
         'bansheeinventory': [],
         'adainventory': [],
+        'heroicstory': [],
+        'forge': [],
         'activenightfalls': [],
-        'guidedgamenightfall': []
+        'guidedgamenightfall': [],
+        'ordeal': [],
+        'nightmare': []
     }
 
     destiny = pydest.Pydest(api_data['key'])
@@ -162,7 +174,13 @@ async def get_data(token):
     }
     spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356'.\
         format(platform, membership_id, char_id)
-    spider_resp = requests.get(spider_url, params=vendor_params, headers=headers)
+    spider_resp_code = 1672
+    while spider_resp_code in wait_codes:
+        spider_resp = requests.get(spider_url, params=vendor_params, headers=headers)
+        spider_resp_code = spider_resp.json()['ErrorCode']
+        time.sleep(5)
+    if not spider_resp:
+        print("spider get error", json.dumps(spider_resp.json(), indent = 4, sort_keys=True)+"\n")
     spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
     spider_sales = spider_resp.json()['Response']['sales']['data']
 
@@ -196,7 +214,14 @@ async def get_data(token):
     # get xur inventory
     xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/534869653'.\
         format(platform, membership_id, char_id)
-    xur_resp = requests.get(xur_url, params=vendor_params, headers=headers)
+    xur_resp_code = 1672
+    while xur_resp_code in wait_codes:
+        xur_resp = requests.get(xur_url, params=vendor_params, headers=headers)
+        xur_resp_code = xur_resp.json()['ErrorCode']
+        time.sleep(5)
+    if not xur_resp and not xur_resp.json()['ErrorCode'] == 1627:
+        print("xur get error\n", json.dumps(xur_resp.json(), indent = 4, sort_keys=True)+"\n")
+
     if not xur_resp.json()['ErrorCode'] == 1627:
         data['xur'] = {
             'xurweapon': '',
@@ -252,7 +277,14 @@ async def get_data(token):
 
     banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013'.\
         format(platform, membership_id, char_id)
-    banshee_resp = requests.get(banshee_url, params=vendor_params, headers=headers)
+    banshee_resp_code = 1672
+    while banshee_resp_code in wait_codes:
+        banshee_resp = requests.get(banshee_url, params=vendor_params, headers=headers)
+        banshee_resp_code = banshee_resp.json()['ErrorCode']
+        time.sleep(5)
+    if not banshee_resp:
+        print("banshee get error\n", json.dumps(banshee_resp.json(), indent = 4, sort_keys=True)+"\n")
+
     banshee_sales = banshee_resp.json()['Response']['sales']['data']
 
     for key in sorted(banshee_sales):
@@ -282,7 +314,14 @@ async def get_data(token):
 
     ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2917531897'.\
         format(platform, membership_id, char_id)
-    ada_resp = requests.get(ada_url, params=vendor_params, headers=headers)
+    ada_resp_code = 1672
+    while ada_resp_code in wait_codes:
+        ada_resp = requests.get(ada_url, params=vendor_params, headers=headers)
+        ada_resp_code = ada_resp.json()['ErrorCode']
+        time.sleep(5)
+    if not ada_resp:
+        print("ada get error\n", json.dumps(ada_resp.json(), indent = 4, sort_keys=True)+"\n")
+
     ada_cats = ada_resp.json()['Response']['categories']['data']['categories']
     ada_sales = ada_resp.json()['Response']['sales']['data']
 
@@ -302,24 +341,47 @@ async def get_data(token):
 
         data['adainventory'].append(item_name)
 
-    nightfall_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/?components=204'.\
+    activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/?components=204'.\
         format(platform, membership_id, char_id)
-    nightfall_resp = requests.get(nightfall_url, headers=headers)
-    # print(json.dumps(nightfallresp.json()['Response']['activities']['data']['availableActivities'], indent = 4, sort_keys=True)+"\n")
+    local_types = activity_types[lang]
+    activities_resp_code = 1672
+    while activities_resp_code in wait_codes:
+        activities_resp = requests.get(activities_url, params=vendor_params, headers=headers)
+        activities_resp_code = activities_resp.json()['ErrorCode']
+        time.sleep(5)
+    if not activities_resp:
+        print("activities get error\n", json.dumps(activities_resp.json(), indent = 4, sort_keys=True)+"\n")
 
-    for key in nightfall_resp.json()['Response']['activities']['data']['availableActivities']:
+    for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
         item_hash = key['activityHash']
         try:
             recommended_light = key['recommendedLight']
+            definition = 'DestinyActivityDefinition'
+            r_json = await destiny.decode_hash(item_hash, definition, language=lang)
             if recommended_light == 820:
-                definition = 'DestinyActivityDefinition'
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
                 if r_json['matchmaking']['requiresGuardianOath']:
                     data['guidedgamenightfall'].append(r_json['displayProperties']['name'])
                 else:
                     data['activenightfalls'].append(r_json['displayProperties']['name'])
-                # print(itemhash," ",rjson['displayProperties']['name'])
-                # print(json.dumps(rjson, indent = 4, sort_keys=True)+"\n")
+            # else:
+            #     print(item_hash, r_json['displayProperties']['name'])
+            #     print(json.dumps(r_json, indent = 4, sort_keys=True))
+            if local_types['heroicstory'] in r_json['displayProperties']['name']:
+                data['heroicstory'].append(r_json['displayProperties']['name'].replace(local_types['heroicstory'],""))
+            if local_types['forge'] in r_json['displayProperties']['name']:
+                data['forge'].append(r_json['displayProperties']['name'])
+            if local_types['ordeal'] in r_json['displayProperties']['name'] and local_types['adept'] in r_json['displayProperties']['name']:
+                info = {
+                    'name': r_json['displayProperties']['name'].replace(local_types['adept'],""),
+                    'description': r_json['displayProperties']['description']
+                }
+                data['ordeal'].append(info)
+            if local_types['nightmare'] in r_json['displayProperties']['name'] and local_types['adept'] in r_json['displayProperties']['name']:
+                info = {
+                    'name': r_json['displayProperties']['name'].replace(local_types['adept'],""),
+                    'description': r_json['displayProperties']['description']
+                }
+                data['nightmare'].append(info)
         except KeyError:
             continue
 
@@ -327,20 +389,37 @@ async def get_data(token):
 
     return data
 
+
 async def create_updates(raw_data, type):
-    table = []
 
     if type == 'spider':
+        table = []
         msg = 'Spider sells this:\n```'
         for item in raw_data['spiderinventory']:
             table.append([item['name'], item['cost']])
-    if type == 'nightfall':
+        msg = msg + str(tabulate(table, tablefmt="fancy_grid"))
+    if type == 'daily':
+        msg = 'Current heroic story missions are:\n```'
+        i = 1
+        for item in raw_data['heroicstory']:
+            msg = msg + "{}. {}\n".format(i, item)
+            i += 1
+        msg = msg + '```Current forge is:\n```{}'.format(raw_data['forge'][0])
+    if type == 'weekly':
         msg = 'Current 820 nightfalls are:\n```'
+        i = 1
         for item in raw_data['activenightfalls']:
-            table.append(['Usual', item])
-        table.append(['Guided game', raw_data['guidedgamenightfall'][0]])
+            msg += "{}. {}\n".format(i, item)
+            i += 1
+        msg += "```Current guided game nightfall:\n```{}```".format(raw_data['guidedgamenightfall'][0])
+        msg += "Current ordeal:\n```{}```".format(raw_data['ordeal'][0]['description'])
+        msg += "Current nightmare hunts are:\n```"
+        i = 1
+        for item in raw_data['nightmare']:
+            msg += "{}. {}\n  {}\n".format(i, item['name'], item['description'])
+            i += 1
 
-    msg = msg + str(tabulate(table, tablefmt="fancy_grid")) + "```"
+    msg = msg + "```"
     return msg
 
 @client.event
@@ -348,33 +427,42 @@ async def on_ready():
     parser = argparse.ArgumentParser()
     parser.add_argument('--noclear', action='store_true')
     parser.add_argument('--production', action='store_true')
+    parser.add_argument('--nomessage', action='store_true')
     parser.add_argument('--type', type=str, help='What to post', required=True)
     args = parser.parse_args()
 
-    bungie_data = await upd()
+    lang = 'en'
 
-    msg = await create_updates(bungie_data, args.type)
+    activity_types_file = open('activities.json', 'r')
+    activity_types = json.loads(activity_types_file.read())
+    activity_types_file.close()
 
-    for server in client.guilds:
-        for channel in server.channels:
-            if channel.name == 'resetbot':
-                if hist[args.type] and not args.noclear:
-                    last = await channel.fetch_message(hist[args.type])
-                    await last.delete()
-                message = await channel.send(msg)
-                hist[args.type] = message.id
-                print('yay ', message.id)
-            if args.production:
-                post_type = args.type + 'Prod'
-                if channel.name == 'd2resetpreview':
-                    if hist[post_type]:
-                        last = await channel.fetch_message(hist[post_type])
+    bungie_data = await upd(activity_types, lang)
+
+    if not args.nomessage:
+        msg = await create_updates(bungie_data, args.type)
+
+        for server in client.guilds:
+            for channel in server.channels:
+                if channel.name == 'resetbot':
+                    if hist[args.type] and not args.noclear:
+                        last = await channel.fetch_message(hist[args.type])
                         await last.delete()
                     message = await channel.send(msg)
-                    hist[post_type] = message.id
+                    hist[args.type] = message.id
+                    print('yay ', message.id)
+                if args.production:
+                    post_type = args.type + 'Prod'
+                    if channel.name == 'd2resetpreview':
+                        if hist[post_type]:
+                            last = await channel.fetch_message(hist[post_type])
+                            await last.delete()
+                        message = await channel.send(msg)
+                        hist[post_type] = message.id
 
-    f = open('history.json', 'w')
-    f.write(json.dumps(hist))
+        f = open('history.json', 'w')
+        f.write(json.dumps(hist))
+
     await client.logout()
     await client.close()
 
@@ -387,7 +475,7 @@ def discord_post():
     client.run(token)
 
 
-async def upd():
+async def upd(activity_types, lang):
     # check to see if token.json exists, if not we have to start with oauth
     try:
         f = open('token.json', 'r')
@@ -416,7 +504,7 @@ async def upd():
             return
     else:
         refresh = refresh_token(token['refresh'])
-        data = await get_data(refresh)
+        data = await get_data(refresh, activity_types, lang)
 
         print(json.dumps(data, ensure_ascii=False))
 
