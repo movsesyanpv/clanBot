@@ -12,6 +12,7 @@ import pydest
 import asyncio
 import discord
 from tabulate import tabulate
+import argparse
 
 app = Flask(__name__)
 client = discord.Client()
@@ -326,33 +327,51 @@ async def get_data(token):
 
     return data
 
+async def create_updates(raw_data, type):
+    table = []
+
+    if type == 'spider':
+        msg = 'Spider sells this:\n```'
+        for item in raw_data['spiderinventory']:
+            table.append([item['name'], item['cost']])
+    if type == 'nightfall':
+        msg = 'Current 820 nightfalls are:\n```'
+        for item in raw_data['activenightfalls']:
+            table.append(['Usual', item])
+        table.append(['Guided game', raw_data['guidedgamenightfall'][0]])
+
+    msg = msg + str(tabulate(table, tablefmt="fancy_grid")) + "```"
+    return msg
 
 @client.event
 async def on_ready():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--noclear', action='store_true')
+    parser.add_argument('--production', action='store_true')
+    parser.add_argument('--type', type=str, help='What to post', required=True)
+    args = parser.parse_args()
+
     bungie_data = await upd()
 
-    table = []
-    msg = 'Spider sells this:\n```'
-    for item in bungie_data['spiderinventory']:
-        table.append([item['name'], item['cost']])
-    msg = msg + str(tabulate(table, tablefmt="fancy_grid")) + "```"
+    msg = await create_updates(bungie_data, args.type)
 
     for server in client.guilds:
         for channel in server.channels:
             if channel.name == 'resetbot':
-                if hist['spider']:
-                    last = await channel.fetch_message(hist['spider'])
+                if hist[args.type] and not args.noclear:
+                    last = await channel.fetch_message(hist[args.type])
                     await last.delete()
                 message = await channel.send(msg)
-                hist['spider'] = message.id
+                hist[args.type] = message.id
                 print('yay ', message.id)
-            if '--production' in sys.argv:
+            if args.production:
+                post_type = args.type + 'Prod'
                 if channel.name == 'd2resetpreview':
-                    if hist['spiderProd']:
-                        last = await channel.fetch_message(hist['spiderProd'])
+                    if hist[post_type]:
+                        last = await channel.fetch_message(hist[post_type])
                         await last.delete()
                     message = await channel.send(msg)
-                    hist['spiderProd'] = message.id
+                    hist[post_type] = message.id
 
     f = open('history.json', 'w')
     f.write(json.dumps(hist))
@@ -420,7 +439,9 @@ try:
 except FileNotFoundError:
     hist = {
         "spider": False,
-        "spiderProd": False
+        "spiderProd": False,
+        "nightfall": False,
+        "nightfallProd": False
     }
 
 discord_post()
