@@ -172,9 +172,10 @@ async def get_data(token, activity_types, lang):
     vendor_params = {
         'components': '401,402'
     }
-    spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356'.\
+    spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'.\
         format(platform, membership_id, char_id)
     spider_resp_code = 1672
+    print('getting spider')
     while spider_resp_code in wait_codes:
         spider_resp = requests.get(spider_url, params=vendor_params, headers=headers)
         spider_resp_code = spider_resp.json()['ErrorCode']
@@ -212,9 +213,10 @@ async def get_data(token, activity_types, lang):
 
     # this is gonna break monday-thursday
     # get xur inventory
-    xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/534869653'.\
+    xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/534869653/'.\
         format(platform, membership_id, char_id)
     xur_resp_code = 1672
+    print('getting xur')
     while xur_resp_code in wait_codes:
         xur_resp = requests.get(xur_url, params=vendor_params, headers=headers)
         xur_resp_code = xur_resp.json()['ErrorCode']
@@ -233,7 +235,7 @@ async def get_data(token, activity_types, lang):
         for key in sorted(xur_sales.keys()):
             item_hash = xur_sales[key]['itemHash']
             if not item_hash == 4285666432:
-                item_def_url = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/{}'.\
+                item_def_url = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/{}/'.\
                     format(item_hash)
                 item_resp = requests.get(item_def_url, headers=headers)
                 item_name = item_resp.json()['Response']['displayProperties']['name']
@@ -247,7 +249,7 @@ async def get_data(token, activity_types, lang):
                     perks = []
 
                     for p in plugs[2:]:
-                        plug_url = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/{}'.\
+                        plug_url = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/{}/'.\
                             format(item_hash)
                         plug_resp = requests.get(plug_url, headers=headers)
                         perk = {
@@ -275,9 +277,10 @@ async def get_data(token, activity_types, lang):
         # do something if xur isn't here
         pass
 
-    banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013'.\
+    banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'.\
         format(platform, membership_id, char_id)
     banshee_resp_code = 1672
+    print('getting banshee')
     while banshee_resp_code in wait_codes:
         banshee_resp = requests.get(banshee_url, params=vendor_params, headers=headers)
         banshee_resp_code = banshee_resp.json()['ErrorCode']
@@ -312,9 +315,10 @@ async def get_data(token, activity_types, lang):
             # put result in a well formatted string in the data dict
             data['bansheeinventory'].append(mod)
 
-    ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2917531897'.\
+    ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2917531897/'.\
         format(platform, membership_id, char_id)
     ada_resp_code = 1672
+    print('getting ada')
     while ada_resp_code in wait_codes:
         ada_resp = requests.get(ada_url, params=vendor_params, headers=headers)
         ada_resp_code = ada_resp.json()['ErrorCode']
@@ -345,6 +349,7 @@ async def get_data(token, activity_types, lang):
         format(platform, membership_id, char_id)
     local_types = activity_types[lang]
     activities_resp_code = 1672
+    print('getting activities')
     while activities_resp_code in wait_codes:
         activities_resp = requests.get(activities_url, params=vendor_params, headers=headers)
         activities_resp_code = activities_resp.json()['ErrorCode']
