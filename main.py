@@ -73,10 +73,11 @@ def refresh_token(re_token):
     }
     r = requests.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
     while not r:
-        r = requests.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
         print("re_token get error", json.dumps(r.json(), indent = 4, sort_keys=True)+"\n")
-        if not r.json()['error_description'] == 'DestinyThrottledByGameServer':
-            break
+        r = requests.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
+        if not r:
+            if not r.json()['error_description'] == 'DestinyThrottledByGameServer':
+                break
         time.sleep(5)
     if not r:
         print("re_token get error", json.dumps(r.json(), indent = 4, sort_keys=True)+"\n")
@@ -101,7 +102,8 @@ async def get_data(token, activity_types, lang):
         'Authorization': 'Bearer ' + token
     }
 
-    wait_codes = [1672, 1652]
+    wait_codes = [1672]
+    max_retries = 10
 
     char_info = {}
     platform = 0
@@ -155,6 +157,7 @@ async def get_data(token, activity_types, lang):
 
     # create data.json dict
     data = {
+        'api_fucked_up': False,
         'spiderinventory': [],
         'bansheeinventory': [],
         'adainventory': [],
@@ -176,12 +179,17 @@ async def get_data(token, activity_types, lang):
         format(platform, membership_id, char_id)
     spider_resp_code = 1672
     print('getting spider')
-    while spider_resp_code in wait_codes:
+    curr_try = 1
+    while spider_resp_code in wait_codes and curr_try <= max_retries:
         spider_resp = requests.get(spider_url, params=vendor_params, headers=headers)
         spider_resp_code = spider_resp.json()['ErrorCode']
+        curr_try += 1
+        print('try {}'.format(curr_try))
         time.sleep(5)
     if not spider_resp:
         print("spider get error", json.dumps(spider_resp.json(), indent = 4, sort_keys=True)+"\n")
+        data['api_fucked_up'] = True
+        return data
     spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
     spider_sales = spider_resp.json()['Response']['sales']['data']
 
@@ -217,12 +225,16 @@ async def get_data(token, activity_types, lang):
         format(platform, membership_id, char_id)
     xur_resp_code = 1672
     print('getting xur')
-    while xur_resp_code in wait_codes:
+    curr_try = 1
+    while xur_resp_code in wait_codes or curr_try <= max_retries:
         xur_resp = requests.get(xur_url, params=vendor_params, headers=headers)
         xur_resp_code = xur_resp.json()['ErrorCode']
+        curr_try += 1
         time.sleep(5)
     if not xur_resp and not xur_resp.json()['ErrorCode'] == 1627:
         print("xur get error\n", json.dumps(xur_resp.json(), indent = 4, sort_keys=True)+"\n")
+        data['api_fucked_up'] = True
+        return data
 
     if not xur_resp.json()['ErrorCode'] == 1627:
         data['xur'] = {
@@ -281,12 +293,16 @@ async def get_data(token, activity_types, lang):
         format(platform, membership_id, char_id)
     banshee_resp_code = 1672
     print('getting banshee')
-    while banshee_resp_code in wait_codes:
+    curr_try = 1
+    while banshee_resp_code in wait_codes or curr_try <= max_retries:
         banshee_resp = requests.get(banshee_url, params=vendor_params, headers=headers)
         banshee_resp_code = banshee_resp.json()['ErrorCode']
+        curr_try += 1
         time.sleep(5)
     if not banshee_resp:
         print("banshee get error\n", json.dumps(banshee_resp.json(), indent = 4, sort_keys=True)+"\n")
+        data['api_fucked_up'] = True
+        return data
 
     banshee_sales = banshee_resp.json()['Response']['sales']['data']
 
@@ -319,12 +335,16 @@ async def get_data(token, activity_types, lang):
         format(platform, membership_id, char_id)
     ada_resp_code = 1672
     print('getting ada')
-    while ada_resp_code in wait_codes:
+    curr_try = 1
+    while ada_resp_code in wait_codes or curr_try <= max_retries:
         ada_resp = requests.get(ada_url, params=vendor_params, headers=headers)
         ada_resp_code = ada_resp.json()['ErrorCode']
+        curr_try += 1
         time.sleep(5)
     if not ada_resp:
         print("ada get error\n", json.dumps(ada_resp.json(), indent = 4, sort_keys=True)+"\n")
+        data['api_fucked_up'] = True
+        return data
 
     ada_cats = ada_resp.json()['Response']['categories']['data']['categories']
     ada_sales = ada_resp.json()['Response']['sales']['data']
@@ -350,12 +370,17 @@ async def get_data(token, activity_types, lang):
     local_types = activity_types[lang]
     activities_resp_code = 1672
     print('getting activities')
-    while activities_resp_code in wait_codes:
+    curr_try = 1
+    while activities_resp_code in wait_codes or curr_try <= max_retries:
         activities_resp = requests.get(activities_url, params=vendor_params, headers=headers)
         activities_resp_code = activities_resp.json()['ErrorCode']
+        curr_try += 1
         time.sleep(5)
     if not activities_resp:
         print("activities get error\n", json.dumps(activities_resp.json(), indent = 4, sort_keys=True)+"\n")
+        data['api_fucked_up'] = True
+        return data
+    # print(json.dumps(activities_resp.json()['Response'], indent = 4, sort_keys=True))
 
     for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
         item_hash = key['activityHash']
@@ -395,7 +420,11 @@ async def get_data(token, activity_types, lang):
     return data
 
 
-async def create_updates(raw_data, type):
+def create_updates(raw_data, type):
+
+    if raw_data['api_fucked_up']:
+        msg = 'Bungie API is unavailable'
+        return msg
 
     if type == 'spider':
         table = []
@@ -445,7 +474,7 @@ async def on_ready():
     bungie_data = await upd(activity_types, lang)
 
     if not args.nomessage:
-        msg = await create_updates(bungie_data, args.type)
+        msg = create_updates(bungie_data, args.type)
 
         for server in client.guilds:
             for channel in server.channels:
