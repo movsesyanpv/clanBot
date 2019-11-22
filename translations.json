@@ -4,13 +4,19 @@
         "heroicstory": "Ежедневная героическая сюжетная миссия: ",
         "ordeal": "Сумрачный налет: Побоище",
         "nightmare": "Охота на кошмаров:",
-        "adept": ": Адепт"
+        "adept": ": Адепт",
+        "Warlock": "Варлок",
+        "Titan": "Титан",
+        "Hunter": "Охотник"
     },
     "en": {
         "forge": "Forge",
         "heroicstory": "Daily Heroic Story Mission: ",
         "ordeal": "Nightfall: The Ordeal",
         "nightmare": "Nightmare Hunt:",
-        "adept": ": Adept"
+        "adept": ": Adept",
+        "Warlock": "Warlock",
+        "Titan": "Titan",
+        "Hunter": "Hunter"
     }
 }
