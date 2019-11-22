@@ -510,7 +510,7 @@ async def on_ready():
                 if args.production:
                     post_type = args.type + 'Prod'
                     if channel.name == 'd2resetpreview':
-                        if hist[post_type]:
+                        if hist[post_type] and not args.noclear:
                             last = await channel.fetch_message(hist[post_type])
                             await last.delete()
                         message = await channel.send(msg)
