@@ -1,5 +1,22 @@
 {
     "ru": {
+        "msg": {
+            "noapi": "API Bungie недоступен",
+            "maintenance": "API Bungie на обслуживании",
+            "spider": "Паук продает следующее",
+            "xur": "Ассортимент Зура",
+            "weapon": "Оружие",
+            "heroicstory": "Сегодняшние героические сюжетные миссии",
+            "forge": "Сегодняшняя кузница",
+            "strikesmods": "Модификаторы плейлиста налетов",
+            "reckoningmods": "Модификаторы суда",
+            "nightfalls820": "Классические сумраки",
+            "guidedgamenightfall": "Сумрак с гидом",
+            "ordeal": "Сумрачный налет: побоище",
+            "nightmares": "Охоты на кошмаров этой недели",
+            "reckoningboss": "Босс суда",
+            "cruciblerotators": "Сменяемые режимы горнила"
+        },
         "forge": "Кузница",
         "heroicstory": "Ежедневная героическая сюжетная миссия: ",
         "ordeal": "Сумрачный налет: Побоище",
@@ -10,9 +27,28 @@
         "Hunter": "Охотник",
         "rotator": "Испытание из сменяемого плейлиста Горнила",
         "strikes": "Плейлист героических налетов",
-        "reckoning": "Суд: Уровень III"
+        "reckoning": "Суд: Уровень III",
+        "oryx": "Двойник Орикса",
+        "swords": "Мечи"
     },
     "en": {
+        "msg": {
+            "noapi": "Bungie API is unavailable",
+            "maintenance": "Bungie API is brought down for maintenance",
+            "spider": "Spider sells this",
+            "xur": "Xur sells this",
+            "weapon": "Weapon",
+            "heroicstory": "Current heroic story missions are",
+            "forge": "Current forge is",
+            "strikesmods": "Current Vanguard strikes modifiers",
+            "reckoningmods": "Current Reckoning modifiers",
+            "nightfalls820": "Current 820 nightfalls are",
+            "guidedgamenightfall": "Current guided game nightfall",
+            "ordeal": "Current ordeal",
+            "nightmares": "Current nightmare hunts are",
+            "reckoningboss": "The Reckoning boss is",
+            "cruciblerotators": "Crucible rotators are"
+        },
         "forge": "Forge",
         "heroicstory": "Daily Heroic Story Mission: ",
         "ordeal": "Nightfall: The Ordeal",
@@ -23,6 +59,8 @@
         "Hunter": "Hunter",
         "rotator": "Rotator",
         "strikes": "Heroic Strikes Playlist",
-        "reckoning": "The Reckoning: Tier III"
+        "reckoning": "The Reckoning: Tier III",
+        "oryx": "Likeness of Oryx",
+        "swords": "The Swords"
     }
 }

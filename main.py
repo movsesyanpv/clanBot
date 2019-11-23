@@ -396,7 +396,7 @@ async def get_data(token, translation, lang, get_type):
     first_reset_time = 1539709200
     seconds_since_first = time.time() - first_reset_time
     weeks_since_first = seconds_since_first // 604800
-    reckoning_bosses = ['Knights', 'Oryx']
+    reckoning_bosses = ['swords', 'oryx']
 
     char_info = {}
     platform = 0
@@ -489,52 +489,54 @@ async def get_data(token, translation, lang, get_type):
     return data
 
 
-def create_updates(raw_data, msg_type):
+def create_updates(raw_data, msg_type, lang, translation):
+    tr = translation[lang]['msg']
+
     if raw_data['api_fucked_up']:
-        msg = 'Bungie API is unavailable'
+        msg = '{}'.format(tr['noapi'])
         return msg
     if raw_data['api_maintenance']:
-        msg = 'Bungie API is brought down for maintenance'
+        msg = '{}'.format(tr['maintenance'])
         return msg
 
     if msg_type == 'spider':
         table = []
-        msg = 'Spider sells this:\n```'
+        msg = '{}:\n```'.format(tr['spider'])
         for item in raw_data['spiderinventory']:
             table.append([item['name'], item['cost']])
         msg = msg + str(tabulate(table, tablefmt="fancy_grid"))
     if msg_type == 'xur':
-        msg = 'Xur sells this:\n```Weapon: {}\n'.format(raw_data['xur']['xurweapon'])
+        msg = '{}:\n```{}: {}\n'.format(tr['xur'], tr['weapon'], raw_data['xur']['xurweapon'])
         for item in raw_data['xur']['xurarmor']:
             msg += '{}: {}\n'.format(item['class'], item['name'])
     if msg_type == 'daily':
-        msg = 'Current heroic story missions are:\n```'
+        msg = '{}:\n```'.format(tr['heroicstory'])
         i = 1
         for item in raw_data['heroicstory']:
             msg = msg + "{}. {}\n".format(i, item)
             i += 1
-        msg = msg + '```Current forge is:\n```{}'.format(raw_data['forge'][0])
-        msg += "```Current Vanguard strikes modifiers:\n```"
+        msg = msg + '```{}:\n```{}'.format(tr['forge'], raw_data['forge'][0])
+        msg += "```{}:\n```".format(tr['strikesmods'])
         for item in raw_data['vanguardstrikes']:
             msg += "{}: {}\n".format(item['name'], item['description'])
-        msg += "```Current Reckoning modifiers:\n```"
+        msg += "```{}:\n```".format(tr['reckoningmods'])
         for item in raw_data['reckoning']:
             msg += "{}: {}\n".format(item['name'], item['description'])
     if msg_type == 'weekly':
-        msg = 'Current 820 nightfalls are:\n```'
+        msg = '{}:\n```'.format(tr['nightfalls820'])
         i = 1
         for item in raw_data['activenightfalls']:
             msg += "{}. {}\n".format(i, item)
             i += 1
-        msg += "```Current guided game nightfall:\n```{}```".format(raw_data['guidedgamenightfall'][0])
-        msg += "Current ordeal:\n```{}```".format(raw_data['ordeal'][0]['description'])
-        msg += "Current nightmare hunts are:\n```"
+        msg += "```{}:\n```{}```".format(tr['guidedgamenightfall'], raw_data['guidedgamenightfall'][0])
+        msg += "{}:\n```{}```".format(tr['ordeal'], raw_data['ordeal'][0]['description'])
+        msg += "{}:\n```".format(tr['nightmares'])
         i = 1
         for item in raw_data['nightmare']:
             msg += "{}. {}\n  {}\n".format(i, item['name'], item['description'])
             i += 1
-        msg += "```The Reckoning boss is:```{}".format(raw_data['reckoning'])
-        msg += "```Crucible rotators are:\n```"
+        msg += "```{}:```{}".format(tr['reckoningboss'], translation[lang][raw_data['reckoning']])
+        msg += "```{}:\n```".format(tr['cruciblerotators'])
         i = 1
         for item in raw_data['cruciblerotator']:
             msg += "{}. {}\n".format(i, item)
@@ -551,9 +553,10 @@ async def on_ready():
     parser.add_argument('--production', action='store_true')
     parser.add_argument('--nomessage', action='store_true')
     parser.add_argument('--type', type=str, help='What to post', required=True)
+    parser.add_argument('--lang', type=str, default='en')
     args = parser.parse_args()
 
-    lang = 'en'
+    lang = args.lang
 
     translations_file = open('translations.json', 'r', encoding='utf-8')
     translations = json.loads(translations_file.read())
@@ -562,7 +565,7 @@ async def on_ready():
     bungie_data = await upd(translations, lang, args.type)
 
     if not args.nomessage:
-        msg = create_updates(bungie_data, args.type)
+        msg = create_updates(bungie_data, args.type, lang, translations)
 
         for server in client.guilds:
             for channel in server.channels:
