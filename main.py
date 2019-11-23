@@ -475,6 +475,9 @@ async def on_ready():
             for channel in server.channels:
                 if channel.name == 'resetbot':
                     if hist[args.type] and not args.noclear:
+                        if args.type == 'weekly':
+                            xur_last = await channel.fetch_message(hist['xur'])
+                            await xur_last.delete()
                         last = await channel.fetch_message(hist[args.type])
                         await last.delete()
                     message = await channel.send(msg)
@@ -484,6 +487,9 @@ async def on_ready():
                     post_type = args.type + 'Prod'
                     if channel.name == 'd2resetpreview':
                         if hist[post_type] and not args.noclear:
+                            if args.type == 'weekly':
+                                xur_last = await channel.fetch_message(hist['xurProd'])
+                                await xur_last.delete()
                             last = await channel.fetch_message(hist[post_type])
                             await last.delete()
                         message = await channel.send(msg)
