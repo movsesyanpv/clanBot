@@ -96,6 +96,31 @@ def refresh_token(re_token):
     return resp['access_token']
 
 
+def get_bungie_json(name, url, params, headers, data, wait_codes, max_retries):
+    resp = requests.get(url, params=params, headers=headers)
+    resp_code = resp.json()['ErrorCode']
+    print('getting {}'.format(name))
+    curr_try = 2
+    while resp_code in wait_codes and curr_try <= max_retries:
+        print('{}, attempt {}'.format(resp_code, curr_try))
+        resp = requests.get(url, params=params, headers=headers)
+        resp_code = resp.json()['ErrorCode']
+        if resp_code == 5:
+            data['api_maintenance'] = True
+            curr_try -= 1
+        curr_try += 1
+        time.sleep(5)
+    if not resp:
+        resp_code = resp.json()['ErrorCode']
+        if resp_code == 5:
+            data['api_maintenance'] = True
+            return resp
+        print("{} get error".format(name), json.dumps(resp.json(), indent=4, sort_keys=True) + "\n")
+        data['api_fucked_up'] = True
+        return resp
+    return resp
+
+
 async def get_data(token, translation, lang):
     print('hmmmmmmm')
     headers = {
@@ -179,22 +204,8 @@ async def get_data(token, translation, lang):
     }
     spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'. \
         format(platform, membership_id, char_id)
-    spider_resp_code = 1672
-    print('getting spider')
-    curr_try = 1
-    while spider_resp_code in wait_codes and curr_try <= max_retries:
-        spider_resp = requests.get(spider_url, params=vendor_params, headers=headers)
-        spider_resp_code = spider_resp.json()['ErrorCode']
-        print('{}, attempt {}'.format(spider_resp_code, curr_try))
-        if spider_resp_code == 5:
-            data['api_maintenance'] = True
-            await destiny.close()
-            return data
-        curr_try += 1
-        time.sleep(5)
+    spider_resp = get_bungie_json('spider', spider_url, vendor_params, headers, data, wait_codes, max_retries)
     if not spider_resp:
-        print("spider get error", json.dumps(spider_resp.json(), indent=4, sort_keys=True) + "\n")
-        data['api_fucked_up'] = True
         await destiny.close()
         return data
     spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
@@ -230,21 +241,10 @@ async def get_data(token, translation, lang):
     # get xur inventory
     xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
         format(platform, membership_id, char_id)
-    xur_resp_code = 1672
-    print('getting xur')
-    curr_try = 1
-    while xur_resp_code in wait_codes and curr_try <= max_retries:
-        xur_resp = requests.get(xur_url, params=vendor_params, headers=headers)
-        xur_resp_code = xur_resp.json()['ErrorCode']
-        print('{}, attempt {}'.format(xur_resp_code, curr_try))
-        curr_try += 1
-        time.sleep(5)
+    xur_resp = get_bungie_json('xur', xur_url, vendor_params, headers, data, wait_codes, max_retries)
     if not xur_resp and not xur_resp.json()['ErrorCode'] == 1627:
-        print("xur get error\n", json.dumps(xur_resp.json(), indent=4, sort_keys=True) + "\n")
-        data['api_fucked_up'] = True
         await destiny.close()
         return data
-    # print(json.dumps(xur_resp.json()['Response'], indent=4, sort_keys=True) + "\n")
 
     if not xur_resp.json()['ErrorCode'] == 1627:
         data['xur'] = {
@@ -298,18 +298,8 @@ async def get_data(token, translation, lang):
 
     banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
         format(platform, membership_id, char_id)
-    banshee_resp_code = 1672
-    print('getting banshee')
-    curr_try = 1
-    while banshee_resp_code in wait_codes and curr_try <= max_retries:
-        banshee_resp = requests.get(banshee_url, params=vendor_params, headers=headers)
-        banshee_resp_code = banshee_resp.json()['ErrorCode']
-        print('{}, attempt {}'.format(banshee_resp_code, curr_try))
-        curr_try += 1
-        time.sleep(5)
+    banshee_resp = get_bungie_json('banshee', banshee_url, vendor_params, headers, data, wait_codes, max_retries)
     if not banshee_resp:
-        print("banshee get error\n", json.dumps(banshee_resp.json(), indent=4, sort_keys=True) + "\n")
-        data['api_fucked_up'] = True
         await destiny.close()
         return data
 
@@ -342,18 +332,8 @@ async def get_data(token, translation, lang):
 
     ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2917531897/'. \
         format(platform, membership_id, char_id)
-    ada_resp_code = 1672
-    print('getting ada')
-    curr_try = 1
-    while ada_resp_code in wait_codes and curr_try <= max_retries:
-        ada_resp = requests.get(ada_url, params=vendor_params, headers=headers)
-        ada_resp_code = ada_resp.json()['ErrorCode']
-        print('{}, attempt {}'.format(ada_resp_code, curr_try))
-        curr_try += 1
-        time.sleep(5)
+    ada_resp = get_bungie_json('ada', ada_url, vendor_params, headers, data, wait_codes, max_retries)
     if not ada_resp:
-        print("ada get error\n", json.dumps(ada_resp.json(), indent=4, sort_keys=True) + "\n")
-        data['api_fucked_up'] = True
         await destiny.close()
         return data
 
@@ -376,21 +356,14 @@ async def get_data(token, translation, lang):
 
         data['adainventory'].append(item_name)
 
-    activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/?components=204'. \
+    activities_params = {
+        'components': '204'
+    }
+    activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
         format(platform, membership_id, char_id)
+    activities_resp = get_bungie_json('activities', activities_url, activities_params, headers, data, wait_codes, max_retries)
     local_types = translation[lang]
-    activities_resp_code = 1672
-    print('getting activities')
-    curr_try = 1
-    while activities_resp_code in wait_codes and curr_try <= max_retries:
-        activities_resp = requests.get(activities_url, params=vendor_params, headers=headers)
-        activities_resp_code = activities_resp.json()['ErrorCode']
-        print('{}, attempt {}'.format(activities_resp_code, curr_try))
-        curr_try += 1
-        time.sleep(5)
     if not activities_resp:
-        print("activities get error\n", json.dumps(activities_resp.json(), indent=4, sort_keys=True) + "\n")
-        data['api_fucked_up'] = True
         await destiny.close()
         return data
     # print(json.dumps(activities_resp.json()['Response'], indent = 4, sort_keys=True))
@@ -435,7 +408,7 @@ async def get_data(token, translation, lang):
     return data
 
 
-def create_updates(raw_data, type):
+def create_updates(raw_data, msg_type):
     if raw_data['api_fucked_up']:
         msg = 'Bungie API is unavailable'
         return msg
@@ -443,24 +416,24 @@ def create_updates(raw_data, type):
         msg = 'Bungie API is brought down for maintenance'
         return msg
 
-    if type == 'spider':
+    if msg_type == 'spider':
         table = []
         msg = 'Spider sells this:\n```'
         for item in raw_data['spiderinventory']:
             table.append([item['name'], item['cost']])
         msg = msg + str(tabulate(table, tablefmt="fancy_grid"))
-    if type == 'xur':
+    if msg_type == 'xur':
         msg = 'Xur sells this:\n```Weapon: {}\n'.format(raw_data['xur']['xurweapon'])
         for item in raw_data['xur']['xurarmor']:
             msg += '{}: {}\n'.format(item['class'], item['name'])
-    if type == 'daily':
+    if msg_type == 'daily':
         msg = 'Current heroic story missions are:\n```'
         i = 1
         for item in raw_data['heroicstory']:
             msg = msg + "{}. {}\n".format(i, item)
             i += 1
         msg = msg + '```Current forge is:\n```{}'.format(raw_data['forge'][0])
-    if type == 'weekly':
+    if msg_type == 'weekly':
         msg = 'Current 820 nightfalls are:\n```'
         i = 1
         for item in raw_data['activenightfalls']:
