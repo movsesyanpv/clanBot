@@ -121,7 +121,230 @@ def get_bungie_json(name, url, params, headers, data, wait_codes, max_retries):
     return resp
 
 
-async def get_data(token, translation, lang):
+async def get_spider(lang, data, char_info, vendor_params, headers, wait_codes, max_retries):
+    destiny = pydest.Pydest(headers['X-API-Key'])
+
+    spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'. \
+        format(char_info['platform'], char_info['membershipid'], char_info['charid'])
+    spider_resp = get_bungie_json('spider', spider_url, vendor_params, headers, data, wait_codes, max_retries)
+    if not spider_resp:
+        await destiny.close()
+        return
+    spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
+    spider_sales = spider_resp.json()['Response']['sales']['data']
+
+    # if spider inventory breaks, look here
+    items_to_get = spider_cats[0]['itemIndexes']
+
+    # iterate through keys in spider_sales, except masterwork cores (everyone knows about those)
+    for key in items_to_get:
+        item = spider_sales[str(key)]
+        item_hash = item['itemHash']
+        if not item_hash == 1812969468:
+            currency = item['costs'][0]
+            definition = 'DestinyInventoryItemDefinition'
+            item_resp = await destiny.decode_hash(item_hash, definition, language=lang)
+            currency_resp = await destiny.decode_hash(currency['itemHash'], definition, language=lang)
+
+            # query bungie api for name of item and name of currency
+            item_name_list = item_resp['displayProperties']['name'].split()[1:]
+            item_name = ' '.join(item_name_list)
+            currency_cost = str(currency['quantity'])
+            currency_item = currency_resp['displayProperties']['name']
+
+            # put result in a well formatted string in the data dict
+            item_data = {
+                'name': item_name,
+                'cost': currency_cost + ' ' + currency_item
+            }
+            data['spiderinventory'].append(item_data)
+    await destiny.close()
+
+
+async def get_xur(lang, translation, data, char_info, vendor_params, headers, wait_codes, max_retries):
+    destiny = pydest.Pydest(headers['X-API-Key'])
+    # this is gonna break monday-thursday
+    # get xur inventory
+    xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
+        format(char_info['platform'], char_info['membershipid'], char_info['charid'])
+    xur_resp = get_bungie_json('xur', xur_url, vendor_params, headers, data, wait_codes, max_retries)
+    if not xur_resp and not xur_resp.json()['ErrorCode'] == 1627:
+        await destiny.close()
+        return data
+
+    if not xur_resp.json()['ErrorCode'] == 1627:
+        data['xur'] = {
+            'xurweapon': '',
+            'xurarmor': []
+        }
+        xur_sales = xur_resp.json()['Response']['sales']['data']
+
+        # go through keys in xur inventory (except the first one, that's 5 of swords and is there every week)
+        for key in sorted(xur_sales.keys()):
+            item_hash = xur_sales[key]['itemHash']
+            if not item_hash == 4285666432:
+                definition = 'DestinyInventoryItemDefinition'
+                item_resp = await destiny.decode_hash(item_hash, definition, language=lang)
+                item_name = item_resp['displayProperties']['name']
+                if item_resp['itemType'] == 2:
+                    item_sockets = item_resp['sockets']['socketEntries']
+                    plugs = []
+                    for s in item_sockets:
+                        if len(s['reusablePlugItems']) > 0 and s['plugSources'] == 2:
+                            plugs.append(s['reusablePlugItems'][0]['plugItemHash'])
+
+                    perks = []
+
+                    for p in plugs[2:]:
+                        plug_resp = await destiny.decode_hash(str(p), definition, language=lang)
+                        perk = {
+                            'name': plug_resp['displayProperties']['name'],
+                            'desc': plug_resp['displayProperties']['description']
+                        }
+                        perks.append(perk)
+
+                    exotic = {
+                        'name': item_name,
+                        'perks': perks
+                    }
+
+                    if item_resp['classType'] == 0:
+                        exotic['class'] = translation[lang]['Titan']
+                    elif item_resp['classType'] == 1:
+                        exotic['class'] = translation[lang]['Hunter']
+                    elif item_resp['classType'] == 2:
+                        exotic['class'] = translation[lang]['Warlock']
+
+                    data['xur']['xurarmor'].append(exotic)
+                else:
+                    data['xur']['xurweapon'] = item_name
+    else:
+        # do something if xur isn't here
+        pass
+    await destiny.close()
+
+
+async def get_banshee(lang, data, char_info, vendor_params, headers, wait_codes, max_retries):
+    destiny = pydest.Pydest(headers['X-API-Key'])
+
+    banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
+        format(char_info['platform'], char_info['membershipid'], char_info['charid'])
+    banshee_resp = get_bungie_json('banshee', banshee_url, vendor_params, headers, data, wait_codes, max_retries)
+    if not banshee_resp:
+        await destiny.close()
+        return data
+
+    banshee_sales = banshee_resp.json()['Response']['sales']['data']
+
+    for key in sorted(banshee_sales):
+        item_hash = banshee_sales[key]['itemHash']
+        definition = 'DestinyInventoryItemDefinition'
+
+        if not item_hash == 2731650749 and not item_hash == 1493877378:
+            r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+
+            # query bungie api for name of item and name of currency
+            item_name = r_json['displayProperties']['name']
+            try:
+                item_perk_hash = r_json['perks'][0]['perkHash']
+                definition = 'DestinySandboxPerkDefinition'
+                perk_resp = await destiny.decode_hash(item_perk_hash, definition, language=lang)
+                item_desc = perk_resp['displayProperties']['description']
+            except IndexError:
+                item_desc = ""
+
+            mod = {
+                'name': item_name,
+                'desc': item_desc
+            }
+
+            # put result in a well formatted string in the data dict
+            data['bansheeinventory'].append(mod)
+    await destiny.close()
+
+
+async def get_ada(lang, data, char_info, vendor_params, headers, wait_codes, max_retries):
+    destiny = pydest.Pydest(headers['X-API-Key'])
+
+    ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2917531897/'. \
+        format(char_info['platform'], char_info['membershipid'], char_info['charid'])
+    ada_resp = get_bungie_json('ada', ada_url, vendor_params, headers, data, wait_codes, max_retries)
+    if not ada_resp:
+        await destiny.close()
+        return data
+
+    ada_cats = ada_resp.json()['Response']['categories']['data']['categories']
+    ada_sales = ada_resp.json()['Response']['sales']['data']
+
+    items_to_get = ada_cats[0]['itemIndexes']
+
+    for key in items_to_get:
+        item_hash = ada_sales[str(key)]['itemHash']
+        item_def_url = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/' + str(
+            item_hash) + '/'
+        item_resp = requests.get(item_def_url, headers=headers)
+
+        # query bungie api for name of item and name of currency
+        item_name_list = item_resp.json()['Response']['displayProperties']['name'].split()
+        if 'Powerful' in item_name_list:
+            item_name_list = item_name_list[1:]
+        item_name = ' '.join(item_name_list)
+
+        data['adainventory'].append(item_name)
+    await destiny.close()
+
+
+async def get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries):
+    destiny = pydest.Pydest(headers['X-API-Key'])
+
+    activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
+        format(char_info['platform'], char_info['membershipid'], char_info['charid'])
+    activities_resp = get_bungie_json('activities', activities_url, activities_params, headers, data, wait_codes,
+                                      max_retries)
+    local_types = translation[lang]
+    if not activities_resp:
+        await destiny.close()
+        return data
+    # print(json.dumps(activities_resp.json()['Response'], indent = 4, sort_keys=True))
+
+    for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+        item_hash = key['activityHash']
+        try:
+            recommended_light = key['recommendedLight']
+            definition = 'DestinyActivityDefinition'
+            r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+            if recommended_light == 820:
+                if r_json['matchmaking']['requiresGuardianOath']:
+                    data['guidedgamenightfall'].append(r_json['displayProperties']['name'])
+                else:
+                    data['activenightfalls'].append(r_json['displayProperties']['name'])
+            # else:
+            #     print(item_hash, r_json['displayProperties']['name'])
+            #     print(json.dumps(r_json, indent = 4, sort_keys=True))
+            if local_types['heroicstory'] in r_json['displayProperties']['name']:
+                data['heroicstory'].append(r_json['displayProperties']['name'].replace(local_types['heroicstory'], ""))
+            if local_types['forge'] in r_json['displayProperties']['name']:
+                data['forge'].append(r_json['displayProperties']['name'])
+            if local_types['ordeal'] in r_json['displayProperties']['name'] and \
+                    local_types['adept'] in r_json['displayProperties']['name']:
+                info = {
+                    'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
+                    'description': r_json['displayProperties']['description']
+                }
+                data['ordeal'].append(info)
+            if local_types['nightmare'] in r_json['displayProperties']['name'] and \
+                    local_types['adept'] in r_json['displayProperties']['name']:
+                info = {
+                    'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
+                    'description': r_json['displayProperties']['description']
+                }
+                data['nightmare'].append(info)
+        except KeyError:
+            continue
+    await destiny.close()
+
+
+async def get_data(token, translation, lang, get_type):
     print('hmmmmmmm')
     headers = {
         'X-API-Key': api_data['key'],
@@ -196,214 +419,22 @@ async def get_data(token, translation, lang):
         'nightmare': []
     }
 
-    destiny = pydest.Pydest(api_data['key'])
-
-    # get spider's inventory
     vendor_params = {
         'components': '400,401,402'
     }
-    spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'. \
-        format(platform, membership_id, char_id)
-    spider_resp = get_bungie_json('spider', spider_url, vendor_params, headers, data, wait_codes, max_retries)
-    if not spider_resp:
-        await destiny.close()
-        return data
-    spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
-    spider_sales = spider_resp.json()['Response']['sales']['data']
-
-    # if spider inventory breaks, look here
-    items_to_get = spider_cats[0]['itemIndexes']
-
-    # iterate through keys in spidersales, except masterwork cores (everyone knows about those)
-    for key in items_to_get:
-        item = spider_sales[str(key)]
-        item_hash = item['itemHash']
-        if not item_hash == 1812969468:
-            currency = item['costs'][0]
-            definition = 'DestinyInventoryItemDefinition'
-            item_resp = await destiny.decode_hash(item_hash, definition, language=lang)
-            currency_resp = await destiny.decode_hash(currency['itemHash'], definition, language=lang)
-
-            # query bungie api for name of item and name of currency
-            item_name_list = item_resp['displayProperties']['name'].split()[1:]
-            item_name = ' '.join(item_name_list)
-            currency_cost = str(currency['quantity'])
-            currency_item = currency_resp['displayProperties']['name']
-
-            # put result in a well formatted string in the data dict
-            item_data = {
-                'name': item_name,
-                'cost': currency_cost + ' ' + currency_item
-            }
-            data['spiderinventory'].append(item_data)
-
-    # this is gonna break monday-thursday
-    # get xur inventory
-    xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
-        format(platform, membership_id, char_id)
-    xur_resp = get_bungie_json('xur', xur_url, vendor_params, headers, data, wait_codes, max_retries)
-    if not xur_resp and not xur_resp.json()['ErrorCode'] == 1627:
-        await destiny.close()
-        return data
-
-    if not xur_resp.json()['ErrorCode'] == 1627:
-        data['xur'] = {
-            'xurweapon': '',
-            'xurarmor': []
-        }
-        xur_sales = xur_resp.json()['Response']['sales']['data']
-
-        # go through keys in xur inventory (except the first one, that's 5 of swords and is there every week)
-        for key in sorted(xur_sales.keys()):
-            item_hash = xur_sales[key]['itemHash']
-            if not item_hash == 4285666432:
-                definition = 'DestinyInventoryItemDefinition'
-                item_resp = await destiny.decode_hash(item_hash, definition, language=lang)
-                item_name = item_resp['displayProperties']['name']
-                if item_resp['itemType'] == 2:
-                    item_sockets = item_resp['sockets']['socketEntries']
-                    plugs = []
-                    for s in item_sockets:
-                        if len(s['reusablePlugItems']) > 0 and s['plugSources'] == 2:
-                            plugs.append(s['reusablePlugItems'][0]['plugItemHash'])
-
-                    perks = []
-
-                    for p in plugs[2:]:
-                        plug_resp = await destiny.decode_hash(item_hash, definition, language=lang)
-                        perk = {
-                            'name': plug_resp['displayProperties']['name'],
-                            'desc': plug_resp['displayProperties']['description']
-                        }
-                        perks.append(perk)
-
-                    exotic = {
-                        'name': item_name,
-                        'perks': perks
-                    }
-
-                    if item_resp['classType'] == 0:
-                        exotic['class'] = translation[lang]['Titan']
-                    elif item_resp['classType'] == 1:
-                        exotic['class'] = translation[lang]['Hunter']
-                    elif item_resp['classType'] == 2:
-                        exotic['class'] = translation[lang]['Warlock']
-
-                    data['xur']['xurarmor'].append(exotic)
-                else:
-                    data['xur']['xurweapon'] = item_name
-    else:
-        # do something if xur isn't here
-        pass
-
-    banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
-        format(platform, membership_id, char_id)
-    banshee_resp = get_bungie_json('banshee', banshee_url, vendor_params, headers, data, wait_codes, max_retries)
-    if not banshee_resp:
-        await destiny.close()
-        return data
-
-    banshee_sales = banshee_resp.json()['Response']['sales']['data']
-
-    for key in sorted(banshee_sales):
-        item_hash = banshee_sales[key]['itemHash']
-        definition = 'DestinyInventoryItemDefinition'
-
-        if not item_hash == 2731650749 and not item_hash == 1493877378:
-            r_json = await destiny.decode_hash(item_hash, definition, language=lang)
-
-            # query bungie api for name of item and name of currency
-            item_name = r_json['displayProperties']['name']
-            try:
-                item_perk_hash = r_json['perks'][0]['perkHash']
-                definition = 'DestinySandboxPerkDefinition'
-                perk_resp = await destiny.decode_hash(item_perk_hash, definition, language=lang)
-                item_desc = perk_resp['displayProperties']['description']
-            except IndexError:
-                item_desc = ""
-
-            mod = {
-                'name': item_name,
-                'desc': item_desc
-            }
-
-            # put result in a well formatted string in the data dict
-            data['bansheeinventory'].append(mod)
-
-    ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2917531897/'. \
-        format(platform, membership_id, char_id)
-    ada_resp = get_bungie_json('ada', ada_url, vendor_params, headers, data, wait_codes, max_retries)
-    if not ada_resp:
-        await destiny.close()
-        return data
-
-    ada_cats = ada_resp.json()['Response']['categories']['data']['categories']
-    ada_sales = ada_resp.json()['Response']['sales']['data']
-
-    items_to_get = ada_cats[0]['itemIndexes']
-
-    for key in items_to_get:
-        item_hash = ada_sales[str(key)]['itemHash']
-        item_def_url = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/' + str(
-            item_hash) + '/'
-        item_resp = requests.get(item_def_url, headers=headers)
-
-        # query bungie api for name of item and name of currency
-        item_name_list = item_resp.json()['Response']['displayProperties']['name'].split()
-        if 'Powerful' in item_name_list:
-            item_name_list = item_name_list[1:]
-        item_name = ' '.join(item_name_list)
-
-        data['adainventory'].append(item_name)
 
     activities_params = {
         'components': '204'
     }
-    activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
-        format(platform, membership_id, char_id)
-    activities_resp = get_bungie_json('activities', activities_url, activities_params, headers, data, wait_codes, max_retries)
-    local_types = translation[lang]
-    if not activities_resp:
-        await destiny.close()
-        return data
-    # print(json.dumps(activities_resp.json()['Response'], indent = 4, sort_keys=True))
 
-    for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
-        item_hash = key['activityHash']
-        try:
-            recommended_light = key['recommendedLight']
-            definition = 'DestinyActivityDefinition'
-            r_json = await destiny.decode_hash(item_hash, definition, language=lang)
-            if recommended_light == 820:
-                if r_json['matchmaking']['requiresGuardianOath']:
-                    data['guidedgamenightfall'].append(r_json['displayProperties']['name'])
-                else:
-                    data['activenightfalls'].append(r_json['displayProperties']['name'])
-            # else:
-            #     print(item_hash, r_json['displayProperties']['name'])
-            #     print(json.dumps(r_json, indent = 4, sort_keys=True))
-            if local_types['heroicstory'] in r_json['displayProperties']['name']:
-                data['heroicstory'].append(r_json['displayProperties']['name'].replace(local_types['heroicstory'], ""))
-            if local_types['forge'] in r_json['displayProperties']['name']:
-                data['forge'].append(r_json['displayProperties']['name'])
-            if local_types['ordeal'] in r_json['displayProperties']['name'] and \
-                    local_types['adept'] in r_json['displayProperties']['name']:
-                info = {
-                    'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
-                    'description': r_json['displayProperties']['description']
-                }
-                data['ordeal'].append(info)
-            if local_types['nightmare'] in r_json['displayProperties']['name'] and \
-                    local_types['adept'] in r_json['displayProperties']['name']:
-                info = {
-                    'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
-                    'description': r_json['displayProperties']['description']
-                }
-                data['nightmare'].append(info)
-        except KeyError:
-            continue
-
-    await destiny.close()
+    if get_type == 'spider':
+        await get_spider(lang, data, char_info, vendor_params, headers, wait_codes, max_retries)
+    if get_type == 'xur':
+        await get_xur(lang, translation, data, char_info, vendor_params, headers, wait_codes, max_retries)
+    if get_type == 'daily':
+        await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
+    if get_type == 'weekly':
+        await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
 
     return data
 
@@ -466,7 +497,7 @@ async def on_ready():
     translations = json.loads(translations_file.read())
     translations_file.close()
 
-    bungie_data = await upd(translations, lang)
+    bungie_data = await upd(translations, lang, args.type)
 
     if not args.nomessage:
         msg = create_updates(bungie_data, args.type)
@@ -475,9 +506,10 @@ async def on_ready():
             for channel in server.channels:
                 if channel.name == 'resetbot':
                     if hist[args.type] and not args.noclear:
-                        if args.type == 'weekly':
+                        if args.type == 'weekly' and hist['xur']:
                             xur_last = await channel.fetch_message(hist['xur'])
                             await xur_last.delete()
+                            hist['xur'] = False
                         last = await channel.fetch_message(hist[args.type])
                         await last.delete()
                     message = await channel.send(msg)
@@ -487,9 +519,10 @@ async def on_ready():
                     post_type = args.type + 'Prod'
                     if channel.name == 'd2resetpreview':
                         if hist[post_type] and not args.noclear:
-                            if args.type == 'weekly':
+                            if args.type == 'weekly' and hist['xurProd']:
                                 xur_last = await channel.fetch_message(hist['xurProd'])
                                 await xur_last.delete()
+                                hist['xurProd'] = False
                             last = await channel.fetch_message(hist[post_type])
                             await last.delete()
                         message = await channel.send(msg)
@@ -510,7 +543,7 @@ def discord_post():
     client.run(token)
 
 
-async def upd(activity_types, lang):
+async def upd(activity_types, lang, get_type):
     # check to see if token.json exists, if not we have to start with oauth
     try:
         f = open('token.json', 'r')
@@ -539,7 +572,7 @@ async def upd(activity_types, lang):
             return
     else:
         refresh = refresh_token(token['refresh'])
-        data = await get_data(refresh, activity_types, lang)
+        data = await get_data(refresh, activity_types, lang, get_type)
 
         print(json.dumps(data, ensure_ascii=False))
 
