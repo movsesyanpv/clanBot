@@ -560,6 +560,16 @@ def create_updates(raw_data, msg_type, lang, translation):
     return msg
 
 
+async def post_msg(msg, channel, args, hist, post_type):
+    if hist[post_type] and not args.noclear:
+        print(hist[post_type])
+        last = await channel.fetch_message(hist[post_type])
+        await last.delete()
+    message = await channel.send(msg)
+    hist[post_type] = message.id
+    return message.id
+
+
 @client.event
 async def on_ready():
     parser = argparse.ArgumentParser()
@@ -582,6 +592,25 @@ async def on_ready():
         msg = create_updates(bungie_data, args.type, lang, translations)
 
         for server in client.guilds:
+            history_file = str(server.id) + '_history.json'
+            print(history_file)
+            try:
+                with open(history_file) as json_file:
+                    hist = json.loads(json_file.read())
+                    json_file.close()
+            except FileNotFoundError:
+                hist = {
+                    "server_name": '',
+                    "spider": False,
+                    "spiderProd": False,
+                    "weekly": False,
+                    "weeklyProd": False,
+                    "daily": False,
+                    "dailyProd": False,
+                    "xur": False,
+                    "xurProd": False
+                }
+            hist['server_name'] = server.name.strip('\'')
             for channel in server.channels:
                 if channel.name == 'resetbot':
                     if hist[args.type] and not args.noclear:
@@ -606,9 +635,19 @@ async def on_ready():
                             await last.delete()
                         message = await channel.send(msg)
                         hist[post_type] = message.id
+                    if channel.name == 'бот-информация':
+                        if hist[post_type] and not args.noclear:
+                            if args.type == 'weekly' and hist['xurProd']:
+                                xur_last = await channel.fetch_message(hist['xurProd'])
+                                await xur_last.delete()
+                                hist['xurProd'] = False
+                            last = await channel.fetch_message(hist[post_type])
+                            await last.delete()
+                        message = await channel.send(msg)
+                        hist[post_type] = message.id
 
-        f = open('history.json', 'w')
-        f.write(json.dumps(hist))
+                f = open(history_file, 'w')
+                f.write(json.dumps(hist))
 
     await client.logout()
     await client.close()
@@ -667,20 +706,5 @@ async def upd(activity_types, lang, get_type):
 #     loop = asyncio.get_event_loop()
 #     loop.run_until_complete(discordPost())
 #     loop.close()
-
-try:
-    with open('history.json') as json_file:
-        hist = json.load(json_file)
-except FileNotFoundError:
-    hist = {
-        "spider": False,
-        "spiderProd": False,
-        "weekly": False,
-        "weeklyProd": False,
-        "daily": False,
-        "dailyProd": False,
-        "xur": False,
-        "xurProd": False
-    }
 
 discord_post()
