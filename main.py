@@ -13,6 +13,7 @@ import asyncio
 import discord
 from tabulate import tabulate
 import argparse
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 client = discord.Client()
@@ -305,7 +306,6 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
     if not activities_resp:
         await destiny.close()
         return data
-    # print(json.dumps(activities_resp.json()['Response'], indent = 4, sort_keys=True))
 
     for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
         item_hash = key['activityHash']
@@ -318,9 +318,6 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
                     data['guidedgamenightfall'].append(r_json['displayProperties']['name'])
                 else:
                     data['activenightfalls'].append(r_json['displayProperties']['name'])
-            # else:
-            #     print(item_hash, r_json['displayProperties']['name'])
-            #     print(json.dumps(r_json, indent = 4, sort_keys=True))
             if local_types['heroicstory'] in r_json['displayProperties']['name']:
                 data['heroicstory'].append(r_json['displayProperties']['name'].replace(local_types['heroicstory'], ""))
             if local_types['forge'] in r_json['displayProperties']['name']:
@@ -344,6 +341,24 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
     await destiny.close()
 
 
+def get_modifiers(lang, act_hash):
+    url = 'https://www.bungie.net/{}/Explore/Detail/DestinyActivityDefinition/{}'.format(lang, act_hash)
+    r = requests.get(url)
+    soup = BeautifulSoup(r.text, features="html.parser")
+    modifier_list = soup.find_all('div', {'data-identifier': 'modifier-information'})
+    modifiers = []
+    for item in modifier_list:
+        modifier = item.find('div', {'class': 'text-content'})
+        modifier_title = modifier.find('div', {'class': 'title'})
+        modifier_subtitle = modifier.find('div', {'class': 'subtitle'})
+        mod = {
+            "name": modifier_title.text,
+            "description": modifier_subtitle.text
+        }
+        modifiers.append(mod)
+    return modifiers
+
+
 async def get_data(token, translation, lang, get_type):
     print('hmmmmmmm')
     headers = {
@@ -353,6 +368,10 @@ async def get_data(token, translation, lang, get_type):
 
     wait_codes = [1672]
     max_retries = 10
+    first_reset_time = 1539709200
+    seconds_since_first = time.time() - first_reset_time
+    weeks_since_first = seconds_since_first // 604800
+    reckoning_bosses = ['Knights', 'Oryx']
 
     char_info = {}
     platform = 0
@@ -416,7 +435,9 @@ async def get_data(token, translation, lang, get_type):
         'activenightfalls': [],
         'guidedgamenightfall': [],
         'ordeal': [],
-        'nightmare': []
+        'nightmare': [],
+        'reckoning': [],
+        'vanguardstrikes': []
     }
 
     vendor_params = {
@@ -433,8 +454,11 @@ async def get_data(token, translation, lang, get_type):
         await get_xur(lang, translation, data, char_info, vendor_params, headers, wait_codes, max_retries)
     if get_type == 'daily':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
+        data['vanguardstrikes'] = get_modifiers(lang, 4252456044)
+        data['reckoning'] = get_modifiers(lang, 1446606128)
     if get_type == 'weekly':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
+        data['reckoning'] = reckoning_bosses[int(weeks_since_first % 2)]
 
     return data
 
@@ -464,6 +488,12 @@ def create_updates(raw_data, msg_type):
             msg = msg + "{}. {}\n".format(i, item)
             i += 1
         msg = msg + '```Current forge is:\n```{}'.format(raw_data['forge'][0])
+        msg += "```Current Vanguard strikes modifiers:\n```"
+        for item in raw_data['vanguardstrikes']:
+            msg += "{}: {}\n".format(item['name'], item['description'])
+        msg += "```Current Reckoning modifiers:\n```"
+        for item in raw_data['reckoning']:
+            msg += "{}: {}\n".format(item['name'], item['description'])
     if msg_type == 'weekly':
         msg = 'Current 820 nightfalls are:\n```'
         i = 1
@@ -477,6 +507,7 @@ def create_updates(raw_data, msg_type):
         for item in raw_data['nightmare']:
             msg += "{}. {}\n  {}\n".format(i, item['name'], item['description'])
             i += 1
+        msg += "```The Reckoning boss is:```{}".format(raw_data['reckoning'])
 
     msg = msg + "```"
     return msg
