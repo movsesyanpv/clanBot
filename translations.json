@@ -15,7 +15,16 @@
             "ordeal": "Сумрачный налет: побоище",
             "nightmares": "Охоты на кошмаров этой недели",
             "reckoningboss": "Босс суда",
-            "cruciblerotators": "Сменяемые режимы горнила"
+            "cruciblerotators": "Сменяемые режимы горнила",
+            "xurloc": "Зур здесь"
+        },
+        "xur": {
+            "Earth": "Земля",
+            "Tower": "Странник",
+            "Titan": "Титан",
+            "Io": "Ио",
+            "Nessus": "Несс",
+            "NULL": "Не удалось получить информацию"
         },
         "forge": "Кузница",
         "heroicstory": "Ежедневная героическая сюжетная миссия: ",
@@ -47,7 +56,16 @@
             "ordeal": "Current ordeal",
             "nightmares": "Current nightmare hunts are",
             "reckoningboss": "The Reckoning boss is",
-            "cruciblerotators": "Crucible rotators are"
+            "cruciblerotators": "Crucible rotators are",
+            "xurloc": "Xur's here"
+        },
+        "xur": {
+            "Earth": "Earth",
+            "Tower": "Tower",
+            "Titan": "Titan",
+            "Io": "Io",
+            "Nessus": "Nessus",
+            "NULL": "Unable to get the info"
         },
         "forge": "Forge",
         "heroicstory": "Daily Heroic Story Mission: ",

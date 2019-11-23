@@ -162,6 +162,16 @@ async def get_spider(lang, data, char_info, vendor_params, headers, wait_codes, 
     await destiny.close()
 
 
+def get_xur_loc():
+    url = 'https://wherethefuckisxur.com/'
+    r = requests.get(url)
+    soup = BeautifulSoup(r.text, features="html.parser")
+    modifier_list = soup.find('img', {'id': 'map'})
+    location_str = modifier_list.attrs['src']
+    location = location_str.replace('/images/', '').replace('_map_light.png', '').capitalize()
+    return location
+
+
 async def get_xur(lang, translation, data, char_info, vendor_params, headers, wait_codes, max_retries):
     destiny = pydest.Pydest(headers['X-API-Key'])
     # this is gonna break monday-thursday
@@ -175,9 +185,14 @@ async def get_xur(lang, translation, data, char_info, vendor_params, headers, wa
 
     if not xur_resp.json()['ErrorCode'] == 1627:
         data['xur'] = {
+            'location': 'NULL',
             'xurweapon': '',
             'xurarmor': []
         }
+        try:
+            data['xur']['location'] = get_xur_loc()
+        except:
+            pass
         xur_sales = xur_resp.json()['Response']['sales']['data']
 
         # go through keys in xur inventory (except the first one, that's 5 of swords and is there every week)
@@ -480,8 +495,6 @@ async def get_data(token, translation, lang, get_type):
         await get_xur(lang, translation, data, char_info, vendor_params, headers, wait_codes, max_retries)
     if get_type == 'daily':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
-        # data['vanguardstrikes'] = get_modifiers(lang, 4252456044)
-        # data['reckoning'] = get_modifiers(lang, 1446606128)
     if get_type == 'weekly':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
         data['reckoning'] = reckoning_bosses[int(weeks_since_first % 2)]
@@ -506,7 +519,8 @@ def create_updates(raw_data, msg_type, lang, translation):
             table.append([item['name'], item['cost']])
         msg = msg + str(tabulate(table, tablefmt="fancy_grid"))
     if msg_type == 'xur':
-        msg = '{}:\n```{}: {}\n'.format(tr['xur'], tr['weapon'], raw_data['xur']['xurweapon'])
+        msg = '{}:\n```{}```'.format(tr['xurloc'], translation[lang]['xur'][raw_data['xur']['location']])
+        msg += '{}:\n```{}: {}\n'.format(tr['xur'], tr['weapon'], raw_data['xur']['xurweapon'])
         for item in raw_data['xur']['xurarmor']:
             msg += '{}: {}\n'.format(item['class'], item['name'])
     if msg_type == 'daily':
