@@ -7,7 +7,10 @@
         "adept": ": Адепт",
         "Warlock": "Варлок",
         "Titan": "Титан",
-        "Hunter": "Охотник"
+        "Hunter": "Охотник",
+        "rotator": "Испытание из сменяемого плейлиста Горнила",
+        "strikes": "Плейлист героических налетов",
+        "reckoning": "Суд: Уровень III"
     },
     "en": {
         "forge": "Forge",
@@ -17,6 +20,9 @@
         "adept": ": Adept",
         "Warlock": "Warlock",
         "Titan": "Titan",
-        "Hunter": "Hunter"
+        "Hunter": "Hunter",
+        "rotator": "Rotator",
+        "strikes": "Heroic Strikes Playlist",
+        "reckoning": "The Reckoning: Tier III"
     }
 }

@@ -295,6 +295,20 @@ async def get_ada(lang, data, char_info, vendor_params, headers, wait_codes, max
     await destiny.close()
 
 
+async def decode_modifiers(key, destiny, lang):
+    data = []
+    for mod_key in key['modifierHashes']:
+        mod_def = 'DestinyActivityModifierDefinition'
+        mod_json = await destiny.decode_hash(mod_key, mod_def, lang)
+        mod = {
+            "name": mod_json['displayProperties']['name'],
+            "description": mod_json['displayProperties']['description']
+        }
+        data.append(mod)
+
+    return data
+
+
 async def get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries):
     destiny = pydest.Pydest(headers['X-API-Key'])
 
@@ -309,35 +323,46 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
 
     for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
         item_hash = key['activityHash']
+        definition = 'DestinyActivityDefinition'
+        r_json = await destiny.decode_hash(item_hash, definition, language=lang)
         try:
             recommended_light = key['recommendedLight']
-            definition = 'DestinyActivityDefinition'
-            r_json = await destiny.decode_hash(item_hash, definition, language=lang)
             if recommended_light == 820:
                 if r_json['matchmaking']['requiresGuardianOath']:
                     data['guidedgamenightfall'].append(r_json['displayProperties']['name'])
                 else:
                     data['activenightfalls'].append(r_json['displayProperties']['name'])
-            if local_types['heroicstory'] in r_json['displayProperties']['name']:
-                data['heroicstory'].append(r_json['displayProperties']['name'].replace(local_types['heroicstory'], ""))
-            if local_types['forge'] in r_json['displayProperties']['name']:
-                data['forge'].append(r_json['displayProperties']['name'])
-            if local_types['ordeal'] in r_json['displayProperties']['name'] and \
-                    local_types['adept'] in r_json['displayProperties']['name']:
-                info = {
-                    'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
-                    'description': r_json['displayProperties']['description']
-                }
-                data['ordeal'].append(info)
-            if local_types['nightmare'] in r_json['displayProperties']['name'] and \
-                    local_types['adept'] in r_json['displayProperties']['name']:
-                info = {
-                    'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
-                    'description': r_json['displayProperties']['description']
-                }
-                data['nightmare'].append(info)
         except KeyError:
-            continue
+            pass
+        if local_types['heroicstory'] in r_json['displayProperties']['name']:
+            data['heroicstory'].append(r_json['displayProperties']['name'].replace(local_types['heroicstory'], ""))
+        if local_types['forge'] in r_json['displayProperties']['name']:
+            data['forge'].append(r_json['displayProperties']['name'])
+        if local_types['ordeal'] in r_json['displayProperties']['name'] and \
+                local_types['adept'] in r_json['displayProperties']['name']:
+            info = {
+                'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
+                'description': r_json['displayProperties']['description']
+            }
+            data['ordeal'].append(info)
+        if local_types['nightmare'] in r_json['displayProperties']['name'] and \
+                local_types['adept'] in r_json['displayProperties']['name']:
+            info = {
+                'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
+                'description': r_json['displayProperties']['description']
+            }
+            data['nightmare'].append(info)
+        if translation[lang]['strikes'] in r_json['displayProperties']['name']:
+            data['vanguardstrikes'] = await decode_modifiers(key, destiny, lang)
+        if translation[lang]['reckoning'] in r_json['displayProperties']['name']:
+            data['reckoning'] = await decode_modifiers(key, destiny, lang)
+        if r_json['isPvP']:
+            if len(r_json['challenges']) > 0:
+                obj_def = 'DestinyObjectiveDefinition'
+                objective = await destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
+                if translation[lang]['rotator'] in objective['displayProperties']['name']:
+                    data['cruciblerotator'].append(r_json['displayProperties']['name'])
+
     await destiny.close()
 
 
@@ -437,7 +462,8 @@ async def get_data(token, translation, lang, get_type):
         'ordeal': [],
         'nightmare': [],
         'reckoning': [],
-        'vanguardstrikes': []
+        'vanguardstrikes': [],
+        'cruciblerotator': []
     }
 
     vendor_params = {
@@ -454,8 +480,8 @@ async def get_data(token, translation, lang, get_type):
         await get_xur(lang, translation, data, char_info, vendor_params, headers, wait_codes, max_retries)
     if get_type == 'daily':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
-        data['vanguardstrikes'] = get_modifiers(lang, 4252456044)
-        data['reckoning'] = get_modifiers(lang, 1446606128)
+        # data['vanguardstrikes'] = get_modifiers(lang, 4252456044)
+        # data['reckoning'] = get_modifiers(lang, 1446606128)
     if get_type == 'weekly':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
         data['reckoning'] = reckoning_bosses[int(weeks_since_first % 2)]
@@ -508,6 +534,11 @@ def create_updates(raw_data, msg_type):
             msg += "{}. {}\n  {}\n".format(i, item['name'], item['description'])
             i += 1
         msg += "```The Reckoning boss is:```{}".format(raw_data['reckoning'])
+        msg += "```Crucible rotators are:\n```"
+        i = 1
+        for item in raw_data['cruciblerotator']:
+            msg += "{}. {}\n".format(i, item)
+            i += 1
 
     msg = msg + "```"
     return msg
