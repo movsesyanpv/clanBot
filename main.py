@@ -362,7 +362,9 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
             }
             data['heroicstory'].append(info)
         if local_types['forge'] in r_json['displayProperties']['name']:
-            data['forge'].append(r_json['displayProperties']['name'])
+            forge_def = 'DestinyDestinationDefinition'
+            place = await destiny.decode_hash(r_json['destinationHash'], forge_def, language=lang)
+            data['forge'].append({"name": r_json['displayProperties']['name'], "loc": place['displayProperties']['name']})
         if local_types['ordeal'] in r_json['displayProperties']['name'] and \
                 local_types['adept'] in r_json['displayProperties']['name']:
             info = {
@@ -547,7 +549,7 @@ def create_updates(raw_data, msg_type, lang, translation):
         for item in raw_data['heroicstory']:
             msg = msg + "{}. {}\n".format(i, item['name'])
             i += 1
-        msg = msg + '```{}:\n```{}'.format(tr['forge'], raw_data['forge'][0])
+        msg = msg + '```{}:\n```{}'.format(tr['forge'], raw_data['forge'][0]['name'])
         msg += "```{}:\n```".format(tr['strikesmods'])
         for item in raw_data['vanguardstrikes']:
             msg += "{}: {}\n".format(item['name'], item['description'])
@@ -611,7 +613,8 @@ def create_embeds(raw_data, msg_type, lang, translation):
             embed[0].add_field(name=item['name'], value=item['description'], inline=True)
         embed.append(discord.Embed(type="rich"))
         embed[1].color = discord.Color.dark_purple()
-        embed[1].add_field(name=tr['forge'], value=raw_data['forge'][0], inline=True)
+        embed[1].title = tr['forge']
+        embed[1].add_field(name=raw_data['forge'][0]['name'], value=raw_data['forge'][0]['loc'], inline=True)
         embed.append(discord.Embed(type="rich"))
         embed[2].title = tr['strikesmods']
         embed[2].color = discord.Color.blurple()
@@ -708,6 +711,16 @@ async def on_ready():
                         message = await channel.send(embed=item)
                         hist[translations["{}embeds".format(args.type)][str(i)]] = message.id
                         i += 1
+                    # if hist[args.type] and not args.noclear:
+                    #     last = await channel.fetch_message(hist[args.type])
+                    #     await last.delete()
+                    # if args.type == 'weekly' and hist['xur'] and not args.noclear:
+                    #         xur_last = await channel.fetch_message(hist['xur'])
+                    #         await xur_last.delete()
+                    #         hist['xur'] = False
+                    # message = await channel.send(msg)
+                    # hist[args.type] = message.id
+
                 if args.production:
                     post_type = args.type + 'Prod'
                     if channel.name == 'd2resetpreview':
@@ -725,12 +738,12 @@ async def on_ready():
                             i += 1
                     if channel.name == 'бот-информация' and not args.testprod:
                         if hist[post_type] and not args.noclear:
-                            if args.type == 'weekly' and hist['xurProd']:
+                            last = await channel.fetch_message(hist[post_type])
+                            await last.delete()
+                        if args.type == 'weekly' and hist['xurProd']:
                                 xur_last = await channel.fetch_message(hist['xurProd'])
                                 await xur_last.delete()
                                 hist['xurProd'] = False
-                            last = await channel.fetch_message(hist[post_type])
-                            await last.delete()
                         message = await channel.send(msg)
                         hist[post_type] = message.id
 
