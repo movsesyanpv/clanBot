@@ -590,8 +590,8 @@ def create_embeds(raw_data, msg_type, lang, translation):
     if msg_type == 'xur':
         embed[0].color = discord.Color.gold()
         embed[0].title = tr['xurtitle']
-        embed[0].add_field(name=tr['xurloc'], value=translation[lang]['xur'][raw_data['xur']['location']], inline=True)
-        embed[0].add_field(name=tr['weapon'], value=raw_data['xur']['xurweapon'], inline=True)
+        embed[0].add_field(name=tr['xurloc'], value=translation[lang]['xur'][raw_data['xur']['location']], inline=False)
+        embed[0].add_field(name=tr['weapon'], value=raw_data['xur']['xurweapon'], inline=False)
         for item in raw_data['xur']['xurarmor']:
             embed[0].add_field(name=item['class'], value=item['name'], inline=True)
     if msg_type == 'daily':
