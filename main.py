@@ -358,13 +358,14 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
         if local_types['heroicstory'] in r_json['displayProperties']['name']:
             info = {
                 "name": r_json['selectionScreenDisplayProperties']['name'],
-                "description": r_json['selectionScreenDisplayProperties']['description']
+                "description": r_json['selectionScreenDisplayProperties']['description'],
+                "icon": r_json['displayProperties']['icon']
             }
             data['heroicstory'].append(info)
         if local_types['forge'] in r_json['displayProperties']['name']:
             forge_def = 'DestinyDestinationDefinition'
             place = await destiny.decode_hash(r_json['destinationHash'], forge_def, language=lang)
-            data['forge'].append({"name": r_json['displayProperties']['name'], "loc": place['displayProperties']['name']})
+            data['forge'].append({"name": r_json['displayProperties']['name'], "loc": place['displayProperties']['name'], "icon": r_json['displayProperties']['icon']})
         if local_types['ordeal'] in r_json['displayProperties']['name'] and \
                 local_types['adept'] in r_json['displayProperties']['name']:
             info = {
@@ -384,8 +385,10 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
             data['nightmare'].append(info)
         if translation[lang]['strikes'] in r_json['displayProperties']['name']:
             data['vanguardstrikes'] = await decode_modifiers(key, destiny, lang)
+            data['vanguardstrikes'][0]['icon'] = r_json['displayProperties']['icon']
         if translation[lang]['reckoning'] in r_json['displayProperties']['name']:
             data['reckoning'] = await decode_modifiers(key, destiny, lang)
+            data['reckoning'][0]['icon'] = r_json['displayProperties']['icon']
         if r_json['isPvP']:
             if len(r_json['challenges']) > 0:
                 obj_def = 'DestinyObjectiveDefinition'
@@ -517,7 +520,7 @@ async def get_data(token, translation, lang, get_type):
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
     if get_type == 'weekly':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
-        data['reckoning'] = reckoning_bosses[int(weeks_since_first % 2)]
+        data['reckoning'] = {"boss": reckoning_bosses[int(weeks_since_first % 2)], "icon": "/common/destiny2_content/icons/fc31e8ede7cc15908d6e2dfac25d78ff.png"}
 
     return data
 
@@ -583,6 +586,8 @@ def create_updates(raw_data, msg_type, lang, translation):
 def create_embeds(raw_data, msg_type, lang, translation):
     tr = translation[lang]['msg']
 
+    icon_prefix = "https://www.bungie.net"
+
     embed = [discord.Embed(type="rich")]
 
     if raw_data['api_fucked_up']:
@@ -609,20 +614,24 @@ def create_embeds(raw_data, msg_type, lang, translation):
     if msg_type == 'daily':
         embed[0].title = tr['heroicstory']
         embed[0].color = discord.Color.greyple()
+        embed[0].set_thumbnail(url=icon_prefix+raw_data['heroicstory'][0]['icon'])
         for item in raw_data['heroicstory']:
             embed[0].add_field(name=item['name'], value=item['description'], inline=True)
         embed.append(discord.Embed(type="rich"))
-        embed[1].color = discord.Color.dark_purple()
+        embed[1].color = discord.Color(0x382229)
         embed[1].title = tr['forge']
+        embed[1].set_thumbnail(url=icon_prefix+raw_data['forge'][0]['icon'])
         embed[1].add_field(name=raw_data['forge'][0]['name'], value=raw_data['forge'][0]['loc'], inline=True)
         embed.append(discord.Embed(type="rich"))
         embed[2].title = tr['strikesmods']
+        embed[2].set_thumbnail(url=icon_prefix+raw_data['vanguardstrikes'][0]['icon'])
         embed[2].color = discord.Color.blurple()
         for item in raw_data['vanguardstrikes']:
             embed[2].add_field(name=item['name'], value=item['description'], inline=True)
         embed.append(discord.Embed(type="rich"))
         embed[3].title = tr['reckoningmods']
-        embed[3].color = discord.Color.dark_teal()
+        embed[3].color = discord.Color(0x14563f)
+        embed[3].set_thumbnail(url=icon_prefix+raw_data['reckoning'][0]['icon'])
         for item in raw_data['reckoning']:
             embed[3].add_field(name=item['name'], value=item['description'], inline=True)
     if msg_type == 'weekly':
@@ -641,8 +650,8 @@ def create_embeds(raw_data, msg_type, lang, translation):
         for item in raw_data['nightmare']:
             embed[2].add_field(name=item['name'], value=item['description'], inline=True)
         embed.append(discord.Embed(type="rich"))
-        embed[3].color = discord.Color.dark_teal()
-        embed[3].add_field(name=tr['reckoningboss'], value=translation[lang][raw_data['reckoning']])
+        embed[3].color = discord.Color(0x14563f)
+        embed[3].add_field(name=tr['reckoningboss'], value=translation[lang][raw_data['reckoning']['boss']])
         embed.append(discord.Embed(type="rich"))
         embed[4].color = discord.Color.red()
         embed[4].title = tr['cruciblerotators']
