@@ -134,6 +134,8 @@ async def get_spider(lang, data, char_info, vendor_params, headers, wait_codes, 
     spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
     spider_sales = spider_resp.json()['Response']['sales']['data']
 
+    spider_def = await destiny.decode_hash(863940356, 'DestinyVendorDefinition', language=lang)
+
     # if spider inventory breaks, look here
     items_to_get = spider_cats[0]['itemIndexes']
 
@@ -156,7 +158,8 @@ async def get_spider(lang, data, char_info, vendor_params, headers, wait_codes, 
             # put result in a well formatted string in the data dict
             item_data = {
                 'name': item_name,
-                'cost': currency_cost + ' ' + currency_item
+                'cost': currency_cost + ' ' + currency_item,
+                'icon': spider_def['displayProperties']['smallTransparentIcon']
             }
             data['spiderinventory'].append(item_data)
     await destiny.close()
@@ -600,8 +603,9 @@ def create_embeds(raw_data, msg_type, lang, translation):
         return embed
 
     if msg_type == 'spider':
-        embed[0].color = discord.Color.dark_gold()
+        embed[0].color = discord.Color(0x6C5E31)
         embed[0].title = tr['spider']
+        embed[0].set_thumbnail(url=icon_prefix+raw_data['spiderinventory'][0]['icon'])
         for item in raw_data['spiderinventory']:
             embed[0].add_field(name=item['name'].capitalize(), value="{}: {}".format(tr['cost'], item['cost'].capitalize()), inline=True)
     if msg_type == 'xur':
