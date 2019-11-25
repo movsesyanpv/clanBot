@@ -336,6 +336,8 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
         await destiny.close()
         return data
 
+    strikes = []
+
     for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
         item_hash = key['activityHash']
         definition = 'DestinyActivityDefinition'
@@ -364,10 +366,13 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
         if local_types['ordeal'] in r_json['displayProperties']['name'] and \
                 local_types['adept'] in r_json['displayProperties']['name']:
             info = {
-                'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
-                'description': r_json['displayProperties']['description']
+                'title': r_json['originalDisplayProperties']['name'],
+                'name': r_json['originalDisplayProperties']['description'],
+                'description': ""
             }
             data['ordeal'].append(info)
+        if r_json['activityTypeHash'] == 4110605575:
+            strikes.append({"name": r_json['displayProperties']['name'], "description": r_json['displayProperties']['description']})
         if local_types['nightmare'] in r_json['displayProperties']['name'] and \
                 local_types['adept'] in r_json['displayProperties']['name']:
             info = {
@@ -385,6 +390,11 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
                 objective = await destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
                 if translation[lang]['rotator'] in objective['displayProperties']['name']:
                     data['cruciblerotator'].append({"name": r_json['displayProperties']['name'], "description": r_json['displayProperties']['description']})
+
+        for strike in strikes:
+            if strike['name'] in data['ordeal'][0]['name']:
+                data['ordeal'][0]['description'] = strike['description']
+                break
 
     await destiny.close()
 
@@ -551,7 +561,7 @@ def create_updates(raw_data, msg_type, lang, translation):
             msg += "{}. {}\n".format(i, item['name'])
             i += 1
         msg += "```{}:\n```{}```".format(tr['guidedgamenightfall'], raw_data['guidedgamenightfall'][0]['name'])
-        msg += "{}:\n```{}```".format(tr['ordeal'], raw_data['ordeal'][0]['description'])
+        msg += "{}:\n```{}```".format(tr['ordeal'], raw_data['ordeal'][0]['name'])
         msg += "{}:\n```".format(tr['nightmares'])
         i = 1
         for item in raw_data['nightmare']:
@@ -620,7 +630,8 @@ def create_embeds(raw_data, msg_type, lang, translation):
         embed[0].add_field(name=tr['guidedgamenightfall'], value=raw_data['guidedgamenightfall'][0]['name'])
         embed.append(discord.Embed(type="rich"))
         embed[1].color = discord.Color.dark_blue()
-        embed[1].add_field(name=tr['ordeal'], value=raw_data['ordeal'][0]['description'])
+        embed[1].title = raw_data['ordeal'][0]['title']
+        embed[1].add_field(name=raw_data['ordeal'][0]['name'], value=raw_data['ordeal'][0]['description'])
         embed.append(discord.Embed(type="rich"))
         embed[2].color = discord.Color.dark_red()
         embed[2].title = tr['nightmares']
