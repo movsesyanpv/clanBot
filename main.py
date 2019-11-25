@@ -656,7 +656,7 @@ async def on_ready():
     parser.add_argument('--nomessage', action='store_true')
     parser.add_argument('--type', type=str, help='What to post', required=True)
     parser.add_argument('--lang', type=str, default='en')
-    parser.add_argument('--testprod', action='store_false')
+    parser.add_argument('--testprod', action='store_true')
     args = parser.parse_args()
 
     lang = args.lang
@@ -700,15 +700,18 @@ async def on_ready():
                 if args.production:
                     post_type = args.type + 'Prod'
                     if channel.name == 'd2resetpreview':
-                        if hist[post_type] and not args.noclear:
+                        i = 0
+                        for item in embed:
+                            if hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] and not args.noclear:
+                                last = await channel.fetch_message(hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])])
+                                await last.delete()
                             if args.type == 'weekly' and hist['xurProd']:
-                                xur_last = await channel.fetch_message(hist['xurProd'])
-                                await xur_last.delete()
-                                hist['xurProd'] = False
-                            last = await channel.fetch_message(hist[post_type])
-                            await last.delete()
-                        message = await channel.send(msg)
-                        hist[post_type] = message.id
+                                    xur_last = await channel.fetch_message(hist['xurProd'])
+                                    await xur_last.delete()
+                                    hist['xurProd'] = False
+                            message = await channel.send(embed=item)
+                            hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] = message.id
+                            i += 1
                     if channel.name == 'бот-информация' and not args.testprod:
                         if hist[post_type] and not args.noclear:
                             if args.type == 'weekly' and hist['xurProd']:
