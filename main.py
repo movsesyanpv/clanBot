@@ -187,10 +187,12 @@ async def get_xur(lang, translation, data, char_info, vendor_params, headers, wa
         return data
 
     if not xur_resp.json()['ErrorCode'] == 1627:
+        xur_def = await destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
         data['xur'] = {
             'location': 'NULL',
             'xurweapon': '',
-            'xurarmor': []
+            'xurarmor': [],
+            'icon': xur_def['displayProperties']['smallTransparentIcon']
         }
         try:
             data['xur']['location'] = get_xur_loc()
@@ -350,7 +352,8 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
             if recommended_light == 820:
                 info = {
                     'name': r_json['selectionScreenDisplayProperties']['name'],
-                    'description': r_json['selectionScreenDisplayProperties']['description']
+                    'description': r_json['selectionScreenDisplayProperties']['description'],
+                    'icon': r_json['displayProperties']['icon']
                 }
                 if r_json['matchmaking']['requiresGuardianOath']:
                     data['guidedgamenightfall'].append(info)
@@ -374,7 +377,8 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
             info = {
                 'title': r_json['originalDisplayProperties']['name'],
                 'name': r_json['originalDisplayProperties']['description'],
-                'description': ""
+                'description': "",
+                'icon': r_json['displayProperties']['icon']
             }
             data['ordeal'].append(info)
         if r_json['activityTypeHash'] == 4110605575:
@@ -383,7 +387,8 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
                 local_types['adept'] in r_json['displayProperties']['name']:
             info = {
                 'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
-                'description': r_json['displayProperties']['description']
+                'description': r_json['displayProperties']['description'],
+                'icon': r_json['displayProperties']['icon']
             }
             data['nightmare'].append(info)
         if translation[lang]['strikes'] in r_json['displayProperties']['name']:
@@ -397,7 +402,12 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
                 obj_def = 'DestinyObjectiveDefinition'
                 objective = await destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
                 if translation[lang]['rotator'] in objective['displayProperties']['name']:
-                    data['cruciblerotator'].append({"name": r_json['displayProperties']['name'], "description": r_json['displayProperties']['description']})
+                    info = {
+                        "name": r_json['displayProperties']['name'],
+                        "description": r_json['displayProperties']['description'],
+                        'icon': r_json['displayProperties']['icon']
+                    }
+                    data['cruciblerotator'].append(info)
 
         for strike in strikes:
             if strike['name'] in data['ordeal'][0]['name']:
@@ -523,7 +533,7 @@ async def get_data(token, translation, lang, get_type):
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
     if get_type == 'weekly':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
-        data['reckoning'] = {"boss": reckoning_bosses[int(weeks_since_first % 2)], "icon": "/common/destiny2_content/icons/fc31e8ede7cc15908d6e2dfac25d78ff.png"}
+        data['reckoning'] = {"boss": reckoning_bosses[int(weeks_since_first % 2)], "desc": translation[lang]['r_desc']}
 
     return data
 
@@ -575,7 +585,7 @@ def create_updates(raw_data, msg_type, lang, translation):
         for item in raw_data['nightmare']:
             msg += "{}. {}\n  {}\n".format(i, item['name'], item['description'])
             i += 1
-        msg += "```{}:```{}".format(tr['reckoningboss'], translation[lang][raw_data['reckoning']])
+        msg += "```{}:```{}".format(tr['reckoningboss'], translation[lang][raw_data['reckoning']['boss']])
         msg += "```{}:\n```".format(tr['cruciblerotators'])
         i = 1
         for item in raw_data['cruciblerotator']:
@@ -610,6 +620,7 @@ def create_embeds(raw_data, msg_type, lang, translation):
             embed[0].add_field(name=item['name'].capitalize(), value="{}: {}".format(tr['cost'], item['cost'].capitalize()), inline=True)
     if msg_type == 'xur':
         embed[0].color = discord.Color.gold()
+        embed[0].set_thumbnail(url=icon_prefix+raw_data['xur']['icon'])
         embed[0].title = tr['xurtitle']
         embed[0].add_field(name=tr['xurloc'], value=translation[lang]['xur'][raw_data['xur']['location']], inline=False)
         embed[0].add_field(name=tr['weapon'], value=raw_data['xur']['xurweapon'], inline=False)
@@ -640,24 +651,33 @@ def create_embeds(raw_data, msg_type, lang, translation):
             embed[3].add_field(name=item['name'], value=item['description'], inline=True)
     if msg_type == 'weekly':
         embed[0].color = discord.Color.blurple()
+        embed[0].set_thumbnail(url=icon_prefix+raw_data['activenightfalls'][0]['icon'])
         embed[0].title = tr['nightfalls820']
         for item in raw_data['activenightfalls']:
             embed[0].add_field(name=item['name'], value=item['description'], inline=True)
         embed[0].add_field(name=tr['guidedgamenightfall'], value=raw_data['guidedgamenightfall'][0]['name'])
         embed.append(discord.Embed(type="rich"))
-        embed[1].color = discord.Color.dark_blue()
+        embed[1].color = discord.Color(0x515A77)
+        embed[1].set_thumbnail(url=icon_prefix+"/common/destiny2_content/icons"
+                                               "/DestinyMilestoneDefinition_a72e5ce5c66e21f34a420271a30d7ec3.png")
         embed[1].title = raw_data['ordeal'][0]['title']
         embed[1].add_field(name=raw_data['ordeal'][0]['name'], value=raw_data['ordeal'][0]['description'])
         embed.append(discord.Embed(type="rich"))
-        embed[2].color = discord.Color.dark_red()
+        embed[2].color = discord.Color(0x5C1E1F)
+        embed[2].set_thumbnail(url=icon_prefix+"/common/destiny2_content/icons"
+                                               "/DestinyActivityModeDefinition_48ad57129cd0c46a355ef8bcaa1acd04.png")
         embed[2].title = tr['nightmares']
         for item in raw_data['nightmare']:
             embed[2].add_field(name=item['name'], value=item['description'], inline=True)
         embed.append(discord.Embed(type="rich"))
         embed[3].color = discord.Color(0x14563f)
-        embed[3].add_field(name=tr['reckoningboss'], value=translation[lang][raw_data['reckoning']['boss']])
+        embed[3].set_thumbnail(url=icon_prefix+"/common/destiny2_content/icons"
+                                               "/DestinyActivityModeDefinition_e74b3385c5269da226372df8ae7f500d.png")
+        embed[3].title = tr['reckoningboss']
+        embed[3].add_field(name=translation[lang][raw_data['reckoning']['boss']], value=raw_data["reckoning"]['desc'])
         embed.append(discord.Embed(type="rich"))
-        embed[4].color = discord.Color.red()
+        embed[4].color = discord.Color(0x652911)
+        embed[4].set_thumbnail(url=icon_prefix+raw_data['cruciblerotator'][0]['icon'])
         embed[4].title = tr['cruciblerotators']
         for item in raw_data['cruciblerotator']:
             embed[4].add_field(name=item['name'], value=item['description'])
