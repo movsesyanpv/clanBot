@@ -344,8 +344,8 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
             recommended_light = key['recommendedLight']
             if recommended_light == 820:
                 info = {
-                    'name': r_json['displayProperties']['name'],
-                    'description': r_json['displayProperties']['description']
+                    'name': r_json['selectionScreenDisplayProperties']['name'],
+                    'description': r_json['selectionScreenDisplayProperties']['description']
                 }
                 if r_json['matchmaking']['requiresGuardianOath']:
                     data['guidedgamenightfall'].append(info)
