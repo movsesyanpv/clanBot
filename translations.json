@@ -7,7 +7,7 @@
             "xur": "Ассортимент Зура",
             "weapon": "Оружие",
             "heroicstory": "Сегодняшние героические сюжетные миссии",
-            "forge": "Сегодняшняя кузница",
+            "forge": "Доступная кузница",
             "strikesmods": "Модификаторы плейлиста налетов",
             "reckoningmods": "Модификаторы суда",
             "nightfalls820": "Классические сумраки",
@@ -16,7 +16,9 @@
             "nightmares": "Охоты на кошмаров этой недели",
             "reckoningboss": "Босс суда",
             "cruciblerotators": "Сменяемые режимы горнила",
-            "xurloc": "Зур здесь"
+            "xurloc": "Местоположение",
+            "cost": "Цена",
+            "xurtitle": "Зур"
         },
         "xur": {
             "Earth": "Земля",
@@ -57,7 +59,9 @@
             "nightmares": "Current nightmare hunts are",
             "reckoningboss": "The Reckoning boss is",
             "cruciblerotators": "Crucible rotators are",
-            "xurloc": "Xur's here"
+            "xurloc": "Location",
+            "cost": "Cost",
+            "xurtitle": "Xur"
         },
         "xur": {
             "Earth": "Earth",
@@ -80,5 +84,24 @@
         "reckoning": "The Reckoning: Tier III",
         "oryx": "Likeness of Oryx",
         "swords": "The Swords"
+    },
+    "spiderembeds": {
+        "0": "spider"
+    },
+    "xurembeds": {
+        "0": "xur"
+    },
+    "dailyembeds": {
+        "0": "heroicstory",
+        "1": "forge",
+        "2": "vanguardstrikes",
+        "3": "reckoning"
+    },
+    "weeklyembeds": {
+        "0": "nightfalls820",
+        "1": "ordeal",
+        "2": "nightmares",
+        "3": "reckoningboss",
+        "4": "cruciblerotators"
     }
 }

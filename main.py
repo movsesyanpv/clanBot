@@ -343,14 +343,22 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
         try:
             recommended_light = key['recommendedLight']
             if recommended_light == 820:
+                info = {
+                    'name': r_json['displayProperties']['name'],
+                    'description': r_json['displayProperties']['description']
+                }
                 if r_json['matchmaking']['requiresGuardianOath']:
-                    data['guidedgamenightfall'].append(r_json['displayProperties']['name'])
+                    data['guidedgamenightfall'].append(info)
                 else:
-                    data['activenightfalls'].append(r_json['displayProperties']['name'])
+                    data['activenightfalls'].append(info)
         except KeyError:
             pass
         if local_types['heroicstory'] in r_json['displayProperties']['name']:
-            data['heroicstory'].append(r_json['displayProperties']['name'].replace(local_types['heroicstory'], ""))
+            info = {
+                "name": r_json['selectionScreenDisplayProperties']['name'],
+                "description": r_json['selectionScreenDisplayProperties']['description']
+            }
+            data['heroicstory'].append(info)
         if local_types['forge'] in r_json['displayProperties']['name']:
             data['forge'].append(r_json['displayProperties']['name'])
         if local_types['ordeal'] in r_json['displayProperties']['name'] and \
@@ -376,7 +384,7 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
                 obj_def = 'DestinyObjectiveDefinition'
                 objective = await destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
                 if translation[lang]['rotator'] in objective['displayProperties']['name']:
-                    data['cruciblerotator'].append(r_json['displayProperties']['name'])
+                    data['cruciblerotator'].append({"name": r_json['displayProperties']['name'], "description": r_json['displayProperties']['description']})
 
     await destiny.close()
 
@@ -527,7 +535,7 @@ def create_updates(raw_data, msg_type, lang, translation):
         msg = '{}:\n```'.format(tr['heroicstory'])
         i = 1
         for item in raw_data['heroicstory']:
-            msg = msg + "{}. {}\n".format(i, item)
+            msg = msg + "{}. {}\n".format(i, item['name'])
             i += 1
         msg = msg + '```{}:\n```{}'.format(tr['forge'], raw_data['forge'][0])
         msg += "```{}:\n```".format(tr['strikesmods'])
@@ -540,9 +548,9 @@ def create_updates(raw_data, msg_type, lang, translation):
         msg = '{}:\n```'.format(tr['nightfalls820'])
         i = 1
         for item in raw_data['activenightfalls']:
-            msg += "{}. {}\n".format(i, item)
+            msg += "{}. {}\n".format(i, item['name'])
             i += 1
-        msg += "```{}:\n```{}```".format(tr['guidedgamenightfall'], raw_data['guidedgamenightfall'][0])
+        msg += "```{}:\n```{}```".format(tr['guidedgamenightfall'], raw_data['guidedgamenightfall'][0]['name'])
         msg += "{}:\n```{}```".format(tr['ordeal'], raw_data['ordeal'][0]['description'])
         msg += "{}:\n```".format(tr['nightmares'])
         i = 1
@@ -553,11 +561,81 @@ def create_updates(raw_data, msg_type, lang, translation):
         msg += "```{}:\n```".format(tr['cruciblerotators'])
         i = 1
         for item in raw_data['cruciblerotator']:
-            msg += "{}. {}\n".format(i, item)
+            msg += "{}. {}\n".format(i, item['name'])
             i += 1
 
     msg = msg + "```"
     return msg
+
+
+def create_embeds(raw_data, msg_type, lang, translation):
+    tr = translation[lang]['msg']
+
+    embed = [discord.Embed(type="rich")]
+
+    if raw_data['api_fucked_up']:
+        embed[0].title = tr['noapi']
+        embed[0].color = discord.Color.red()
+        return embed
+    if raw_data['api_maintenance']:
+        embed[0].title = tr['maintenance']
+        embed[0].color = discord.Color.orange()
+        return embed
+
+    if msg_type == 'spider':
+        embed[0].color = discord.Color.dark_gold()
+        embed[0].title = tr['spider']
+        for item in raw_data['spiderinventory']:
+            embed[0].add_field(name=item['name'].capitalize(), value="{}: {}".format(tr['cost'], item['cost'].capitalize()), inline=True)
+    if msg_type == 'xur':
+        embed[0].color = discord.Color.gold()
+        embed[0].title = tr['xurtitle']
+        embed[0].add_field(name=tr['xurloc'], value=translation[lang]['xur'][raw_data['xur']['location']], inline=True)
+        embed[0].add_field(name=tr['weapon'], value=raw_data['xur']['xurweapon'], inline=True)
+        for item in raw_data['xur']['xurarmor']:
+            embed[0].add_field(name=item['class'], value=item['name'], inline=True)
+    if msg_type == 'daily':
+        embed[0].title = tr['heroicstory']
+        embed[0].color = discord.Color.greyple()
+        for item in raw_data['heroicstory']:
+            embed[0].add_field(name=item['name'], value=item['description'], inline=True)
+        embed.append(discord.Embed(type="rich"))
+        embed[1].color = discord.Color.dark_purple()
+        embed[1].add_field(name=tr['forge'], value=raw_data['forge'][0], inline=True)
+        embed.append(discord.Embed(type="rich"))
+        embed[2].title = tr['strikesmods']
+        embed[2].color = discord.Color.blurple()
+        for item in raw_data['vanguardstrikes']:
+            embed[2].add_field(name=item['name'], value=item['description'], inline=True)
+        embed.append(discord.Embed(type="rich"))
+        embed[3].title = tr['reckoningmods']
+        embed[3].color = discord.Color.dark_teal()
+        for item in raw_data['reckoning']:
+            embed[3].add_field(name=item['name'], value=item['description'], inline=True)
+    if msg_type == 'weekly':
+        embed[0].color = discord.Color.blurple()
+        embed[0].title = tr['nightfalls820']
+        for item in raw_data['activenightfalls']:
+            embed[0].add_field(name=item['name'], value=item['description'], inline=True)
+        embed[0].add_field(name=tr['guidedgamenightfall'], value=raw_data['guidedgamenightfall'][0]['name'])
+        embed.append(discord.Embed(type="rich"))
+        embed[1].color = discord.Color.dark_blue()
+        embed[1].add_field(name=tr['ordeal'], value=raw_data['ordeal'][0]['description'])
+        embed.append(discord.Embed(type="rich"))
+        embed[2].color = discord.Color.dark_red()
+        embed[2].title = tr['nightmares']
+        for item in raw_data['nightmare']:
+            embed[2].add_field(name=item['name'], value=item['description'], inline=True)
+        embed.append(discord.Embed(type="rich"))
+        embed[3].color = discord.Color.dark_teal()
+        embed[3].add_field(name=tr['reckoningboss'], value=translation[lang][raw_data['reckoning']])
+        embed.append(discord.Embed(type="rich"))
+        embed[4].color = discord.Color.red()
+        embed[4].title = tr['cruciblerotators']
+        for item in raw_data['cruciblerotator']:
+            embed[4].add_field(name=item['name'], value=item['description'])
+
+    return embed
 
 
 async def post_msg(msg, channel, args, hist, post_type):
@@ -578,6 +656,7 @@ async def on_ready():
     parser.add_argument('--nomessage', action='store_true')
     parser.add_argument('--type', type=str, help='What to post', required=True)
     parser.add_argument('--lang', type=str, default='en')
+    parser.add_argument('--testprod', action='store_false')
     args = parser.parse_args()
 
     lang = args.lang
@@ -590,6 +669,7 @@ async def on_ready():
 
     if not args.nomessage:
         msg = create_updates(bungie_data, args.type, lang, translations)
+        embed = create_embeds(bungie_data, args.type, lang, translations)
 
         for server in client.guilds:
             history_file = str(server.id) + '_history.json'
@@ -599,30 +679,24 @@ async def on_ready():
                     hist = json.loads(json_file.read())
                     json_file.close()
             except FileNotFoundError:
-                hist = {
-                    "server_name": '',
-                    "spider": False,
-                    "spiderProd": False,
-                    "weekly": False,
-                    "weeklyProd": False,
-                    "daily": False,
-                    "dailyProd": False,
-                    "xur": False,
-                    "xurProd": False
-                }
+                with open("history.json") as json_file:
+                    hist = json.loads(json_file.read())
+                    json_file.close()
             hist['server_name'] = server.name.strip('\'')
             for channel in server.channels:
                 if channel.name == 'resetbot':
-                    if hist[args.type] and not args.noclear:
+                    i = 0
+                    for item in embed:
+                        if hist[translations["{}embeds".format(args.type)][str(i)]] and not args.noclear:
+                            last = await channel.fetch_message(hist[translations["{}embeds".format(args.type)][str(i)]])
+                            await last.delete()
                         if args.type == 'weekly' and hist['xur']:
-                            xur_last = await channel.fetch_message(hist['xur'])
-                            await xur_last.delete()
-                            hist['xur'] = False
-                        last = await channel.fetch_message(hist[args.type])
-                        await last.delete()
-                    message = await channel.send(msg)
-                    hist[args.type] = message.id
-                    print('yay ', message.id)
+                                xur_last = await channel.fetch_message(hist['xur'])
+                                await xur_last.delete()
+                                hist['xur'] = False
+                        message = await channel.send(embed=item)
+                        hist[translations["{}embeds".format(args.type)][str(i)]] = message.id
+                        i += 1
                 if args.production:
                     post_type = args.type + 'Prod'
                     if channel.name == 'd2resetpreview':
@@ -635,7 +709,7 @@ async def on_ready():
                             await last.delete()
                         message = await channel.send(msg)
                         hist[post_type] = message.id
-                    if channel.name == 'бот-информация':
+                    if channel.name == 'бот-информация' and not args.testprod:
                         if hist[post_type] and not args.noclear:
                             if args.type == 'weekly' and hist['xurProd']:
                                 xur_last = await channel.fetch_message(hist['xurProd'])
