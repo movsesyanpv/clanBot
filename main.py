@@ -122,6 +122,42 @@ def get_bungie_json(name, url, params, headers, data, wait_codes, max_retries):
     return resp
 
 
+async def get_records(lang, data, char_info, params, headers, wait_codes, max_retries):
+    destiny = pydest.Pydest(headers['X-API-Key'])
+    records_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/'. \
+        format(char_info['platform'], char_info['membershipid'])
+
+    records_resp = get_bungie_json('records', records_url, params, headers, data, wait_codes, max_retries)
+
+    seal_resp = await destiny.decode_hash(1652422747, 'DestinyPresentationNodeDefinition', language=lang)
+
+    seals = {
+        "id": "",
+        "seals": []
+    }
+
+    correction = False
+    records_nodes = records_resp.json()['Response']['profilePresentationNodes']['data']['nodes']
+    mmxix_node = records_resp.json()['Response']['characterRecords']['data'][char_info['charid']]['records']
+    for record in mmxix_node:
+        if record == "1492080644" and mmxix_node['1492080644']['objectives'][0]['complete']:
+            correction = True
+            break
+
+    for seal in seal_resp['children']['presentationNodes']:
+        for record in records_resp.json()['Response']['profilePresentationNodes']['data']['nodes']:
+            if str(seal['presentationNodeHash']) == record:
+                corr_value = 0
+                if record == "1002334440" and correction:
+                    corr_value = 1
+                if records_nodes[record]['progressValue'] + corr_value == records_nodes[record]['completionValue']:
+                    seals['seals'].append(record)
+
+    await destiny.close()
+
+    return seals
+
+
 async def get_spider(lang, data, char_info, vendor_params, headers, wait_codes, max_retries):
     destiny = pydest.Pydest(headers['X-API-Key'])
 
@@ -435,7 +471,33 @@ def get_modifiers(lang, act_hash):
     return modifiers
 
 
-async def get_data(token, translation, lang, get_type):
+async def get_seals(token, lang, char_info):
+    headers = {
+        'X-API-Key': api_data['key'],
+        'Authorization': 'Bearer ' + token
+    }
+
+    wait_codes = [1672]
+    max_retries = 10
+
+    record_params = {
+        "components": "900,700"
+    }
+
+    data = {
+        'api_fucked_up': False,
+        'api_maintenance': False,
+        'char': char_info
+    }
+
+    seals = await get_records(lang, data, char_info, record_params, headers, wait_codes, max_retries)
+
+    data['seals'] = seals
+
+    return data
+
+
+async def get_data(token, translation, lang, get_type, seals, chars):
     print('hmmmmmmm')
     headers = {
         'X-API-Key': api_data['key'],
@@ -525,12 +587,20 @@ async def get_data(token, translation, lang, get_type):
         'components': '204'
     }
 
+    record_params = {
+        "components": "900,700"
+    }
+
     if get_type == 'spider':
         await get_spider(lang, data, char_info, vendor_params, headers, wait_codes, max_retries)
     if get_type == 'xur':
         await get_xur(lang, translation, data, char_info, vendor_params, headers, wait_codes, max_retries)
     if get_type == 'daily':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
+        for char in chars:
+            info = await get_records(lang, data, chars[char], record_params, headers, wait_codes, max_retries)
+            info['id'] = char
+            seals.append(info)
     if get_type == 'weekly':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
         data['reckoning'] = {"boss": reckoning_bosses[int(weeks_since_first % 2)], "desc": translation[lang]['r_desc']}
@@ -646,7 +716,8 @@ def create_embeds(raw_data, msg_type, lang, translation):
         embed.append(discord.Embed(type="rich"))
         embed[3].title = tr['reckoningmods']
         embed[3].color = discord.Color(0x14563f)
-        embed[3].set_thumbnail(url=icon_prefix+raw_data['reckoning'][0]['icon'])
+        embed[3].set_thumbnail(url=icon_prefix + "/common/destiny2_content/icons"
+                                                 "/DestinyActivityModeDefinition_e74b3385c5269da226372df8ae7f500d.png")
         for item in raw_data['reckoning']:
             embed[3].add_field(name=item['name'], value=item['description'], inline=True)
     if msg_type == 'weekly':
@@ -712,7 +783,13 @@ async def on_ready():
     translations = json.loads(translations_file.read())
     translations_file.close()
 
-    bungie_data = await upd(translations, lang, args.type)
+    seals = []
+
+    chars_file = open('chars.json', 'r', encoding='utf-8')
+    chars = json.loads(chars_file.read())
+    chars_file.close()
+
+    bungie_data = await upd(translations, lang, args.type, seals, chars)
 
     if not args.nomessage:
         msg = create_updates(bungie_data, args.type, lang, translations)
@@ -720,7 +797,6 @@ async def on_ready():
 
         for server in client.guilds:
             history_file = str(server.id) + '_history.json'
-            print(history_file)
             try:
                 with open(history_file) as json_file:
                     hist = json.loads(json_file.read())
@@ -783,6 +859,18 @@ async def on_ready():
                 f = open(history_file, 'w')
                 f.write(json.dumps(hist))
 
+            if server.id == 173495302823608320 and args.type == 'daily':
+                seal_file = open('seals.json', 'r', encoding='utf-8')
+                seal_list = json.loads(seal_file.read())
+                seal_file.close()
+                for ch_id in chars:
+                    for char in seals:
+                        if char['id'] == ch_id:
+                            for seal in char['seals']:
+                                member = server.get_member(int(ch_id))
+                                role = server.get_role(seal_list[seal])
+                                await member.add_roles(role, reason='Worthy')
+
     await client.logout()
     await client.close()
 
@@ -795,7 +883,7 @@ def discord_post():
     client.run(token)
 
 
-async def upd(activity_types, lang, get_type):
+async def upd(activity_types, lang, get_type, seals, chars):
     # check to see if token.json exists, if not we have to start with oauth
     try:
         f = open('token.json', 'r')
@@ -824,7 +912,7 @@ async def upd(activity_types, lang, get_type):
             return
     else:
         refresh = refresh_token(token['refresh'])
-        data = await get_data(refresh, activity_types, lang, get_type)
+        data = await get_data(refresh, activity_types, lang, get_type, seals, chars)
 
         print(json.dumps(data, ensure_ascii=False))
 
