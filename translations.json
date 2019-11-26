@@ -41,7 +41,7 @@
         "reckoning": "Суд: Уровень III",
         "oryx": "Двойник Орикса",
         "swords": "Мечи",
-        "r_desc": "Отправляйтесь в место, которое Скиталец называет \"Добычей\", и предстаньте перед судом высших сил"
+        "r_desc": "Отправляйтесь в место, которое Скиталец называет \"Добычей\", и предстаньте перед судом высших сил."
     },
     "en": {
         "msg": {
@@ -85,7 +85,7 @@
         "reckoning": "The Reckoning: Tier III",
         "oryx": "Likeness of Oryx",
         "swords": "The Swords",
-        "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers"
+        "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers."
     },
     "spiderembeds": {
         "0": "spider"

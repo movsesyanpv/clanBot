@@ -10,6 +10,7 @@
 }`
 
 * A file called `auth.json` in the root of the folder:
+
 `{
     "token": "discord api key",
     "bungieapi": "bungie api key",
