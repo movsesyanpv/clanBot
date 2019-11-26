@@ -769,12 +769,13 @@ async def post_msg(msg, channel, args, hist, post_type):
 @client.event
 async def on_ready():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--noclear', action='store_true')
-    parser.add_argument('--production', action='store_true')
-    parser.add_argument('--nomessage', action='store_true')
-    parser.add_argument('--type', type=str, help='What to post', required=True)
-    parser.add_argument('--lang', type=str, default='en')
-    parser.add_argument('--testprod', action='store_true')
+    parser.add_argument('-nc', '--noclear', help='Don\'t clear last message of the type', action='store_true')
+    parser.add_argument('-p', '--production', help='Use to launch in production mode', action='store_true')
+    parser.add_argument('-nm', '--nomessage', help='Don\'t post any messages', action='store_true')
+    required_named = parser.add_argument_group('required named arguments')
+    required_named.add_argument('-t', '--type', type=str, help='Type of message', required=True)
+    parser.add_argument('-l', '--lang', type=str, help='Language of data', default='en')
+    parser.add_argument('-tp', '--testprod', help='Use to launch in test production mode', action='store_true')
     args = parser.parse_args()
 
     lang = args.lang

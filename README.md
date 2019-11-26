@@ -9,6 +9,14 @@
     "secret": "client secret"
 }`
 
+* A file called `auth.json` in the root of the folder:
+`{
+    "token": "discord api key",
+    "bungieapi": "bungie api key",
+    "bungieid": "bungie client id",
+    "bungiesecret": "bungie client secret"
+}`
+
 # Tutorial
 
 Make sure you install all the packages required, either using pipenv or the requirements.txt file.  Also make sure that git has been setup properly (this script might not even work if git doesn't remember your username/password for github).
@@ -28,3 +36,25 @@ On first run, the script will launch a flask server and tell you to navigate to 
 Now that you've got oauth taken care of, when you run the script no flask server will kick up, instead it will simply ask what platform you play on (answer with 1, 2, or 3) and for your platform's username.  Once it has this info, it'll go and do its thing, building a data file and committing it to the repository.
 
 Notes: the files `token.json` and `char.json` can be transferred to another machine along with the script to let the script run without any input at all.
+
+# Launch
+
+Python 3.6+ is required
+
+```
+usage: main.py [-h] [-nc] [-p] [-nm] -t TYPE [-l LANG] [-tp]
+```
+
+## Optional arguments:
+```
+  -h, --help            show this help message and exit
+  -nc, --noclear        Don't clear last message of the type
+  -p, --production      Use to launch in production mode
+  -nm, --nomessage      Don't post any messages
+  -l LANG, --lang LANG  Language of data
+  -tp, --testprod       Use to launch in test production mode
+```
+## Required arguments:
+```
+  -t TYPE, --type TYPE  Type of message
+```
