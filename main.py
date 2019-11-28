@@ -815,9 +815,9 @@ async def on_ready():
                             last = await channel.fetch_message(hist[translations["{}embeds".format(args.type)][str(i)]])
                             await last.delete()
                         if args.type == 'weekly' and hist['xur']:
-                                xur_last = await channel.fetch_message(hist['xur'])
-                                await xur_last.delete()
-                                hist['xur'] = False
+                            xur_last = await channel.fetch_message(hist['xur'])
+                            await xur_last.delete()
+                            hist['xur'] = False
                         message = await channel.send(embed=item)
                         hist[translations["{}embeds".format(args.type)][str(i)]] = message.id
                         i += 1
@@ -840,20 +840,20 @@ async def on_ready():
                                 last = await channel.fetch_message(hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])])
                                 await last.delete()
                             if args.type == 'weekly' and hist['xurProd']:
-                                    xur_last = await channel.fetch_message(hist['xurProd'])
-                                    await xur_last.delete()
-                                    hist['xurProd'] = False
+                                xur_last = await channel.fetch_message(hist['xurProd'])
+                                await xur_last.delete()
+                                hist['xurProd'] = False
                             message = await channel.send(embed=item)
                             hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] = message.id
                             i += 1
-                    if channel.name == 'бот-информация' and not args.testprod:
+                    if channel.name == 'reset-info' and not args.testprod:
                         if hist[post_type] and not args.noclear:
                             last = await channel.fetch_message(hist[post_type])
                             await last.delete()
                         if args.type == 'weekly' and hist['xurProd']:
-                                xur_last = await channel.fetch_message(hist['xurProd'])
-                                await xur_last.delete()
-                                hist['xurProd'] = False
+                            xur_last = await channel.fetch_message(hist['xurProd'])
+                            await xur_last.delete()
+                            hist['xurProd'] = False
                         message = await channel.send(msg)
                         hist[post_type] = message.id
 
