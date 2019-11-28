@@ -403,6 +403,7 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
                 "description": r_json['selectionScreenDisplayProperties']['description'],
                 "icon": r_json['displayProperties']['icon']
             }
+            data['vanguardstrikes'] = await decode_modifiers(key, destiny, lang)
             data['heroicstory'].append(info)
         if local_types['forge'] in r_json['displayProperties']['name']:
             forge_def = 'DestinyDestinationDefinition'
@@ -428,7 +429,6 @@ async def get_activities(lang, translation, data, char_info, activities_params, 
             }
             data['nightmare'].append(info)
         if translation[lang]['strikes'] in r_json['displayProperties']['name']:
-            data['vanguardstrikes'] = await decode_modifiers(key, destiny, lang)
             data['vanguardstrikes'][0]['icon'] = r_json['displayProperties']['icon']
         if translation[lang]['reckoning'] in r_json['displayProperties']['name']:
             data['reckoning'] = await decode_modifiers(key, destiny, lang)
