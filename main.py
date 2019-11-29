@@ -497,7 +497,7 @@ async def get_seals(token, lang, char_info):
     return data
 
 
-async def get_data(token, translation, lang, get_type, seals, chars):
+async def get_data(token, translation, lang, get_type):
     print('hmmmmmmm')
     headers = {
         'X-API-Key': api_data['key'],
@@ -597,10 +597,6 @@ async def get_data(token, translation, lang, get_type, seals, chars):
         await get_xur(lang, translation, data, char_info, vendor_params, headers, wait_codes, max_retries)
     if get_type == 'daily':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
-        for char in chars:
-            info = await get_records(lang, data, chars[char], record_params, headers, wait_codes, max_retries)
-            info['id'] = char
-            seals.append(info)
     if get_type == 'weekly':
         await get_activities(lang, translation, data, char_info, activities_params, headers, wait_codes, max_retries)
         data['reckoning'] = {"boss": reckoning_bosses[int(weeks_since_first % 2)], "desc": translation[lang]['r_desc']}
@@ -784,13 +780,7 @@ async def on_ready():
     translations = json.loads(translations_file.read())
     translations_file.close()
 
-    seals = []
-
-    chars_file = open('chars.json', 'r', encoding='utf-8')
-    chars = json.loads(chars_file.read())
-    chars_file.close()
-
-    bungie_data = await upd(translations, lang, args.type, seals, chars)
+    bungie_data = await upd(translations, lang, args.type)
 
     if not args.nomessage:
         msg = create_updates(bungie_data, args.type, lang, translations)
@@ -860,18 +850,6 @@ async def on_ready():
                 f = open(history_file, 'w')
                 f.write(json.dumps(hist))
 
-            if server.id == 173495302823608320 and args.type == 'daily':
-                seal_file = open('seals.json', 'r', encoding='utf-8')
-                seal_list = json.loads(seal_file.read())
-                seal_file.close()
-                for ch_id in chars:
-                    for char in seals:
-                        if char['id'] == ch_id:
-                            for seal in char['seals']:
-                                member = server.get_member(int(ch_id))
-                                role = server.get_role(seal_list[seal])
-                                await member.add_roles(role, reason='Worthy')
-
     await client.logout()
     await client.close()
 
@@ -884,7 +862,7 @@ def discord_post():
     client.run(token)
 
 
-async def upd(activity_types, lang, get_type, seals, chars):
+async def upd(activity_types, lang, get_type):
     # check to see if token.json exists, if not we have to start with oauth
     try:
         f = open('token.json', 'r')
@@ -913,7 +891,7 @@ async def upd(activity_types, lang, get_type, seals, chars):
             return
     else:
         refresh = refresh_token(token['refresh'])
-        data = await get_data(refresh, activity_types, lang, get_type, seals, chars)
+        data = await get_data(refresh, activity_types, lang, get_type)
 
         print(json.dumps(data, ensure_ascii=False))
 
