@@ -14,8 +14,10 @@ import discord
 from tabulate import tabulate
 import argparse
 from bs4 import BeautifulSoup
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 app = Flask(__name__)
+sched = AsyncIOScheduler(timezone='UTC')
 client = discord.Client()
 
 api_data_file = open('api.json', 'r')
@@ -772,86 +774,107 @@ async def on_ready():
     required_named.add_argument('-t', '--type', type=str, help='Type of message', required=True)
     parser.add_argument('-l', '--lang', type=str, help='Language of data', default='en')
     parser.add_argument('-tp', '--testprod', help='Use to launch in test production mode', action='store_true')
+    parser.add_argument('-d', '--daemonized', help='Use to start as a \'real\' bot', action='store_true')
     args = parser.parse_args()
 
     lang = args.lang
 
-    translations_file = open('translations.json', 'r', encoding='utf-8')
-    translations = json.loads(translations_file.read())
-    translations_file.close()
+    if not args.daemonized:
+        translations_file = open('translations.json', 'r', encoding='utf-8')
+        translations = json.loads(translations_file.read())
+        translations_file.close()
 
-    bungie_data = await upd(translations, lang, args.type)
+        bungie_data = await upd(translations, lang, args.type)
 
-    if not args.nomessage:
-        msg = create_updates(bungie_data, args.type, lang, translations)
-        embed = create_embeds(bungie_data, args.type, lang, translations)
+        if not args.nomessage:
+            msg = create_updates(bungie_data, args.type, lang, translations)
+            embed = create_embeds(bungie_data, args.type, lang, translations)
 
-        for server in client.guilds:
-            history_file = str(server.id) + '_history.json'
-            try:
-                with open(history_file) as json_file:
-                    hist = json.loads(json_file.read())
-                    json_file.close()
-            except FileNotFoundError:
-                with open("history.json") as json_file:
-                    hist = json.loads(json_file.read())
-                    json_file.close()
-            hist['server_name'] = server.name.strip('\'')
-            for channel in server.channels:
-                if channel.name == 'resetbot':
-                    i = 0
-                    for item in embed:
-                        if hist[translations["{}embeds".format(args.type)][str(i)]] and not args.noclear:
-                            last = await channel.fetch_message(hist[translations["{}embeds".format(args.type)][str(i)]])
-                            await last.delete()
-                        if args.type == 'weekly' and hist['xur']:
-                            xur_last = await channel.fetch_message(hist['xur'])
-                            await xur_last.delete()
-                            hist['xur'] = False
-                        message = await channel.send(embed=item)
-                        hist[translations["{}embeds".format(args.type)][str(i)]] = message.id
-                        i += 1
-                    # if hist[args.type] and not args.noclear:
-                    #     last = await channel.fetch_message(hist[args.type])
-                    #     await last.delete()
-                    # if args.type == 'weekly' and hist['xur'] and not args.noclear:
-                    #         xur_last = await channel.fetch_message(hist['xur'])
-                    #         await xur_last.delete()
-                    #         hist['xur'] = False
-                    # message = await channel.send(msg)
-                    # hist[args.type] = message.id
-
-                if args.production:
-                    post_type = args.type + 'Prod'
-                    if channel.name == 'd2resetpreview':
+            for server in client.guilds:
+                history_file = str(server.id) + '_history.json'
+                try:
+                    with open(history_file) as json_file:
+                        hist = json.loads(json_file.read())
+                        json_file.close()
+                except FileNotFoundError:
+                    with open("history.json") as json_file:
+                        hist = json.loads(json_file.read())
+                        json_file.close()
+                hist['server_name'] = server.name.strip('\'')
+                for channel in server.channels:
+                    if channel.name == 'resetbot':
                         i = 0
                         for item in embed:
-                            if hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] and not args.noclear:
-                                last = await channel.fetch_message(hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])])
+                            if hist[translations["{}embeds".format(args.type)][str(i)]] and not args.noclear:
+                                last = await channel.fetch_message(hist[translations["{}embeds".format(args.type)][str(i)]])
+                                await last.delete()
+                            if args.type == 'weekly' and hist['xur']:
+                                xur_last = await channel.fetch_message(hist['xur'])
+                                await xur_last.delete()
+                                hist['xur'] = False
+                            message = await channel.send(embed=item)
+                            hist[translations["{}embeds".format(args.type)][str(i)]] = message.id
+                            i += 1
+                        # if hist[args.type] and not args.noclear:
+                        #     last = await channel.fetch_message(hist[args.type])
+                        #     await last.delete()
+                        # if args.type == 'weekly' and hist['xur'] and not args.noclear:
+                        #         xur_last = await channel.fetch_message(hist['xur'])
+                        #         await xur_last.delete()
+                        #         hist['xur'] = False
+                        # message = await channel.send(msg)
+                        # hist[args.type] = message.id
+
+                    if args.production:
+                        post_type = args.type + 'Prod'
+                        if channel.name == 'd2resetpreview':
+                            i = 0
+                            for item in embed:
+                                if hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] and not args.noclear:
+                                    last = await channel.fetch_message(hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])])
+                                    await last.delete()
+                                if args.type == 'weekly' and hist['xurProd']:
+                                    xur_last = await channel.fetch_message(hist['xurProd'])
+                                    await xur_last.delete()
+                                    hist['xurProd'] = False
+                                message = await channel.send(embed=item)
+                                hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] = message.id
+                                i += 1
+                        if channel.name == 'reset-info' and not args.testprod:
+                            if hist[post_type] and not args.noclear:
+                                last = await channel.fetch_message(hist[post_type])
                                 await last.delete()
                             if args.type == 'weekly' and hist['xurProd']:
                                 xur_last = await channel.fetch_message(hist['xurProd'])
                                 await xur_last.delete()
                                 hist['xurProd'] = False
-                            message = await channel.send(embed=item)
-                            hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] = message.id
-                            i += 1
-                    if channel.name == 'reset-info' and not args.testprod:
-                        if hist[post_type] and not args.noclear:
-                            last = await channel.fetch_message(hist[post_type])
-                            await last.delete()
-                        if args.type == 'weekly' and hist['xurProd']:
-                            xur_last = await channel.fetch_message(hist['xurProd'])
-                            await xur_last.delete()
-                            hist['xurProd'] = False
-                        message = await channel.send(msg)
-                        hist[post_type] = message.id
+                            message = await channel.send(msg)
+                            hist[post_type] = message.id
 
-                f = open(history_file, 'w')
-                f.write(json.dumps(hist))
+                    f = open(history_file, 'w')
+                    f.write(json.dumps(hist))
 
-    await client.logout()
-    await client.close()
+        await client.logout()
+        await client.close()
+
+
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+
+    if message.content.startswith('!stop'):
+        bot_info = await client.application_info()
+        if bot_info.owner == message.author:
+            msg = 'Ok, {}'.format(message.author.mention)
+            await message.channel.send(msg)
+            await client.logout()
+            await client.close()
+            return
+        else:
+            msg = 'I will not obey you, {}'.format(message.author.mention)
+            await message.channel.send(msg)
+            return
 
 
 def discord_post():
