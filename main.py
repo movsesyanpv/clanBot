@@ -706,8 +706,7 @@ async def on_ready():
     parser.add_argument('-nc', '--noclear', help='Don\'t clear last message of the type', action='store_true')
     parser.add_argument('-p', '--production', help='Use to launch in production mode', action='store_true')
     parser.add_argument('-nm', '--nomessage', help='Don\'t post any messages', action='store_true')
-    required_named = parser.add_argument_group('required named arguments')
-    required_named.add_argument('-t', '--type', type=str, help='Type of message', required=True)
+    parser.add_argument('-t', '--type', type=str, help='Type of message')
     parser.add_argument('-l', '--lang', type=str, help='Language of data', default='en')
     parser.add_argument('-tp', '--testprod', help='Use to launch in test production mode', action='store_true')
     parser.add_argument('-d', '--daemonized', help='Use to start as a \'real\' bot', action='store_true')
@@ -716,86 +715,22 @@ async def on_ready():
 
     lang = args.lang
 
-    if not args.daemonized:
-        translations_file = open('translations.json', 'r', encoding='utf-8')
-        translations = json.loads(translations_file.read())
-        translations_file.close()
-
-        bungie_data = await upd(translations, lang, args.type)
-
-        if not args.nomessage:
-            embed = create_embeds(bungie_data, args.type, lang, translations)
-
-            for server in client.guilds:
-                history_file = str(server.id) + '_history.json'
-                try:
-                    with open(history_file) as json_file:
-                        hist = json.loads(json_file.read())
-                        json_file.close()
-                except FileNotFoundError:
-                    with open("history.json") as json_file:
-                        hist = json.loads(json_file.read())
-                        json_file.close()
-                hist['server_name'] = server.name.strip('\'')
-                for channel in server.channels:
-                    if channel.name == 'resetbot':
-                        i = 0
-                        for item in embed:
-                            if hist[translations["{}embeds".format(args.type)][str(i)]] and not args.noclear:
-                                last = await channel.fetch_message(hist[translations["{}embeds".format(args.type)][str(i)]])
-                                await last.delete()
-                            if args.type == 'weekly' and hist['xur']:
-                                xur_last = await channel.fetch_message(hist['xur'])
-                                await xur_last.delete()
-                                hist['xur'] = False
-                            message = await channel.send(embed=item)
-                            hist[translations["{}embeds".format(args.type)][str(i)]] = message.id
-                            i += 1
-                    if args.production:
-                        post_type = args.type + 'Prod'
-                        if channel.name == 'd2resetpreview':
-                            i = 0
-                            for item in embed:
-                                if hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] and not args.noclear:
-                                    last = await channel.fetch_message(hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])])
-                                    await last.delete()
-                                if args.type == 'weekly' and hist['xurProd']:
-                                    xur_last = await channel.fetch_message(hist['xurProd'])
-                                    await xur_last.delete()
-                                    hist['xurProd'] = False
-                                message = await channel.send(embed=item)
-                                hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] = message.id
-                                i += 1
-                        if channel.name == 'reset-info' and not args.testprod:
-                            i = 0
-                            for item in embed:
-                                if hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] and not args.noclear:
-                                    last = await channel.fetch_message(hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])])
-                                    await last.delete()
-                                if args.type == 'weekly' and hist['xurProd']:
-                                    xur_last = await channel.fetch_message(hist['xurProd'])
-                                    await xur_last.delete()
-                                    hist['xurProd'] = False
-                                message = await channel.send(embed=item)
-                                hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] = message.id
-                                i += 1
-
-                    f = open(history_file, 'w')
-                    f.write(json.dumps(hist))
-
-        await client.logout()
-        await client.close()
-    else:
-        await update_history()
-        if args.forceupdate:
-            if args.type == 'daily':
-                await daily_update(args)
-        sched.add_job(daily_update, 'cron', hour='17', second='30', args=[args])
-        sched.add_job(spider_update, 'cron', hour='1', second='10', args=[args])
-        sched.add_job(weekly_update, 'cron', day_of_week='tue', hour='17', second='40', args=[args])
-        sched.add_job(xur_update, 'cron', day_of_week='fri', hour='17', minute='5', args=[args])
-        sched.add_job(update_history, 'cron', hour='2', args=[])
-        sched.start()
+    await update_history()
+    if args.forceupdate:
+        if args.type == 'daily':
+            await daily_update(args)
+        if args.type == 'weekly':
+            await weekly_update(args)
+        if args.type == 'spider':
+            await spider_update(args)
+        if args.type == 'xur':
+            await xur_update(args)
+    sched.add_job(daily_update, 'cron', hour='17', second='30', args=[args])
+    sched.add_job(spider_update, 'cron', hour='1', second='10', args=[args])
+    sched.add_job(weekly_update, 'cron', day_of_week='tue', hour='17', second='40', args=[args])
+    sched.add_job(xur_update, 'cron', day_of_week='fri', hour='17', minute='5', args=[args])
+    sched.add_job(update_history, 'cron', hour='2', args=[])
+    sched.start()
 
 
 @client.event
