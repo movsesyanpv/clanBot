@@ -14,13 +14,19 @@ import discord
 from tabulate import tabulate
 import argparse
 from bs4 import BeautifulSoup
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+# import logging
+
+# logging.basicConfig()
+# logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
 app = Flask(__name__)
+sched = AsyncIOScheduler(timezone='UTC')
 client = discord.Client()
+curr_hist = False
 
 api_data_file = open('api.json', 'r')
 api_data = json.loads(api_data_file.read())
-
 
 # redirect to the static html page with the link
 @app.route('/')
@@ -604,64 +610,6 @@ async def get_data(token, translation, lang, get_type):
     return data
 
 
-def create_updates(raw_data, msg_type, lang, translation):
-    tr = translation[lang]['msg']
-
-    if raw_data['api_fucked_up']:
-        msg = '{}'.format(tr['noapi'])
-        return msg
-    if raw_data['api_maintenance']:
-        msg = '{}'.format(tr['maintenance'])
-        return msg
-
-    if msg_type == 'spider':
-        table = []
-        msg = '{}:\n```'.format(tr['spider'])
-        for item in raw_data['spiderinventory']:
-            table.append([item['name'], item['cost']])
-        msg = msg + str(tabulate(table, tablefmt="fancy_grid"))
-    if msg_type == 'xur':
-        msg = '{}:\n```{}```'.format(tr['xurloc'], translation[lang]['xur'][raw_data['xur']['location']])
-        msg += '{}:\n```{}: {}\n'.format(tr['xur'], tr['weapon'], raw_data['xur']['xurweapon'])
-        for item in raw_data['xur']['xurarmor']:
-            msg += '{}: {}\n'.format(item['class'], item['name'])
-    if msg_type == 'daily':
-        msg = '{}:\n```'.format(tr['heroicstory'])
-        i = 1
-        for item in raw_data['heroicstory']:
-            msg = msg + "{}. {}\n".format(i, item['name'])
-            i += 1
-        msg = msg + '```{}:\n```{}'.format(tr['forge'], raw_data['forge'][0]['name'])
-        msg += "```{}:\n```".format(tr['strikesmods'])
-        for item in raw_data['vanguardstrikes']:
-            msg += "{}: {}\n".format(item['name'], item['description'])
-        msg += "```{}:\n```".format(tr['reckoningmods'])
-        for item in raw_data['reckoning']:
-            msg += "{}: {}\n".format(item['name'], item['description'])
-    if msg_type == 'weekly':
-        msg = '{}:\n```'.format(tr['nightfalls820'])
-        i = 1
-        for item in raw_data['activenightfalls']:
-            msg += "{}. {}\n".format(i, item['name'])
-            i += 1
-        msg += "```{}:\n```{}```".format(tr['guidedgamenightfall'], raw_data['guidedgamenightfall'][0]['name'])
-        msg += "{}:\n```{}```".format(tr['ordeal'], raw_data['ordeal'][0]['name'])
-        msg += "{}:\n```".format(tr['nightmares'])
-        i = 1
-        for item in raw_data['nightmare']:
-            msg += "{}. {}\n  {}\n".format(i, item['name'], item['description'])
-            i += 1
-        msg += "```{}:```{}".format(tr['reckoningboss'], translation[lang][raw_data['reckoning']['boss']])
-        msg += "```{}:\n```".format(tr['cruciblerotators'])
-        i = 1
-        for item in raw_data['cruciblerotator']:
-            msg += "{}. {}\n".format(i, item['name'])
-            i += 1
-
-    msg = msg + "```"
-    return msg
-
-
 def create_embeds(raw_data, msg_type, lang, translation):
     tr = translation[lang]['msg']
 
@@ -752,16 +700,6 @@ def create_embeds(raw_data, msg_type, lang, translation):
     return embed
 
 
-async def post_msg(msg, channel, args, hist, post_type):
-    if hist[post_type] and not args.noclear:
-        print(hist[post_type])
-        last = await channel.fetch_message(hist[post_type])
-        await last.delete()
-    message = await channel.send(msg)
-    hist[post_type] = message.id
-    return message.id
-
-
 @client.event
 async def on_ready():
     parser = argparse.ArgumentParser()
@@ -772,43 +710,205 @@ async def on_ready():
     required_named.add_argument('-t', '--type', type=str, help='Type of message', required=True)
     parser.add_argument('-l', '--lang', type=str, help='Language of data', default='en')
     parser.add_argument('-tp', '--testprod', help='Use to launch in test production mode', action='store_true')
+    parser.add_argument('-d', '--daemonized', help='Use to start as a \'real\' bot', action='store_true')
+    parser.add_argument('-f', '--forceupdate', help='Force update right now', action='store_true')
     args = parser.parse_args()
 
     lang = args.lang
 
+    if not args.daemonized:
+        translations_file = open('translations.json', 'r', encoding='utf-8')
+        translations = json.loads(translations_file.read())
+        translations_file.close()
+
+        bungie_data = await upd(translations, lang, args.type)
+
+        if not args.nomessage:
+            embed = create_embeds(bungie_data, args.type, lang, translations)
+
+            for server in client.guilds:
+                history_file = str(server.id) + '_history.json'
+                try:
+                    with open(history_file) as json_file:
+                        hist = json.loads(json_file.read())
+                        json_file.close()
+                except FileNotFoundError:
+                    with open("history.json") as json_file:
+                        hist = json.loads(json_file.read())
+                        json_file.close()
+                hist['server_name'] = server.name.strip('\'')
+                for channel in server.channels:
+                    if channel.name == 'resetbot':
+                        i = 0
+                        for item in embed:
+                            if hist[translations["{}embeds".format(args.type)][str(i)]] and not args.noclear:
+                                last = await channel.fetch_message(hist[translations["{}embeds".format(args.type)][str(i)]])
+                                await last.delete()
+                            if args.type == 'weekly' and hist['xur']:
+                                xur_last = await channel.fetch_message(hist['xur'])
+                                await xur_last.delete()
+                                hist['xur'] = False
+                            message = await channel.send(embed=item)
+                            hist[translations["{}embeds".format(args.type)][str(i)]] = message.id
+                            i += 1
+                    if args.production:
+                        post_type = args.type + 'Prod'
+                        if channel.name == 'd2resetpreview':
+                            i = 0
+                            for item in embed:
+                                if hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] and not args.noclear:
+                                    last = await channel.fetch_message(hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])])
+                                    await last.delete()
+                                if args.type == 'weekly' and hist['xurProd']:
+                                    xur_last = await channel.fetch_message(hist['xurProd'])
+                                    await xur_last.delete()
+                                    hist['xurProd'] = False
+                                message = await channel.send(embed=item)
+                                hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] = message.id
+                                i += 1
+                        if channel.name == 'reset-info' and not args.testprod:
+                            i = 0
+                            for item in embed:
+                                if hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] and not args.noclear:
+                                    last = await channel.fetch_message(hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])])
+                                    await last.delete()
+                                if args.type == 'weekly' and hist['xurProd']:
+                                    xur_last = await channel.fetch_message(hist['xurProd'])
+                                    await xur_last.delete()
+                                    hist['xurProd'] = False
+                                message = await channel.send(embed=item)
+                                hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] = message.id
+                                i += 1
+
+                    f = open(history_file, 'w')
+                    f.write(json.dumps(hist))
+
+        await client.logout()
+        await client.close()
+    else:
+        await update_history()
+        if args.forceupdate:
+            if args.type == 'daily':
+                await daily_update(args)
+        sched.add_job(daily_update, 'cron', hour='17', second='30', args=[args])
+        sched.add_job(spider_update, 'cron', hour='1', second='10', args=[args])
+        sched.add_job(weekly_update, 'cron', day_of_week='tue', hour='17', second='40', args=[args])
+        sched.add_job(xur_update, 'cron', day_of_week='fri', hour='17', minute='5', args=[args])
+        sched.add_job(update_history, 'cron', hour='2', args=[])
+        sched.start()
+
+
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+
+    if message.content.startswith('!stop'):
+        bot_info = await client.application_info()
+        if bot_info.owner == message.author:
+            msg = 'Ok, {}'.format(message.author.mention)
+            await message.channel.send(msg)
+            await update_history()
+            await client.logout()
+            await client.close()
+            return
+        else:
+            msg = 'I will not obey you, {}'.format(message.author.mention)
+            await message.channel.send(msg)
+            return
+
+
+async def update_history():
+    global curr_hist
+    game = discord.Game('updating history')
+    await client.change_presence(activity=game)
+    hist_saved = {}
+    for server in client.guilds:
+        history_file = str(server.id) + '_history.json'
+        try:
+            with open(history_file) as json_file:
+                hist_saved[str(server.id)] = json.loads(json_file.read())
+                json_file.close()
+        except FileNotFoundError:
+            with open("history.json") as json_file:
+                hist_saved[str(server.id)] = json.loads(json_file.read())
+                json_file.close()
+    if curr_hist:
+        for server in client.guilds:
+            history_file = str(server.id) + '_history.json'
+            f = open(history_file, 'w')
+            f.write(json.dumps(curr_hist[str(server.id)]))
+    else:
+        curr_hist = hist_saved
+    game = discord.Game('waiting')
+    await client.change_presence(activity=game)
+
+
+async def daily_update(args):
+    await client.wait_until_ready()
+    global curr_hist
+    game = discord.Game('updating daily')
+    await client.change_presence(activity=game)
     translations_file = open('translations.json', 'r', encoding='utf-8')
     translations = json.loads(translations_file.read())
     translations_file.close()
 
     bungie_data = await upd(translations, lang, args.type)
 
-    if not args.nomessage:
-        embed = create_embeds(bungie_data, args.type, lang, translations)
-
         for server in client.guilds:
-            history_file = str(server.id) + '_history.json'
-            try:
-                with open(history_file) as json_file:
-                    hist = json.loads(json_file.read())
-                    json_file.close()
-            except FileNotFoundError:
-                with open("history.json") as json_file:
-                    hist = json.loads(json_file.read())
-                    json_file.close()
-            hist['server_name'] = server.name.strip('\'')
+            curr_hist[str(server.id)]['server_name'] = server.name.strip('\'')
             for channel in server.channels:
                 if channel.name == 'resetbot':
                     i = 0
                     for item in embed:
-                        if hist[translations["{}embeds".format(args.type)][str(i)]] and not args.noclear:
-                            last = await channel.fetch_message(hist[translations["{}embeds".format(args.type)][str(i)]])
+                        if curr_hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]] and not args.noclear:
+                            last = await channel.fetch_message(curr_hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]])
                             await last.delete()
-                        if args.type == 'weekly' and hist['xur']:
-                            xur_last = await channel.fetch_message(hist['xur'])
+                        if upd_type == 'weekly' and curr_hist[str(server.id)]['xur']:
+                            xur_last = await channel.fetch_message(curr_hist[str(server.id)]['xur'])
                             await xur_last.delete()
-                            hist['xur'] = False
+                            curr_hist[str(server.id)]['xur'] = False
                         message = await channel.send(embed=item)
-                        hist[translations["{}embeds".format(args.type)][str(i)]] = message.id
+                        curr_hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]] = message.id
+                        i += 1
+    if args.forceupdate:
+        await update_history()
+    game = discord.Game('waiting')
+    await client.change_presence(activity=game)
+
+
+async def weekly_update(args):
+    await client.wait_until_ready()
+    global curr_hist
+    game = discord.Game('updating weekly')
+    await client.change_presence(activity=game)
+    translations_file = open('translations.json', 'r', encoding='utf-8')
+    translations = json.loads(translations_file.read())
+    translations_file.close()
+
+    lang = args.lang
+    upd_type = args.type
+
+    bungie_data = await upd(translations, lang, upd_type)
+
+    if not args.nomessage:
+        embed = create_embeds(bungie_data, args.type, lang, translations)
+
+        for server in client.guilds:
+            curr_hist[str(server.id)]['server_name'] = server.name.strip('\'')
+            for channel in server.channels:
+                if channel.name == 'resetbot':
+                    i = 0
+                    for item in embed:
+                        if curr_hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]] and not args.noclear:
+                            last = await channel.fetch_message(curr_hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]])
+                            await last.delete()
+                        if upd_type == 'weekly' and curr_hist[str(server.id)]['xur']:
+                            xur_last = await channel.fetch_message(curr_hist[str(server.id)]['xur'])
+                            await xur_last.delete()
+                            curr_hist[str(server.id)]['xur'] = False
+                        message = await channel.send(embed=item)
+                        curr_hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]] = message.id
                         i += 1
                 if args.production:
                     post_type = args.type + 'Prod'
@@ -841,11 +941,35 @@ async def on_ready():
                             hist["{}Prod".format(translations["{}embeds".format(args.type)][str(i)])] = message.id
                             i += 1
 
-                f = open(history_file, 'w')
-                f.write(json.dumps(hist))
 
-    await client.logout()
-    await client.close()
+    lang = args.lang
+    upd_type = args.type
+
+    bungie_data = await upd(translations, lang, upd_type)
+
+    if not args.nomessage:
+        embed = create_embeds(bungie_data, upd_type, lang, translations)
+
+        for server in client.guilds:
+            curr_hist[str(server.id)]['server_name'] = server.name.strip('\'')
+            for channel in server.channels:
+                if channel.name == 'resetbot':
+                    i = 0
+                    for item in embed:
+                        if curr_hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]] and not args.noclear:
+                            last = await channel.fetch_message(curr_hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]])
+                            await last.delete()
+                        if upd_type == 'weekly' and curr_hist[str(server.id)]['xur']:
+                            xur_last = await channel.fetch_message(curr_hist[str(server.id)]['xur'])
+                            await xur_last.delete()
+                            curr_hist[str(server.id)]['xur'] = False
+                        message = await channel.send(embed=item)
+                        curr_hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]] = message.id
+                        i += 1
+    if args.forceupdate:
+        await update_history()
+    game = discord.Game('waiting')
+    await client.change_presence(activity=game)
 
 
 def discord_post():
@@ -887,7 +1011,7 @@ async def upd(activity_types, lang, get_type):
         refresh = refresh_token(token['refresh'])
         data = await get_data(refresh, activity_types, lang, get_type)
 
-        print(json.dumps(data, ensure_ascii=False))
+        # print(json.dumps(data, ensure_ascii=False))
 
         if '--update-repo' in sys.argv:
             # write data dict to the data.json file
