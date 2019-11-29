@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from flask import Flask, request, session, redirect, url_for
 import requests
 import json
