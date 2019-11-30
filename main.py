@@ -725,9 +725,9 @@ async def on_ready():
             await spider_update(args)
         if args.type == 'xur':
             await xur_update(args)
-    sched.add_job(daily_update, 'cron', hour='17', second='30', args=[args])
-    sched.add_job(spider_update, 'cron', hour='1', second='10', args=[args])
-    sched.add_job(weekly_update, 'cron', day_of_week='tue', hour='17', second='40', args=[args])
+    sched.add_job(daily_update, 'cron', hour='17', minute='0', second='30', args=[args])
+    sched.add_job(spider_update, 'cron', hour='1', minute='0', second='10', args=[args])
+    sched.add_job(weekly_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', args=[args])
     sched.add_job(xur_update, 'cron', day_of_week='fri', hour='17', minute='5', args=[args])
     sched.add_job(update_history, 'cron', hour='2', args=[])
     sched.start()
