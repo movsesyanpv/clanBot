@@ -707,10 +707,8 @@ async def on_ready():
     parser.add_argument('-nc', '--noclear', help='Don\'t clear last message of the type', action='store_true')
     parser.add_argument('-p', '--production', help='Use to launch in production mode', action='store_true')
     parser.add_argument('-nm', '--nomessage', help='Don\'t post any messages', action='store_true')
-    parser.add_argument('-t', '--type', type=str, help='Type of message')
     parser.add_argument('-l', '--lang', type=str, help='Language of data', default='en')
     parser.add_argument('-tp', '--testprod', help='Use to launch in test production mode', action='store_true')
-    parser.add_argument('-d', '--daemonized', help='Use to start as a \'real\' bot', action='store_true')
     parser.add_argument('-f', '--forceupdate', help='Force update right now', action='store_true')
     args = parser.parse_args()
 
@@ -790,7 +788,7 @@ async def daily_update(args):
     translations_file.close()
 
     lang = args.lang
-    upd_type = args.type
+    upd_type = 'daily'
 
     bungie_data = await upd(translations, lang, upd_type)
 
@@ -829,7 +827,7 @@ async def weekly_update(args):
     translations_file.close()
 
     lang = args.lang
-    upd_type = args.type
+    upd_type = 'weekly'
 
     bungie_data = await upd(translations, lang, upd_type)
 
@@ -868,7 +866,7 @@ async def spider_update(args):
     translations_file.close()
 
     lang = args.lang
-    upd_type = args.type
+    upd_type = 'spider'
 
     bungie_data = await upd(translations, lang, upd_type)
 
@@ -907,7 +905,7 @@ async def xur_update(args):
     translations_file.close()
 
     lang = args.lang
-    upd_type = args.type
+    upd_type = 'xur'
 
     bungie_data = await upd(translations, lang, upd_type)
 
