@@ -58,7 +58,6 @@ class ClanBot(discord.Client):
     def get_chars(self):
         platform = 0
         membership_id = ''
-        char_id = ''
         try:
             char_file = open('char.json', 'r')
             self.char_info = json.loads(char_file.read())
@@ -173,7 +172,7 @@ class ClanBot(discord.Client):
             return resp
         return resp
 
-    async def get_records(self, lang, data, char_info, params, headers, wait_codes, max_retries):
+    async def get_records(self, lang, char_info, params, headers, wait_codes, max_retries):
         destiny = pydest.Pydest(headers['X-API-Key'])
         records_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/'. \
             format(char_info['platform'], char_info['membershipid'])
@@ -368,7 +367,7 @@ class ClanBot(discord.Client):
                 self.data['bansheeinventory'].append(mod)
         await destiny.close()
 
-    async def get_ada(self, lang, vendor_params, wait_codes, max_retries):
+    async def get_ada(self, vendor_params, wait_codes, max_retries):
         char_info = self.char_info
         destiny = pydest.Pydest(self.headers['X-API-Key'])
 
@@ -517,7 +516,7 @@ class ClanBot(discord.Client):
             'char': char_info
         }
 
-        seals = await self.get_records(lang, data, char_info, record_params, headers, wait_codes, max_retries)
+        seals = await self.get_records(lang, record_params, headers, wait_codes, max_retries)
 
         data['seals'] = seals
 
@@ -650,8 +649,6 @@ class ClanBot(discord.Client):
         return embed
 
     async def on_ready(self):
-        lang = self.args.lang
-
         await self.token_update()
         await self.update_history()
         self.get_chars()
@@ -729,10 +726,10 @@ class ClanBot(discord.Client):
         lang = self.args.lang
         upd_type = 'daily'
 
-        bungie_data = await self.upd(translations, lang, upd_type)
+        await self.upd(translations, lang, upd_type)
 
-        if bungie_data:
-            await self.post_updates(bungie_data, upd_type, translations)
+        if self.data:
+            await self.post_updates(upd_type, translations)
 
             if self.args.forceupdate:
                 await self.update_history()
@@ -751,10 +748,10 @@ class ClanBot(discord.Client):
         lang = self.args.lang
         upd_type = 'weekly'
 
-        bungie_data = await self.upd(translations, lang, upd_type)
+        await self.upd(translations, lang, upd_type)
 
-        if bungie_data:
-            await self.post_updates(bungie_data, upd_type, translations)
+        if self.data:
+            await self.post_updates(upd_type, translations)
 
             if self.args.forceupdate:
                 await self.update_history()
@@ -773,10 +770,10 @@ class ClanBot(discord.Client):
         lang = self.args.lang
         upd_type = 'spider'
 
-        bungie_data = await self.upd(translations, lang, upd_type)
+        await self.upd(translations, lang, upd_type)
 
-        if bungie_data:
-            await self.post_updates(bungie_data, upd_type, translations)
+        if self.data:
+            await self.post_updates(upd_type, translations)
 
             if self.args.forceupdate:
                 await self.update_history()
@@ -835,7 +832,7 @@ class ClanBot(discord.Client):
                 print('refresh token expired!  run the script with --oauth or add a valid token.js file!')
                 return False
         else:
-            refresh = self.refresh_token(self.token['refresh'])
+            self.refresh_token(self.token['refresh'])
 
     async def post_updates(self, upd_type, translations):
         lang = self.args.lang
