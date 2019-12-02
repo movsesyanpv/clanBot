@@ -30,6 +30,22 @@ class ClanBot(discord.Client):
 
     icon_prefix = "https://www.bungie.net"
 
+    token = {}
+
+    args = ''
+
+    def get_args(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-nc', '--noclear', help='Don\'t clear last message of the type', action='store_true')
+        parser.add_argument('-p', '--production', help='Use to launch in production mode', action='store_true')
+        parser.add_argument('-nm', '--nomessage', help='Don\'t post any messages', action='store_true')
+        parser.add_argument('-l', '--lang', type=str, help='Language of data', default='en')
+        parser.add_argument('-t', '--type', type=str, help='Type of message. Use with -f')
+        parser.add_argument('-tp', '--testprod', help='Use to launch in test production mode', action='store_true')
+        parser.add_argument('-f', '--forceupdate', help='Force update right now', action='store_true')
+        parser.add_argument('--oauth', action='store_true')
+        self.args = parser.parse_args()
+
     # refresh the saved token
     def refresh_token(self, re_token):
         headers = {
@@ -659,34 +675,25 @@ class ClanBot(discord.Client):
 
 
     async def on_ready(self):
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-nc', '--noclear', help='Don\'t clear last message of the type', action='store_true')
-        parser.add_argument('-p', '--production', help='Use to launch in production mode', action='store_true')
-        parser.add_argument('-nm', '--nomessage', help='Don\'t post any messages', action='store_true')
-        parser.add_argument('-l', '--lang', type=str, help='Language of data', default='en')
-        parser.add_argument('-t', '--type', type=str, help='Type of message. Use with -f')
-        parser.add_argument('-tp', '--testprod', help='Use to launch in test production mode', action='store_true')
-        parser.add_argument('-f', '--forceupdate', help='Force update right now', action='store_true')
-        parser.add_argument('--oauth', action='store_true')
-        args = parser.parse_args()
+        lang = self.args.lang
 
-        lang = args.lang
-
+        await self.token_update()
         await self.update_history()
-        if args.forceupdate:
-            if args.type == 'daily':
-                await self.daily_update(args)
-            if args.type == 'weekly':
-                await self.weekly_update(args)
-            if args.type == 'spider':
-                await self.spider_update(args)
-            if args.type == 'xur':
-                await self.xur_update(args)
-        self.sched.add_job(self.daily_update, 'cron', hour='17', minute='0', second='30', args=[args])
-        self.sched.add_job(self.spider_update, 'cron', hour='1', minute='0', second='10', args=[args])
-        self.sched.add_job(self.weekly_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', args=[args])
-        self.sched.add_job(self.xur_update, 'cron', day_of_week='fri', hour='17', minute='5', args=[args])
-        self.sched.add_job(self.update_history, 'cron', hour='2', args=[])
+        if self.args.forceupdate:
+            if self.args.type == 'daily':
+                await self.daily_update()
+            if self.args.type == 'weekly':
+                await self.weekly_update()
+            if self.args.type == 'spider':
+                await self.spider_update()
+            if self.args.type == 'xur':
+                await self.xur_update()
+        self.sched.add_job(self.daily_update, 'cron', hour='17', minute='0', second='30')
+        self.sched.add_job(self.spider_update, 'cron', hour='1', minute='0', second='10')
+        self.sched.add_job(self.weekly_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40')
+        self.sched.add_job(self.xur_update, 'cron', day_of_week='fri', hour='17', minute='5')
+        self.sched.add_job(self.update_history, 'cron', hour='2')
+        self.sched.add_job(self.token_update, 'interval', hours=1)
         self.sched.start()
 
 
@@ -699,6 +706,7 @@ class ClanBot(discord.Client):
             if bot_info.owner == message.author:
                 msg = 'Ok, {}'.format(message.author.mention)
                 await message.channel.send(msg)
+                self.sched.shutdown(wait=True)
                 await self.update_history()
                 await self.logout()
                 await self.close()
@@ -737,7 +745,7 @@ class ClanBot(discord.Client):
         await self.change_presence(activity=game)
 
 
-    async def daily_update(self, args):
+    async def daily_update(self):
         await self.wait_until_ready()
         game = discord.Game('updating daily')
         await self.change_presence(activity=game)
@@ -745,22 +753,22 @@ class ClanBot(discord.Client):
         translations = json.loads(translations_file.read())
         translations_file.close()
 
-        lang = args.lang
+        lang = self.args.lang
         upd_type = 'daily'
 
         bungie_data = await self.upd(translations, lang, upd_type)
 
         if bungie_data:
-            await self.post_updates(args, bungie_data, upd_type, translations)
+            await self.post_updates(bungie_data, upd_type, translations)
 
-            if args.forceupdate:
+            if self.args.forceupdate:
                 await self.update_history()
 
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
 
-    async def weekly_update(self, args):
+    async def weekly_update(self):
         await self.wait_until_ready()
         game = discord.Game('updating weekly')
         await self.change_presence(activity=game)
@@ -768,22 +776,22 @@ class ClanBot(discord.Client):
         translations = json.loads(translations_file.read())
         translations_file.close()
 
-        lang = args.lang
+        lang = self.args.lang
         upd_type = 'weekly'
 
         bungie_data = await self.upd(translations, lang, upd_type)
 
         if bungie_data:
-            await self.post_updates(args, bungie_data, upd_type, translations)
+            await self.post_updates(bungie_data, upd_type, translations)
 
-            if args.forceupdate:
+            if self.args.forceupdate:
                 await self.update_history()
 
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
 
-    async def spider_update(self, args):
+    async def spider_update(self):
         await self.wait_until_ready()
         game = discord.Game('updating spider')
         await self.change_presence(activity=game)
@@ -791,22 +799,22 @@ class ClanBot(discord.Client):
         translations = json.loads(translations_file.read())
         translations_file.close()
 
-        lang = args.lang
+        lang = self.args.lang
         upd_type = 'spider'
 
         bungie_data = await self.upd(translations, lang, upd_type)
 
         if bungie_data:
-            await self.post_updates(args, bungie_data, upd_type, translations)
+            await self.post_updates(bungie_data, upd_type, translations)
 
-            if args.forceupdate:
+            if self.args.forceupdate:
                 await self.update_history()
 
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
 
-    async def xur_update(self, args):
+    async def xur_update(self):
         await self.wait_until_ready()
         game = discord.Game('updating xur')
         await self.change_presence(activity=game)
@@ -814,26 +822,58 @@ class ClanBot(discord.Client):
         translations = json.loads(translations_file.read())
         translations_file.close()
 
-        lang = args.lang
+        lang = self.args.lang
         upd_type = 'xur'
 
         bungie_data = await self.upd(translations, lang, upd_type)
 
         if bungie_data:
-            await self.post_updates(args, bungie_data, upd_type, translations)
+            await self.post_updates(bungie_data, upd_type, translations)
 
-            if args.forceupdate:
+            if self.args.forceupdate:
                 await self.update_history()
 
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
 
-    async def post_updates(self, args, bungie_data, upd_type, translations):
-        lang = args.lang
+    async def token_update(self):
+        # check to see if token.json exists, if not we have to start with oauth
+        try:
+            f = open('token.json', 'r')
+        except FileNotFoundError:
+            if '--oauth' in sys.argv:
+                oauth.get_oauth(self.api_data)
+            else:
+                print('token file not found!  run the script with --oauth or add a valid token.js file!')
+                return False
+
+        try:
+            f = open('token.json', 'r')
+            self.token = json.loads(f.read())
+        except json.decoder.JSONDecodeError:
+            if '--oauth' in sys.argv:
+                oauth.get_oauth(self.api_data)
+            else:
+                print('token file invalid!  run the script with --oauth or add a valid token.js file!')
+                return False
+
+        # check if token has expired, if so we have to oauth, if not just refresh the token
+        if self.token['expires'] < time.time():
+            if '--oauth' in sys.argv:
+                oauth.get_oauth(self.api_data)
+            else:
+                print('refresh token expired!  run the script with --oauth or add a valid token.js file!')
+                return False
+        else:
+            refresh = self.refresh_token(self.token['refresh'])
+
+
+    async def post_updates(self, bungie_data, upd_type, translations):
+        lang = self.args.lang
         hist = self.curr_hist
 
-        if not args.nomessage:
+        if not self.args.nomessage:
             embed = self.create_embeds(bungie_data, upd_type, lang, translations)
 
             for server in self.guilds:
@@ -842,7 +882,7 @@ class ClanBot(discord.Client):
                     if channel.name == 'resetbot':
                         i = 0
                         for item in embed:
-                            if hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]] and not args.noclear:
+                            if hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]] and not self.args.noclear:
                                 last = await channel.fetch_message(hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]])
                                 await last.delete()
                             if upd_type == 'weekly' and hist[str(server.id)]['xur']:
@@ -855,58 +895,23 @@ class ClanBot(discord.Client):
 
 
     def start_up(self):
-        with open('auth.json') as json_file:
-            data = json.load(json_file)
-        token = data['token']
+        self.get_args()
+        token = self.api_data['token']
         print('hmm')
         self.run(token)
 
 
     async def upd(self, activity_types, lang, get_type):
-        # check to see if token.json exists, if not we have to start with oauth
-        try:
-            f = open('token.json', 'r')
-            token = json.loads(f.read())
-        except FileNotFoundError:
-            if '--oauth' in sys.argv:
-                oauth.get_oauth(self.api_data)
-            else:
-                print('token file not found!  run the script with --oauth or add a valid token.js file!')
-                return False
-        except json.decoder.JSONDecodeError:
-            if '--oauth' in sys.argv:
-                oauth.get_oauth(self.api_data)
-            else:
-                print('token file invalid!  run the script with --oauth or add a valid token.js file!')
-                return False
-
-        try:
-            f = open('token.json', 'r')
-            token = json.loads(f.read())
-        except json.decoder.JSONDecodeError:
-            if '--oauth' in sys.argv:
-                oauth.get_oauth(self.api_data)
-            else:
-                print('token file invalid!  run the script with --oauth or add a valid token.js file!')
-                return False
-
         # check if token has expired, if so we have to oauth, if not just refresh the token
-        if token['expires'] < time.time():
+        if self.token['expires'] < time.time():
             if '--oauth' in sys.argv:
                 oauth.get_oauth(self.api_data)
             else:
                 print('refresh token expired!  run the script with --oauth or add a valid token.js file!')
                 return False
         else:
-            refresh = self.refresh_token(token['refresh'])
+            refresh = self.refresh_token(self.token['refresh'])
             data = await self.get_data(refresh, activity_types, lang, get_type)
-
-            # print(json.dumps(data, ensure_ascii=False))
-
-            if '--update-repo' in sys.argv:
-                # write data dict to the data.json file
-                f = open('databack.json', 'w')
-                f.write(json.dumps(data, ensure_ascii=False))
 
         return data
 

@@ -4,18 +4,10 @@
 * A file called `api.json` in the root of the folder, with the format:
 
 `{
+    "token": "discord api key",
     "key": "apikey",
     "id": "client id",
     "secret": "client secret"
-}`
-
-* A file called `auth.json` in the root of the folder:
-
-`{
-    "token": "discord api key",
-    "bungieapi": "bungie api key",
-    "bungieid": "bungie client id",
-    "bungiesecret": "bungie client secret"
 }`
 
 # Tutorial
