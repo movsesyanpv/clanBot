@@ -499,8 +499,6 @@ class ClanBot(discord.Client):
                 platform = int(input())
                 if 3 >= platform >= 1:
                     valid_input = True
-            # if platform == 3:
-            #     platform = 4
             platform = str(platform)
             char_info['platform'] = platform
 
@@ -752,10 +750,12 @@ class ClanBot(discord.Client):
 
         bungie_data = await self.upd(translations, lang, upd_type)
 
-        await self.post_updates(args, bungie_data, upd_type, translations)
+        if bungie_data:
+            await self.post_updates(args, bungie_data, upd_type, translations)
 
-        if args.forceupdate:
-            await self.update_history()
+            if args.forceupdate:
+                await self.update_history()
+
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
@@ -773,9 +773,12 @@ class ClanBot(discord.Client):
 
         bungie_data = await self.upd(translations, lang, upd_type)
 
-        await self.post_updates(args, bungie_data, upd_type, translations)
-        if args.forceupdate:
-            await self.update_history()
+        if bungie_data:
+            await self.post_updates(args, bungie_data, upd_type, translations)
+
+            if args.forceupdate:
+                await self.update_history()
+
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
@@ -793,10 +796,12 @@ class ClanBot(discord.Client):
 
         bungie_data = await self.upd(translations, lang, upd_type)
 
-        await self.post_updates(args, bungie_data, upd_type, translations)
+        if bungie_data:
+            await self.post_updates(args, bungie_data, upd_type, translations)
 
-        if args.forceupdate:
-            await self.update_history()
+            if args.forceupdate:
+                await self.update_history()
+
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
@@ -814,10 +819,12 @@ class ClanBot(discord.Client):
 
         bungie_data = await self.upd(translations, lang, upd_type)
 
-        await self.post_updates(args, bungie_data, upd_type, translations)
+        if bungie_data:
+            await self.post_updates(args, bungie_data, upd_type, translations)
 
-        if args.forceupdate:
-            await self.update_history()
+            if args.forceupdate:
+                await self.update_history()
+
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
@@ -859,12 +866,19 @@ class ClanBot(discord.Client):
         # check to see if token.json exists, if not we have to start with oauth
         try:
             f = open('token.json', 'r')
+            token = json.loads(f.read())
         except FileNotFoundError:
             if '--oauth' in sys.argv:
                 oauth.get_oauth(self.api_data)
             else:
                 print('token file not found!  run the script with --oauth or add a valid token.js file!')
-                return
+                return False
+        except json.decoder.JSONDecodeError:
+            if '--oauth' in sys.argv:
+                oauth.get_oauth(self.api_data)
+            else:
+                print('token file invalid!  run the script with --oauth or add a valid token.js file!')
+                return False
 
         try:
             f = open('token.json', 'r')
@@ -874,7 +888,7 @@ class ClanBot(discord.Client):
                 oauth.get_oauth(self.api_data)
             else:
                 print('token file invalid!  run the script with --oauth or add a valid token.js file!')
-                return
+                return False
 
         # check if token has expired, if so we have to oauth, if not just refresh the token
         if token['expires'] < time.time():
@@ -882,7 +896,7 @@ class ClanBot(discord.Client):
                 oauth.get_oauth(self.api_data)
             else:
                 print('refresh token expired!  run the script with --oauth or add a valid token.js file!')
-                return
+                return False
         else:
             refresh = self.refresh_token(token['refresh'])
             data = await self.get_data(refresh, activity_types, lang, get_type)
