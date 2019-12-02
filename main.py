@@ -1,4 +1,3 @@
-from flask import Flask, request, session, redirect, url_for
 import requests
 import json
 import time
@@ -17,6 +16,8 @@ from bs4 import BeautifulSoup
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # import logging
 
+import oauth
+
 # logging.basicConfig()
 # logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
@@ -26,6 +27,8 @@ class ClanBot(discord.Client):
 
     api_data_file = open('api.json', 'r')
     api_data = json.loads(api_data_file.read())
+
+    icon_prefix = "https://www.bungie.net"
 
     # refresh the saved token
     def refresh_token(self, re_token):
@@ -572,8 +575,6 @@ class ClanBot(discord.Client):
     def create_embeds(self, raw_data, msg_type, lang, translation):
         tr = translation[lang]['msg']
 
-        icon_prefix = "https://www.bungie.net"
-
         embed = [discord.Embed(type="rich")]
 
         if raw_data['api_fucked_up']:
@@ -588,12 +589,12 @@ class ClanBot(discord.Client):
         if msg_type == 'spider':
             embed[0].color = discord.Color(0x6C5E31)
             embed[0].title = tr['spider']
-            embed[0].set_thumbnail(url=icon_prefix+raw_data['spiderinventory'][0]['icon'])
+            embed[0].set_thumbnail(url=self.icon_prefix+raw_data['spiderinventory'][0]['icon'])
             for item in raw_data['spiderinventory']:
                 embed[0].add_field(name=item['name'].capitalize(), value="{}: {}".format(tr['cost'], item['cost'].capitalize()), inline=True)
         if msg_type == 'xur':
             embed[0].color = discord.Color.gold()
-            embed[0].set_thumbnail(url=icon_prefix+raw_data['xur']['icon'])
+            embed[0].set_thumbnail(url=self.icon_prefix+raw_data['xur']['icon'])
             embed[0].title = tr['xurtitle']
             embed[0].add_field(name=tr['xurloc'], value=translation[lang]['xur'][raw_data['xur']['location']], inline=False)
             embed[0].add_field(name=tr['weapon'], value=raw_data['xur']['xurweapon'], inline=False)
@@ -602,56 +603,56 @@ class ClanBot(discord.Client):
         if msg_type == 'daily':
             embed[0].title = tr['heroicstory']
             embed[0].color = discord.Color.greyple()
-            embed[0].set_thumbnail(url=icon_prefix+raw_data['heroicstory'][0]['icon'])
+            embed[0].set_thumbnail(url=self.icon_prefix+raw_data['heroicstory'][0]['icon'])
             for item in raw_data['heroicstory']:
                 embed[0].add_field(name=item['name'], value=item['description'], inline=True)
             embed.append(discord.Embed(type="rich"))
             embed[1].color = discord.Color(0x382229)
             embed[1].title = tr['forge']
-            embed[1].set_thumbnail(url=icon_prefix+raw_data['forge'][0]['icon'])
+            embed[1].set_thumbnail(url=self.icon_prefix+raw_data['forge'][0]['icon'])
             embed[1].add_field(name=raw_data['forge'][0]['name'], value=raw_data['forge'][0]['loc'], inline=True)
             embed.append(discord.Embed(type="rich"))
             embed[2].title = tr['strikesmods']
-            embed[2].set_thumbnail(url=icon_prefix+raw_data['vanguardstrikes'][0]['icon'])
+            embed[2].set_thumbnail(url=self.icon_prefix+raw_data['vanguardstrikes'][0]['icon'])
             embed[2].color = discord.Color.blurple()
             for item in raw_data['vanguardstrikes']:
                 embed[2].add_field(name=item['name'], value=item['description'], inline=True)
             embed.append(discord.Embed(type="rich"))
             embed[3].title = tr['reckoningmods']
             embed[3].color = discord.Color(0x14563f)
-            embed[3].set_thumbnail(url=icon_prefix + "/common/destiny2_content/icons"
+            embed[3].set_thumbnail(url=self.icon_prefix + "/common/destiny2_content/icons"
                                                      "/DestinyActivityModeDefinition_e74b3385c5269da226372df8ae7f500d.png")
             for item in raw_data['reckoning']:
                 embed[3].add_field(name=item['name'], value=item['description'], inline=True)
         if msg_type == 'weekly':
             embed[0].color = discord.Color.blurple()
-            embed[0].set_thumbnail(url=icon_prefix+raw_data['activenightfalls'][0]['icon'])
+            embed[0].set_thumbnail(url=self.icon_prefix+raw_data['activenightfalls'][0]['icon'])
             embed[0].title = tr['nightfalls820']
             for item in raw_data['activenightfalls']:
                 embed[0].add_field(name=item['name'], value=item['description'], inline=True)
             embed[0].add_field(name=tr['guidedgamenightfall'], value=raw_data['guidedgamenightfall'][0]['name'])
             embed.append(discord.Embed(type="rich"))
             embed[1].color = discord.Color(0x515A77)
-            embed[1].set_thumbnail(url=icon_prefix+"/common/destiny2_content/icons"
+            embed[1].set_thumbnail(url=self.icon_prefix+"/common/destiny2_content/icons"
                                                    "/DestinyMilestoneDefinition_a72e5ce5c66e21f34a420271a30d7ec3.png")
             embed[1].title = raw_data['ordeal'][0]['title']
             embed[1].add_field(name=raw_data['ordeal'][0]['name'], value=raw_data['ordeal'][0]['description'])
             embed.append(discord.Embed(type="rich"))
             embed[2].color = discord.Color(0x5C1E1F)
-            embed[2].set_thumbnail(url=icon_prefix+"/common/destiny2_content/icons"
+            embed[2].set_thumbnail(url=self.icon_prefix+"/common/destiny2_content/icons"
                                                    "/DestinyActivityModeDefinition_48ad57129cd0c46a355ef8bcaa1acd04.png")
             embed[2].title = tr['nightmares']
             for item in raw_data['nightmare']:
                 embed[2].add_field(name=item['name'], value=item['description'], inline=True)
             embed.append(discord.Embed(type="rich"))
             embed[3].color = discord.Color(0x14563f)
-            embed[3].set_thumbnail(url=icon_prefix+"/common/destiny2_content/icons"
+            embed[3].set_thumbnail(url=self.icon_prefix+"/common/destiny2_content/icons"
                                                    "/DestinyActivityModeDefinition_e74b3385c5269da226372df8ae7f500d.png")
             embed[3].title = tr['reckoningboss']
             embed[3].add_field(name=translation[lang][raw_data['reckoning']['boss']], value=raw_data["reckoning"]['desc'])
             embed.append(discord.Embed(type="rich"))
             embed[4].color = discord.Color(0x652911)
-            embed[4].set_thumbnail(url=icon_prefix+raw_data['cruciblerotator'][0]['icon'])
+            embed[4].set_thumbnail(url=self.icon_prefix+raw_data['cruciblerotator'][0]['icon'])
             embed[4].title = tr['cruciblerotators']
             for item in raw_data['cruciblerotator']:
                 embed[4].add_field(name=item['name'], value=item['description'])
@@ -854,64 +855,23 @@ class ClanBot(discord.Client):
         self.run(token)
 
 
-    # spin up the flask server so we can oauth authenticate
-    def get_oauth(self):
-        print('No tokens saved, please authorize the app by going to localhost:4200')
-
-        app = Flask(__name__)
-
-        # redirect to the static html page with the link
-        @app.route('/')
-        def main():
-            return '<a href="https://www.bungie.net/en/oauth/authorize?client_id=' + self.api_data[
-                'id'] + '&response_type=code&state=asdf">Click me to authorize the script</a>'
-
-
-        # catch the oauth redirect
-        @app.route('/redirect')
-        def oauth_redirect():
-            # get the token/refresh_token/expiration
-            code = request.args.get('code')
-            headers = {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-            params = {
-                'grant_type': 'authorization_code',
-                'client_id': self.api_data['id'],
-                'client_secret': self.api_data['secret'],
-                'code': code
-            }
-            r = requests.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
-            resp = r.json()
-
-            # save refresh_token/expiration in token.json
-            token = {
-                'refresh': resp['refresh_token'],
-                'expires': time.time() + resp['refresh_expires_in']
-            }
-            token_file = open('token.json', 'w')
-            token_file.write(json.dumps(token))
-            return 'Got it, rerun the script!'
-
-        app.run(port=4200)
-
-
     async def upd(self, activity_types, lang, get_type):
         # check to see if token.json exists, if not we have to start with oauth
         try:
             f = open('token.json', 'r')
         except FileNotFoundError:
             if '--oauth' in sys.argv:
-                self.get_oauth()
+                oauth.get_oauth(self.api_data)
             else:
                 print('token file not found!  run the script with --oauth or add a valid token.js file!')
                 return
 
         try:
+            f = open('token.json', 'r')
             token = json.loads(f.read())
         except json.decoder.JSONDecodeError:
             if '--oauth' in sys.argv:
-                self.get_oauth()
+                oauth.get_oauth(self.api_data)
             else:
                 print('token file invalid!  run the script with --oauth or add a valid token.js file!')
                 return
@@ -919,7 +879,7 @@ class ClanBot(discord.Client):
         # check if token has expired, if so we have to oauth, if not just refresh the token
         if token['expires'] < time.time():
             if '--oauth' in sys.argv:
-                self.get_oauth()
+                oauth.get_oauth(self.api_data)
             else:
                 print('refresh token expired!  run the script with --oauth or add a valid token.js file!')
                 return
