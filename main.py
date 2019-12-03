@@ -187,41 +187,6 @@ class ClanBot(discord.Client):
             return resp
         return resp
 
-    async def get_records(self, lang, char_info, params, headers, wait_codes, max_retries):
-        destiny = pydest.Pydest(headers['X-API-Key'])
-        records_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/'. \
-            format(char_info['platform'], char_info['membershipid'])
-
-        records_resp = self.get_bungie_json('records', records_url, params, wait_codes, max_retries)
-
-        seal_resp = await destiny.decode_hash(1652422747, 'DestinyPresentationNodeDefinition', language=lang)
-
-        seals = {
-            "id": "",
-            "seals": []
-        }
-
-        correction = False
-        records_nodes = records_resp.json()['Response']['profilePresentationNodes']['data']['nodes']
-        mmxix_node = records_resp.json()['Response']['characterRecords']['data'][char_info['charid']]['records']
-        for record in mmxix_node:
-            if record == "1492080644" and mmxix_node['1492080644']['objectives'][0]['complete']:
-                correction = True
-                break
-
-        for seal in seal_resp['children']['presentationNodes']:
-            for record in records_resp.json()['Response']['profilePresentationNodes']['data']['nodes']:
-                if str(seal['presentationNodeHash']) == record:
-                    corr_value = 0
-                    if record == "1002334440" and correction:
-                        corr_value = 1
-                    if records_nodes[record]['progressValue'] + corr_value == records_nodes[record]['completionValue']:
-                        seals['seals'].append(record)
-
-        await destiny.close()
-
-        return seals
-
     async def get_spider(self, lang, translation):
         char_info = self.char_info
         destiny = pydest.Pydest(self.headers['X-API-Key'])
@@ -682,7 +647,7 @@ class ClanBot(discord.Client):
 
         banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'])
-        banshee_resp = self.get_bungie_json('banshee', banshee_url, vendor_params, wait_codes, max_retries)
+        banshee_resp = self.get_bungie_json('banshee', banshee_url, vendor_params)
         if not banshee_resp:
             await destiny.close()
 
@@ -720,7 +685,7 @@ class ClanBot(discord.Client):
 
         ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2917531897/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'])
-        ada_resp = self.get_bungie_json('ada', ada_url, vendor_params, wait_codes, max_retries)
+        ada_resp = self.get_bungie_json('ada', ada_url, vendor_params)
         if not ada_resp:
             await destiny.close()
 
@@ -765,31 +730,6 @@ class ClanBot(discord.Client):
             format(char_info['platform'], char_info['membershipid'], char_info['charid'])
         activities_resp = self.get_bungie_json(name, activities_url, self.activities_params)
         return activities_resp
-
-    async def get_seals(self, token, lang, char_info):
-        headers = {
-            'X-API-Key': self.api_data['key'],
-            'Authorization': 'Bearer ' + token
-        }
-
-        wait_codes = [1672]
-        max_retries = 10
-
-        record_params = {
-            "components": "900,700"
-        }
-
-        data = {
-            'api_fucked_up': False,
-            'api_maintenance': False,
-            'char': char_info
-        }
-
-        seals = await self.get_records(lang, record_params, headers, wait_codes, max_retries)
-
-        data['seals'] = seals
-
-        return data
 
     async def on_ready(self):
         await self.token_update()
@@ -867,7 +807,6 @@ class ClanBot(discord.Client):
         translations_file.close()
 
         lang = self.args.lang
-        upd_type = 'daily'
 
         await self.get_heroic_story(lang, translations)
         await self.get_forge(lang, translations)
@@ -895,7 +834,6 @@ class ClanBot(discord.Client):
         translations_file.close()
 
         lang = self.args.lang
-        upd_type = 'weekly'
 
         await self.get_nightfall820(lang, translations)
         await self.get_ordeal(lang, translations)
@@ -972,7 +910,6 @@ class ClanBot(discord.Client):
                 return False
 
         try:
-            f = open('token.json', 'r')
             self.token = json.loads(f.read())
         except json.decoder.JSONDecodeError:
             if '--oauth' in sys.argv:
@@ -992,7 +929,6 @@ class ClanBot(discord.Client):
             self.refresh_token(self.token['refresh'])
 
     async def post_embed(self, upd_type, src_dict, channel_name):
-        lang = self.args.lang
         hist = self.curr_hist
 
         if not self.args.nomessage:
@@ -1021,18 +957,6 @@ class ClanBot(discord.Client):
         token = self.api_data['token']
         print('hmm')
         self.run(token)
-
-    async def upd(self, activity_types, lang, get_type):
-        # check if token has expired, if so we have to oauth, if not just refresh the token
-        if self.token['expires'] < time.time():
-            if '--oauth' in sys.argv:
-                oauth.get_oauth(self.api_data)
-            else:
-                print('refresh token expired!  run the script with --oauth or add a valid token.js file!')
-                return False
-        else:
-            self.refresh_token(self.token['refresh'])
-            await self.get_data(activity_types, lang, get_type)
 
 
 if __name__ == '__main__':
