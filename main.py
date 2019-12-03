@@ -539,7 +539,7 @@ class ClanBot(discord.Client):
                 info = {
                     'inline': True,
                     'name': r_json['originalDisplayProperties']['description'],
-                    'value': ''
+                    'value': u"\u2063"
                 }
                 self.data['ordeal']['fields'].append(info)
 
