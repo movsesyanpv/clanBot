@@ -269,8 +269,9 @@ class ClanBot(discord.Client):
                 # put result in a well formatted string in the data dict
                 item_data = {
                     'inline': True,
-                    'name': item_name,
-                    'value': "{}: {} {}".format(translation[lang]['msg']['cost'], currency_cost, currency_item)
+                    'name': item_name.capitalize(),
+                    'value': "{}: {} {}".format(translation[lang]['msg']['cost'], currency_cost,
+                                                currency_item.capitalize())
                 }
                 self.data['spider']['fields'].append(item_data)
         await destiny.close()
@@ -377,7 +378,7 @@ class ClanBot(discord.Client):
 
     async def get_heroic_story(self, lang, translation):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        activities_resp = await self.get_activities_responce('heroic story missions')
+        activities_resp = await self.get_activities_response('heroic story missions')
         local_types = translation[lang]
         if not activities_resp:
             await destiny.close()
@@ -409,7 +410,7 @@ class ClanBot(discord.Client):
 
     async def get_forge(self, lang, translation):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        activities_resp = await self.get_activities_responce('forge')
+        activities_resp = await self.get_activities_response('forge')
         local_types = translation[lang]
         if not activities_resp:
             await destiny.close()
@@ -443,7 +444,7 @@ class ClanBot(discord.Client):
 
     async def get_strike_modifiers(self, lang, translation):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        activities_resp = await self.get_activities_responce('strike modifiers')
+        activities_resp = await self.get_activities_response('strike modifiers')
         local_types = translation[lang]
         if not activities_resp:
             await destiny.close()
@@ -472,14 +473,15 @@ class ClanBot(discord.Client):
 
     async def get_reckoning_modifiers(self, lang, translation):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        activities_resp = await self.get_activities_responce('reckoning modifiers')
+        activities_resp = await self.get_activities_response('reckoning modifiers')
         local_types = translation[lang]
         if not activities_resp:
             await destiny.close()
 
         self.data['reckoning'] = {
             'thumbnail': {
-                'url': ''
+                'url': "https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_"
+                       "e74b3385c5269da226372df8ae7f500d.png"
             },
             'fields': [],
             'color': 1332799,
@@ -494,12 +496,11 @@ class ClanBot(discord.Client):
 
             if translation[lang]['reckoning'] in r_json['displayProperties']['name']:
                 self.data['reckoning']['fields'] = await self.decode_modifiers(key, destiny, lang)
-                self.data['reckoning']['thumbnail']['url'] = self.icon_prefix + r_json['displayProperties']['icon']
         await destiny.close()
 
     async def get_nightfall820(self, lang, translation):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        activities_resp = await self.get_activities_responce('820 nightfalls')
+        activities_resp = await self.get_activities_response('820 nightfalls')
         local_types = translation[lang]
         if not activities_resp:
             await destiny.close()
@@ -543,7 +544,7 @@ class ClanBot(discord.Client):
 
     async def get_ordeal(self, lang, translation):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        activities_resp = await self.get_activities_responce('ordeal')
+        activities_resp = await self.get_activities_response('ordeal')
         local_types = translation[lang]
         if not activities_resp:
             await destiny.close()
@@ -585,7 +586,7 @@ class ClanBot(discord.Client):
 
     async def get_nightmares(self, lang, translation):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        activities_resp = await self.get_activities_responce('nightmares')
+        activities_resp = await self.get_activities_response('nightmares')
         local_types = translation[lang]
         if not activities_resp:
             await destiny.close()
@@ -640,7 +641,7 @@ class ClanBot(discord.Client):
 
     async def get_crucible_rotators(self, lang, translation):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        activities_resp = await self.get_activities_responce('crucible rotators')
+        activities_resp = await self.get_activities_response('crucible rotators')
         local_types = translation[lang]
         if not activities_resp:
             await destiny.close()
@@ -743,7 +744,8 @@ class ClanBot(discord.Client):
             self.data['adainventory'].append(item_name)
         await destiny.close()
 
-    async def decode_modifiers(self, key, destiny, lang):
+    @staticmethod
+    async def decode_modifiers(key, destiny, lang):
         data = []
         for mod_key in key['modifierHashes']:
             mod_def = 'DestinyActivityModifierDefinition'
@@ -756,98 +758,13 @@ class ClanBot(discord.Client):
             data.append(mod)
         return data
 
-    async def get_activities_responce(self, name):
+    async def get_activities_response(self, name):
         char_info = self.char_info
 
         activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'])
         activities_resp = self.get_bungie_json(name, activities_url, self.activities_params)
         return activities_resp
-
-    async def get_activities(self, lang, translation):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
-        activities_resp = await self.get_activities_responce('activities')
-        local_types = translation[lang]
-        if not activities_resp:
-            await destiny.close()
-
-        strikes = []
-
-        for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
-            item_hash = key['activityHash']
-            definition = 'DestinyActivityDefinition'
-            r_json = await destiny.decode_hash(item_hash, definition, language=lang)
-            try:
-                recommended_light = key['recommendedLight']
-                if recommended_light == 820:
-                    info = {
-                        'name': r_json['selectionScreenDisplayProperties']['name'],
-                        'description': r_json['selectionScreenDisplayProperties']['description'],
-                        'icon': r_json['displayProperties']['icon']
-                    }
-                    if r_json['matchmaking']['requiresGuardianOath']:
-                        self.data['guidedgamenightfall'].append(info)
-                    else:
-                        self.data['activenightfalls'].append(info)
-            except KeyError:
-                pass
-            if local_types['heroicstory'] in r_json['displayProperties']['name']:
-                info = {
-                    "name": r_json['selectionScreenDisplayProperties']['name'],
-                    "description": r_json['selectionScreenDisplayProperties']['description'],
-                    "icon": r_json['displayProperties']['icon']
-                }
-                self.data['vanguardstrikes'] = await self.decode_modifiers(key, destiny, lang)
-                self.data['heroicstory'].append(info)
-            if local_types['forge'] in r_json['displayProperties']['name']:
-                forge_def = 'DestinyDestinationDefinition'
-                place = await destiny.decode_hash(r_json['destinationHash'], forge_def, language=lang)
-                self.data['forge'].append(
-                    {"name": r_json['displayProperties']['name'], "loc": place['displayProperties']['name'],
-                     "icon": r_json['displayProperties']['icon']})
-            if local_types['ordeal'] in r_json['displayProperties']['name'] and \
-                    local_types['adept'] in r_json['displayProperties']['name']:
-                info = {
-                    'title': r_json['originalDisplayProperties']['name'],
-                    'name': r_json['originalDisplayProperties']['description'],
-                    'description': "",
-                    'icon': r_json['displayProperties']['icon']
-                }
-                self.data['ordeal'].append(info)
-            if r_json['activityTypeHash'] == 4110605575:
-                strikes.append({"name": r_json['displayProperties']['name'],
-                                "description": r_json['displayProperties']['description']})
-            if local_types['nightmare'] in r_json['displayProperties']['name'] and \
-                    local_types['adept'] in r_json['displayProperties']['name']:
-                info = {
-                    'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
-                    'description': r_json['displayProperties']['description'],
-                    'icon': r_json['displayProperties']['icon']
-                }
-                self.data['nightmare'].append(info)
-            if translation[lang]['strikes'] in r_json['displayProperties']['name']:
-                self.data['vanguardstrikes'][0]['icon'] = r_json['displayProperties']['icon']
-            if translation[lang]['reckoning'] in r_json['displayProperties']['name']:
-                self.data['reckoning'] = await self.decode_modifiers(key, destiny, lang)
-                self.data['reckoning'][0]['icon'] = r_json['displayProperties']['icon']
-            if r_json['isPvP']:
-                if len(r_json['challenges']) > 0:
-                    obj_def = 'DestinyObjectiveDefinition'
-                    objective = await destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
-                    if translation[lang]['rotator'] in objective['displayProperties']['name']:
-                        info = {
-                            "name": r_json['displayProperties']['name'],
-                            "description": r_json['displayProperties']['description'],
-                            'icon': r_json['displayProperties']['icon']
-                        }
-                        self.data['cruciblerotator'].append(info)
-
-            for strike in strikes:
-                if strike['name'] in self.data['ordeal'][0]['name']:
-                    self.data['ordeal'][0]['description'] = strike['description']
-                    break
-
-        await destiny.close()
 
     async def get_seals(self, token, lang, char_info):
         headers = {
@@ -873,118 +790,6 @@ class ClanBot(discord.Client):
         data['seals'] = seals
 
         return data
-
-    async def get_data(self, translation, lang, get_type):
-        print('hmmmmmmm')
-
-        first_reset_time = 1539709200
-        seconds_since_first = time.time() - first_reset_time
-        weeks_since_first = seconds_since_first // 604800
-        reckoning_bosses = ['swords', 'oryx']
-
-        # create data.json dict
-
-        if get_type == 'spider':
-            await self.get_spider(lang, translation)
-        if get_type == 'xur':
-            await self.get_xur(lang, translation)
-        if get_type == 'daily':
-            await self.get_activities(lang, translation)
-        if get_type == 'weekly':
-            await self.get_activities(lang, translation)
-            self.data['reckoning'] = {"boss": reckoning_bosses[int(weeks_since_first % 2)],
-                                      "desc": translation[lang]['r_desc']}
-
-    def create_embeds(self, msg_type, lang, translation):
-        tr = translation[lang]['msg']
-        raw_data = self.data
-
-        embed = [discord.Embed(type="rich")]
-
-        if raw_data['api_fucked_up']:
-            embed[0].title = tr['noapi']
-            embed[0].color = discord.Color.red()
-            return embed
-        if raw_data['api_maintenance']:
-            embed[0].title = tr['maintenance']
-            embed[0].color = discord.Color.orange()
-            return embed
-
-        if msg_type == 'spider' and False:
-            embed[0].color = discord.Color(0x6C5E31)
-            embed[0].title = tr['spider']
-            embed[0].set_thumbnail(url=self.icon_prefix + raw_data['spiderinventory'][0]['icon'])
-            for item in raw_data['spiderinventory']:
-                embed[0].add_field(name=item['name'].capitalize(),
-                                   value="{}: {}".format(tr['cost'], item['cost'].capitalize()), inline=True)
-        if msg_type == 'xur' and False:
-            embed[0].color = discord.Color.gold()
-            embed[0].set_thumbnail(url=self.icon_prefix + raw_data['xur']['icon'])
-            embed[0].title = tr['xurtitle']
-            embed[0].add_field(name=tr['xurloc'], value=translation[lang]['xur'][raw_data['xur']['location']],
-                               inline=False)
-            embed[0].add_field(name=tr['weapon'], value=raw_data['xur']['xurweapon'], inline=False)
-            for item in raw_data['xur']['xurarmor']:
-                embed[0].add_field(name=item['class'], value=item['name'], inline=True)
-        if msg_type == 'daily':
-            embed[0].title = tr['heroicstory']
-            embed[0].color = discord.Color.greyple()
-            embed[0].set_thumbnail(url=self.icon_prefix + raw_data['heroicstory'][0]['icon'])
-            for item in raw_data['heroicstory']:
-                embed[0].add_field(name=item['name'], value=item['description'], inline=True)
-            embed.append(discord.Embed(type="rich"))
-            embed[1].color = discord.Color(0x382229)
-            embed[1].title = tr['forge']
-            embed[1].set_thumbnail(url=self.icon_prefix + raw_data['forge'][0]['icon'])
-            embed[1].add_field(name=raw_data['forge'][0]['name'], value=raw_data['forge'][0]['loc'], inline=True)
-            embed.append(discord.Embed(type="rich"))
-            embed[2].title = tr['strikesmods']
-            embed[2].set_thumbnail(url=self.icon_prefix + raw_data['vanguardstrikes'][0]['icon'])
-            embed[2].color = discord.Color.blurple()
-            for item in raw_data['vanguardstrikes']:
-                embed[2].add_field(name=item['name'], value=item['description'], inline=True)
-            embed.append(discord.Embed(type="rich"))
-            embed[3].title = tr['reckoningmods']
-            embed[3].color = discord.Color(0x14563f)
-            embed[3].set_thumbnail(url=self.icon_prefix + "/common/destiny2_content/icons/DestinyActivityModeDefinition"
-                                                          "_e74b3385c5269da226372df8ae7f500d.png")
-            for item in raw_data['reckoning']:
-                embed[3].add_field(name=item['name'], value=item['description'], inline=True)
-        if msg_type == 'weekly':
-            embed[0].color = discord.Color.blurple()
-            embed[0].set_thumbnail(url=self.icon_prefix + raw_data['activenightfalls'][0]['icon'])
-            embed[0].title = tr['nightfalls820']
-            for item in raw_data['activenightfalls']:
-                embed[0].add_field(name=item['name'], value=item['description'], inline=True)
-            embed[0].add_field(name=tr['guidedgamenightfall'], value=raw_data['guidedgamenightfall'][0]['name'])
-            embed.append(discord.Embed(type="rich"))
-            embed[1].color = discord.Color(0x515A77)
-            embed[1].set_thumbnail(url=self.icon_prefix + "/common/destiny2_content/icons/DestinyMilestoneDefinition"
-                                                          "_a72e5ce5c66e21f34a420271a30d7ec3.png")
-            embed[1].title = raw_data['ordeal'][0]['title']
-            embed[1].add_field(name=raw_data['ordeal'][0]['name'], value=raw_data['ordeal'][0]['description'])
-            embed.append(discord.Embed(type="rich"))
-            embed[2].color = discord.Color(0x5C1E1F)
-            embed[2].set_thumbnail(url=self.icon_prefix + "/common/destiny2_content/icons/DestinyActivityModeDefinition"
-                                                          "_48ad57129cd0c46a355ef8bcaa1acd04.png")
-            embed[2].title = tr['nightmares']
-            for item in raw_data['nightmare']:
-                embed[2].add_field(name=item['name'], value=item['description'], inline=True)
-            embed.append(discord.Embed(type="rich"))
-            embed[3].color = discord.Color(0x14563f)
-            embed[3].set_thumbnail(url=self.icon_prefix + "/common/destiny2_content/icons/DestinyActivityModeDefinition"
-                                                          "_e74b3385c5269da226372df8ae7f500d.png")
-            embed[3].title = tr['reckoningboss']
-            embed[3].add_field(name=translation[lang][raw_data['reckoning']['boss']],
-                               value=raw_data["reckoning"]['desc'])
-            embed.append(discord.Embed(type="rich"))
-            embed[4].color = discord.Color(0x652911)
-            embed[4].set_thumbnail(url=self.icon_prefix + raw_data['cruciblerotator'][0]['icon'])
-            embed[4].title = tr['cruciblerotators']
-            for item in raw_data['cruciblerotator']:
-                embed[4].add_field(name=item['name'], value=item['description'])
-
-        return embed
 
     async def on_ready(self):
         await self.token_update()
@@ -1210,34 +1015,6 @@ class ClanBot(discord.Client):
                         else:
                             message = await channel.send(embed=embed)
                         hist[str(server.id)][upd_type] = message.id
-
-    async def post_updates(self, upd_type, translations):
-        lang = self.args.lang
-        hist = self.curr_hist
-
-        if not self.args.nomessage:
-            embed = self.create_embeds(upd_type, lang, translations)
-
-            print(json.dumps(embed[4].to_dict(), indent=4))
-
-            for server in self.guilds:
-                hist[str(server.id)]['server_name'] = server.name.strip('\'')
-                for channel in server.channels:
-                    if channel.name == 'resetbot':
-                        i = 0
-                        for item in embed:
-                            if hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]] and \
-                                    not self.args.noclear:
-                                last = await channel.fetch_message(
-                                    hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]])
-                                await last.delete()
-                            if upd_type == 'weekly' and hist[str(server.id)]['xur']:
-                                xur_last = await channel.fetch_message(hist[str(server.id)]['xur'])
-                                await xur_last.delete()
-                                hist[str(server.id)]['xur'] = False
-                            message = await channel.send(embed=item)
-                            hist[str(server.id)][translations["{}embeds".format(upd_type)][str(i)]] = message.id
-                            i += 1
 
     def start_up(self):
         self.get_args()
