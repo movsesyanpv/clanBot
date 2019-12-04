@@ -767,7 +767,7 @@ class ClanBot(discord.Client):
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_crucible_rotators, 'cruciblerotators'])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.get_xur, 'xur'])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='1', minute='0', second='30', misfire_grace_time=86300, args=[self.get_spider, 'spider'])
+        self.sched.add_job(self.universal_update, 'cron', hour='1', minute='0', second='10', misfire_grace_time=86300, args=[self.get_spider, 'spider'])
 
         self.sched.add_job(self.update_history, 'cron', hour='2')
         self.sched.add_job(self.token_update, 'interval', hours=1)
