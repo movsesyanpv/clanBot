@@ -124,7 +124,7 @@ class ClanBot(discord.Client):
         parser.add_argument('-t', '--type', type=str, help='Type of message. Use with -f')
         parser.add_argument('-tp', '--testprod', help='Use to launch in test production mode', action='store_true')
         parser.add_argument('-f', '--forceupdate', help='Force update right now', action='store_true')
-        parser.add_argument('--oauth', action='store_true')
+        parser.add_argument('--oauth', help='Get Bungie access token', action='store_true')
         self.args = parser.parse_args()
 
     # refresh the saved token

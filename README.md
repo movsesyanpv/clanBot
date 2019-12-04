@@ -24,7 +24,7 @@ and all of the scopes are checked (this definitely excessive but hey, it works).
 
 Create the file `api.json` in the folder with the script and fill it out with all the necessary info from your application's page (the template for the file is above).
 
-On first run, the script will launch a flask server and tell you to navigate to localhost:4200.  When you navigate to there, you must open the developer console and open to the network tab.  Click the link, scroll to the bottom of bungie's page, and click the authorize button.  When you do so, nothing will happen, but you'll see a redirect network event that is cancelled.  You need to copy the link that was attempted to direct to, and go there directly.  If all is well, you should see a page telling you to relaunch the script, which you must now do.
+On first run, the script will launch a flask server and tell you to navigate to localhost:4200.  When you navigate to there, you must open the developer console and open to the network tab.  Click the link, scroll to the bottom of bungie's page, and click the authorize button.  When you do so, nothing will happen, but you'll see a redirect network event that is cancelled.  You need to copy the link that was attempted to direct to, and go there directly.  If all is well, the script will proceed to the next stage.
 
 Now that you've got oauth taken care of, when you run the script no flask server will kick up, instead it will simply ask what platform you play on (answer with 1, 2, or 3) and for your platform's username.  Once it has this info, it'll go and do its thing, building a data file and committing it to the repository.
 
@@ -35,19 +35,15 @@ Notes: the files `token.json` and `char.json` can be transferred to another mach
 Python 3.6+ is required
 
 ```
-usage: main.py [-h] [-nc] [-p] [-nm] -t TYPE [-l LANG] [-tp]
-```
+usage: main.py [-h] [-nc] [-p] [-nm] [-l LANG] [-t TYPE] [-tp] [-f] [--oauth]
 
-## Optional arguments:
-```
   -h, --help            show this help message and exit
   -nc, --noclear        Don't clear last message of the type
   -p, --production      Use to launch in production mode
   -nm, --nomessage      Don't post any messages
   -l LANG, --lang LANG  Language of data
+  -t TYPE, --type TYPE  Type of message. Use with -f
   -tp, --testprod       Use to launch in test production mode
-```
-## Required arguments:
-```
-  -t TYPE, --type TYPE  Type of message
+  -f, --forceupdate     Force update right now
+  --oauth               Get Bungie access token
 ```
