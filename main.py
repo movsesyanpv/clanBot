@@ -625,7 +625,7 @@ class ClanBot(discord.Client):
             item_hash = key['activityHash']
             definition = 'DestinyActivityDefinition'
             r_json = await destiny.decode_hash(item_hash, definition, language=lang)
-            if r_json['isPvP']:
+            if r_json['destinationHash'] == 2777041980:
                 if len(r_json['challenges']) > 0:
                     obj_def = 'DestinyObjectiveDefinition'
                     objective = await destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
