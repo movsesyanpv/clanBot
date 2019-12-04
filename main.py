@@ -40,11 +40,11 @@ class ClanBot(discord.Client):
         'forge': [],
         'nightfalls820': [],
         'ordeal': [],
-        'nightmare': [],
+        'nightmares': [],
         'reckoning': [],
         'reckoningboss': [],
         'vanguardstrikes': [],
-        'cruciblerotator': []
+        'cruciblerotators': []
     }
 
     wait_codes = [1672]
@@ -556,7 +556,7 @@ class ClanBot(discord.Client):
         if not activities_resp:
             await destiny.close()
 
-        self.data['nightmare'] = {
+        self.data['nightmares'] = {
             'thumbnail': {
                 'url': 'https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_'
                        '48ad57129cd0c46a355ef8bcaa1acd04.png'
@@ -578,7 +578,7 @@ class ClanBot(discord.Client):
                     'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
                     'value': r_json['displayProperties']['description']
                 }
-                self.data['nightmare']['fields'].append(info)
+                self.data['nightmares']['fields'].append(info)
         await destiny.close()
 
     async def get_reckoning_boss(self, lang, translation):
@@ -611,7 +611,7 @@ class ClanBot(discord.Client):
         if not activities_resp:
             await destiny.close()
 
-        self.data['cruciblerotator'] = {
+        self.data['cruciblerotators'] = {
             'thumbnail': {
                 'url': False
             },
@@ -630,15 +630,15 @@ class ClanBot(discord.Client):
                     obj_def = 'DestinyObjectiveDefinition'
                     objective = await destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
                     if translation[lang]['rotator'] in objective['displayProperties']['name']:
-                        if not self.data['cruciblerotator']['thumbnail']['url']:
-                            self.data['cruciblerotator']['thumbnail']['url'] = self.icon_prefix + \
+                        if not self.data['cruciblerotators']['thumbnail']['url']:
+                            self.data['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
                                                                                r_json['displayProperties']['icon']
                         info = {
                             'inline': True,
                             "name": r_json['displayProperties']['name'],
                             "value": r_json['displayProperties']['description']
                         }
-                        self.data['cruciblerotator']['fields'].append(info)
+                        self.data['cruciblerotators']['fields'].append(info)
         await destiny.close()
 
     async def get_banshee(self, lang, vendor_params, wait_codes, max_retries):
@@ -737,17 +737,38 @@ class ClanBot(discord.Client):
         self.get_chars()
         if self.args.forceupdate:
             if self.args.type == 'daily':
-                await self.daily_update()
+                await self.universal_update(self.get_heroic_story, 'heroicstory')
+                await self.universal_update(self.get_forge, 'forge')
+                await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes')
+                await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
+                await self.update_history()
             if self.args.type == 'weekly':
-                await self.weekly_update()
+                await self.universal_update(self.get_nightfall820, 'nightfalls820')
+                await self.universal_update(self.get_ordeal, 'ordeal')
+                await self.universal_update(self.get_nightmares, 'nightmares')
+                await self.universal_update(self.get_reckoning_boss, 'reckoningboss')
+                await self.universal_update(self.get_crucible_rotators, 'cruciblerotators')
+                await self.update_history()
             if self.args.type == 'spider':
-                await self.spider_update()
+                await self.universal_update(self.get_spider, 'spider')
+                await self.update_history()
             if self.args.type == 'xur':
-                await self.xur_update()
-        self.sched.add_job(self.daily_update, 'cron', hour='17', minute='0', second='30')
-        self.sched.add_job(self.spider_update, 'cron', hour='1', minute='0', second='10')
-        self.sched.add_job(self.weekly_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40')
-        self.sched.add_job(self.xur_update, 'cron', day_of_week='fri', hour='17', minute='5')
+                await self.universal_update(self.get_xur, 'xur')
+                await self.update_history()
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_heroic_story, 'heroicstory'])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_forge, 'forge'])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_strike_modifiers, 'vanguardstrikes'])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_reckoning_modifiers, 'reckoning'])
+
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_nightfall820, 'nightfalls820'])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_ordeal, 'ordeal'])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_nightmares, 'nightmares'])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_reckoning_boss, 'reckoningboss'])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_crucible_rotators, 'cruciblerotators'])
+
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.get_xur, 'xur'])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='1', minute='0', second='30', misfire_grace_time=86300, args=[self.get_spider, 'spider'])
+
         self.sched.add_job(self.update_history, 'cron', hour='2')
         self.sched.add_job(self.token_update, 'interval', hours=1)
         self.sched.start()
@@ -798,9 +819,9 @@ class ClanBot(discord.Client):
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
-    async def daily_update(self):
+    async def universal_update(self, getter, name):
         await self.wait_until_ready()
-        game = discord.Game('updating daily')
+        game = discord.Game('updating {}'.format(name))
         await self.change_presence(activity=game)
         translations_file = open('translations.json', 'r', encoding='utf-8')
         translations = json.loads(translations_file.read())
@@ -808,92 +829,11 @@ class ClanBot(discord.Client):
 
         lang = self.args.lang
 
-        await self.get_heroic_story(lang, translations)
-        await self.get_forge(lang, translations)
-        await self.get_strike_modifiers(lang, translations)
-        await self.get_reckoning_modifiers(lang, translations)
+        await getter(lang, translations)
 
-        if self.data:
-            await self.post_embed('heroicstory', self.data['heroicstory'], 'resetbot')
-            await self.post_embed('forge', self.data['forge'], 'resetbot')
-            await self.post_embed('vanguardstrikes', self.data['vanguardstrikes'], 'resetbot')
-            await self.post_embed('reckoning', self.data['reckoning'], 'resetbot')
-
-            if self.args.forceupdate:
-                await self.update_history()
-
-        game = discord.Game('waiting')
-        await self.change_presence(activity=game)
-
-    async def weekly_update(self):
-        await self.wait_until_ready()
-        game = discord.Game('updating weekly')
-        await self.change_presence(activity=game)
-        translations_file = open('translations.json', 'r', encoding='utf-8')
-        translations = json.loads(translations_file.read())
-        translations_file.close()
-
-        lang = self.args.lang
-
-        await self.get_nightfall820(lang, translations)
-        await self.get_ordeal(lang, translations)
-        await self.get_nightmares(lang, translations)
-        await self.get_reckoning_boss(lang, translations)
-        await self.get_crucible_rotators(lang, translations)
-
-        if self.data:
-            await self.post_embed('nightfalls820', self.data['nightfalls820'], 'resetbot')
-            await self.post_embed('ordeal', self.data['ordeal'], 'resetbot')
-            await self.post_embed('nightmares', self.data['nightmare'], 'resetbot')
-            await self.post_embed('reckoningboss', self.data['reckoningboss'], 'resetbot')
-            await self.post_embed('cruciblerotators', self.data['cruciblerotator'], 'resetbot')
-
-            if self.args.forceupdate:
-                await self.update_history()
-
-        game = discord.Game('waiting')
-        await self.change_presence(activity=game)
-
-    async def spider_update(self):
-        await self.wait_until_ready()
-        game = discord.Game('updating spider')
-        await self.change_presence(activity=game)
-        translations_file = open('translations.json', 'r', encoding='utf-8')
-        translations = json.loads(translations_file.read())
-        translations_file.close()
-
-        lang = self.args.lang
-        upd_type = 'spider'
-
-        await self.get_spider(lang, translations)
-
-        if self.data:
-            await self.post_embed(upd_type, self.data['spider'], 'resetbot')
-
-            if self.args.forceupdate:
-                await self.update_history()
-
-        game = discord.Game('waiting')
-        await self.change_presence(activity=game)
-
-    async def xur_update(self):
-        await self.wait_until_ready()
-        game = discord.Game('updating xur')
-        await self.change_presence(activity=game)
-        translations_file = open('translations.json', 'r', encoding='utf-8')
-        translations = json.loads(translations_file.read())
-        translations_file.close()
-
-        lang = self.args.lang
-        upd_type = 'xur'
-
-        await self.get_xur(translations, lang)
-
-        if self.data:
-            await self.post_embed(upd_type, self.data['xur'], 'resetbot')
-
-            if self.args.forceupdate:
-                await self.update_history()
+        if not self.data['api_maintenance'] and not self.data['api_fucked_up']:
+            if self.data[name]:
+                await self.post_embed(name, self.data[name], 'resetbot')
 
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
