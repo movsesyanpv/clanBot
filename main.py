@@ -47,6 +47,8 @@ class ClanBot(discord.Client):
         'cruciblerotators': []
     }
 
+    channels = []
+
     wait_codes = [1672]
     max_retries = 10
 
@@ -734,6 +736,7 @@ class ClanBot(discord.Client):
     async def on_ready(self):
         await self.token_update()
         await self.update_history()
+        self.get_channels()
         self.get_chars()
         if self.args.forceupdate:
             if self.args.type == 'daily':
@@ -773,13 +776,23 @@ class ClanBot(discord.Client):
         self.sched.add_job(self.token_update, 'interval', hours=1)
         self.sched.start()
 
+    async def check_ownership(self, message):
+        bot_info = await self.application_info()
+        is_owner = bot_info.owner == message.author
+        if not is_owner:
+            msg = '{}!'.format(message.author.mention)
+            e = discord.Embed(title='I will not obey you.', type="rich",
+                              url='https://www.youtube.com/watch?v=qn9FkoqYgI4')
+            e.set_image(url='https://i.ytimg.com/vi/qn9FkoqYgI4/hqdefault.jpg')
+            await message.channel.send(msg, embed=e)
+        return is_owner
+
     async def on_message(self, message):
         if message.author == self.user:
             return
 
-        if message.content.startswith('!stop'):
-            bot_info = await self.application_info()
-            if bot_info.owner == message.author:
+        if message.content.lower().startswith('!stop'):
+            if await self.check_ownership(message):
                 msg = 'Ok, {}'.format(message.author.mention)
                 await message.channel.send(msg)
                 self.sched.shutdown(wait=True)
@@ -787,13 +800,40 @@ class ClanBot(discord.Client):
                 await self.logout()
                 await self.close()
                 return
-            else:
-                msg = '{}!'.format(message.author.mention)
-                e = discord.Embed(title='I will not obey you.', type="rich",
-                                  url='https://www.youtube.com/watch?v=qn9FkoqYgI4')
-                e.set_image(url='https://i.ytimg.com/vi/qn9FkoqYgI4/hqdefault.jpg')
-                await message.channel.send(msg, embed=e)
+            return
+
+        if message.content.lower().startswith('!regnotifier'):
+            if message.channel.type == 'private':
+                msg = 'Can\'t register a private chat, {}'.format(message.author.mention)
+                await message.channel.send(msg)
                 return
+            if await self.check_ownership(message):
+                self.channels.append(message.channel.id)
+                self.channels = list(set(self.channels))
+                f = open('channelList.dat', 'w')
+                for channel in self.channels:
+                    f.write('{}\n'.format(channel))
+                f.close()
+                msg = 'Got it, {}'.format(message.author.mention)
+                await message.channel.send(msg)
+                return
+            return
+
+        if message.content.lower().startswith('!daily'):
+            await message.delete()
+            await self.universal_update(self.get_heroic_story, 'heroicstory')
+            await self.universal_update(self.get_forge, 'forge')
+            await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes')
+            await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
+            await self.update_history()
+
+    def get_channels(self):
+        try:
+            f = open('channelList.dat', 'r')
+            self.channels = f.readlines()
+            f.close()
+        except FileNotFoundError:
+            pass
 
     async def update_history(self):
         game = discord.Game('updating history')
@@ -833,7 +873,7 @@ class ClanBot(discord.Client):
 
         if not self.data['api_maintenance'] and not self.data['api_fucked_up']:
             if self.data[name]:
-                await self.post_embed(name, self.data[name], 'resetbot')
+                await self.post_embed(name, self.data[name])
 
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
@@ -868,7 +908,7 @@ class ClanBot(discord.Client):
         else:
             self.refresh_token(self.token['refresh'])
 
-    async def post_embed(self, upd_type, src_dict, channel_name):
+    async def post_embed(self, upd_type, src_dict):
         hist = self.curr_hist
 
         if not self.args.nomessage:
@@ -877,7 +917,7 @@ class ClanBot(discord.Client):
             for server in self.guilds:
                 hist[str(server.id)]['server_name'] = server.name.strip('\'')
                 for channel in server.channels:
-                    if channel.name == channel_name:
+                    if '{}\n'.format(channel.id) in self.channels:
                         if hist[str(server.id)][upd_type] and \
                                 not self.args.noclear:
                             last = await channel.fetch_message(
