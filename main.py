@@ -800,7 +800,7 @@ class ClanBot(discord.Client):
         if message.author == self.user:
             return
 
-        if message.content.lower().startswith('!stop'):
+        if message.content.lower().startswith('!stop') and self.user in message.mentions:
             if await self.check_ownership(message):
                 msg = 'Ok, {}'.format(message.author.mention)
                 await message.channel.send(msg)
@@ -816,7 +816,7 @@ class ClanBot(discord.Client):
             await message.channel.send(msg)
             return
 
-        if message.content.lower().startswith('!regnotifier'):
+        if message.content.lower().startswith('!regnotifier') and self.user in message.mentions:
             if await self.check_ownership(message):
                 await message.delete()
                 self.channels.append(message.channel.id)
@@ -830,10 +830,10 @@ class ClanBot(discord.Client):
                 return
             return
 
-        if message.content.lower().startswith('!update'):
+        if message.content.lower().startswith('!update') and self.user in message.mentions:
             content = message.content.lower().split()
             await message.delete()
-            for upd_type in content[1:]:
+            for upd_type in content[2:]:
                 print(upd_type)
                 await self.force_update(upd_type)
             return
