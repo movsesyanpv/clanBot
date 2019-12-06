@@ -733,31 +733,34 @@ class ClanBot(discord.Client):
         activities_resp = self.get_bungie_json(name, activities_url, self.activities_params)
         return activities_resp
 
+    async def force_update(self, upd_type):
+        if upd_type == 'daily':
+            await self.universal_update(self.get_heroic_story, 'heroicstory')
+            await self.universal_update(self.get_forge, 'forge')
+            await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes')
+            await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
+            await self.update_history()
+        if upd_type == 'weekly':
+            await self.universal_update(self.get_nightfall820, 'nightfalls820')
+            await self.universal_update(self.get_ordeal, 'ordeal')
+            await self.universal_update(self.get_nightmares, 'nightmares')
+            await self.universal_update(self.get_reckoning_boss, 'reckoningboss')
+            await self.universal_update(self.get_crucible_rotators, 'cruciblerotators')
+            await self.update_history()
+        if upd_type == 'spider':
+            await self.universal_update(self.get_spider, 'spider')
+            await self.update_history()
+        if upd_type == 'xur':
+            await self.universal_update(self.get_xur, 'xur')
+            await self.update_history()
+
     async def on_ready(self):
         await self.token_update()
         await self.update_history()
         self.get_channels()
         self.get_chars()
         if self.args.forceupdate:
-            if self.args.type == 'daily':
-                await self.universal_update(self.get_heroic_story, 'heroicstory')
-                await self.universal_update(self.get_forge, 'forge')
-                await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes')
-                await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
-                await self.update_history()
-            if self.args.type == 'weekly':
-                await self.universal_update(self.get_nightfall820, 'nightfalls820')
-                await self.universal_update(self.get_ordeal, 'ordeal')
-                await self.universal_update(self.get_nightmares, 'nightmares')
-                await self.universal_update(self.get_reckoning_boss, 'reckoningboss')
-                await self.universal_update(self.get_crucible_rotators, 'cruciblerotators')
-                await self.update_history()
-            if self.args.type == 'spider':
-                await self.universal_update(self.get_spider, 'spider')
-                await self.update_history()
-            if self.args.type == 'xur':
-                await self.universal_update(self.get_xur, 'xur')
-                await self.update_history()
+            await force_update(self.args.type)
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_heroic_story, 'heroicstory'])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_forge, 'forge'])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_strike_modifiers, 'vanguardstrikes'])
@@ -802,12 +805,13 @@ class ClanBot(discord.Client):
                 return
             return
 
+        if str(message.channel.type) == 'private':
+            msg = 'Can\'t do anything a private chat, {}'.format(message.author.mention)
+            await message.channel.send(msg)
+            return
+
         if message.content.lower().startswith('!regnotifier'):
-            if message.channel.type == 'private':
-                msg = 'Can\'t do anything a private chat, {}'.format(message.author.mention)
-                await message.channel.send(msg)
-                return
-            if await self.check_ownership(message) and message.channel.type == 'text':
+            if await self.check_ownership(message):
                 await message.delete()
                 self.channels.append(message.channel.id)
                 self.channels = list(set(self.channels))
@@ -820,18 +824,12 @@ class ClanBot(discord.Client):
                 return
             return
 
-        if message.content.lower().startswith('!daily') and message.channel.type == 'text':
+        if message.content.lower().startswith('!update'):
+            content = message.content.lower().split()
             await message.delete()
-            await self.universal_update(self.get_heroic_story, 'heroicstory')
-            await self.universal_update(self.get_forge, 'forge')
-            await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes')
-            await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
-            await self.update_history()
-
-        if message.content.lower().startswith('!spider') and message.channel.type == 'text':
-            await message.delete()
-            await self.universal_update(self.get_spider, 'spider')
-            await self.update_history()
+            for upd_type in content[1:]:
+                await self.force_update(upd_type)
+            return
 
     def get_channels(self):
         try:
