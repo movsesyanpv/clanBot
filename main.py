@@ -804,10 +804,10 @@ class ClanBot(discord.Client):
 
         if message.content.lower().startswith('!regnotifier'):
             if message.channel.type == 'private':
-                msg = 'Can\'t register a private chat, {}'.format(message.author.mention)
+                msg = 'Can\'t do anything a private chat, {}'.format(message.author.mention)
                 await message.channel.send(msg)
                 return
-            if await self.check_ownership(message):
+            if await self.check_ownership(message) and message.channel.type == 'text':
                 await message.delete()
                 self.channels.append(message.channel.id)
                 self.channels = list(set(self.channels))
@@ -820,7 +820,7 @@ class ClanBot(discord.Client):
                 return
             return
 
-        if message.content.lower().startswith('!daily'):
+        if message.content.lower().startswith('!daily') and message.channel.type == 'text':
             await message.delete()
             await self.universal_update(self.get_heroic_story, 'heroicstory')
             await self.universal_update(self.get_forge, 'forge')
@@ -828,7 +828,7 @@ class ClanBot(discord.Client):
             await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
             await self.update_history()
 
-        if message.content.lower().startswith('!spider'):
+        if message.content.lower().startswith('!spider') and message.channel.type == 'text':
             await message.delete()
             await self.universal_update(self.get_spider, 'spider')
             await self.update_history()
