@@ -834,7 +834,6 @@ class ClanBot(discord.Client):
             content = message.content.lower().split()
             await message.delete()
             for upd_type in content[2:]:
-                print(upd_type)
                 await self.force_update(upd_type)
             return
 
