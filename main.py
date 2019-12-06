@@ -253,7 +253,7 @@ class ClanBot(discord.Client):
         location = location_str.replace('/images/', '').replace('_map_light.png', '').capitalize()
         return location
 
-    async def get_xur(self, translation, lang):
+    async def get_xur(self, lang, translation):
         char_info = self.char_info
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         # this is gonna break monday-thursday
@@ -261,20 +261,21 @@ class ClanBot(discord.Client):
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'])
         xur_resp = self.get_bungie_json('xur', xur_url, self.vendor_params)
-        if not xur_resp and not xur_resp.json()['ErrorCode'] == 1627:
+        if not xur_resp and xur_resp.json()['ErrorCode'] != 1627:
             await destiny.close()
 
+        xur_def = await destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
+        self.data['xur'] = {
+            'thumbnail': {
+                'url': self.icon_prefix + xur_def['displayProperties']['smallTransparentIcon']
+            },
+            'fields': [],
+            'color': 15844367,
+            'type': "rich",
+            'title': translation[lang]['msg']['xurtitle'],
+        }
+
         if not xur_resp.json()['ErrorCode'] == 1627:
-            xur_def = await destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
-            self.data['xur'] = {
-                'thumbnail': {
-                    'url': self.icon_prefix + xur_def['displayProperties']['smallTransparentIcon']
-                },
-                'fields': [],
-                'color': 15844367,
-                'type': "rich",
-                'title': translation[lang]['msg']['xurtitle'],
-            }
             loc_field = {
                 "inline": False,
                 "name": translation[lang]['msg']['xurloc'],
@@ -339,8 +340,13 @@ class ClanBot(discord.Client):
                                 self.data['xur']['fields'][i]['value'] = item_name
                             i += 1
         else:
-            # do something if xur isn't here
-            pass
+            self.data['api_fucked_up'] = False
+            loc_field = {
+                "inline": False,
+                "name": translation[lang]['msg']['xurloc'],
+                "value": translation[lang]['xur']['noxur']
+            }
+            self.data['xur']['fields'].append(loc_field)
         await destiny.close()
 
     async def get_heroic_story(self, lang, translation):
@@ -733,31 +739,34 @@ class ClanBot(discord.Client):
         activities_resp = self.get_bungie_json(name, activities_url, self.activities_params)
         return activities_resp
 
+    async def force_update(self, upd_type):
+        if upd_type == 'daily':
+            await self.universal_update(self.get_heroic_story, 'heroicstory')
+            await self.universal_update(self.get_forge, 'forge')
+            await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes')
+            await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
+            await self.update_history()
+        if upd_type == 'weekly':
+            await self.universal_update(self.get_nightfall820, 'nightfalls820')
+            await self.universal_update(self.get_ordeal, 'ordeal')
+            await self.universal_update(self.get_nightmares, 'nightmares')
+            await self.universal_update(self.get_reckoning_boss, 'reckoningboss')
+            await self.universal_update(self.get_crucible_rotators, 'cruciblerotators')
+            await self.update_history()
+        if upd_type == 'spider':
+            await self.universal_update(self.get_spider, 'spider')
+            await self.update_history()
+        if upd_type == 'xur':
+            await self.universal_update(self.get_xur, 'xur')
+            await self.update_history()
+
     async def on_ready(self):
         await self.token_update()
         await self.update_history()
         self.get_channels()
         self.get_chars()
         if self.args.forceupdate:
-            if self.args.type == 'daily':
-                await self.universal_update(self.get_heroic_story, 'heroicstory')
-                await self.universal_update(self.get_forge, 'forge')
-                await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes')
-                await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
-                await self.update_history()
-            if self.args.type == 'weekly':
-                await self.universal_update(self.get_nightfall820, 'nightfalls820')
-                await self.universal_update(self.get_ordeal, 'ordeal')
-                await self.universal_update(self.get_nightmares, 'nightmares')
-                await self.universal_update(self.get_reckoning_boss, 'reckoningboss')
-                await self.universal_update(self.get_crucible_rotators, 'cruciblerotators')
-                await self.update_history()
-            if self.args.type == 'spider':
-                await self.universal_update(self.get_spider, 'spider')
-                await self.update_history()
-            if self.args.type == 'xur':
-                await self.universal_update(self.get_xur, 'xur')
-                await self.update_history()
+            await force_update(self.args.type)
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_heroic_story, 'heroicstory'])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_forge, 'forge'])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_strike_modifiers, 'vanguardstrikes'])
@@ -791,7 +800,7 @@ class ClanBot(discord.Client):
         if message.author == self.user:
             return
 
-        if message.content.lower().startswith('!stop'):
+        if message.content.lower().startswith('!stop') and self.user in message.mentions:
             if await self.check_ownership(message):
                 msg = 'Ok, {}'.format(message.author.mention)
                 await message.channel.send(msg)
@@ -802,11 +811,12 @@ class ClanBot(discord.Client):
                 return
             return
 
-        if message.content.lower().startswith('!regnotifier'):
-            if message.channel.type == 'private':
-                msg = 'Can\'t register a private chat, {}'.format(message.author.mention)
-                await message.channel.send(msg)
-                return
+        if str(message.channel.type) == 'private':
+            msg = 'Can\'t do anything a private chat, {}'.format(message.author.mention)
+            await message.channel.send(msg)
+            return
+
+        if message.content.lower().startswith('!regnotifier') and self.user in message.mentions:
             if await self.check_ownership(message):
                 await message.delete()
                 self.channels.append(message.channel.id)
@@ -820,18 +830,13 @@ class ClanBot(discord.Client):
                 return
             return
 
-        if message.content.lower().startswith('!daily'):
+        if message.content.lower().startswith('!update') and self.user in message.mentions:
+            content = message.content.lower().split()
             await message.delete()
-            await self.universal_update(self.get_heroic_story, 'heroicstory')
-            await self.universal_update(self.get_forge, 'forge')
-            await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes')
-            await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
-            await self.update_history()
-
-        if message.content.lower().startswith('!spider'):
-            await message.delete()
-            await self.universal_update(self.get_spider, 'spider')
-            await self.update_history()
+            for upd_type in content[2:]:
+                print(upd_type)
+                await self.force_update(upd_type)
+            return
 
     def get_channels(self):
         try:

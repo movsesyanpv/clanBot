@@ -26,7 +26,8 @@
             "Titan": "Титан",
             "Io": "Ио",
             "Nessus": "Несс",
-            "NULL": "Не удалось получить информацию"
+            "NULL": "Не удалось получить информацию",
+            "noxur": "Куда приедет, там и будет"
         },
         "forge": "Кузница",
         "heroicstory": "Ежедневная героическая сюжетная миссия: ",
@@ -70,7 +71,8 @@
             "Titan": "Titan",
             "Io": "Io",
             "Nessus": "Nessus",
-            "NULL": "Unable to get the info"
+            "NULL": "Unable to get the info",
+            "noxur": "Only the Nine know"
         },
         "forge": "Forge",
         "heroicstory": "Daily Heroic Story Mission: ",
