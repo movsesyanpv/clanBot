@@ -808,6 +808,7 @@ class ClanBot(discord.Client):
                 await message.channel.send(msg)
                 return
             if await self.check_ownership(message):
+                await message.delete()
                 self.channels.append(message.channel.id)
                 self.channels = list(set(self.channels))
                 f = open('channelList.dat', 'w')
@@ -815,7 +816,7 @@ class ClanBot(discord.Client):
                     f.write('{}\n'.format(channel))
                 f.close()
                 msg = 'Got it, {}'.format(message.author.mention)
-                await message.channel.send(msg)
+                await message.channel.send(msg, delete_after=10)
                 return
             return
 
@@ -825,6 +826,11 @@ class ClanBot(discord.Client):
             await self.universal_update(self.get_forge, 'forge')
             await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes')
             await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
+            await self.update_history()
+
+        if message.content.lower().startswith('!spider'):
+            await message.delete()
+            await self.universal_update(self.get_spider, 'spider')
             await self.update_history()
 
     def get_channels(self):
