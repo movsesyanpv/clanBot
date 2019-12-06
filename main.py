@@ -253,7 +253,7 @@ class ClanBot(discord.Client):
         location = location_str.replace('/images/', '').replace('_map_light.png', '').capitalize()
         return location
 
-    async def get_xur(self, translation, lang):
+    async def get_xur(self, lang, translation):
         char_info = self.char_info
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         # this is gonna break monday-thursday
@@ -261,20 +261,21 @@ class ClanBot(discord.Client):
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'])
         xur_resp = self.get_bungie_json('xur', xur_url, self.vendor_params)
-        if not xur_resp and not xur_resp.json()['ErrorCode'] == 1627:
+        if not xur_resp and xur_resp.json()['ErrorCode'] != 1627:
             await destiny.close()
 
+        xur_def = await destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
+        self.data['xur'] = {
+            'thumbnail': {
+                'url': self.icon_prefix + xur_def['displayProperties']['smallTransparentIcon']
+            },
+            'fields': [],
+            'color': 15844367,
+            'type': "rich",
+            'title': translation[lang]['msg']['xurtitle'],
+        }
+
         if not xur_resp.json()['ErrorCode'] == 1627:
-            xur_def = await destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
-            self.data['xur'] = {
-                'thumbnail': {
-                    'url': self.icon_prefix + xur_def['displayProperties']['smallTransparentIcon']
-                },
-                'fields': [],
-                'color': 15844367,
-                'type': "rich",
-                'title': translation[lang]['msg']['xurtitle'],
-            }
             loc_field = {
                 "inline": False,
                 "name": translation[lang]['msg']['xurloc'],
@@ -339,8 +340,13 @@ class ClanBot(discord.Client):
                                 self.data['xur']['fields'][i]['value'] = item_name
                             i += 1
         else:
-            # do something if xur isn't here
-            pass
+            self.data['api_fucked_up'] = False
+            loc_field = {
+                "inline": False,
+                "name": translation[lang]['msg']['xurloc'],
+                "value": translation[lang]['xur']['noxur']
+            }
+            self.data['xur']['fields'].append(loc_field)
         await destiny.close()
 
     async def get_heroic_story(self, lang, translation):
@@ -828,6 +834,7 @@ class ClanBot(discord.Client):
             content = message.content.lower().split()
             await message.delete()
             for upd_type in content[1:]:
+                print(upd_type)
                 await self.force_update(upd_type)
             return
 
