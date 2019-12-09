@@ -11,6 +11,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # import logging
 
 import oauth
+import raid as lfg
 
 
 # logging.basicConfig()
@@ -46,6 +47,8 @@ class ClanBot(discord.Client):
         'vanguardstrikes': [],
         'cruciblerotators': []
     }
+
+    lfgs = []
 
     channels = []
 
@@ -741,23 +744,23 @@ class ClanBot(discord.Client):
 
     async def force_update(self, upd_type):
         if upd_type == 'daily':
-            await self.universal_update(self.get_heroic_story, 'heroicstory')
-            await self.universal_update(self.get_forge, 'forge')
-            await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes')
-            await self.universal_update(self.get_reckoning_modifiers, 'reckoning')
+            await self.universal_update(self.get_heroic_story, 'heroicstory', 86400)
+            await self.universal_update(self.get_forge, 'forge', 86400)
+            await self.universal_update(self.get_strike_modifiers, 'vanguardstrikes', 86400)
+            await self.universal_update(self.get_reckoning_modifiers, 'reckoning', 86400)
             await self.update_history()
         if upd_type == 'weekly':
-            await self.universal_update(self.get_nightfall820, 'nightfalls820')
-            await self.universal_update(self.get_ordeal, 'ordeal')
-            await self.universal_update(self.get_nightmares, 'nightmares')
-            await self.universal_update(self.get_reckoning_boss, 'reckoningboss')
-            await self.universal_update(self.get_crucible_rotators, 'cruciblerotators')
+            await self.universal_update(self.get_nightfall820, 'nightfalls820', 604800)
+            await self.universal_update(self.get_ordeal, 'ordeal', 604800)
+            await self.universal_update(self.get_nightmares, 'nightmares', 604800)
+            await self.universal_update(self.get_reckoning_boss, 'reckoningboss', 604800)
+            await self.universal_update(self.get_crucible_rotators, 'cruciblerotators', 604800)
             await self.update_history()
         if upd_type == 'spider':
-            await self.universal_update(self.get_spider, 'spider')
+            await self.universal_update(self.get_spider, 'spider', 86400)
             await self.update_history()
         if upd_type == 'xur':
-            await self.universal_update(self.get_xur, 'xur')
+            await self.universal_update(self.get_xur, 'xur', 345600)
             await self.update_history()
 
     async def on_ready(self):
@@ -767,19 +770,19 @@ class ClanBot(discord.Client):
         self.get_chars()
         if self.args.forceupdate:
             await force_update(self.args.type)
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_heroic_story, 'heroicstory'])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_forge, 'forge'])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_strike_modifiers, 'vanguardstrikes'])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_reckoning_modifiers, 'reckoning'])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_heroic_story, 'heroicstory', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_forge, 'forge', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_strike_modifiers, 'vanguardstrikes', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_reckoning_modifiers, 'reckoning', 86400])
 
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_nightfall820, 'nightfalls820'])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_ordeal, 'ordeal'])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_nightmares, 'nightmares'])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_reckoning_boss, 'reckoningboss'])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_crucible_rotators, 'cruciblerotators'])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_nightfall820, 'nightfalls820', 604800])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_ordeal, 'ordeal', 604800])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_nightmares, 'nightmares', 604800])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_reckoning_boss, 'reckoningboss', 604800])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.get_crucible_rotators, 'cruciblerotators', 604800])
 
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.get_xur, 'xur'])
-        self.sched.add_job(self.universal_update, 'cron', hour='1', minute='0', second='10', misfire_grace_time=86300, args=[self.get_spider, 'spider'])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.get_xur, 'xur', 345600])
+        self.sched.add_job(self.universal_update, 'cron', hour='1', minute='0', second='10', misfire_grace_time=86300, args=[self.get_spider, 'spider', 86400])
 
         self.sched.add_job(self.update_history, 'cron', hour='2')
         self.sched.add_job(self.token_update, 'interval', hours=1)
@@ -795,6 +798,11 @@ class ClanBot(discord.Client):
             e.set_image(url='https://i.ytimg.com/vi/qn9FkoqYgI4/hqdefault.jpg')
             await message.channel.send(msg, embed=e)
         return is_owner
+
+    async def on_reaction_add(self, reaction, user):
+        for group in self.lfgs:
+            if group.is_raid(reaction.message):
+                await reaction.message.edit(content="{}\n{}".format(reaction.message.content, user.mention))
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -815,6 +823,18 @@ class ClanBot(discord.Client):
             msg = 'Can\'t do anything a private chat, {}'.format(message.author.mention)
             await message.channel.send(msg)
             return
+
+        if 'newraid' in message.content.lower() and self.user in message.mentions:
+            content = message.content.splitlines()
+            the_role = message.guild.get_role(message.guild.id)
+            for role in message.guild.roles:
+                if role.name.lower() == 'guardian':
+                    the_role = role
+            raid = lfg.RaidLFG(message)
+            msg = '{}, GO {}\n@ {}\n{}\nParticipants: '.format(the_role.mention, raid.name, raid.time, raid.description)
+            out = await message.channel.send(msg)
+            raid.r_id = out.id
+            self.lfgs.append(raid)
 
         if message.content.lower().startswith('!regnotifier') and self.user in message.mentions:
             if await self.check_ownership(message):
@@ -869,7 +889,7 @@ class ClanBot(discord.Client):
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
-    async def universal_update(self, getter, name):
+    async def universal_update(self, getter, name, time_to_delete):
         await self.wait_until_ready()
         game = discord.Game('updating {}'.format(name))
         await self.change_presence(activity=game)
@@ -883,7 +903,7 @@ class ClanBot(discord.Client):
 
         if not self.data['api_maintenance'] and not self.data['api_fucked_up']:
             if self.data[name]:
-                await self.post_embed(name, self.data[name])
+                await self.post_embed(name, self.data[name], time_to_delete)
 
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
@@ -918,7 +938,7 @@ class ClanBot(discord.Client):
         else:
             self.refresh_token(self.token['refresh'])
 
-    async def post_embed(self, upd_type, src_dict):
+    async def post_embed(self, upd_type, src_dict, time_to_delete):
         hist = self.curr_hist
 
         if not self.args.nomessage:
@@ -940,10 +960,7 @@ class ClanBot(discord.Client):
                                 await last.delete()
                             except:
                                 pass
-                        if upd_type == 'xur':
-                            message = await channel.send(embed=embed, delete_after=345600)
-                        else:
-                            message = await channel.send(embed=embed)
+                        message = await channel.send(embed=embed, delete_after=time_to_delete)
                         hist[str(server.id)][upd_type] = message.id
 
     def start_up(self):
