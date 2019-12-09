@@ -800,7 +800,7 @@ class ClanBot(discord.Client):
         if message.author == self.user:
             return
 
-        if message.content.lower().startswith('!stop') and self.user in message.mentions:
+        if message.content.lower().startswith('!stop') and (self.user in message.mentions or str(message.channel.type) == 'private'):
             if await self.check_ownership(message):
                 msg = 'Ok, {}'.format(message.author.mention)
                 await message.channel.send(msg)
@@ -930,8 +930,12 @@ class ClanBot(discord.Client):
                     if '{}\n'.format(channel.id) in self.channels:
                         if hist[str(server.id)][upd_type] and \
                                 not self.args.noclear:
-                            last = await channel.fetch_message(
-                                hist[str(server.id)][upd_type])
+                            try:
+                                last = await channel.fetch_message(
+                                    hist[str(server.id)][upd_type])
+                            except discord.NotFound:
+                                bot_info = await self.application_info()
+                                await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.format(upd_type, channel.name, server.name))
                             try:
                                 await last.delete()
                             except:
