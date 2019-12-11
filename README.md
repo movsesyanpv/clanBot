@@ -47,3 +47,40 @@ usage: main.py [-h] [-nc] [-p] [-nm] [-l LANG] [-t TYPE] [-tp] [-f] [--oauth]
   -f, --forceupdate     Force update right now
   --oauth               Get Bungie access token
 ```
+
+# Bot commands
+
+## DMable commands
+
+1. `[bot mention] stop` - stop the bot. Mention is required in non-dm channels. Available only to the bot's owner.
+
+## Group channel commands
+
+These don't work in dm channels.
+
+2. `{bot mention} lfg {lfg details}` - create lfg.
+3. `{bot mention} regnotifier` - register current channel as reset notifier channel.
+4. `{bot mention} update {[daily] [weekly] [spider] [xur]}` - force updates in notifier channels.
+
+# Reset info
+
+To begin receiving Destiny 2 reset information a notifier channel should be registered. After that the bot will be automatically posting daily weekly spider and xur updates. The bot will also try to clean up old messages. If the deletion fails it will inform it's owner about that.
+
+# LFG
+
+LFG creation message has the following syntax:
+
+```
+{bot mention} lfg
+{lfg name or planned activity}
+time:
+{time of the activity start}
+additional info:
+{description of the activity}
+size:
+{size of the group}
+```
+
+Note, that "time:", "additional info:" and "size:" lines are just for readability purposes but are required to be present in some way, e.g. the line "time:" can be anything but the time itself must be on the fourth line of the message. The description should not have any line breaks inside.
+
+When the time comes, the bot will mention every participant and none from reserves. The posts will be automatically deleted after an hour.
