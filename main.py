@@ -837,7 +837,7 @@ class ClanBot(discord.Client):
             raid.r_id = out.id
             self.lfgs.append(raid)
 
-        if message.content.lower().startswith('!regnotifier') and self.user in message.mentions:
+        if 'regnotifier' in message.content.lower() and self.user in message.mentions:
             if await self.check_ownership(message):
                 await message.delete()
                 self.channels.append(message.channel.id)
@@ -851,7 +851,7 @@ class ClanBot(discord.Client):
                 return
             return
 
-        if message.content.lower().startswith('!update') and self.user in message.mentions:
+        if 'update' in message.content.lower() and self.user in message.mentions:
             content = message.content.lower().split()
             await message.delete()
             for upd_type in content[2:]:
