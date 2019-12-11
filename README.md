@@ -62,6 +62,10 @@ These don't work in dm channels.
 3. `{bot mention} regnotifier` - register current channel as reset notifier channel.
 4. `{bot mention} update {[daily] [weekly] [spider] [xur]}` - force updates in notifier channels.
 
+# Reset info
+
+To begin receiving Destiny 2 reset information a notifier channel should be registered. After that the bot will be automatically posting daily weekly spider and xur updates. The bot will also try to clean up old messages. If the deletion fails it will inform it's owner about that.
+
 # LFG
 
 LFG creation message has the following syntax:
