@@ -153,6 +153,7 @@ class ClanBot(discord.Client):
             time.sleep(5)
         if not r:
             print("re_token get error", json.dumps(r.json(), indent=4, sort_keys=True) + "\n")
+            return
         resp = r.json()
 
         # save new refresh_token/expiration in token.json
