@@ -554,10 +554,10 @@ class ClanBot(discord.Client):
                 }
                 self.data['ordeal']['fields'].append(info)
 
-            for strike in strikes:
-                if strike['name'] in self.data['ordeal']['fields'][0]['name']:
-                    self.data['ordeal']['fields'][0]['value'] = strike['description']
-                    break
+        for strike in strikes:
+            if strike['name'] in self.data['ordeal']['fields'][0]['name']:
+                self.data['ordeal']['fields'][0]['value'] = strike['description']
+                break
         await destiny.close()
 
     async def get_nightmares(self, lang, translation):
@@ -769,7 +769,7 @@ class ClanBot(discord.Client):
         self.get_channels()
         self.get_chars()
         if self.args.forceupdate:
-            await force_update(self.args.type)
+            await self.force_update(self.args.type)
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_heroic_story, 'heroicstory', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_forge, 'forge', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.get_strike_modifiers, 'vanguardstrikes', 86400])
@@ -920,6 +920,7 @@ class ClanBot(discord.Client):
                 return False
 
         try:
+            f = open('token.json', 'r')
             self.token = json.loads(f.read())
         except json.decoder.JSONDecodeError:
             if '--oauth' in sys.argv:
