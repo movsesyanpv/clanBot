@@ -20,6 +20,12 @@
             "cost": "Цена",
             "xurtitle": "Зур"
         },
+        "lfg": {
+            "go": "Предлагаю сходить в",
+            "at": "Время:",
+            "participants": "Участники",
+            "wanters": "Также хотят"
+        },
         "xur": {
             "Earth": "Земля",
             "Tower": "Странник",
@@ -64,6 +70,12 @@
             "xurloc": "Location",
             "cost": "Cost",
             "xurtitle": "Xur"
+        },
+        "lfg": {
+            "go": "Go",
+            "at": "@",
+            "participants": "Participants",
+            "wanters": "Also want to go"
         },
         "xur": {
             "Earth": "Earth",

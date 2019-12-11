@@ -71,9 +71,14 @@ class ClanBot(discord.Client):
 
     char_info = {}
 
+    translations = {}
+
     def __init__(self, **options):
         super().__init__(**options)
         self.get_args()
+        translations_file = open('translations.json', 'r', encoding='utf-8')
+        self.translations = json.loads(translations_file.read())
+        translations_file.close()
 
     def get_chars(self):
         platform = 0
@@ -192,7 +197,7 @@ class ClanBot(discord.Client):
             return resp
         return resp
 
-    async def get_spider(self, lang, translation):
+    async def get_spider(self, lang):
         char_info = self.char_info
         destiny = pydest.Pydest(self.headers['X-API-Key'])
 
@@ -214,7 +219,7 @@ class ClanBot(discord.Client):
             'fields': [],
             'color': 7102001,
             'type': "rich",
-            'title': translation[lang]['msg']['spider'],
+            'title': self.translations[lang]['msg']['spider'],
         }
 
         # if spider inventory breaks, look here
@@ -240,7 +245,7 @@ class ClanBot(discord.Client):
                 item_data = {
                     'inline': True,
                     'name': item_name.capitalize(),
-                    'value': "{}: {} {}".format(translation[lang]['msg']['cost'], currency_cost,
+                    'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
                                                 currency_item.capitalize())
                 }
                 self.data['spider']['fields'].append(item_data)
@@ -256,7 +261,7 @@ class ClanBot(discord.Client):
         location = location_str.replace('/images/', '').replace('_map_light.png', '').capitalize()
         return location
 
-    async def get_xur(self, lang, translation):
+    async def get_xur(self, lang):
         char_info = self.char_info
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         # this is gonna break monday-thursday
@@ -275,22 +280,22 @@ class ClanBot(discord.Client):
             'fields': [],
             'color': 15844367,
             'type': "rich",
-            'title': translation[lang]['msg']['xurtitle'],
+            'title': self.translations[lang]['msg']['xurtitle'],
         }
 
         if not xur_resp.json()['ErrorCode'] == 1627:
             loc_field = {
                 "inline": False,
-                "name": translation[lang]['msg']['xurloc'],
-                "value": translation[lang]['xur']['NULL']
+                "name": self.translations[lang]['msg']['xurloc'],
+                "value": self.translations[lang]['xur']['NULL']
             }
             weapon = {
                 'inline': False,
-                'name': translation[lang]['msg']['weapon'],
+                'name': self.translations[lang]['msg']['weapon'],
                 'value': ''
             }
             try:
-                loc_field['value'] = translation[lang]['xur'][self.get_xur_loc()]
+                loc_field['value'] = self.translations[lang]['xur'][self.get_xur_loc()]
                 self.data['xur']['fields'].append(loc_field)
             except:
                 pass
@@ -329,33 +334,33 @@ class ClanBot(discord.Client):
                         }
 
                         if item_resp['classType'] == 0:
-                            exotic['name'] = translation[lang]['Titan']
+                            exotic['name'] = self.translations[lang]['Titan']
                         elif item_resp['classType'] == 1:
-                            exotic['name'] = translation[lang]['Hunter']
+                            exotic['name'] = self.translations[lang]['Hunter']
                         elif item_resp['classType'] == 2:
-                            exotic['name'] = translation[lang]['Warlock']
+                            exotic['name'] = self.translations[lang]['Warlock']
 
                         self.data['xur']['fields'].append(exotic)
                     else:
                         i = 0
                         for item in self.data['xur']['fields']:
-                            if item['name'] == translation[lang]['msg']['weapon']:
+                            if item['name'] == self.translations[lang]['msg']['weapon']:
                                 self.data['xur']['fields'][i]['value'] = item_name
                             i += 1
         else:
             self.data['api_fucked_up'] = False
             loc_field = {
                 "inline": False,
-                "name": translation[lang]['msg']['xurloc'],
-                "value": translation[lang]['xur']['noxur']
+                "name": self.translations[lang]['msg']['xurloc'],
+                "value": self.translations[lang]['xur']['noxur']
             }
             self.data['xur']['fields'].append(loc_field)
         await destiny.close()
 
-    async def get_heroic_story(self, lang, translation):
+    async def get_heroic_story(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         activities_resp = await self.get_activities_response('heroic story missions')
-        local_types = translation[lang]
+        local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
 
@@ -367,7 +372,7 @@ class ClanBot(discord.Client):
             'fields': [],
             'color': 10070709,
             'type': 'rich',
-            'title': translation[lang]['msg']['heroicstory']
+            'title': self.translations[lang]['msg']['heroicstory']
         }
 
         for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -384,10 +389,10 @@ class ClanBot(discord.Client):
                 self.data['heroicstory']['fields'].append(info)
         await destiny.close()
 
-    async def get_forge(self, lang, translation):
+    async def get_forge(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         activities_resp = await self.get_activities_response('forge')
-        local_types = translation[lang]
+        local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
 
@@ -398,7 +403,7 @@ class ClanBot(discord.Client):
             'fields': [],
             'color': 3678761,
             'type': 'rich',
-            'title': translation[lang]['msg']['forge']
+            'title': self.translations[lang]['msg']['forge']
         }
 
         for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -418,10 +423,10 @@ class ClanBot(discord.Client):
                 self.data['forge']['fields'].append(info)
         await destiny.close()
 
-    async def get_strike_modifiers(self, lang, translation):
+    async def get_strike_modifiers(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         activities_resp = await self.get_activities_response('strike modifiers')
-        local_types = translation[lang]
+        local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
 
@@ -432,7 +437,7 @@ class ClanBot(discord.Client):
             'fields': [],
             'color': 7506394,
             'type': 'rich',
-            'title': translation[lang]['msg']['strikesmods']
+            'title': self.translations[lang]['msg']['strikesmods']
         }
 
         for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -442,15 +447,15 @@ class ClanBot(discord.Client):
 
             if local_types['heroicstory'] in r_json['displayProperties']['name']:
                 self.data['vanguardstrikes']['fields'] = await self.decode_modifiers(key, destiny, lang)
-            if translation[lang]['strikes'] in r_json['displayProperties']['name']:
+            if self.translations[lang]['strikes'] in r_json['displayProperties']['name']:
                 self.data['vanguardstrikes']['thumbnail']['url'] = self.icon_prefix +\
                                                                    r_json['displayProperties']['icon']
         await destiny.close()
 
-    async def get_reckoning_modifiers(self, lang, translation):
+    async def get_reckoning_modifiers(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         activities_resp = await self.get_activities_response('reckoning modifiers')
-        local_types = translation[lang]
+        local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
 
@@ -462,7 +467,7 @@ class ClanBot(discord.Client):
             'fields': [],
             'color': 1332799,
             'type': 'rich',
-            'title': translation[lang]['msg']['reckoningmods']
+            'title': self.translations[lang]['msg']['reckoningmods']
         }
 
         for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -470,14 +475,14 @@ class ClanBot(discord.Client):
             definition = 'DestinyActivityDefinition'
             r_json = await destiny.decode_hash(item_hash, definition, language=lang)
 
-            if translation[lang]['reckoning'] in r_json['displayProperties']['name']:
+            if self.translations[lang]['reckoning'] in r_json['displayProperties']['name']:
                 self.data['reckoning']['fields'] = await self.decode_modifiers(key, destiny, lang)
         await destiny.close()
 
-    async def get_nightfall820(self, lang, translation):
+    async def get_nightfall820(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         activities_resp = await self.get_activities_response('820 nightfalls')
-        local_types = translation[lang]
+        local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
 
@@ -488,7 +493,7 @@ class ClanBot(discord.Client):
             'fields': [],
             'color': 7506394,
             'type': 'rich',
-            'title': translation[lang]['msg']['nightfalls820']
+            'title': self.translations[lang]['msg']['nightfalls820']
         }
 
         for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -503,7 +508,7 @@ class ClanBot(discord.Client):
                     if r_json['matchmaking']['requiresGuardianOath']:
                         info = {
                             'inline': True,
-                            'name': translation[lang]['msg']['guidedgamenightfall'],
+                            'name': self.translations[lang]['msg']['guidedgamenightfall'],
                             'value': r_json['selectionScreenDisplayProperties']['name']
                         }
                     else:
@@ -518,10 +523,10 @@ class ClanBot(discord.Client):
 
         await destiny.close()
 
-    async def get_ordeal(self, lang, translation):
+    async def get_ordeal(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         activities_resp = await self.get_activities_response('ordeal')
-        local_types = translation[lang]
+        local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
 
@@ -533,7 +538,7 @@ class ClanBot(discord.Client):
             'fields': [],
             'color': 5331575,
             'type': 'rich',
-            'title': translation[lang]['msg']['ordeal']
+            'title': self.translations[lang]['msg']['ordeal']
         }
 
         strikes = []
@@ -561,10 +566,10 @@ class ClanBot(discord.Client):
                     break
         await destiny.close()
 
-    async def get_nightmares(self, lang, translation):
+    async def get_nightmares(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         activities_resp = await self.get_activities_response('nightmares')
-        local_types = translation[lang]
+        local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
 
@@ -576,7 +581,7 @@ class ClanBot(discord.Client):
             'fields': [],
             'color': 6037023,
             'type': 'rich',
-            'title': translation[lang]['msg']['nightmares']
+            'title': self.translations[lang]['msg']['nightmares']
         }
 
         for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -593,7 +598,7 @@ class ClanBot(discord.Client):
                 self.data['nightmares']['fields'].append(info)
         await destiny.close()
 
-    async def get_reckoning_boss(self, lang, translation):
+    async def get_reckoning_boss(self, lang):
         first_reset_time = 1539709200
         seconds_since_first = time.time() - first_reset_time
         weeks_since_first = seconds_since_first // 604800
@@ -607,19 +612,19 @@ class ClanBot(discord.Client):
             'fields': [
                 {
                     'inline': True,
-                    "name": translation[lang][reckoning_bosses[int(weeks_since_first % 2)]],
-                    "value": translation[lang]['r_desc']
+                    "name": self.translations[lang][reckoning_bosses[int(weeks_since_first % 2)]],
+                    "value": self.translations[lang]['r_desc']
                 }
             ],
             "color": 1332799,
             "type": "rich",
-            "title": translation[lang]['msg']['reckoningboss']
+            "title": self.translations[lang]['msg']['reckoningboss']
         }
 
-    async def get_crucible_rotators(self, lang, translation):
+    async def get_crucible_rotators(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         activities_resp = await self.get_activities_response('crucible rotators')
-        local_types = translation[lang]
+        local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
 
@@ -630,7 +635,7 @@ class ClanBot(discord.Client):
             'fields': [],
             'color': 6629649,
             'type': 'rich',
-            'title': translation[lang]['msg']['cruciblerotators']
+            'title': self.translations[lang]['msg']['cruciblerotators']
         }
 
         for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -641,7 +646,7 @@ class ClanBot(discord.Client):
                 if len(r_json['challenges']) > 0:
                     obj_def = 'DestinyObjectiveDefinition'
                     objective = await destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
-                    if translation[lang]['rotator'] in objective['displayProperties']['name']:
+                    if self.translations[lang]['rotator'] in objective['displayProperties']['name']:
                         if not self.data['cruciblerotators']['thumbnail']['url']:
                             self.data['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
                                                                                r_json['displayProperties']['icon']
@@ -800,16 +805,43 @@ class ClanBot(discord.Client):
             await message.channel.send(msg, embed=e)
         return is_owner
 
-    async def on_reaction_add(self, reaction, user):
+    async def on_reaction_remove(self, reaction, user):
+        if user == self.user:
+            return
+
         for group in self.lfgs:
             if group.is_raid(reaction.message):
-                await reaction.message.edit(content="{}\n{}".format(reaction.message.content, user.mention))
+                if str(reaction) != '👌':
+                    return
+                if user.mention in group.going:
+                    group.going.pop(group.going.index(user.mention))
+                    if len(group.wanters) > 0:
+                        group.going.append(group.wanters[0])
+                        group.wanters.pop(0)
+                if user.mention in group.wanters:
+                    group.wanters.pop(group.wanters.index(user.mention))
+                await group.update_group_msg(reaction, user, self.translations[self.args.lang])
+
+    async def on_reaction_add(self, reaction, user):
+        if user == self.user:
+            return
+
+        for group in self.lfgs:
+            if group.is_raid(reaction.message):
+                if str(reaction) != '👌':
+                    await reaction.remove(user)
+                    return
+                if len(group.going) < group.size:
+                    group.going.append(user.mention)
+                else:
+                    group.wanters.append(user.mention)
+                await group.update_group_msg(reaction, user, self.translations[self.args.lang])
 
     async def on_message(self, message):
         if message.author == self.user:
             return
 
-        if message.content.lower().startswith('!stop') and (self.user in message.mentions or str(message.channel.type) == 'private'):
+        if 'stop' in message.content.lower() and (self.user in message.mentions or str(message.channel.type) == 'private'):
             if await self.check_ownership(message):
                 msg = 'Ok, {}'.format(message.author.mention)
                 await message.channel.send(msg)
@@ -825,16 +857,13 @@ class ClanBot(discord.Client):
             await message.channel.send(msg)
             return
 
-        if 'newraid' in message.content.lower() and self.user in message.mentions:
+        if 'lfg' in message.content.lower().splitlines()[0] and self.user in message.mentions:
             content = message.content.splitlines()
-            the_role = message.guild.get_role(message.guild.id)
-            for role in message.guild.roles:
-                if role.name.lower() == 'guardian':
-                    the_role = role
-            raid = lfg.RaidLFG(message)
-            msg = '{}, GO {}\n@ {}\n{}\nParticipants: '.format(the_role.mention, raid.name, raid.time, raid.description)
+            raid = lfg.LFG(message)
+            msg = "{}, {} {}\n{} {}\n{}".format(raid.the_role.mention, self.translations[self.args.lang]['lfg']['go'], raid.name, self.translations[self.args.lang]['lfg']['at'], raid.time, raid.description)
             out = await message.channel.send(msg)
-            raid.r_id = out.id
+            await out.add_reaction('👌')
+            raid.group_id = out.id
             self.lfgs.append(raid)
 
         if 'regnotifier' in message.content.lower() and self.user in message.mentions:
@@ -894,13 +923,10 @@ class ClanBot(discord.Client):
         await self.wait_until_ready()
         game = discord.Game('updating {}'.format(name))
         await self.change_presence(activity=game)
-        translations_file = open('translations.json', 'r', encoding='utf-8')
-        translations = json.loads(translations_file.read())
-        translations_file.close()
 
         lang = self.args.lang
 
-        await getter(lang, translations)
+        await getter(lang)
 
         if not self.data['api_maintenance'] and not self.data['api_fucked_up']:
             if self.data[name]:
