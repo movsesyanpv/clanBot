@@ -361,7 +361,8 @@ class ClanBot(discord.Client):
 
         self.data['heroicstory'] = {
             'thumbnail': {
-                'url': ''
+                'url': "https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_"
+                "5f8a923a0d0ac1e4289ae3be03f94aa2.png"
             },
             'fields': [],
             'color': 10070709,
@@ -380,7 +381,6 @@ class ClanBot(discord.Client):
                     "name": r_json['selectionScreenDisplayProperties']['name'],
                     "value": r_json['selectionScreenDisplayProperties']['description']
                 }
-                self.data['heroicstory']['thumbnail']['url'] = self.icon_prefix + r_json['displayProperties']['icon']
                 self.data['heroicstory']['fields'].append(info)
         await destiny.close()
 
@@ -554,10 +554,11 @@ class ClanBot(discord.Client):
                 }
                 self.data['ordeal']['fields'].append(info)
 
-        for strike in strikes:
-            if strike['name'] in self.data['ordeal']['fields'][0]['name']:
-                self.data['ordeal']['fields'][0]['value'] = strike['description']
-                break
+        if len(self.data['ordeal']['fields']) > 0:
+            for strike in strikes:
+                if strike['name'] in self.data['ordeal']['fields'][0]['name']:
+                    self.data['ordeal']['fields'][0]['value'] = strike['description']
+                    break
         await destiny.close()
 
     async def get_nightmares(self, lang, translation):
