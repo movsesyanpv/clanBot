@@ -52,15 +52,15 @@ usage: main.py [-h] [-nc] [-p] [-nm] [-l LANG] [-t TYPE] [-tp] [-f] [--oauth]
 
 ## DMable commands
 
-`[bot mention] stop` - stop the bot. Mention is required in non-dm channels. Available only to the bot's owner.
+1. `[bot mention] stop` - stop the bot. Mention is required in non-dm channels. Available only to the bot's owner.
 
 ## Group channel commands
 
 These don't work in dm channels.
 
-`{bot mention} lfg {lfg details}` - create lfg.
-`{bot mention} regnotifier` - register current channel as reset notifier channel.
-`{bot mention} update {[daily] [weekly] [spider] [xur]}` - force updates in notifier channels.
+2. `{bot mention} lfg {lfg details}` - create lfg.
+3. `{bot mention} regnotifier` - register current channel as reset notifier channel.
+4. `{bot mention} update {[daily] [weekly] [spider] [xur]}` - force updates in notifier channels.
 
 # LFG
 
