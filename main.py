@@ -8,6 +8,7 @@ import discord
 import argparse
 from bs4 import BeautifulSoup
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from datetime import datetime, timedelta
 # import logging
 
 import oauth
@@ -828,6 +829,12 @@ class ClanBot(discord.Client):
 
         for group in self.lfgs:
             if group.is_raid(reaction.message):
+                if str(reaction) == '❌' and user == group.owner:
+                    await reaction.message.delete()
+                    self.lfgs.pop(self.lfgs.index(group))
+                    self.sched.remove_job('{}_del'.format(group.group_id))
+                    print(self.lfgs)
+                    return
                 if str(reaction) != '👌':
                     await reaction.remove(user)
                     return
@@ -860,10 +867,14 @@ class ClanBot(discord.Client):
         if 'lfg' in message.content.lower().splitlines()[0] and self.user in message.mentions:
             content = message.content.splitlines()
             raid = lfg.LFG(message)
-            msg = "{}, {} {}\n{} {}\n{}".format(raid.the_role.mention, self.translations[self.args.lang]['lfg']['go'], raid.name, self.translations[self.args.lang]['lfg']['at'], raid.time, raid.description)
+            msg = "{}, {} {}\n{} {}\n{}".format(raid.the_role.mention, self.translations[self.args.lang]['lfg']['go'], raid.name, self.translations[self.args.lang]['lfg']['at'], raid.time.strftime("%d-%m-%Y %H:%M %Z"), raid.description)
             out = await message.channel.send(msg)
+            end_time = raid.time + timedelta(seconds=3600)
             await out.add_reaction('👌')
+            await out.add_reaction('❌')
             raid.group_id = out.id
+            self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(raid.group_id))
+            self.sched.add_job(raid.ping_going, 'date', run_date=raid.time, id='{}_ping'.format(raid.group_id))
             self.lfgs.append(raid)
 
         if 'regnotifier' in message.content.lower() and self.user in message.mentions:
