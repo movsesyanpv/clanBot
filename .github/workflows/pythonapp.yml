@@ -31,4 +31,4 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test force update
       run: |
-        python main.py -l ru -f -t "daily weekly spider xur"; gpg --passphrase $api --batch --symmetric --cipher-algo AES256 token.json; git add token.json; git commit -m "automatic token update"; git push
+        python main.py -l ru -f -t "daily weekly spider xur"; gpg --passphrase="$api" --batch --symmetric --cipher-algo AES256 token.json; git add token.json; git commit -m "automatic token update"; git push
