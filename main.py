@@ -9,6 +9,7 @@ import argparse
 from bs4 import BeautifulSoup
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
+import asyncio
 # import logging
 
 import oauth
@@ -844,6 +845,13 @@ class ClanBot(discord.Client):
                     group.wanters.append(user.mention)
                 await group.update_group_msg(reaction, user, self.translations[self.args.lang])
 
+    async def pause_for(self, message, delta):
+        self.sched.pause()
+        await asyncio.sleep(delta.total_seconds())
+        self.sched.resume()
+        await message.channel.send('should be after delay finish {}'.format(str(datetime.now())))
+        return
+
     async def on_message(self, message):
         if message.author == self.user:
             return
@@ -857,6 +865,17 @@ class ClanBot(discord.Client):
                 await self.logout()
                 await self.close()
                 return
+            return
+
+        if 'plan maintenance' in message.content.lower() and (self.user in message.mentions or str(message.channel.type) == 'private'):
+            try:
+                content = message.content.splitlines()
+                start = datetime.strptime(content[1], "%d-%m-%Y %H:%M %z")
+                finish = datetime.strptime(content[2], "%d-%m-%Y %H:%M %z")
+                delta = finish-start
+                self.sched.add_job(self.pause_for, 'date', run_date=start, args=[message, delta], misfire_grace_time=600)
+            except Exception as e:
+                await message.channel.send('exception `{}`\nUse following format:```plan maintenance\n<start time formatted %d-%m-%Y %H:%M %z>\n<finish time formatted %d-%m-%Y %H:%M %z>```'.format(str(e)))
             return
 
         if str(message.channel.type) == 'private':
