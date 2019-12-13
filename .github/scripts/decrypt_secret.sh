@@ -3,4 +3,4 @@
 # Decrypt the file
 # --batch to prevent interactive command --yes to assume "yes" for questions
 gpg --quiet --batch --yes --decrypt --passphrase="$api" \
---output ../../api.json ../../api.json.gpg
+--output $HOME/api.json $HOME/api.json.gpg
