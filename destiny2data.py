@@ -8,6 +8,8 @@ import discord
 import argparse
 from bs4 import BeautifulSoup
 
+import oauth
+
 class d2data():
     api_data_file = open('api.json', 'r')
     api_data = json.loads(api_data_file.read())
@@ -50,11 +52,14 @@ class d2data():
         "components": "900,700"
     }
 
+    oauth = false
+
     char_info = {}
 
-    def __init__(self, translations, **options):
+    def __init__(self, translations, oauth, **options):
         super().__init__(**options)
         self.translations = translations
+        self.oauth = oauth
 
     def get_chars(self):
         platform = 0
@@ -678,7 +683,7 @@ class d2data():
         try:
             f = open('token.json', 'r')
         except FileNotFoundError:
-            if '--oauth' in sys.argv:
+            if self.oauth:
                 oauth.get_oauth(self.api_data)
             else:
                 print('token file not found!  run the script with --oauth or add a valid token.js file!')
@@ -688,7 +693,7 @@ class d2data():
             f = open('token.json', 'r')
             self.token = json.loads(f.read())
         except json.decoder.JSONDecodeError:
-            if '--oauth' in sys.argv:
+            if self.oauth:
                 oauth.get_oauth(self.api_data)
             else:
                 print('token file invalid!  run the script with --oauth or add a valid token.js file!')
@@ -696,7 +701,7 @@ class d2data():
 
         # check if token has expired, if so we have to oauth, if not just refresh the token
         if self.token['expires'] < time.time():
-            if '--oauth' in sys.argv:
+            if self.oauth:
                 oauth.get_oauth(self.api_data)
             else:
                 print('refresh token expired!  run the script with --oauth or add a valid token.js file!')

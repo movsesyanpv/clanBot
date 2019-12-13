@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 import asyncio
 # import logging
 
-import oauth
 import raid as lfg
 import destiny2data as d2
 
@@ -42,7 +41,7 @@ class ClanBot(discord.Client):
         translations_file = open('translations.json', 'r', encoding='utf-8')
         self.translations = json.loads(translations_file.read())
         translations_file.close()
-        self.data = d2.d2data(self.translations)
+        self.data = d2.d2data(self.translations, self.args.oauth)
 
     def get_args(self):
         parser = argparse.ArgumentParser()
