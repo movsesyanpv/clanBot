@@ -17,7 +17,7 @@ jobs:
     - name: Decrypt large secret
       run: ./.github/scripts/decrypt_secret.sh
       env:
-        LARGE_SECRET_PASSPHRASE: $
+        api: $
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
