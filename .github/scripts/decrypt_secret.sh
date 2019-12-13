@@ -9,7 +9,7 @@ gpg --quiet --batch --yes --decrypt --passphrase="$api" \
 --output ./char.json ./char.json.gpg
 
 gpg --quiet --batch --yes --decrypt --passphrase="$api" \
---output ./channelList.dat ./channelList.dat
+--output ./channelList.dat ./channelList.dat.gpg
 
 gpg --quiet --batch --yes --decrypt --passphrase="$api" \
 --output ./token.json ./token.json.gpg
