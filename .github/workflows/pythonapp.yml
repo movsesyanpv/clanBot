@@ -21,8 +21,8 @@ jobs:
     - name: Decrypt large secret
       run: echo $test; sh ./.github/scripts/decrypt_secret.sh
       env:
-        api: $
-        test: $
+        api: ${{ secrets.api }}
+        test: ${{ secrets.test }}
     - name: Lint with flake8
       run: |
         pip install flake8
