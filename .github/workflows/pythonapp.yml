@@ -19,7 +19,7 @@ jobs:
         pip install -r requirements.txt
     - uses: actions/checkout@v1
     - name: Decrypt large secret
-      run: sh ./.github/scripts/decrypt_secret.sh
+      run: ls -lR ./; sh ./.github/scripts/decrypt_secret.sh
       env:
         api: $
     - name: Lint with flake8
