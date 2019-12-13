@@ -57,25 +57,27 @@ class ClanBot(discord.Client):
         self.args = parser.parse_args()
 
     async def force_update(self, upd_type):
-        if upd_type == 'daily':
+        if 'daily' in upd_type:
             await self.universal_update(self.data.get_heroic_story, 'heroicstory', 86400)
             await self.universal_update(self.data.get_forge, 'forge', 86400)
             await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400)
             await self.universal_update(self.data.get_reckoning_modifiers, 'reckoning', 86400)
             await self.update_history()
-        if upd_type == 'weekly':
+        if 'weekly' in upd_type:
             await self.universal_update(self.data.get_nightfall820, 'nightfalls820', 604800)
             await self.universal_update(self.data.get_ordeal, 'ordeal', 604800)
             await self.universal_update(self.data.get_nightmares, 'nightmares', 604800)
             await self.universal_update(self.data.get_reckoning_boss, 'reckoningboss', 604800)
             await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800)
             await self.update_history()
-        if upd_type == 'spider':
+        if 'spider' in upd_type:
             await self.universal_update(self.data.get_spider, 'spider', 86400)
             await self.update_history()
-        if upd_type == 'xur':
+        if 'xur' in upd_type:
             await self.universal_update(self.data.get_xur, 'xur', 345600)
             await self.update_history()
+        await self.logout()
+        await self.close()
 
     async def on_ready(self):
         await self.data.token_update()
