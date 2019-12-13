@@ -52,7 +52,7 @@ class d2data():
         "components": "900,700"
     }
 
-    oauth = false
+    oauth = False
 
     char_info = {}
 
