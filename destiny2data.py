@@ -101,8 +101,7 @@ class d2data():
             char_file = open('char.json', 'w')
             char_file.write(json.dumps(self.char_info))
 
-        # refresh the saved token
-
+    # refresh the saved token
     def refresh_token(self, re_token):
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -282,16 +281,6 @@ class d2data():
                         for s in item_sockets:
                             if len(s['reusablePlugItems']) > 0 and s['plugSources'] == 2:
                                 plugs.append(s['reusablePlugItems'][0]['plugItemHash'])
-
-                        perks = []
-
-                        for p in plugs[2:]:
-                            plug_resp = await destiny.decode_hash(str(p), definition, language=lang)
-                            perk = {
-                                'name': plug_resp['displayProperties']['name'],
-                                'desc': plug_resp['displayProperties']['description']
-                            }
-                            perks.append(perk)
 
                         exotic = {
                             'inline': True,
@@ -660,36 +649,6 @@ class d2data():
 
                 # put result in a well formatted string in the data dict
                 self.data['bansheeinventory'].append(mod)
-        await destiny.close()
-
-    async def get_ada(self, vendor_params, wait_codes, max_retries):
-        char_info = self.char_info
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
-
-        ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2917531897/'. \
-            format(char_info['platform'], char_info['membershipid'], char_info['charid'])
-        ada_resp = self.get_bungie_json('ada', ada_url, vendor_params)
-        if not ada_resp:
-            await destiny.close()
-
-        ada_cats = ada_resp.json()['Response']['categories']['data']['categories']
-        ada_sales = ada_resp.json()['Response']['sales']['data']
-
-        items_to_get = ada_cats[0]['itemIndexes']
-
-        for key in items_to_get:
-            item_hash = ada_sales[str(key)]['itemHash']
-            item_def_url = 'https://www.bungie.net/platform/Destiny2/Manifest/DestinyInventoryItemDefinition/' + str(
-                item_hash) + '/'
-            item_resp = requests.get(item_def_url, headers=self.headers)
-
-            # query bungie api for name of item and name of currency
-            item_name_list = item_resp.json()['Response']['displayProperties']['name'].split()
-            if 'Powerful' in item_name_list:
-                item_name_list = item_name_list[1:]
-            item_name = ' '.join(item_name_list)
-
-            self.data['adainventory'].append(item_name)
         await destiny.close()
 
     @staticmethod
