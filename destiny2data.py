@@ -2,15 +2,13 @@ import requests
 import json
 import time
 from urllib.parse import quote
-import sys
 import pydest
-import discord
-import argparse
 from bs4 import BeautifulSoup
 
 import oauth
 
-class d2data():
+
+class D2data:
     api_data_file = open('api.json', 'r')
     api_data = json.loads(api_data_file.read())
 

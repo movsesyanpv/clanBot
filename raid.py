@@ -2,6 +2,7 @@ import discord
 import json
 from datetime import datetime
 
+
 class LFG():
     group_id = 0
     size = 0
@@ -14,7 +15,7 @@ class LFG():
     the_role = ''
     announcement_msg = ''
 
-    def __init__(self, message, **options):
+    def __init__(self, message: discord.Message, **options):
         super().__init__(**options)
         content = message.content.splitlines()
         self.name = content[1]

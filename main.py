@@ -1,12 +1,6 @@
-import requests
 import json
-import time
-from urllib.parse import quote
-import sys
-import pydest
 import discord
 import argparse
-from bs4 import BeautifulSoup
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 import asyncio
@@ -41,7 +35,7 @@ class ClanBot(discord.Client):
         translations_file = open('translations.json', 'r', encoding='utf-8')
         self.translations = json.loads(translations_file.read())
         translations_file.close()
-        self.data = d2.d2data(self.translations, self.args.oauth)
+        self.data = d2.D2data(self.translations, self.args.oauth)
 
     def get_args(self):
         parser = argparse.ArgumentParser()

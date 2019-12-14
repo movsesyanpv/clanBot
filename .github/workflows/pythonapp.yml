@@ -32,5 +32,5 @@ jobs:
     - name: Test force update
       run: |
         python main.py -l ru -f -t "daily weekly spider xur"
-    - name: Try push repo
-      run: sh ./.github/scripts/encrypt_secret.sh; git add token.json; git commit -m "automatic token update"; git push || echo "meh"
+#    - name: Try push repo
+#      run: sh ./.github/scripts/encrypt_secret.sh; git add token.json; git commit -m "automatic token update"; git push || echo "meh"
