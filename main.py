@@ -69,8 +69,9 @@ class ClanBot(discord.Client):
         if 'xur' in upd_type:
             await self.universal_update(self.data.get_xur, 'xur', 345600)
             await self.update_history()
-        await self.logout()
-        await self.close()
+        if self.args.forceupdate:
+            await self.logout()
+            await self.close()
 
     async def on_ready(self):
         await self.data.token_update()
@@ -177,7 +178,9 @@ class ClanBot(discord.Client):
                     delta = finish-start
                     self.sched.add_job(self.pause_for, 'date', run_date=start, args=[message, delta], misfire_grace_time=600)
                 except Exception as e:
-                    await message.channel.send('exception `{}`\nUse following format:```plan maintenance\n<start time formatted %d-%m-%Y %H:%M %z>\n<finish time formatted %d-%m-%Y %H:%M %z>```'.format(str(e)))
+                    await message.channel.send('exception `{}`\nUse following format:```plan maintenance\n'
+                                               '<start time formatted %d-%m-%Y %H:%M %z>\n'
+                                               '<finish time formatted %d-%m-%Y %H:%M %z>```'.format(str(e)))
                 return
             return
 
