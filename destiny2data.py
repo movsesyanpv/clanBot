@@ -227,7 +227,7 @@ class D2data:
         modifier_list = soup.find('div', {'class': 'xur-location'})
         loc = modifier_list.find('h1', {'class': 'page-title'})
         location = loc.text.split(' >')
-        return location
+        return location[0]
 
     async def get_xur(self, lang):
         char_info = self.char_info
