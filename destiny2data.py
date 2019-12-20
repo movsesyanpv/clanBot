@@ -224,9 +224,9 @@ class D2data:
         url = 'https://wherethefuckisxur.com/'
         r = requests.get(url)
         soup = BeautifulSoup(r.text, features="html.parser")
-        modifier_list = soup.find('img', {'id': 'map'})
-        location_str = modifier_list.attrs['src']
-        location = location_str.replace('/images/', '').replace('_map_light.png', '').capitalize()
+        modifier_list = soup.find('div', {'class': 'xur-location'})
+        loc = modifier_list.find('h1', {'class': 'page-title'})
+        location = loc.text.split(' >')
         return location
 
     async def get_xur(self, lang):
