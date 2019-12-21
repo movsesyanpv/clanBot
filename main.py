@@ -81,9 +81,9 @@ class ClanBot(discord.Client):
         if self.args.forceupdate:
             await self.force_update(self.args.type)
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='50', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightfall820, 'nightfalls820', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
@@ -192,7 +192,9 @@ class ClanBot(discord.Client):
         if 'lfg' in message.content.lower().splitlines()[0] and self.user in message.mentions:
             content = message.content.splitlines()
             raid = lfg.LFG(message)
-            msg = "{}, {} {}\n{} {}\n{}".format(raid.the_role.mention, self.translations[self.args.lang]['lfg']['go'], raid.name, self.translations[self.args.lang]['lfg']['at'], raid.time.strftime("%d-%m-%Y %H:%M %Z"), raid.description)
+            msg = "{}, {} {}\n{} {}\n{}".format(raid.the_role.mention, self.translations[self.args.lang]['lfg']['go'],
+                                                raid.name, self.translations[self.args.lang]['lfg']['at'],
+                                                raid.time.strftime("%d-%m-%Y %H:%M %Z"), raid.description)
             out = await message.channel.send(msg)
             end_time = raid.time + timedelta(seconds=3600)
             await out.add_reaction('👌')
