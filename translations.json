@@ -24,7 +24,7 @@
             "go": "Предлагаю сходить в",
             "at": "Время:",
             "participants": "Участники",
-            "wanters": "Также хотят"
+            "wanters": "Желающие"
         },
         "xur": {
             "Earth": "Земля",
@@ -75,7 +75,7 @@
             "go": "Go",
             "at": "@",
             "participants": "Participants",
-            "wanters": "Also want to go"
+            "wanters": "Want to go"
         },
         "xur": {
             "Earth": "Earth",
