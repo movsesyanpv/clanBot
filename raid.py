@@ -1,47 +1,122 @@
 import discord
 import json
+import sqlite3
 from datetime import datetime
 
 class LFG():
-    group_id = 0
-    size = 0
-    name = ''
-    time = 0
-    description = ''
-    owner = ''
-    wanters = []
-    going = []
-    the_role = ''
-    announcement_msg = ''
+    conn = ''
 
-    def __init__(self, message, **options):
+    def __init__(self, **options):
         super().__init__(**options)
+        self.conn = sqlite3.connect('lfg.db')
+
+    def add(self, message):
         content = message.content.splitlines()
-        self.name = content[1]
-        self.time = datetime.strptime(content[3], "%d-%m-%Y %H:%M %z")
-        self.description = content[5]
-        self.size = int(content[7])
-        self.group_id = message.id
-        self.owner = message.author
-        self.announcement_msg = message
-        self.the_role = message.guild.get_role(message.guild.id)
+        name = content[1]
+        time = datetime.strptime(content[3], "%d-%m-%Y %H:%M %z")
+        description = content[5]
+        size = int(content[7])
+        group_id = message.id
+        owner = message.author.id
+        announcement_msg = message
+        the_role = message.guild.get_role(message.guild.id)
         for role in message.guild.roles:
             if role.name.lower() == 'guardian':
-                self.the_role = role
+                the_role = role
+        c = self.conn.cursor()
 
-    def set_id(self, new_id):
+        try:
+            c.execute('''CREATE TABLE raid
+                     (group_id int, size int, name text, time int, description text, owner int, wanters text, going text, the_role int, announcement_msg int)''')
+        except sqlite3.OperationalError:
+            pass
+
+        newlfg = [(group_id, size, name, datetime.timestamp(time), description, owner,'[]','[]', the_role.id, announcement_msg.id)]
+        c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?)",newlfg)
+        self.conn.commit()
+
+    def del_entry(self, group_id):
+        c = self.conn.cursor()
+        c.executemany('''DELETE FROM raid WHERE group_id LIKE (?)''', [(group_id,)])
+        self.conn.commit()
+
+    def set_id(self, new_id, group_id):
+        c = self.conn.cursor()
+        c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_id, group_id))
+        self.conn.commit()
         self.group_id = new_id
 
     def is_raid(self, message):
+        c = self.conn.cursor()
+        cell = c.execute('SELECT * FROM raid WHERE group_id=?', (message.id,)).fetchone()[0]
         return message.id == self.group_id
 
+    def get_cell(self, group_id, field):
+        c = self.conn.cursor()
+        cell = c.execute('SELECT {} FROM raid WHERE group_id=?'.format(field), (group_id,)).fetchone()[0]
+        return cell
+
+    def add_people(self, group_id, user):
+        c = self.conn.cursor()
+        goers = c.execute('SELECT going FROM raid WHERE group_id=?',(group_id,))
+        goers = eval(goers.fetchone()[0])
+
+        wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?',(group_id,))
+        wanters = eval(wanters.fetchone()[0])
+
+        size = self.get_cell(group_id, 'size')
+
+        if len(goers) < size:
+            if not user.mention in goers:
+                goers.append(user.mention)
+        else:
+            if not user.mention in wanters:
+                wanters.append(user.mention)
+
+        c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
+        c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
+        self.conn.commit()
+
+    def rm_people(self, group_id, user):
+        c = self.conn.cursor()
+        goers = c.execute('SELECT going FROM raid WHERE group_id=?',(group_id,))
+        goers = eval(goers.fetchone()[0])
+
+        wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?',(group_id,))
+        wanters = eval(wanters.fetchone()[0])
+
+        size = self.get_cell(group_id, 'size')
+
+        if user.mention in goers:
+            goers.pop(goers.index(user.mention))
+            if len(wanters) > 0:
+                goers.append(wanters[0])
+                wanters.pop(0)
+        if user.mention in wanters:
+            wanters.pop(wanters.index(user.mention))
+
+        c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
+        c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
+        self.conn.commit()
+
     async def update_group_msg(self, reaction, user, translations):
-        msg = "{}, {} {}\n{} {}\n{}\n{}: ".format(self.the_role.mention, translations['lfg']['go'], self.name, translations['lfg']['at'], self.time, self.description, translations['lfg']['participants'])
-        for participant in self.going:
+        c = self.conn.cursor()
+
+        role = reaction.message.guild.get_role(self.get_cell(reaction.message.id, 'the_role'))
+        name = self.get_cell(reaction.message.id, 'name')
+        time = datetime.fromtimestamp(self.get_cell(reaction.message.id, 'time'))
+        description = self.get_cell(reaction.message.id, 'description')
+        msg = "{}, {} {}\n{} {}\n{}\n{}: ".format(role.mention, translations['lfg']['go'], name, translations['lfg']['at'], time, description, translations['lfg']['participants'])
+        goers = c.execute('SELECT going FROM raid WHERE group_id=?',(reaction.message.id,))
+        goers = eval(goers.fetchone()[0])
+        wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?',(reaction.message.id,))
+        wanters = eval(wanters.fetchone()[0])
+
+        for participant in goers:
             msg = '{} {}'.format(msg, participant)
-        if len(self.wanters) > 0:
+        if len(wanters) > 0:
             msg = '{}\n{}: '.format(msg, translations['lfg']['wanters'])
-            for wanter in self.wanters:
+            for wanter in wanters:
                 msg = '{} {}'.format(msg, wanter)
         await reaction.message.edit(content=msg)
 

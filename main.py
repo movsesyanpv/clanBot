@@ -31,6 +31,8 @@ class ClanBot(discord.Client):
 
     channels = []
 
+    raid = ''
+
     args = ''
 
     translations = {}
@@ -42,6 +44,7 @@ class ClanBot(discord.Client):
         self.translations = json.loads(translations_file.read())
         translations_file.close()
         self.data = d2.d2data(self.translations, self.args.oauth)
+        self.raid = lfg.LFG()
 
     def get_args(self):
         parser = argparse.ArgumentParser()
@@ -118,39 +121,26 @@ class ClanBot(discord.Client):
         if user == self.user:
             return
 
-        for group in self.lfgs:
-            if group.is_raid(reaction.message):
-                if str(reaction) != '👌':
-                    return
-                if user.mention in group.going:
-                    group.going.pop(group.going.index(user.mention))
-                    if len(group.wanters) > 0:
-                        group.going.append(group.wanters[0])
-                        group.wanters.pop(0)
-                if user.mention in group.wanters:
-                    group.wanters.pop(group.wanters.index(user.mention))
-                await group.update_group_msg(reaction, user, self.translations[self.args.lang])
+        if self.raid.is_raid(reaction.message):
+            if str(reaction) != '👌':
+                return
+            self.raid.rm_people(reaction.message.id, user)
+            await self.raid.update_group_msg(reaction, user, self.translations[self.args.lang])
 
     async def on_reaction_add(self, reaction, user):
         if user == self.user:
             return
 
-        for group in self.lfgs:
-            if group.is_raid(reaction.message):
-                if str(reaction) == '❌' and user == group.owner:
-                    await reaction.message.delete()
-                    self.lfgs.pop(self.lfgs.index(group))
-                    self.sched.remove_job('{}_del'.format(group.group_id))
-                    print(self.lfgs)
-                    return
-                if str(reaction) != '👌':
-                    await reaction.remove(user)
-                    return
-                if len(group.going) < group.size:
-                    group.going.append(user.mention)
-                else:
-                    group.wanters.append(user.mention)
-                await group.update_group_msg(reaction, user, self.translations[self.args.lang])
+        if self.raid.is_raid(reaction.message):
+            if str(reaction) == '❌' and user.id == self.raid.get_cell(reaction.message.id, 'owner'):
+                self.raid.del_entry(reaction.message.id)
+                await reaction.message.delete()
+                return
+            if str(reaction) != '👌':
+                await reaction.remove(user)
+                return
+            self.raid.add_people(reaction.message.id, user)
+            await self.raid.update_group_msg(reaction, user, self.translations[self.args.lang])
 
     async def pause_for(self, message, delta):
         self.sched.pause()
@@ -194,16 +184,20 @@ class ClanBot(discord.Client):
 
         if 'lfg' in message.content.lower().splitlines()[0] and self.user in message.mentions:
             content = message.content.splitlines()
-            raid = lfg.LFG(message)
-            msg = "{}, {} {}\n{} {}\n{}".format(raid.the_role.mention, self.translations[self.args.lang]['lfg']['go'], raid.name, self.translations[self.args.lang]['lfg']['at'], raid.time.strftime("%d-%m-%Y %H:%M %Z"), raid.description)
+            self.raid.add(message)
+            role = message.guild.get_role(self.raid.get_cell(message.id, 'the_role'))
+            name = self.raid.get_cell(message.id, 'name')
+            time = datetime.fromtimestamp(self.raid.get_cell(message.id, 'time'))
+            description = self.raid.get_cell(message.id, 'description')
+            msg = "{}, {} {}\n{} {}\n{}".format(role.mention, self.translations[self.args.lang]['lfg']['go'], name, self.translations[self.args.lang]['lfg']['at'], time, description)
             out = await message.channel.send(msg)
-            end_time = raid.time + timedelta(seconds=3600)
+            end_time = time + timedelta(seconds=3600)
             await out.add_reaction('👌')
             await out.add_reaction('❌')
-            raid.group_id = out.id
-            self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(raid.group_id))
-            self.sched.add_job(raid.ping_going, 'date', run_date=raid.time, id='{}_ping'.format(raid.group_id))
-            self.lfgs.append(raid)
+            self.raid.set_id(out.id, message.id)
+            self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
+            self.sched.add_job(self.raid.ping_going, 'date', run_date=time, id='{}_ping'.format(out.id))
+            await message.delete()
 
         if 'regnotifier' in message.content.lower() and self.user in message.mentions:
             if await self.check_ownership(message):
