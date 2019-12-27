@@ -1,12 +1,6 @@
-import requests
 import json
-import time
-from urllib.parse import quote
-import sys
-import pydest
 import discord
 import argparse
-from bs4 import BeautifulSoup
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 import asyncio
@@ -43,7 +37,7 @@ class ClanBot(discord.Client):
         translations_file = open('translations.json', 'r', encoding='utf-8')
         self.translations = json.loads(translations_file.read())
         translations_file.close()
-        self.data = d2.d2data(self.translations, self.args.oauth)
+        self.data = d2.D2data(self.translations, self.args.oauth)
         self.raid = lfg.LFG()
 
     def get_args(self):
@@ -78,8 +72,9 @@ class ClanBot(discord.Client):
         if 'xur' in upd_type:
             await self.universal_update(self.data.get_xur, 'xur', 345600)
             await self.update_history()
-        await self.logout()
-        await self.close()
+        if self.args.forceupdate:
+            await self.logout()
+            await self.close()
 
     async def on_ready(self):
         await self.data.token_update()
@@ -89,9 +84,9 @@ class ClanBot(discord.Client):
         if self.args.forceupdate:
             await self.force_update(self.args.type)
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='50', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightfall820, 'nightfalls820', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
@@ -173,7 +168,9 @@ class ClanBot(discord.Client):
                     delta = finish-start
                     self.sched.add_job(self.pause_for, 'date', run_date=start, args=[message, delta], misfire_grace_time=600)
                 except Exception as e:
-                    await message.channel.send('exception `{}`\nUse following format:```plan maintenance\n<start time formatted %d-%m-%Y %H:%M %z>\n<finish time formatted %d-%m-%Y %H:%M %z>```'.format(str(e)))
+                    await message.channel.send('exception `{}`\nUse following format:```plan maintenance\n'
+                                               '<start time formatted %d-%m-%Y %H:%M %z>\n'
+                                               '<finish time formatted %d-%m-%Y %H:%M %z>```'.format(str(e)))
                 return
             return
 

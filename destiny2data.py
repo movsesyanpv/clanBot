@@ -2,15 +2,13 @@ import requests
 import json
 import time
 from urllib.parse import quote
-import sys
 import pydest
-import discord
-import argparse
 from bs4 import BeautifulSoup
 
 import oauth
 
-class d2data():
+
+class D2data:
     api_data_file = open('api.json', 'r')
     api_data = json.loads(api_data_file.read())
 
@@ -226,10 +224,10 @@ class d2data():
         url = 'https://wherethefuckisxur.com/'
         r = requests.get(url)
         soup = BeautifulSoup(r.text, features="html.parser")
-        modifier_list = soup.find('img', {'id': 'map'})
-        location_str = modifier_list.attrs['src']
-        location = location_str.replace('/images/', '').replace('_map_light.png', '').capitalize()
-        return location
+        modifier_list = soup.find('div', {'class': 'xur-location'})
+        loc = modifier_list.find('h1', {'class': 'page-title'})
+        location = loc.text.split(' >')
+        return location[0]
 
     async def get_xur(self, lang):
         char_info = self.char_info

@@ -3,6 +3,7 @@ import json
 import sqlite3
 from datetime import datetime
 
+
 class LFG():
     conn = ''
 
@@ -10,7 +11,7 @@ class LFG():
         super().__init__(**options)
         self.conn = sqlite3.connect('lfg.db')
 
-    def add(self, message):
+    def add(self, message: discord.Message):
         content = message.content.splitlines()
         name = content[1]
         time = datetime.strptime(content[3], "%d-%m-%Y %H:%M %z")
