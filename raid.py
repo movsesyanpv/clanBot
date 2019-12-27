@@ -49,8 +49,12 @@ class LFG():
 
     def is_raid(self, message):
         c = self.conn.cursor()
-        cell = c.execute('SELECT * FROM raid WHERE group_id=?', (message.id,)).fetchone()[0]
-        return message.id == self.group_id
+        cell = c.execute('SELECT group_id FROM raid WHERE group_id=?', (message.id,))
+        if not cell is None:
+            cell = cell.fetchone()[0]
+            return message.id == cell
+        else:
+            return False
 
     def get_cell(self, group_id, field):
         c = self.conn.cursor()
@@ -100,26 +104,28 @@ class LFG():
         c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
         self.conn.commit()
 
-    async def update_group_msg(self, reaction, user, translations):
+    async def update_group_msg(self, message, translations):
         c = self.conn.cursor()
 
-        role = reaction.message.guild.get_role(self.get_cell(reaction.message.id, 'the_role'))
-        name = self.get_cell(reaction.message.id, 'name')
-        time = datetime.fromtimestamp(self.get_cell(reaction.message.id, 'time'))
-        description = self.get_cell(reaction.message.id, 'description')
-        msg = "{}, {} {}\n{} {}\n{}\n{}: ".format(role.mention, translations['lfg']['go'], name, translations['lfg']['at'], time, description, translations['lfg']['participants'])
-        goers = c.execute('SELECT going FROM raid WHERE group_id=?',(reaction.message.id,))
+        role = message.guild.get_role(self.get_cell(message.id, 'the_role'))
+        name = self.get_cell(message.id, 'name')
+        time = datetime.fromtimestamp(self.get_cell(message.id, 'time'))
+        description = self.get_cell(message.id, 'description')
+        msg = "{}, {} {}\n{} {}\n{}: ".format(role.mention, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
+        goers = c.execute('SELECT going FROM raid WHERE group_id=?',(message.id,))
         goers = eval(goers.fetchone()[0])
-        wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?',(reaction.message.id,))
+        wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?',(message.id,))
         wanters = eval(wanters.fetchone()[0])
 
+        if len(goers) > 0:
+            msg = '{}\n{}'.format(msg, translations['lfg']['participants'])
         for participant in goers:
             msg = '{} {}'.format(msg, participant)
         if len(wanters) > 0:
             msg = '{}\n{}: '.format(msg, translations['lfg']['wanters'])
             for wanter in wanters:
                 msg = '{} {}'.format(msg, wanter)
-        await reaction.message.edit(content=msg)
+        await message.edit(content=msg)
 
     async def ping_going(self):
         msg = "time!\n"

@@ -112,30 +112,40 @@ class ClanBot(discord.Client):
             await message.channel.send(msg, embed=e)
         return is_owner
 
-    async def on_reaction_remove(self, reaction, user):
+    async def on_raw_reaction_remove(self, payload):
+        user = self.get_user(payload.user_id)
         if user == self.user:
             return
 
-        if self.raid.is_raid(reaction.message):
-            if str(reaction) != '👌':
-                return
-            self.raid.rm_people(reaction.message.id, user)
-            await self.raid.update_group_msg(reaction, user, self.translations[self.args.lang])
+        message = await self.fetch_channel(payload.channel_id)
+        message = await message.fetch_message(payload.message_id)
 
-    async def on_reaction_add(self, reaction, user):
-        if user == self.user:
+        if self.raid.is_raid(message):
+            if str(payload.emoji) != '👌':
+                return
+            self.raid.rm_people(message.id, user)
+            await self.raid.update_group_msg(message, self.translations[self.args.lang])
+
+    async def on_raw_reaction_add(self, payload):
+        if payload.user_id == self.user.id:
             return
 
-        if self.raid.is_raid(reaction.message):
-            if str(reaction) == '❌' and user.id == self.raid.get_cell(reaction.message.id, 'owner'):
-                self.raid.del_entry(reaction.message.id)
-                await reaction.message.delete()
+        message = await self.fetch_channel(payload.channel_id)
+        message = await message.fetch_message(payload.message_id)
+
+        if self.raid.is_raid(message):
+            user = self.get_user(payload.user_id)
+            if str(payload.emoji) == '❌' and payload.user_id == self.raid.get_cell(message.id, 'owner'):
+                self.raid.del_entry(message.id)
+                await message.delete()
                 return
-            if str(reaction) != '👌':
-                await reaction.remove(user)
-                return
-            self.raid.add_people(reaction.message.id, user)
-            await self.raid.update_group_msg(reaction, user, self.translations[self.args.lang])
+            if str(payload.emoji) != '👌':
+                for reaction in message.reactions:
+                    if str(reaction.emoji) == str(payload.emoji):
+                        await reaction.remove(user)
+                        return
+            self.raid.add_people(message.id, user)
+            await self.raid.update_group_msg(message, self.translations[self.args.lang])
 
     async def pause_for(self, message, delta):
         self.sched.pause()
