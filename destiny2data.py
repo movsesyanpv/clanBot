@@ -71,7 +71,7 @@ class D2data:
                 print("What platform are you playing on?")
                 print("1. Xbox")
                 print("2. Playstation")
-                print("3. Battle.net")
+                print("3. Steam")
                 platform = int(input())
                 if 3 >= platform >= 1:
                     valid_input = True
