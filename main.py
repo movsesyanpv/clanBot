@@ -112,6 +112,21 @@ class ClanBot(discord.Client):
             await message.channel.send(msg, embed=e)
         return is_owner
 
+    async def send_lfg_man(self, author):
+        if author.dm_channel is None:
+            await author.create_dm()
+
+        msg = 'This message was sent because of the incorrect command syntax.\n'
+        msg = '{}The correct syntax is:\n' \
+              '```{{bot mention}} lfg\n' \
+              '{{lfg name or planned activity}}\n' \
+              'time:\n{{time of the activity start}}\n' \
+              'additional info:\n' \
+              '{{description of the activity}}\n' \
+              'size:\n' \
+              '{{size of the group}}\n```'.format(msg)
+        await author.dm_channel.send(msg)
+
     async def on_raw_reaction_remove(self, payload):
         user = self.get_user(payload.user_id)
         if user == self.user:
@@ -191,6 +206,10 @@ class ClanBot(discord.Client):
 
         if 'lfg' in message.content.lower().splitlines()[0] and self.user in message.mentions:
             content = message.content.splitlines()
+            if len(content) < 7:
+                await self.send_lfg_man(message.author)
+                await message.delete()
+                return
             self.raid.add(message)
             role = message.guild.get_role(self.raid.get_cell(message.id, 'the_role'))
             name = self.raid.get_cell(message.id, 'name')

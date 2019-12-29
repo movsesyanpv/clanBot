@@ -45,12 +45,11 @@ class LFG():
         c = self.conn.cursor()
         c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_id, group_id))
         self.conn.commit()
-        self.group_id = new_id
 
     def is_raid(self, message):
         c = self.conn.cursor()
         cell = c.execute('SELECT group_id FROM raid WHERE group_id=?', (message.id,))
-        if not cell is None:
+        if cell.fetchone() is not None:
             cell = cell.fetchone()[0]
             return message.id == cell
         else:
