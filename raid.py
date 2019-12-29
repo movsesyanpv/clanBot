@@ -126,10 +126,3 @@ class LFG():
             for wanter in wanters:
                 msg = '{} {}'.format(msg, wanter)
         await message.edit(content=msg)
-
-    async def ping_going(self):
-        msg = "time!\n"
-        announcement = await self.announcement_msg.channel.fetch_message(self.group_id)
-        for participant in self.going:
-            msg = '{} {}'.format(msg, participant)
-        await announcement.channel.send(msg, delete_after=3600)

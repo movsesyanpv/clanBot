@@ -203,7 +203,6 @@ class ClanBot(discord.Client):
             await out.add_reaction('❌')
             self.raid.set_id(out.id, message.id)
             self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
-            self.sched.add_job(self.raid.ping_going, 'date', run_date=time, id='{}_ping'.format(out.id))
             await message.delete()
 
         if 'regnotifier' in message.content.lower() and self.user in message.mentions:
