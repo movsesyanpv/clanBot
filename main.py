@@ -206,7 +206,7 @@ class ClanBot(discord.Client):
 
         if 'lfg' in message.content.lower().splitlines()[0] and self.user in message.mentions:
             content = message.content.splitlines()
-            if len(content) < 7:
+            if len(content) < 8:
                 await self.send_lfg_man(message.author)
                 await message.delete()
                 return
@@ -223,6 +223,7 @@ class ClanBot(discord.Client):
             self.raid.set_id(out.id, message.id)
             self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
             await message.delete()
+            return
 
         if 'regnotifier' in message.content.lower() and self.user in message.mentions:
             if await self.check_ownership(message):

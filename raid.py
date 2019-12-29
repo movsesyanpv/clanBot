@@ -14,7 +14,11 @@ class LFG():
     def add(self, message: discord.Message):
         content = message.content.splitlines()
         name = content[1]
-        time = datetime.strptime(content[3], "%d-%m-%Y %H:%M %z")
+        try:
+            time = datetime.strptime(content[3], "%d-%m-%Y %H:%M %z")
+        except ValueError:
+            time = datetime.now().strftime("%d-%m-%Y %H:%M")
+            time = datetime.strptime(time, "%d-%m-%Y %H:%M")
         description = content[5]
         size = int(content[7])
         group_id = message.id
@@ -49,11 +53,12 @@ class LFG():
     def is_raid(self, message):
         c = self.conn.cursor()
         cell = c.execute('SELECT group_id FROM raid WHERE group_id=?', (message.id,))
-        if cell.fetchone() is not None:
-            cell = cell.fetchone()[0]
-            return message.id == cell
-        else:
+        cell = cell.fetchall()
+        if len(cell) == 0:
             return False
+        else:
+            cell = cell[0]
+            return message.id == cell[0]
 
     def get_cell(self, group_id, field):
         c = self.conn.cursor()
