@@ -120,7 +120,7 @@ class ClanBot(discord.Client):
         msg = '{}The correct syntax is:\n' \
               '```{{bot mention}} lfg\n' \
               '{{lfg name or planned activity}}\n' \
-              'time:\n{{time of the activity start}}\n' \
+              'time:\n{{time of the activity start, format %d-%m-%Y %H:%M %z}}\n' \
               'additional info:\n' \
               '{{description of the activity}}\n' \
               'size:\n' \
