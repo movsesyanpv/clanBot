@@ -26,7 +26,8 @@
             "participants": "Участники:",
             "wanters": "Желающие:",
             "newBlood": "Появились новые желающие:",
-            "gotcha": "Эмошку увидел."
+            "gotcha": "Эмошку увидел.",
+            "syntax": "Это сообщение было отправлено из-за неверного синтаксиса команды.\nСинтаксис команды `lfg` следующий:\n```{{упоминание бота}} lfg\n{{название группы или запланированной активности}}\nВремя:\n{{время начала в формате %d-%m-%Y %H:%M %z}}\nДополнительная информация:\n{{описание активности и/или задач}}\nРазмер:\n{{размер группы}}\n{{тип формирования состава (basic или manual)}}\n````%d-%m-%Y %H:%M %z` - формат времени, в котором полночь по МСК 1 февраля 2000 года будет записана, как `01-02-2000 00:00 +0300`"
         },
         "xur": {
             "Earth": "Земля",
@@ -79,7 +80,8 @@
             "participants": "Participants:",
             "wanters": "Want to go:",
             "newBlood": "Yo, there are new guys:",
-            "gotcha": "Got your emote."
+            "gotcha": "Got your emote.",
+            "syntax": "This message was sent because of the incorrect command syntax.\nThe correct syntax is:\n```{{bot mention}} lfg\n{{lfg name or planned activity}}\ntime:\n{{time of the activity start, format %d-%m-%Y %H:%M %z}}\nadditional info:\n{{description of the activity}}\nsize:\n{{size of the group}}\n{{type of lfg (basic or manual)}}\n````%d-%m-%Y %H:%M %z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00 +0300`"
         },
         "xur": {
             "Earth": "Earth",

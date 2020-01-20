@@ -116,16 +116,7 @@ class ClanBot(discord.Client):
         if author.dm_channel is None:
             await author.create_dm()
 
-        msg = 'This message was sent because of the incorrect command syntax.\n'
-        msg = '{}The correct syntax is:\n' \
-              '```{{bot mention}} lfg\n' \
-              '{{lfg name or planned activity}}\n' \
-              'time:\n{{time of the activity start, format %d-%m-%Y %H:%M %z}}\n' \
-              'additional info:\n' \
-              '{{description of the activity}}\n' \
-              'size:\n' \
-              '{{size of the group}}\n' \
-              '{{type of lfg (basic or manual)}}\n```'.format(msg)
+        msg = self.translations[self.args.lang]['lfg']['syntax']
         await author.dm_channel.send(msg)
 
     async def on_raw_reaction_remove(self, payload):
@@ -142,7 +133,7 @@ class ClanBot(discord.Client):
         if self.raid.is_raid(message):
             if str(payload.emoji) != '👌':
                 return
-            self.raid.rm_people(message.id, user.display_name)
+            self.raid.rm_people(message.id, user)
             if user.dm_channel is None:
                 await user.create_dm()
             await user.dm_channel.send(self.translations[self.args.lang]['lfg']['gotcha'])
@@ -183,7 +174,7 @@ class ClanBot(discord.Client):
                         return
             owner = self.raid.get_cell('group_id', message.id, 'owner')
             owner = self.get_user(owner)
-            self.raid.add_people(message.id, user.display_name)
+            self.raid.add_people(message.id, user)
             if user.dm_channel is None:
                 await user.create_dm()
             await user.dm_channel.send(self.translations[self.args.lang]['lfg']['gotcha'])
