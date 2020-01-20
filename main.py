@@ -147,10 +147,19 @@ class ClanBot(discord.Client):
 
         message = await self.fetch_channel(payload.channel_id)
         message = await message.fetch_message(payload.message_id)
+        user = self.get_user(payload.user_id)
 
         if self.raid.is_raid(message):
-            user = self.get_user(payload.user_id)
-            if str(payload.emoji) == '❌' and payload.user_id == self.raid.get_cell(message.id, 'owner'):
+            mode = self.raid.get_cell('group_id', message.id, 'group_mode')
+            owner = self.get_user(self.raid.get_cell('group_id', message.id, 'owner'))
+            if str(payload.emoji) == '❌' and payload.user_id == owner.id:
+                if mode == 'manual':
+                    dm_id = self.raid.get_cell('group_id', message.id, 'dm_message')
+                    if owner.dm_channel is None:
+                        await owner.create_dm()
+                    if dm_id != '0':
+                        dm_message = await owner.dm_channel.fetch_message(dm_id)
+                        await dm_message.delete()
                 self.raid.del_entry(message.id)
                 await message.delete()
                 return
@@ -159,8 +168,27 @@ class ClanBot(discord.Client):
                     if str(reaction.emoji) == str(payload.emoji):
                         await reaction.remove(user)
                         return
+            owner = self.raid.get_cell('group_id', message.id, 'owner')
+            owner = self.get_user(owner)
             self.raid.add_people(message.id, user)
-            await self.raid.update_group_msg(message, self.translations[self.args.lang])
+            if mode == 'manual':
+                await self.raid.dm_new_people(message.id, owner)
+            if mode == 'basic':
+                await self.raid.update_group_msg(message, self.translations[self.args.lang])
+            return
+
+        raid_dm = self.raid.get_cell('dm_message', message.id, 'dm_message')
+
+        if raid_dm == str(message.id):
+            emojis = ["{}\N{COMBINING ENCLOSING KEYCAP}".format(num) for num in range(1, 7)]
+            if str(payload.emoji) in emojis:
+                number = emojis.index(str(payload.emoji))
+                lfg_message = self.raid.get_cell('dm_message', raid_dm, 'group_id')
+                channel = self.raid.get_cell('group_id', lfg_message, 'lfg_channel')
+                message = await self.fetch_channel(channel)
+                message = await message.fetch_message(lfg_message)
+                await self.raid.add_going(lfg_message, number)
+                await self.raid.update_group_msg(message, self.translations[self.args.lang])
 
     async def pause_for(self, message, delta):
         self.sched.pause()
@@ -211,10 +239,10 @@ class ClanBot(discord.Client):
                 await message.delete()
                 return
             self.raid.add(message)
-            role = message.guild.get_role(self.raid.get_cell(message.id, 'the_role'))
-            name = self.raid.get_cell(message.id, 'name')
-            time = datetime.fromtimestamp(self.raid.get_cell(message.id, 'time'))
-            description = self.raid.get_cell(message.id, 'description')
+            role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'the_role'))
+            name = self.raid.get_cell('group_id', message.id, 'name')
+            time = datetime.fromtimestamp(self.raid.get_cell('group_id', message.id, 'time'))
+            description = self.raid.get_cell('group_id', message.id, 'description')
             msg = "{}, {} {}\n{} {}\n{}".format(role.mention, self.translations[self.args.lang]['lfg']['go'], name, self.translations[self.args.lang]['lfg']['at'], time, description)
             out = await message.channel.send(msg)
             end_time = time + timedelta(seconds=3600)

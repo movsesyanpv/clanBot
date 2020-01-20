@@ -23,7 +23,9 @@ class LFG():
         size = int(content[7])
         group_id = message.id
         owner = message.author.id
-        announcement_msg = message
+        group_mode = 'basic'
+        if len(content) >= 9:
+            group_mode = content[8]
         the_role = message.guild.get_role(message.guild.id)
         for role in message.guild.roles:
             if role.name.lower() == 'guardian':
@@ -32,12 +34,15 @@ class LFG():
 
         try:
             c.execute('''CREATE TABLE raid
-                     (group_id int, size int, name text, time int, description text, owner int, wanters text, going text, the_role int, announcement_msg int)''')
+                     (group_id integer, size integer, name text, time integer, description text, owner integer, 
+                     wanters text, going text, the_role integer, group_mode text, dm_message text, 
+                     lfg_channel integer)''')
         except sqlite3.OperationalError:
             pass
 
-        newlfg = [(group_id, size, name, datetime.timestamp(time), description, owner,'[]','[]', the_role.id, announcement_msg.id)]
-        c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?)",newlfg)
+        newlfg = [(group_id, size, name, datetime.timestamp(time), description,
+                   owner, '[]', '[]', the_role.id, group_mode, 0, message.channel.id)]
+        c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
     def del_entry(self, group_id):
@@ -60,22 +65,26 @@ class LFG():
             cell = cell[0]
             return message.id == cell[0]
 
-    def get_cell(self, group_id, field):
+    def get_cell(self, search_field, group_id, field):
         c = self.conn.cursor()
-        cell = c.execute('SELECT {} FROM raid WHERE group_id=?'.format(field), (group_id,)).fetchone()[0]
-        return cell
+        cell = c.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,)).fetchone()
+        if len(cell) > 0:
+            return cell[0]
+        else:
+            return None
 
     def add_people(self, group_id, user):
         c = self.conn.cursor()
-        goers = c.execute('SELECT going FROM raid WHERE group_id=?',(group_id,))
+        goers = c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
         goers = eval(goers.fetchone()[0])
 
-        wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?',(group_id,))
+        wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
         wanters = eval(wanters.fetchone()[0])
 
-        size = self.get_cell(group_id, 'size')
+        size = self.get_cell('group_id', group_id, 'size')
+        group_mode = self.get_cell('group_id', group_id, 'group_mode')
 
-        if len(goers) < size:
+        if len(goers) < size and group_mode == 'basic':
             if not user.mention in goers:
                 goers.append(user.mention)
         else:
@@ -94,7 +103,7 @@ class LFG():
         wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?',(group_id,))
         wanters = eval(wanters.fetchone()[0])
 
-        size = self.get_cell(group_id, 'size')
+        size = self.get_cell('group_id', group_id, 'size')
 
         if user.mention in goers:
             goers.pop(goers.index(user.mention))
@@ -111,11 +120,12 @@ class LFG():
     async def update_group_msg(self, message, translations):
         c = self.conn.cursor()
 
-        role = message.guild.get_role(self.get_cell(message.id, 'the_role'))
-        name = self.get_cell(message.id, 'name')
-        time = datetime.fromtimestamp(self.get_cell(message.id, 'time'))
-        description = self.get_cell(message.id, 'description')
-        msg = "{}, {} {}\n{} {}\n{}: ".format(role.mention, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
+        role = message.guild.get_role(self.get_cell('group_id', message.id, 'the_role'))
+        name = self.get_cell('group_id', message.id, 'name')
+        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
+        description = self.get_cell('group_id', message.id, 'description')
+        msg = "{}, {} {}\n{} {}\n{}: ".\
+            format(role.mention, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
         goers = c.execute('SELECT going FROM raid WHERE group_id=?',(message.id,))
         goers = eval(goers.fetchone()[0])
         wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?',(message.id,))
@@ -130,3 +140,57 @@ class LFG():
             for wanter in wanters:
                 msg = '{} {}'.format(msg, wanter)
         await message.edit(content=msg)
+
+    async def dm_new_people(self, group_id, owner):
+        c = self.conn.cursor()
+
+        wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
+        wanters = eval(wanters.fetchone()[0])
+
+        dm_id = self.get_cell('group_id', group_id, 'dm_message')
+
+        emoji = ["{}\N{COMBINING ENCLOSING KEYCAP}".format(num) for num in range(1, 7)]
+
+        msg = 'Yo, there are new guys'
+        if owner.dm_channel is None:
+            await owner.create_dm()
+        if dm_id == 0:
+            dm_message = await owner.dm_channel.send(msg)
+        else:
+            dm_message = await owner.dm_channel.fetch_message(dm_id)
+
+        if len(wanters) > 0:
+            i = 0
+            for wanter in wanters:
+                if i < 6:
+                    msg = '{}\n{}. {}'.format(msg, emoji[i], wanter)
+                    await dm_message.edit(content=msg)
+                    await dm_message.add_reaction(emoji[i])
+                    i = i + 1
+
+        c.execute('''UPDATE raid SET dm_message=? WHERE group_id=?''', (dm_message.id, group_id))
+        self.conn.commit()
+
+    async def add_going(self, group_id, number):
+        c = self.conn.cursor()
+        goers = c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,)).fetchone()
+
+        if len(goers) > 0:
+            goers = eval(goers[0])
+        else:
+            goers = []
+
+        wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
+        wanters = eval(wanters.fetchone()[0])
+
+        size = self.get_cell('group_id', group_id, 'size')
+        group_mode = self.get_cell('group_id', group_id, 'group_mode')
+
+        if size > len(goers):
+            if not wanters[number] in goers:
+                goers.append(wanters[number])
+                wanters.pop(number)
+
+        c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
+        c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
+        self.conn.commit()
