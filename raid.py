@@ -35,7 +35,7 @@ class LFG():
         try:
             c.execute('''CREATE TABLE raid
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
-                     wanters text, going text, the_role integer, group_mode text, dm_message text, 
+                     wanters text, going text, the_role integer, group_mode text, dm_message integer, 
                      lfg_channel integer)''')
         except sqlite3.OperationalError:
             pass
@@ -85,11 +85,11 @@ class LFG():
         group_mode = self.get_cell('group_id', group_id, 'group_mode')
 
         if len(goers) < size and group_mode == 'basic':
-            if not user.mention in goers:
-                goers.append(user.mention)
+            if not user in goers:
+                goers.append(user)
         else:
-            if not user.mention in wanters:
-                wanters.append(user.mention)
+            if not user in wanters:
+                wanters.append(user)
 
         c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
         c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
@@ -105,13 +105,13 @@ class LFG():
 
         size = self.get_cell('group_id', group_id, 'size')
 
-        if user.mention in goers:
-            goers.pop(goers.index(user.mention))
+        if user in goers:
+            goers.pop(goers.index(user))
             if len(wanters) > 0:
                 goers.append(wanters[0])
                 wanters.pop(0)
-        if user.mention in wanters:
-            wanters.pop(wanters.index(user.mention))
+        if user in wanters:
+            wanters.pop(wanters.index(user))
 
         c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
         c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
@@ -124,7 +124,7 @@ class LFG():
         name = self.get_cell('group_id', message.id, 'name')
         time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
         description = self.get_cell('group_id', message.id, 'description')
-        msg = "{}, {} {}\n{} {}\n{}: ".\
+        msg = "{}, {} {}\n{} {}\n{}".\
             format(role.mention, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
         goers = c.execute('SELECT going FROM raid WHERE group_id=?',(message.id,))
         goers = eval(goers.fetchone()[0])
@@ -133,15 +133,52 @@ class LFG():
 
         if len(goers) > 0:
             msg = '{}\n{}'.format(msg, translations['lfg']['participants'])
-        for participant in goers:
-            msg = '{} {}'.format(msg, participant)
-        if len(wanters) > 0:
-            msg = '{}\n{}: '.format(msg, translations['lfg']['wanters'])
-            for wanter in wanters:
-                msg = '{} {}'.format(msg, wanter)
+            for participant in goers:
+                msg = '{} {},'.format(msg, participant)
+            msg = '{}.'.format(msg[:-1])
+        dm_id = self.get_cell('group_id', message.id, 'dm_message')
+        if dm_id == 0:
+	        if len(wanters) > 0:
+	            msg = '{}\n{} '.format(msg, translations['lfg']['wanters'])
+	            for wanter in wanters:
+	                msg = '{} {},'.format(msg, wanter)
+	            msg = '{}.'.format(msg[:-1])
         await message.edit(content=msg)
 
-    async def dm_new_people(self, group_id, owner):
+    async def upd_dm(self, owner, translations):
+        c = self.conn.cursor()
+
+        wanters = c.execute('SELECT wanters FROM raid WHERE owner=?', (owner.id,))
+        wanters = eval(wanters.fetchone()[0])
+
+        dm_id = self.get_cell('owner', owner.id, 'dm_message')
+
+        emoji = ["{}\N{COMBINING ENCLOSING KEYCAP}".format(num) for num in range(1, 7)]
+
+        msg = translations['lfg']['newBlood']
+        if owner.dm_channel is None:
+            await owner.create_dm()
+        if dm_id == 0:
+            dm_message = await owner.dm_channel.send(msg)
+        else:
+            dm_message = await owner.dm_channel.fetch_message(dm_id)
+
+        await dm_message.delete()
+        dm_id = 0
+        if len(wanters) > 0:
+            i = 0
+            for wanter in wanters:
+                if i < 6:
+                    msg = '{}\n{}. {}'.format(msg, emoji[i], wanter)
+                    dm_message = await owner.dm_channel.send(msg)
+                    dm_id = dm_message.id
+                    await dm_message.add_reaction(emoji[i])
+                    i = i + 1
+        
+        c.execute('''UPDATE raid SET dm_message=? WHERE owner=?''', (dm_id, owner.id))
+        self.conn.commit()
+
+    async def dm_new_people(self, group_id, owner, translations):
         c = self.conn.cursor()
 
         wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
@@ -151,7 +188,7 @@ class LFG():
 
         emoji = ["{}\N{COMBINING ENCLOSING KEYCAP}".format(num) for num in range(1, 7)]
 
-        msg = 'Yo, there are new guys'
+        msg = translations['lfg']['newBlood']
         if owner.dm_channel is None:
             await owner.create_dm()
         if dm_id == 0:

@@ -23,8 +23,10 @@
         "lfg": {
             "go": "Предлагаю сходить в",
             "at": "Время:",
-            "participants": "Участники",
-            "wanters": "Желающие"
+            "participants": "Участники:",
+            "wanters": "Желающие:",
+            "newBlood": "Появились новые желающие:",
+            "gotcha": "Эмошку увидел."
         },
         "xur": {
             "Earth": "Земля",
@@ -74,8 +76,10 @@
         "lfg": {
             "go": "Go",
             "at": "@",
-            "participants": "Participants",
-            "wanters": "Want to go"
+            "participants": "Participants:",
+            "wanters": "Want to go:",
+            "newBlood": "Yo, there are new guys:",
+            "gotcha": "Got your emote."
         },
         "xur": {
             "Earth": "Earth",
