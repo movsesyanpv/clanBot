@@ -124,7 +124,8 @@ class ClanBot(discord.Client):
               'additional info:\n' \
               '{{description of the activity}}\n' \
               'size:\n' \
-              '{{size of the group}}\n```'.format(msg)
+              '{{size of the group}}\n' \
+              '{{type of lfg (basic or manual)}}\n```'.format(msg)
         await author.dm_channel.send(msg)
 
     async def on_raw_reaction_remove(self, payload):
