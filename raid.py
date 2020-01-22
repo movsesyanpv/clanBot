@@ -26,22 +26,29 @@ class LFG():
         group_mode = 'basic'
         if len(content) >= 9:
             group_mode = content[8]
-        the_role = message.guild.get_role(message.guild.id)
+        the_role = []
         for role in message.guild.roles:
             if role.name.lower() == 'guardian':
-                the_role = role
+                the_role.append(role)
+            if role.name.lower() == 'recruit':
+                the_role.append(role)
+        if len(the_role) == 0:
+            the_role.append(message.guild.get_role(message.guild.id))
+        the_role_str = the_role[0].mention
+        for i in the_role[1:]:
+            the_role_str = "{}, {}".format(the_role_str, i.mention)
         c = self.conn.cursor()
 
         try:
             c.execute('''CREATE TABLE raid
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
-                     wanters text, going text, the_role integer, group_mode text, dm_message integer, 
+                     wanters text, going text, the_role text, group_mode text, dm_message integer, 
                      lfg_channel integer, want_dm text)''')
         except sqlite3.OperationalError:
             pass
 
         newlfg = [(group_id, size, name, datetime.timestamp(time), description,
-                   owner, '[]', '[]', the_role.id, group_mode, 0, message.channel.id, '[]')]
+                   owner, '[]', '[]', the_role_str, group_mode, 0, message.channel.id, '[]')]
         c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
@@ -132,12 +139,12 @@ class LFG():
     async def update_group_msg(self, message, translations):
         c = self.conn.cursor()
 
-        role = message.guild.get_role(self.get_cell('group_id', message.id, 'the_role'))
+        role = self.get_cell('group_id', message.id, 'the_role')
         name = self.get_cell('group_id', message.id, 'name')
         time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
         description = self.get_cell('group_id', message.id, 'description')
         msg = "{}, {} {}\n{} {}\n{}".\
-            format(role.mention, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
+            format(role, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
         goers = c.execute('SELECT going FROM raid WHERE group_id=?',(message.id,))
         goers = eval(goers.fetchone()[0])
         wanters = c.execute('SELECT wanters FROM raid WHERE group_id=?',(message.id,))
@@ -170,9 +177,7 @@ class LFG():
         msg = translations['lfg']['newBlood']
         if owner.dm_channel is None:
             await owner.create_dm()
-        if dm_id == 0:
-            dm_message = await owner.dm_channel.send(msg)
-        else:
+        if dm_id != 0:
             dm_message = await owner.dm_channel.fetch_message(dm_id)
 
         await dm_message.delete()

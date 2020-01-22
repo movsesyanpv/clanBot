@@ -249,11 +249,11 @@ class ClanBot(discord.Client):
                 await message.delete()
                 return
             self.raid.add(message)
-            role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'the_role'))
+            role = self.raid.get_cell('group_id', message.id, 'the_role')
             name = self.raid.get_cell('group_id', message.id, 'name')
             time = datetime.fromtimestamp(self.raid.get_cell('group_id', message.id, 'time'))
             description = self.raid.get_cell('group_id', message.id, 'description')
-            msg = "{}, {} {}\n{} {}\n{}".format(role.mention, self.translations[self.args.lang]['lfg']['go'], name, self.translations[self.args.lang]['lfg']['at'], time, description)
+            msg = "{}, {} {}\n{} {}\n{}".format(role, self.translations[self.args.lang]['lfg']['go'], name, self.translations[self.args.lang]['lfg']['at'], time, description)
             out = await message.channel.send(msg)
             end_time = time + timedelta(seconds=3600)
             await out.add_reaction('👌')
