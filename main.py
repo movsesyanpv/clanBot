@@ -4,6 +4,7 @@ import argparse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 import asyncio
+from hashids import Hashids
 # import logging
 
 import raid as lfg
@@ -141,7 +142,7 @@ class ClanBot(discord.Client):
             if self.raid.get_cell('group_id', message.id, 'group_mode') == 'manual':
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
-                await self.raid.upd_dm(owner, self.translations[self.args.lang])
+                await self.raid.upd_dm(owner, message.id, self.translations[self.args.lang])
 
     async def on_raw_reaction_add(self, payload):
         if payload.user_id == self.user.id:
@@ -198,7 +199,7 @@ class ClanBot(discord.Client):
                 await self.raid.update_group_msg(message, self.translations[self.args.lang])
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
-                await self.raid.upd_dm(owner, self.translations[self.args.lang])
+                await self.raid.upd_dm(owner, lfg_message, self.translations[self.args.lang])
 
     async def pause_for(self, message, delta):
         self.sched.pause()
@@ -209,6 +210,10 @@ class ClanBot(discord.Client):
 
     async def on_message(self, message):
         if message.author == self.user:
+            return
+
+        if 'lfglist' in message.content.lower() and str(message.channel.type) == 'private':
+            await self.raid.dm_lfgs(message.author)
             return
 
         if 'stop' in message.content.lower() and (self.user in message.mentions or str(message.channel.type) == 'private'):
@@ -238,8 +243,20 @@ class ClanBot(discord.Client):
             return
 
         if str(message.channel.type) == 'private':
-            msg = 'Can\'t do anything a private chat, {}'.format(message.author.mention)
+            msg = 'Can\'t do this a private chat, {}'.format(message.author.mention)
             await message.channel.send(msg)
+            return
+
+        if 'transfer lfg' in message.content.lower() and self.user in message.mentions:
+            text = message.content.split()
+            hashids = Hashids()
+            for word in text:
+                group_id = hashids.decode(word)
+                if len(group_id) > 0:
+                    old_lfg = self.raid.get_cell('group_id', group_id[0], 'lfg_channel')
+                    old_lfg = self.get_channel(old_lfg)
+                    old_lfg = await old_lfg.fetch_message(group_id[0])
+                    await self.raid.transfer(message, old_lfg)
             return
 
         if 'lfg' in message.content.lower().splitlines()[0] and self.user in message.mentions:
