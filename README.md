@@ -68,19 +68,4 @@ To begin receiving Destiny 2 reset information a notifier channel should be regi
 
 # LFG
 
-LFG creation message has the following syntax:
-
-```
-{bot mention} lfg
-{lfg name or planned activity}
-time:
-{time of the activity start}
-additional info:
-{description of the activity}
-size:
-{size of the group}
-```
-
-Note, that "time:", "additional info:" and "size:" lines are just for readability purposes but are required to be present in some way, e.g. the line "time:" can be anything but the time itself must be on the fourth line of the message. The description should not have any line breaks inside.
-
-When the time comes, the bot will mention every participant and none from reserves. The posts will be automatically deleted after an hour.
+Check [the LFG manual](lfg.md) for instructions.

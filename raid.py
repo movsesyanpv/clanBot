@@ -17,19 +17,33 @@ class LFG():
 
     def add(self, message: discord.Message):
         content = message.content.splitlines()
-        name = content[1]
-        try:
-            time = datetime.strptime(content[3], "%d-%m-%Y %H:%M %z")
-        except ValueError:
-            time = datetime.now().strftime("%d-%m-%Y %H:%M")
-            time = datetime.strptime(time, "%d-%m-%Y %H:%M")
-        description = content[5]
-        size = int(content[7])
+
+        group_mode = 'basic'
+        name = ''
+        size = 0
+        time = datetime.now().strftime("%d-%m-%Y %H:%M")
+        time = datetime.strptime(time, "%d-%m-%Y %H:%M")
+        description = ''
+        for string in content:
+            str_arg = string.split(':')
+            if len(str_arg) < 2:
+                continue
+            if 'name:' in string or '-n:' in string:
+                name = str_arg[1].lstrip()
+            if 'time:' in string or '-t:' in string:
+                try:
+                    time = datetime.strptime(str_arg[1], "%d-%m-%Y %H:%M %z")
+                except ValueError:
+                    time = datetime.now().strftime("%d-%m-%Y %H:%M")
+                    time = datetime.strptime(time, "%d-%m-%Y %H:%M")
+            if 'description:' in string or '-d:' in string:
+                description = str_arg[1].lstrip()
+            if 'size:' in string or '-s:' in string:
+                size = int(str_arg[1])
+            if 'mode:' in string or '-m:' in string:
+                group_mode = str_arg[1].lstrip()
         group_id = message.id
         owner = message.author.id
-        group_mode = 'basic'
-        if len(content) >= 9:
-            group_mode = content[8]
         the_role = []
         for role in message.guild.roles:
             if role.name.lower() == 'guardian':
@@ -64,14 +78,14 @@ class LFG():
         self.c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_id, group_id))
         self.conn.commit()
 
-    def is_raid(self, message):
-        cell = self.c.execute('SELECT group_id FROM raid WHERE group_id=?', (message,))
+    def is_raid(self, message_id):
+        cell = self.c.execute('SELECT group_id FROM raid WHERE group_id=?', (message_id,))
         cell = cell.fetchall()
         if len(cell) == 0:
             return False
         else:
             cell = cell[0]
-            return message == cell[0]
+            return message_id == cell[0]
 
     def get_cell(self, search_field, group_id, field):
         cell = self.c.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,)).fetchone()

@@ -273,7 +273,7 @@ class ClanBot(discord.Client):
 
         if 'lfg' in message.content.lower().splitlines()[0] and self.user in message.mentions:
             content = message.content.splitlines()
-            if len(content) < 8:
+            if '-man' in message.content.lower():
                 await self.send_lfg_man(message.author)
                 await message.delete()
                 return
