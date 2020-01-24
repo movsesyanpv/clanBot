@@ -5,6 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 import asyncio
 from hashids import Hashids
+import sqlite3
 # import logging
 
 import raid as lfg
@@ -17,7 +18,8 @@ import destiny2data as d2
 class ClanBot(discord.Client):
 
     sched = AsyncIOScheduler(timezone='UTC')
-    curr_hist = False
+    hist_db = ''
+    hist_cursor = ''
 
     api_data_file = open('api.json', 'r')
     api_data = json.loads(api_data_file.read())
@@ -40,6 +42,8 @@ class ClanBot(discord.Client):
         translations_file.close()
         self.data = d2.D2data(self.translations, self.args.oauth)
         self.raid = lfg.LFG()
+        self.hist_db = sqlite3.connect('history.db')
+        self.hist_cursor = self.hist_db.cursor()
 
     def get_args(self):
         parser = argparse.ArgumentParser()
@@ -59,20 +63,16 @@ class ClanBot(discord.Client):
             await self.universal_update(self.data.get_forge, 'forge', 86400)
             await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400)
             await self.universal_update(self.data.get_reckoning_modifiers, 'reckoning', 86400)
-            await self.update_history()
         if 'weekly' in upd_type:
             await self.universal_update(self.data.get_nightfall820, 'nightfalls820', 604800)
             await self.universal_update(self.data.get_ordeal, 'ordeal', 604800)
             await self.universal_update(self.data.get_nightmares, 'nightmares', 604800)
             await self.universal_update(self.data.get_reckoning_boss, 'reckoningboss', 604800)
             await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800)
-            await self.update_history()
         if 'spider' in upd_type:
             await self.universal_update(self.data.get_spider, 'spider', 86400)
-            await self.update_history()
         if 'xur' in upd_type:
             await self.universal_update(self.data.get_xur, 'xur', 345600)
-            await self.update_history()
         if self.args.forceupdate:
             await self.logout()
             await self.close()
@@ -98,7 +98,6 @@ class ClanBot(discord.Client):
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
         self.sched.add_job(self.universal_update, 'cron', hour='1', minute='0', second='10', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
 
-        self.sched.add_job(self.update_history, 'cron', hour='2')
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
         self.sched.start()
 
@@ -233,7 +232,6 @@ class ClanBot(discord.Client):
                 msg = 'Ok, {}'.format(message.author.mention)
                 await message.channel.send(msg)
                 self.sched.shutdown(wait=True)
-                await self.update_history()
                 await self.logout()
                 await self.close()
                 return
@@ -324,24 +322,17 @@ class ClanBot(discord.Client):
     async def update_history(self):
         game = discord.Game('updating history')
         await self.change_presence(activity=game)
-        hist_saved = {}
         for server in self.guilds:
-            history_file = str(server.id) + '_history.json'
             try:
-                with open(history_file) as json_file:
-                    hist_saved[str(server.id)] = json.loads(json_file.read())
-                    json_file.close()
-            except FileNotFoundError:
-                with open("history.json") as json_file:
-                    hist_saved[str(server.id)] = json.loads(json_file.read())
-                    json_file.close()
-        if self.curr_hist:
-            for server in self.guilds:
-                history_file = str(server.id) + '_history.json'
-                f = open(history_file, 'w')
-                f.write(json.dumps(self.curr_hist[str(server.id)]))
-        else:
-            self.curr_hist = hist_saved
+                self.hist_cursor.execute('''CREATE TABLE {} ( server_id integer, spider integer, xur integer, 
+                                nightfalls820 integer, ordeal integer, nightmares integer, reckoningboss integer, 
+                                cruciblerotators integer, heroicstory integer, forge integer, vanguardstrikes integer, 
+                                reckoning integer )'''.format(server.name.strip('\'')))
+                init_values = [server.id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                self.hist_cursor.execute("INSERT INTO {} VALUES (?,?,?,?,?,?,?,?,?,?,?,?)".format(server.name.strip('\'')), init_values)
+                self.hist_db.commit()
+            except sqlite3.OperationalError:
+                pass
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
@@ -362,20 +353,23 @@ class ClanBot(discord.Client):
         await self.change_presence(activity=game)
 
     async def post_embed(self, upd_type, src_dict, time_to_delete):
-        hist = self.curr_hist
-
         if not self.args.nomessage:
             embed = discord.Embed.from_dict(src_dict)
 
             for server in self.guilds:
-                hist[str(server.id)]['server_name'] = server.name.strip('\'')
+                hist = 0
+                last = self.hist_cursor.execute('''SELECT {} FROM {}'''.format(upd_type, server.name.strip('\'')))
+                last = last.fetchall()
+                if last is not None:
+                    if len(last) > 0:
+                        if len(last[0]) > 0:
+                            hist = last[0][0]
+
                 for channel in server.channels:
                     if '{}\n'.format(channel.id) in self.channels:
-                        if hist[str(server.id)][upd_type] and \
-                                not self.args.noclear:
+                        if hist and not self.args.noclear:
                             try:
-                                last = await channel.fetch_message(
-                                    hist[str(server.id)][upd_type])
+                                last = await channel.fetch_message(hist)
                             except discord.NotFound:
                                 bot_info = await self.application_info()
                                 await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.format(upd_type, channel.name, server.name))
@@ -384,7 +378,9 @@ class ClanBot(discord.Client):
                             except:
                                 pass
                         message = await channel.send(embed=embed, delete_after=time_to_delete)
-                        hist[str(server.id)][upd_type] = message.id
+                        hist = message.id
+                self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.name.strip('\''), upd_type), (hist, ))
+                self.hist_db.commit()
 
     def start_up(self):
         self.get_args()
