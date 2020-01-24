@@ -1,8 +1,8 @@
-#LFG description
+# LFG description
 
 To get current group creation syntax mention bot with this message: `lfg -man`
 
-##Creating a group
+## Creating a group
 
 ```
 {bot mention} lfg
@@ -24,27 +24,30 @@ The default values are:
 - time is current
 
 This is an example of a group creation message:
-[](images/lfg_command_en.png)
+
+![](images/lfg_command_en.png)
 
 And an example of a generated message:
-[](images/lfg_bot_group_en.png)
+
+![](images/lfg_bot_group_en.png)
 
 Use 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.
 
 Use ❌ to delete the group (works only for the group owner).
 
-##Managing manual groups
+## Managing manual groups
 
 When someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate:
-[](images/lfg_wishers_en.png)
+
+![](images/lfg_wishers_en.png)
 
 To choose a person press the corresponding emote. The list will update. **Don't** press multiple emotes, wait for the list update.
 
-#Описание LFG-функционала
+# Описание LFG-функционала
 
 Для получения в ЛС актуального синтаксиса команды упомяните бота с таким сообщением: `lfg -man`
 
-##Создание группы
+## Создание группы
 
 ```
 {упоминание бота} lfg
@@ -65,18 +68,21 @@ To choose a person press the corresponding emote. The list will update. **Don't*
 - time выбирается текущее
 
 Это пример сообщения-команды для создания сбора:
-[](images/lfg_command_ru.png)
+
+![](images/lfg_command_ru.png)
 
 И пример сгенерированного сбора:
-[](images/lfg_bot_group_ru.png)
+
+![](images/lfg_bot_group_ru.png)
 
 Нажмите 👌 для добавления себя в список желающих. Бот должен подтвердить реакцию, только в этом случае вы можете быть уверены в успешном добавлении. Для удаления себя из списка желающих уберите 👌.
 
 Нажмите ❌ для удаления сбора (работает только для создателя сбора).
 
-##Управление группами с manual-режимом
+## Управление группами с manual-режимом
 
 Когда кто-то нажимает 👌, автор сбора получит в ЛС сообщение со списком желающих:
-[](images/lfg_wishers_ru.png)
+
+![](images/lfg_wishers_ru.png)
 
 Для выбора участников среди желающих нажмите соответствующую реакцию-цифру. Список желающих обновится автоматически. **Не нажимайте несколько реакций до обновления списка**, дождитесь его обновления.
