@@ -20,7 +20,7 @@ class LFG():
 
         group_mode = 'basic'
         name = ''
-        size = 0
+        size = 1
         time = datetime.now().strftime("%d-%m-%Y %H:%M")
         time = datetime.strptime(time, "%d-%m-%Y %H:%M")
         description = ''
@@ -215,7 +215,7 @@ class LFG():
                     await dm_message.add_reaction(emoji[i])
                     i = i + 1
 
-        self.c.execute('''UPDATE raid SET dm_message=? WHERE owner=?''', (dm_id, owner.id))
+        self.c.execute('''UPDATE raid SET dm_message=? WHERE owner=? AND group_id=?''', (dm_id, owner.id, group_id))
         self.conn.commit()
 
     async def add_going(self, group_id, number):

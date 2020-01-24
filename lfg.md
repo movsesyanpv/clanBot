@@ -19,7 +19,7 @@ To get current group creation syntax mention bot with this message: `lfg -man`
 If parsing of any of the aforementioned parameters fails, the group will be created with the default values of the corresponding parameters.
 The default values are:
 - name is empty
-- size is 0
+- size is 1
 - description is empty
 - mode is basic
 - time is current
@@ -70,7 +70,7 @@ To choose a person press the corresponding emote. The list will update. **Don't*
 
 При возникновении ошибок парсинга любого параметра используются стандартные значения:
 - name - пустая строка
-- size равен 0
+- size равен 1
 - description - пустая строка
 - mode - basic
 - time выбирается текущее
