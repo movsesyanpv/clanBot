@@ -65,13 +65,13 @@ class LFG():
         self.conn.commit()
 
     def is_raid(self, message):
-        cell = self.c.execute('SELECT group_id FROM raid WHERE group_id=?', (message.id,))
+        cell = self.c.execute('SELECT group_id FROM raid WHERE group_id=?', (message,))
         cell = cell.fetchall()
         if len(cell) == 0:
             return False
         else:
             cell = cell[0]
-            return message.id == cell[0]
+            return message == cell[0]
 
     def get_cell(self, search_field, group_id, field):
         cell = self.c.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,)).fetchone()
