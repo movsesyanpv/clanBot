@@ -358,7 +358,7 @@ class ClanBot(discord.Client):
 
             for server in self.guilds:
                 hist = 0
-                last = self.hist_cursor.execute('''SELECT {} FROM {}'''.format(upd_type, server.name.strip('\'')))
+                last = self.hist_cursor.execute('''SELECT {} FROM {}'''.format(upd_type, server.name.replace('\'', '').replace(' ', '_')))
                 last = last.fetchall()
                 if last is not None:
                     if len(last) > 0:
