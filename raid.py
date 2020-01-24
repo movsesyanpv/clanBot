@@ -24,6 +24,7 @@ class LFG():
         time = datetime.now().strftime("%d-%m-%Y %H:%M")
         time = datetime.strptime(time, "%d-%m-%Y %H:%M")
         description = ''
+        roles = []
         for string in content:
             str_arg = string.split(':')
             if len(str_arg) < 2:
@@ -42,13 +43,15 @@ class LFG():
                 size = int(str_arg[1])
             if 'mode:' in string or '-m:' in string:
                 group_mode = str_arg[1].lstrip()
+            if 'role:' in string or '-r:' in string:
+                roles = [role.strip() for role in str_arg[1].split(';')]
         group_id = message.id
         owner = message.author.id
         the_role = []
+        if len(roles) == 0:
+            roles = ['guardian', 'recruit']
         for role in message.guild.roles:
-            if role.name.lower() == 'guardian':
-                the_role.append(role)
-            if role.name.lower() == 'recruit':
+            if role.name.lower() in roles:
                 the_role.append(role)
         if len(the_role) == 0:
             the_role.append(message.guild.get_role(message.guild.id))

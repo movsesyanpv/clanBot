@@ -11,6 +11,7 @@ To get current group creation syntax mention bot with this message: `lfg -man`
 [-d:][description:]{description of the activity}
 [-s:][size:]{size of the group}
 [-m:][mode:]{type of lfg (basic or manual)}
+[-r:][role:] {names of the roles to mention, separated by ";"}
 ```
 
 `%d-%m-%Y %H:%M %z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00 +0300`
@@ -59,6 +60,7 @@ To choose a person press the corresponding emote. The list will update. **Don't*
 [-d:][description:] {описание планируемого, указание длительности (по желанию)}
 [-s:][size:] {размер группы}
 [-m:][mode:] {тип подбора (basic или manual)}
+[-r:][role:] {названия упоминаемых ролей, разделенные ";"}
 ```
 
 Следует отметить, что имя каждого параметра пишется строго в соответствии с описанием, вплоть до знаков препинания. Например, за название сбора отвечает параметр `name:` или `-n:` (сокращенный вариант). Для полного имени параметра обязательно двоеточие в конце, для сокращенного варианта обязательно начало на дефис и окончание двоеточием. Параметры нужно писать в **разных строках**
