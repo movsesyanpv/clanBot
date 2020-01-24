@@ -33,7 +33,8 @@ class LFG():
                 name = str_arg[1].lstrip()
             if 'time:' in string or '-t:' in string:
                 try:
-                    time = datetime.strptime(str_arg[1], "%d-%m-%Y %H:%M %z")
+                    time_str = '{}:{}'.format(str_arg[1], str_arg[2])
+                    time = datetime.strptime(time_str.lstrip(), "%d-%m-%Y %H:%M %z")
                 except ValueError:
                     time = datetime.now().strftime("%d-%m-%Y %H:%M")
                     time = datetime.strptime(time, "%d-%m-%Y %H:%M")
