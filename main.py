@@ -327,9 +327,9 @@ class ClanBot(discord.Client):
                 self.hist_cursor.execute('''CREATE TABLE {} ( server_id integer, spider integer, xur integer, 
                                 nightfalls820 integer, ordeal integer, nightmares integer, reckoningboss integer, 
                                 cruciblerotators integer, heroicstory integer, forge integer, vanguardstrikes integer, 
-                                reckoning integer )'''.format(server.name.strip('\'')))
+                                reckoning integer )'''.format(server.name.replace('\'', '').replace(' ', '_')))
                 init_values = [server.id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                self.hist_cursor.execute("INSERT INTO {} VALUES (?,?,?,?,?,?,?,?,?,?,?,?)".format(server.name.strip('\'')), init_values)
+                self.hist_cursor.execute("INSERT INTO {} VALUES (?,?,?,?,?,?,?,?,?,?,?,?)".format(server.name.replace('\'', '').replace(' ', '_')), init_values)
                 self.hist_db.commit()
             except sqlite3.OperationalError:
                 pass
@@ -379,7 +379,7 @@ class ClanBot(discord.Client):
                                 pass
                         message = await channel.send(embed=embed, delete_after=time_to_delete)
                         hist = message.id
-                self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.name.strip('\''), upd_type), (hist, ))
+                self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.name.replace('\'', '').replace(' ', '_'), upd_type), (hist, ))
                 self.hist_db.commit()
 
     def start_up(self):
