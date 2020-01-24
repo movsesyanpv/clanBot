@@ -180,7 +180,7 @@ class ClanBot(discord.Client):
                 await user.create_dm()
             await user.dm_channel.send(self.translations[self.args.lang]['lfg']['gotcha'])
             if mode == 'manual':
-                await self.raid.dm_new_people(message.id, owner, self.translations[self.args.lang])
+                await self.raid.upd_dm(owner, message.id, self.translations[self.args.lang])
             if mode == 'basic':
                 await self.raid.update_group_msg(message, self.translations[self.args.lang])
             return

@@ -179,7 +179,7 @@ class LFG():
         await message.edit(content=msg)
 
     async def upd_dm(self, owner, group_id, translations):
-        wanters = self.c.execute('SELECT want_dm FROM raid WHERE owner=?', (owner.id,))
+        wanters = self.c.execute('SELECT want_dm FROM raid WHERE owner=? AND group_id=?', (owner.id, group_id))
         wanters = eval(wanters.fetchone()[0])
 
         dm_id = self.c.execute('SELECT dm_message FROM raid WHERE owner=? AND group_id=?', (owner.id, group_id))
@@ -215,44 +215,6 @@ class LFG():
                     i = i + 1
 
         self.c.execute('''UPDATE raid SET dm_message=? WHERE owner=?''', (dm_id, owner.id))
-        self.conn.commit()
-
-    async def dm_new_people(self, group_id, owner, translations):
-        wanters = self.c.execute('SELECT want_dm FROM raid WHERE group_id=?', (group_id,))
-        wanters = eval(wanters.fetchone()[0])
-
-        lfg = self.c.execute('SELECT group_id, name, time, channel_name, server_name FROM raid WHERE group_id=?',
-                             (group_id,))
-        lfg = lfg.fetchall()[0]
-
-        dm_id = self.get_cell('group_id', group_id, 'dm_message')
-
-        emoji = ["{}\N{COMBINING ENCLOSING KEYCAP}".format(num) for num in range(1, 7)]
-
-        msg = "{}\n{}.\n{} {}, #{} {} {}".format(translations['lfg']['newBlood'], lfg[1],
-                                                 translations['lfg']['at'].lower(),
-                                                 datetime.fromtimestamp(lfg[2]), lfg[3],
-                                                 translations['lfg']['server'], lfg[4],
-                                                 self.hashids.encode(lfg[0]))
-        if owner.dm_channel is None:
-            await owner.create_dm()
-        if dm_id != 0:
-            dm_message = await owner.dm_channel.fetch_message(dm_id)
-            await dm_message.delete()
-            dm_id = 0
-
-        if len(wanters) > 0:
-            i = 0
-            dm_message = await owner.dm_channel.send(msg)
-            dm_id = dm_message.id
-            for wanter in wanters:
-                if i < 6:
-                    msg = '{}\n{}. {}'.format(msg, emoji[i], wanter)
-                    await dm_message.edit(content=msg)
-                    await dm_message.add_reaction(emoji[i])
-                    i = i + 1
-
-        self.c.execute('''UPDATE raid SET dm_message=? WHERE group_id=?''', (dm_id, group_id))
         self.conn.commit()
 
     async def add_going(self, group_id, number):
