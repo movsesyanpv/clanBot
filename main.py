@@ -131,7 +131,7 @@ class ClanBot(discord.Client):
             if guild.id == payload.guild_id:
                 user = guild.get_member(payload.user_id)
 
-        if self.raid.is_raid(message):
+        if self.raid.is_raid(message.id):
             if str(payload.emoji) != '👌':
                 return
             self.raid.rm_people(message.id, user)
@@ -154,7 +154,7 @@ class ClanBot(discord.Client):
             if guild.id == payload.guild_id:
                 user = guild.get_member(payload.user_id)
 
-        if self.raid.is_raid(message):
+        if self.raid.is_raid(message.id):
             mode = self.raid.get_cell('group_id', message.id, 'group_mode')
             owner = self.get_user(self.raid.get_cell('group_id', message.id, 'owner'))
             if str(payload.emoji) == '❌' and payload.user_id == owner.id:
@@ -207,6 +207,18 @@ class ClanBot(discord.Client):
         self.sched.resume()
         await message.channel.send('should be after delay finish {}'.format(str(datetime.now())))
         return
+
+    async def on_raw_message_delete(self, payload):
+        if self.raid.is_raid(payload.message_id):
+            owner = self.raid.get_cell('group_id', payload.message_id, 'owner')
+            owner = self.get_user(owner)
+            dm_id = self.raid.get_cell('group_id', payload.message_id, 'dm_message')
+            if owner.dm_channel is None:
+                await owner.create_dm()
+            if dm_id != 0:
+                dm_message = await owner.dm_channel.fetch_message(dm_id)
+                await dm_message.delete()
+            self.raid.del_entry(payload.message_id)
 
     async def on_message(self, message):
         if message.author == self.user:
