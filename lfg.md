@@ -23,6 +23,7 @@ The default values are:
 - description is empty
 - mode is basic
 - time is current
+- role will be "guardian" and/or "recruit" if available or @everyone
 
 This is an example of a group creation message:
 
@@ -73,6 +74,7 @@ To choose a person press the corresponding emote. The list will update. **Don't*
 - description - пустая строка
 - mode - basic
 - time выбирается текущее
+- role выполняется попытка найти роли "guardian" и "recruit", если их нет, то упоминается @everyone
 
 Это пример сообщения-команды для создания сбора:
 
