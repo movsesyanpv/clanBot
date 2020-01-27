@@ -100,7 +100,8 @@ class ClanBot(discord.Client):
         self.data.get_chars()
         if self.args.forceupdate:
             await self.force_update(self.args.type)
-        self.sched.start()
+        if not self.sched.running:
+            self.sched.start()
 
     async def check_ownership(self, message):
         bot_info = await self.application_info()
@@ -258,7 +259,7 @@ class ClanBot(discord.Client):
             await message.channel.send(msg)
             return
 
-        if 'transfer lfg' in message.content.lower() and self.user in message.mentions:
+        if 'edit lfg' in message.content.lower() and self.user in message.mentions:
             text = message.content.split()
             hashids = Hashids()
             for word in text:
@@ -267,11 +268,10 @@ class ClanBot(discord.Client):
                     old_lfg = self.raid.get_cell('group_id', group_id[0], 'lfg_channel')
                     old_lfg = self.get_channel(old_lfg)
                     old_lfg = await old_lfg.fetch_message(group_id[0])
-                    await self.raid.transfer(message, old_lfg)
+                    await self.raid.edit(message, old_lfg, self.translations[self.args.lang])
             return
 
         if 'lfg' in message.content.lower().splitlines()[0] and self.user in message.mentions:
-            content = message.content.splitlines()
             if '-man' in message.content.lower():
                 await self.send_lfg_man(message.author)
                 await message.delete()
@@ -287,7 +287,7 @@ class ClanBot(discord.Client):
             await out.add_reaction('👌')
             await out.add_reaction('❌')
             self.raid.set_id(out.id, message.id)
-            self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
+            # self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
             await message.delete()
             return
 
