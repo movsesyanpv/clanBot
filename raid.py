@@ -18,47 +18,9 @@ class LFG():
     def add(self, message: discord.Message):
         content = message.content.splitlines()
 
-        group_mode = 'basic'
-        name = ''
-        size = 1
-        time = datetime.now().strftime("%d-%m-%Y %H:%M")
-        time = datetime.strptime(time, "%d-%m-%Y %H:%M")
-        description = ''
-        roles = []
-        for string in content:
-            str_arg = string.split(':')
-            if len(str_arg) < 2:
-                continue
-            if 'name:' in string or '-n:' in string:
-                name = str_arg[1].lstrip()
-            if 'time:' in string or '-t:' in string:
-                try:
-                    time_str = '{}:{}'.format(str_arg[1], str_arg[2])
-                    time = datetime.strptime(time_str.lstrip(), "%d-%m-%Y %H:%M %z")
-                except ValueError:
-                    time = datetime.now().strftime("%d-%m-%Y %H:%M")
-                    time = datetime.strptime(time, "%d-%m-%Y %H:%M")
-            if 'description:' in string or '-d:' in string:
-                description = str_arg[1].lstrip()
-            if 'size:' in string or '-s:' in string:
-                size = int(str_arg[1])
-            if 'mode:' in string or '-m:' in string:
-                group_mode = str_arg[1].lstrip()
-            if 'role:' in string or '-r:' in string:
-                roles = [role.strip() for role in str_arg[1].split(';')]
+        args = self.parse_args(content, message, is_init=True)
         group_id = message.id
         owner = message.author.id
-        the_role = []
-        if len(roles) == 0:
-            roles = ['guardian', 'recruit']
-        for role in message.guild.roles:
-            if role.name.lower() in roles:
-                the_role.append(role)
-        if len(the_role) == 0:
-            the_role.append(message.guild.get_role(message.guild.id))
-        the_role_str = the_role[0].mention
-        for i in the_role[1:]:
-            the_role_str = "{}, {}".format(the_role_str, i.mention)
 
         try:
             self.c.execute('''CREATE TABLE raid
@@ -68,11 +30,67 @@ class LFG():
         except sqlite3.OperationalError:
             pass
 
-        newlfg = [(group_id, size, name, datetime.timestamp(time), description,
-                   owner, '[]', '[]', the_role_str, group_mode, 0, message.channel.id, message.channel.name,
+        newlfg = [(group_id, args['size'], args['name'], datetime.timestamp(args['time']), args['description'],
+                   owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
                    message.guild.name, '[]')]
         self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
+
+    @staticmethod
+    def parse_args(content, message, is_init):
+        time = datetime.now().strftime("%d-%m-%Y %H:%M")
+
+        args = {}
+        roles = []
+        if is_init:
+            args = {
+                'group_mode': 'basic',
+                'name': '',
+                'size': 1,
+                'time': datetime.strptime(time, "%d-%m-%Y %H:%M"),
+                'description': '',
+                'the_role': ''
+            }
+        for string in content:
+            str_arg = string.split(':')
+            if len(str_arg) < 2:
+                continue
+            if 'name:' in string or '-n:' in string:
+                args['name'] = str_arg[1].lstrip()
+            if 'time:' in string or '-t:' in string:
+                try:
+                    time_str = '{}:{}'.format(str_arg[1], str_arg[2])
+                    args['time'] = datetime.strptime(time_str.lstrip(), "%d-%m-%Y %H:%M %z")
+                except ValueError:
+                    time = datetime.now().strftime("%d-%m-%Y %H:%M")
+                    args['time'] = datetime.strptime(time, "%d-%m-%Y %H:%M")
+                args['time'] = datetime.timestamp(args['time'])
+            if 'description:' in string or '-d:' in string:
+                args['description'] = str_arg[1].lstrip()
+            if 'size:' in string or '-s:' in string:
+                args['size'] = int(str_arg[1])
+            if 'mode:' in string or '-m:' in string:
+                args['group_mode'] = str_arg[1].lstrip()
+            if 'role:' in string or '-r:' in string:
+                roles = [role.strip() for role in str_arg[1].split(';')]
+
+        if not is_init:
+            if len(roles) == 0:
+                return args
+
+        the_role = []
+        if len(roles) == 0 and is_init:
+            roles = ['guardian', 'recruit']
+        for role in message.guild.roles:
+            if role.name.lower() in roles:
+                the_role.append(role)
+        if len(the_role) == 0:
+            the_role.append(message.guild.get_role(message.guild.id))
+        the_role_str = the_role[0].mention
+        for i in the_role[1:]:
+            the_role_str = "{}, {}".format(the_role_str, i.mention)
+        args['the_role'] = the_role_str
+        return args
 
     def del_entry(self, group_id):
         self.c.executemany('''DELETE FROM raid WHERE group_id LIKE (?)''', [(group_id,)])
@@ -261,8 +279,14 @@ class LFG():
             await user.create_dm()
         await user.dm_channel.send(msg)
 
-    async def transfer(self, message, old_lfg):
-        new_lfg = await message.channel.send(old_lfg.content)
+    async def edit(self, message, old_lfg, translations):
+        args = self.parse_args(message.content.splitlines(), message, is_init=False)
+
+        for item in args:
+            self.c.execute('''UPDATE raid SET {}=? WHERE group_id=?'''.format(item), (args[item], old_lfg.id))
+        self.conn.commit()
+
+        new_lfg = await message.channel.send(self.get_cell('group_id', old_lfg.id, 'the_role'))
         await new_lfg.add_reaction('👌')
         await new_lfg.add_reaction('❌')
 
@@ -270,4 +294,5 @@ class LFG():
         self.c.execute('''UPDATE raid SET lfg_channel=? WHERE group_id=?''', (message.channel.id, new_lfg.id))
         await old_lfg.delete()
         await message.delete()
+        await self.update_group_msg(new_lfg, translations)
         self.conn.commit()
