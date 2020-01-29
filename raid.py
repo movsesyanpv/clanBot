@@ -281,17 +281,23 @@ class LFG():
     async def edit(self, message, old_lfg, translations):
         args = self.parse_args(message.content.splitlines(), message, is_init=False)
 
+        role_changed = False
         for item in args:
             self.c.execute('''UPDATE raid SET {}=? WHERE group_id=?'''.format(item), (args[item], old_lfg.id))
+            if item == 'the_role':
+                role_changed = True
         self.conn.commit()
 
-        new_lfg = await message.channel.send(self.get_cell('group_id', old_lfg.id, 'the_role'))
-        await new_lfg.add_reaction('👌')
-        await new_lfg.add_reaction('❌')
+        if message.channel.id != old_lfg.channel.id or role_changed:
+            new_lfg = await message.channel.send(self.get_cell('group_id', old_lfg.id, 'the_role'))
+            await new_lfg.add_reaction('👌')
+            await new_lfg.add_reaction('❌')
 
-        self.c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_lfg.id, old_lfg.id))
-        self.c.execute('''UPDATE raid SET lfg_channel=? WHERE group_id=?''', (message.channel.id, new_lfg.id))
-        await old_lfg.delete()
+            self.c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_lfg.id, old_lfg.id))
+            self.c.execute('''UPDATE raid SET lfg_channel=? WHERE group_id=?''', (message.channel.id, new_lfg.id))
+            await old_lfg.delete()
+        else:
+            new_lfg = old_lfg
         await message.delete()
         await self.update_group_msg(new_lfg, translations)
         self.conn.commit()
