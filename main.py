@@ -7,6 +7,7 @@ import asyncio
 from hashids import Hashids
 import sqlite3
 import logging
+import traceback
 
 import raid as lfg
 import destiny2data as d2
@@ -344,7 +345,17 @@ class ClanBot(discord.Client):
 
         lang = self.args.lang
 
-        await getter(lang)
+        try:
+            await getter(lang)
+        except Exception as e:
+            bot_info = await self.application_info()
+            owner = bot_info.owner
+            if owner.dm_channel is None:
+                await owner.create_dm()
+            await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+            game = discord.Game('waiting')
+            await self.change_presence(activity=game)
+            return
 
         if not self.data.data['api_maintenance'] and not self.data.data['api_fucked_up']:
             if self.data.data[name]:

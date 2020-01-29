@@ -606,8 +606,13 @@ class D2data:
                     objective = await destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
                     if self.translations[lang]['rotator'] in objective['displayProperties']['name']:
                         if not self.data['cruciblerotators']['thumbnail']['url']:
-                            self.data['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
+                            if 'icon' in r_json['displayProperties']:
+                                self.data['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
                                                                                r_json['displayProperties']['icon']
+                            else:
+                                self.data['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
+                                                                                '/common/destiny2_content/icons/' \
+                                                                                'cc8e6eea2300a1e27832d52e9453a227.png'
                         info = {
                             'inline': True,
                             "name": r_json['displayProperties']['name'],
