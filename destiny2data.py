@@ -584,7 +584,8 @@ class D2data:
                     'value': u"\u2063"
                 }
                 mods = self.get_modifiers(lang, r_json['hash'])
-                info['value'] = '{}: {}\n\n{}: {}'.format(mods[0]['name'], mods[0]['description'], mods[1]['name'], mods[1]['description'])
+                # info['value'] = '{}: {}\n\n{}: {}'.format(mods[0]['name'], mods[0]['description'], mods[1]['name'], mods[1]['description'])
+                info['value'] = '{}: {}'.format(mods[0]['name'], mods[0]['description'])
                 self.data['raids']['fields'].append(info)
             if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
                     not r_json['matchmaking']['requiresGuardianOath']:
