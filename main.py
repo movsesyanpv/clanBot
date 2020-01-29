@@ -373,26 +373,25 @@ class ClanBot(discord.Client):
                 try:
                     last = self.hist_cursor.execute('''SELECT {} FROM {}'''.format(upd_type, server.name.replace('\'', '').replace(' ', '_')))
                     last = last.fetchall()
+                    if last is not None:
+                        if len(last) > 0:
+                            if len(last[0]) > 0:
+                                hist = last[0][0]
                 except sqlite3.OperationalError:
                     self.hist_cursor.execute('''ALTER TABLE {} ADD COLUMN {} INTEGER'''.format(server.name.replace('\'', '').replace(' ', '_'), upd_type))
-
-                if last is not None:
-                    if len(last) > 0:
-                        if len(last[0]) > 0:
-                            hist = last[0][0]
 
                 for channel in server.channels:
                     if '{}\n'.format(channel.id) in self.channels:
                         if hist and not self.args.noclear:
                             try:
                                 last = await channel.fetch_message(hist)
+                                try:
+                                    await last.delete()
+                                except:
+                                    pass
                             except discord.NotFound:
                                 bot_info = await self.application_info()
                                 await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.format(upd_type, channel.name, server.name))
-                            try:
-                                await last.delete()
-                            except:
-                                pass
                         message = await channel.send(embed=embed, delete_after=time_to_delete)
                         hist = message.id
                 self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.name.replace('\'', '').replace(' ', '_'), upd_type), (hist, ))
