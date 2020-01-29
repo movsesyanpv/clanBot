@@ -32,7 +32,8 @@ class D2data:
         'reckoning': [],
         'reckoningboss': [],
         'vanguardstrikes': [],
-        'cruciblerotators': []
+        'cruciblerotators': [],
+        'raids': []
     }
 
     wait_codes = [1672]
@@ -246,7 +247,7 @@ class D2data:
                 'url': self.icon_prefix + xur_def['displayProperties']['smallTransparentIcon']
             },
             'fields': [],
-            'color': 15844367,
+            'color': 0x3DD5D6,
             'type': "rich",
             'title': self.translations[lang]['msg']['xurtitle'],
         }
@@ -520,6 +521,117 @@ class D2data:
                 pass
 
         await destiny.close()
+
+    @staticmethod
+    def get_modifiers(lang, act_hash):
+        url = 'https://www.bungie.net/{}/Explore/Detail/DestinyActivityDefinition/{}'.format(lang, act_hash)
+        r = requests.get(url)
+        soup = BeautifulSoup(r.text, features="html.parser")
+        modifier_list = soup.find_all('div', {'data-identifier': 'modifier-information'})
+        modifiers = []
+        for item in modifier_list:
+            modifier = item.find('div', {'class': 'text-content'})
+            modifier_title = modifier.find('div', {'class': 'title'})
+            modifier_subtitle = modifier.find('div', {'class': 'subtitle'})
+            mod = {
+                "name": modifier_title.text,
+                "description": modifier_subtitle.text
+            }
+            modifiers.append(mod)
+        return modifiers
+
+    async def get_raids(self, lang):
+        destiny = pydest.Pydest(self.headers['X-API-Key'])
+        activities_resp = await self.get_activities_response('raids')
+        local_types = self.translations[lang]
+        if not activities_resp:
+            await destiny.close()
+
+        self.data['raids'] = {
+            'thumbnail': {
+                'url': 'https://www.bungie.net/common/destiny2_content/icons/8b1bfd1c1ce1cab51d23c78235a6e067.png'
+            },
+            'fields': [],
+            'color': 0xF1C40F,
+            'type': 'rich',
+            'title': self.translations[lang]['msg']['raids']
+        }
+
+        first_reset_time = 1580230800
+        seconds_since_first = time.time() - first_reset_time
+        weeks_since_first = seconds_since_first // 604800
+        last_wish_challenges = [1250327262, 3871581136, 1568895666, 4007940282, 2836954349]
+        sotp_challenges = [1348944144, 3415614992, 1381881897]
+        cos_challenges = [2459033425, 2459033426, 2459033427]
+
+        for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+            item_hash = key['activityHash']
+            definition = 'DestinyActivityDefinition'
+            r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+            if str(r_json['hash']) in self.translations[lang]['levi_order'] and \
+                    not r_json['matchmaking']['requiresGuardianOath']:
+                info = {
+                    'inline': True,
+                    'name': r_json['originalDisplayProperties']['name'],
+                    'value': self.translations[lang]['levi_order'][str(r_json['hash'])]
+                }
+                self.data['raids']['fields'].append(info)
+            if self.translations[lang]["EoW"] in r_json['displayProperties']['name'] and \
+                    not r_json['matchmaking']['requiresGuardianOath']:
+                info = {
+                    'inline': False,
+                    'name': self.translations[lang]['lairs'],
+                    'value': u"\u2063"
+                }
+                mods = self.get_modifiers(lang, r_json['hash'])
+                info['value'] = '{}: {}\n\n{}: {}'.format(mods[0]['name'], mods[0]['description'], mods[1]['name'], mods[1]['description'])
+                self.data['raids']['fields'].append(info)
+            if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
+                    not r_json['matchmaking']['requiresGuardianOath']:
+                info = {
+                    'inline': True,
+                    'name': r_json['originalDisplayProperties']['name'],
+                    'value': u"\u2063"
+                }
+                curr_challenge = last_wish_challenges[int(weeks_since_first % 5)]
+                curr_challenge = await destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                                                           language=lang)
+                info['value'] = curr_challenge['displayProperties']['name']
+                self.data['raids']['fields'].append(info)
+            if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
+                    not r_json['matchmaking']['requiresGuardianOath']:
+                info = {
+                    'inline': True,
+                    'name': r_json['originalDisplayProperties']['name'],
+                    'value': u"\u2063"
+                }
+                curr_challenge = sotp_challenges[int(weeks_since_first % 3)]
+                curr_challenge = await destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                                                           language=lang)
+                info['value'] = curr_challenge['displayProperties']['name']
+                self.data['raids']['fields'].append(info)
+            if self.translations[lang]['CoS'] in r_json['displayProperties']['name'] and \
+                    not r_json['matchmaking']['requiresGuardianOath']:
+                info = {
+                    'inline': True,
+                    'name': r_json['originalDisplayProperties']['name'],
+                    'value': u"\u2063"
+                }
+                curr_challenge = cos_challenges[int(weeks_since_first % 3)]
+                curr_challenge = await destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                                                           language=lang)
+                info['value'] = curr_challenge['displayProperties']['name']
+                self.data['raids']['fields'].append(info)
+            if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
+                    not r_json['matchmaking']['requiresGuardianOath']:
+                info = {
+                    'inline': True,
+                    'name': r_json['originalDisplayProperties']['name'],
+                    'value': u"\u2063"
+                }
+                mods = self.get_modifiers(lang, r_json['hash'])
+                info['value'] = mods[0]['name']
+                self.data['raids']['fields'].append(info)
 
     async def get_ordeal(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])

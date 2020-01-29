@@ -18,7 +18,8 @@
             "cruciblerotators": "Сменяемые режимы горнила",
             "xurloc": "Местоположение",
             "cost": "Цена",
-            "xurtitle": "Зур"
+            "xurtitle": "Зур",
+            "raids": "Рейды"
         },
         "lfg": {
             "go": "Предлагаю сходить в",
@@ -52,7 +53,21 @@
         "reckoning": "Суд: Уровень III",
         "oryx": "Двойник Орикса",
         "swords": "Мечи",
-        "r_desc": "Отправляйтесь в место, которое Скиталец называет \"Добычей\", и предстаньте перед судом высших сил."
+        "r_desc": "Отправляйтесь в место, которое Скиталец называет \"Добычей\", и предстаньте перед судом высших сил.",
+        "levi_order": {
+            "1685065161": "1. Турнир\n2. Сады удовольствий\n3. Королевские бассейны",
+            "757116822": "1. Турнир\n2. Королевские бассейны\n3. Сады удовольствий",
+            "417231112": "1. Сады удовольствий\n2. Турнир\n3. Королевские бассейны",
+            "3446541099": "1. Сады удовольствий\n2. Королевские бассейны\n3. Турнир",
+            "2449714930": "1. Королевские бассейны\n2. Турнир\n3. Сады удовольствий",
+            "3879860661": "1. Королевские бассейны\n2. Сады удовольствий\n3. Турнир"
+        },
+        "lairs": "Пожиратель Миров и Звездный Шпиль",
+        "EoW": "пожиратель миров: Престиж",
+        "LW": "Последнее желание",
+        "SotP": "Истребители прошлого",
+        "CoS": "Корона скорби",
+        "GoS": "Сад спасения"
     },
     "en": {
         "msg": {
@@ -73,7 +88,8 @@
             "cruciblerotators": "Crucible rotators are",
             "xurloc": "Location",
             "cost": "Cost",
-            "xurtitle": "Xur"
+            "xurtitle": "Xur",
+            "raids": "Raids"
         },
         "lfg": {
             "go": "Go",
@@ -107,7 +123,21 @@
         "reckoning": "The Reckoning: Tier III",
         "oryx": "Likeness of Oryx",
         "swords": "The Swords",
-        "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers."
+        "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers.",
+        "levi_order": {
+            "1685065161": "1. Gauntlet\n2. Pleasure Gardens\n3. Royal Pools",
+            "757116822": "1. Gauntlet\n2. Royal Pools\n3. Pleasure Gardens",
+            "417231112": "1. Pleasure Gardens\n2. Gauntlet\n3. Royal Pools",
+            "3446541099": "1. Pleasure Gardens\n2. Royal Pools\n3. Gauntlet",
+            "2449714930": "1. Royal Pools\n2. Gauntlet\n3. Pleasure Gardens",
+            "3879860661": "1. Royal Pools\n2. Pleasure Gardens\n3. Gauntlet"
+        },
+        "lairs": "Eater of Worlds and Spire of Stars",
+        "EoW": "Eater of Worlds: Prestige",
+        "LW": "Last Wish",
+        "SotP": "Scourge of the Past",
+        "CoS": "Crown of Sorrow",
+        "GoS": "Garden of Salvation"
     },
     "spiderembeds": {
         "0": "spider"
