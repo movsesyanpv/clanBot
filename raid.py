@@ -1,5 +1,4 @@
 import discord
-import json
 import sqlite3
 from datetime import datetime
 from hashids import Hashids
@@ -30,7 +29,7 @@ class LFG():
         except sqlite3.OperationalError:
             pass
 
-        newlfg = [(group_id, args['size'], args['name'], datetime.timestamp(args['time']), args['description'],
+        newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
                    message.guild.name, '[]')]
         self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
