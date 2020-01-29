@@ -410,6 +410,43 @@ class D2data:
                                                                    r_json['displayProperties']['icon']
         await destiny.close()
 
+    async def get_reckoning_boss(self, lang, ):
+        first_reset_time = 1539709200
+        seconds_since_first = time.time() - first_reset_time
+        weeks_since_first = seconds_since_first // 604800
+        reckoning_bosses = ['swords', 'oryx']
+
+        self.data['reckoningboss'] = {
+            "thumbnail": {
+                "url": "https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_"
+                       "e74b3385c5269da226372df8ae7f500d.png"
+            },
+            'fields': [
+                {
+                    'inline': True,
+                    "name": self.translations[lang][reckoning_bosses[int(weeks_since_first % 2)]],
+                    "value": self.translations[lang]['r_desc']
+                }
+            ],
+            "color": 1332799,
+            "type": "rich",
+            "title": self.translations[lang]['msg']['reckoningboss']
+        }
+
+    def add_reckoning_boss(self, lang):
+        first_reset_time = 1539709200
+        seconds_since_first = time.time() - first_reset_time
+        weeks_since_first = seconds_since_first // 604800
+        reckoning_bosses = ['swords', 'oryx']
+
+        data = [{
+            'inline': False,
+            'name': self.translations[lang]['msg']['reckoningboss'],
+            'value': self.translations[lang][reckoning_bosses[int(weeks_since_first % 2)]],
+        }]
+
+        return data
+
     async def get_reckoning_modifiers(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
         activities_resp = await self.get_activities_response('reckoning modifiers')
@@ -428,13 +465,16 @@ class D2data:
             'title': self.translations[lang]['msg']['reckoningmods']
         }
 
+        self.data['reckoning']['fields'] = self.add_reckoning_boss(lang)
+
         for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
             item_hash = key['activityHash']
             definition = 'DestinyActivityDefinition'
             r_json = await destiny.decode_hash(item_hash, definition, language=lang)
 
             if self.translations[lang]['reckoning'] in r_json['displayProperties']['name']:
-                self.data['reckoning']['fields'] = await self.decode_modifiers(key, destiny, lang)
+                mods = await self.decode_modifiers(key, destiny, lang)
+                self.data['reckoning']['fields'] = [*self.data['reckoning']['fields'], *mods]
         await destiny.close()
 
     async def get_nightfall820(self, lang):
@@ -555,29 +595,6 @@ class D2data:
                 }
                 self.data['nightmares']['fields'].append(info)
         await destiny.close()
-
-    async def get_reckoning_boss(self, lang):
-        first_reset_time = 1539709200
-        seconds_since_first = time.time() - first_reset_time
-        weeks_since_first = seconds_since_first // 604800
-        reckoning_bosses = ['swords', 'oryx']
-
-        self.data['reckoningboss'] = {
-            "thumbnail": {
-                "url": "https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_"
-                       "e74b3385c5269da226372df8ae7f500d.png"
-            },
-            'fields': [
-                {
-                    'inline': True,
-                    "name": self.translations[lang][reckoning_bosses[int(weeks_since_first % 2)]],
-                    "value": self.translations[lang]['r_desc']
-                }
-            ],
-            "color": 1332799,
-            "type": "rich",
-            "title": self.translations[lang]['msg']['reckoningboss']
-        }
 
     async def get_crucible_rotators(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
