@@ -1,6 +1,7 @@
 import discord
 import sqlite3
-from datetime import datetime
+import os
+from datetime import datetime, timezone, timedelta
 from hashids import Hashids
 
 
@@ -169,6 +170,66 @@ class LFG():
         self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
         self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
         self.conn.commit()
+
+    async def update_group_embed(self, message, translations):
+        role = self.get_cell('group_id', message.id, 'the_role')
+        name = self.get_cell('group_id', message.id, 'name')
+        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
+        description = self.get_cell('group_id', message.id, 'description')
+        msg = "{}, {} {}\n{} {}\n{}". \
+            format(role, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
+        goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
+        goers = eval(goers.fetchone()[0])
+        wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
+        wanters = eval(wanters.fetchone()[0])
+
+        ts = datetime.now(timezone(timedelta(0))).astimezone()
+
+        embed = {
+            'thumbnail': {
+                'url': 'https://www.bungie.net/common/destiny2_content/icons/8b1bfd1c1ce1cab51d23c78235a6e067.png'
+            },
+            'fields': [
+                {
+                    "inline": True,
+                    "name": "roles",
+                    "value": role
+                },
+                {
+                    "inline": True,
+                    "name": "id",
+                    "value": self.hashids.encode(message.id)
+                },
+                {
+                    "inline": False,
+                    "name": "description",
+                    "value": description
+                }
+            ],
+            'color': 0xF1C40F,
+            'type': 'rich',
+            'title': name,
+        }
+
+        if len(goers) > 0:
+            embed['fields'].append({"inline": True, "name": "Participants", "value": ""})
+            msg = '{}\n{}'.format(msg, translations['lfg']['participants'])
+            for participant in goers:
+                msg = '{} {},'.format(msg, participant)
+                embed['fields'][3]['value'] = '{} {},'.format(embed['fields'][3]['value'], participant)
+            embed['fields'][3]['value'] = '{}'.format(embed['fields'][3]['value'][:-1])
+            msg = '{}'.format(msg[:-1])
+        dm_id = self.get_cell('group_id', message.id, 'dm_message')
+        if dm_id == 0:
+            if len(wanters) > 0:
+                msg = '{}\n{} '.format(msg, translations['lfg']['wanters'])
+                for wanter in wanters:
+                    msg = '{} {},'.format(msg, wanter)
+                msg = '{}.'.format(msg[:-1])
+        embed = discord.Embed.from_dict(embed)
+        embed.timestamp = time.replace(tzinfo=ts.tzinfo)
+        await message.edit(embed=embed)
+
 
     async def update_group_msg(self, message, translations):
         role = self.get_cell('group_id', message.id, 'the_role')

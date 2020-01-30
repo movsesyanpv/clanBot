@@ -282,8 +282,37 @@ class ClanBot(discord.Client):
             name = self.raid.get_cell('group_id', message.id, 'name')
             time = datetime.fromtimestamp(self.raid.get_cell('group_id', message.id, 'time'))
             description = self.raid.get_cell('group_id', message.id, 'description')
-            msg = "{}, {} {}\n{} {}\n{}".format(role, self.translations[self.args.lang]['lfg']['go'], name, self.translations[self.args.lang]['lfg']['at'], time, description)
-            out = await message.channel.send(msg)
+            if '-embed' in message.content.lower():
+                embed = {
+                    'thumbnail': {
+                        'url': 'https://www.bungie.net/common/destiny2_content/icons/8b1bfd1c1ce1cab51d23c78235a6e067.png'
+                    },
+                    'fields': [
+                        {
+                            "inline": True,
+                            "name": "roles",
+                            "value": role
+                        },
+                        {
+                            "inline": True,
+                            "name": "time",
+                            "value": str(time)
+                        },
+                        {
+                            "inline": True,
+                            "name": "description",
+                            "value": description
+                        }
+                    ],
+                    'color': 0xF1C40F,
+                    'type': 'rich',
+                    'title': name
+                }
+                embed = discord.Embed.from_dict(embed)
+                out = await message.channel.send(embed=embed)
+            else:
+                msg = "{}, {} {}\n{} {}\n{}".format(role, self.translations[self.args.lang]['lfg']['go'], name, self.translations[self.args.lang]['lfg']['at'], time, description)
+                out = await message.channel.send(msg)
             end_time = time + timedelta(seconds=3600)
             await out.add_reaction('👌')
             await out.add_reaction('❌')
