@@ -31,6 +31,12 @@
             "syntax": "Синтаксис команды `lfg` следующий:\n```{{упоминание бота}} lfg\n[-n:][name:] {название группы или активности}\n[-t:][time:] {время начала в формате %d-%m-%Y %H:%M %z}\n[-d:][description:] {описание планируемого, указание длительности (по желанию)}\n[-s:][size:] {размер группы}\n[-m:][mode:] {тип подбора (basic или manual)}\n````%d-%m-%Y %H:%M %z` - формат времени, в котором полночь по МСК 1 февраля 2000 года будет записана, как `01-02-2000 00:00 +0300`.\nПри basic подборе состав формируется в порядке проставления реакций, в manual - попадание в состав происходит после подтверждения реакции автором сбора.",
             "server": "сервера"
         },
+        "lfge": {
+            "roles": "Roles",
+            "description": "Описание",
+            "goers": "Участники",
+            "wanters": "Резерв"
+        },
         "xur": {
             "Earth": "Земля",
             "Tower": "Странник",
@@ -108,6 +114,12 @@
             "gotcha": "Got your emote.",
             "syntax": "The syntax is:\n```{bot mention} lfg\n[-n:][name:] {lfg name or planned activity}\n[-t:][time:] {time of the activity start, format %d-%m-%Y %H:%M %z}\n[-d:][description:] {description of the activity}\n[-s:][size:] {size of the group}\n[-m:][mode:] {type of lfg (basic or manual)}\n````%d-%m-%Y %H:%M %z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00 +0300`",
             "server": "of"
+        },
+        "lfge": {
+            "roles": "Roles",
+            "description": "Description",
+            "goers": "Participants",
+            "wanters": "Reserve"
         },
         "xur": {
             "Earth": "Earth",

@@ -2,7 +2,7 @@ import json
 import discord
 import argparse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import asyncio
 from hashids import Hashids
 import sqlite3
@@ -180,8 +180,8 @@ class ClanBot(discord.Client):
             self.raid.add_people(message.id, user)
             if user.dm_channel is None:
                 await user.create_dm()
-            await user.dm_channel.send(self.translations[self.args.lang]['lfg']['gotcha'])
             if mode == 'manual':
+                await user.dm_channel.send(self.translations[self.args.lang]['lfg']['gotcha'], delete_after=30)
                 await self.raid.upd_dm(owner, message.id, self.translations[self.args.lang])
             if mode == 'basic':
                 await self.raid.update_group_msg(message, self.translations[self.args.lang])
@@ -281,37 +281,15 @@ class ClanBot(discord.Client):
             role = self.raid.get_cell('group_id', message.id, 'the_role')
             name = self.raid.get_cell('group_id', message.id, 'name')
             time = datetime.fromtimestamp(self.raid.get_cell('group_id', message.id, 'time'))
+            is_embed = self.raid.get_cell('group_id', message.id, 'is_embed')
             description = self.raid.get_cell('group_id', message.id, 'description')
-            if '-embed' in message.content.lower():
-                embed = {
-                    'thumbnail': {
-                        'url': 'https://www.bungie.net/common/destiny2_content/icons/8b1bfd1c1ce1cab51d23c78235a6e067.png'
-                    },
-                    'fields': [
-                        {
-                            "inline": True,
-                            "name": "roles",
-                            "value": role
-                        },
-                        {
-                            "inline": True,
-                            "name": "time",
-                            "value": str(time)
-                        },
-                        {
-                            "inline": True,
-                            "name": "description",
-                            "value": description
-                        }
-                    ],
-                    'color': 0xF1C40F,
-                    'type': 'rich',
-                    'title': name
-                }
-                embed = discord.Embed.from_dict(embed)
-                out = await message.channel.send(embed=embed)
+            msg = "{}, {} {}\n{} {}\n{}".format(role, self.translations[self.args.lang]['lfg']['go'], name,
+                                                self.translations[self.args.lang]['lfg']['at'], time, description)
+            if is_embed:
+                embed = self.raid.make_embed(message, self.translations[self.args.lang])
+                out = await message.channel.send(content=msg)
+                await out.edit(content=None, embed=embed)
             else:
-                msg = "{}, {} {}\n{} {}\n{}".format(role, self.translations[self.args.lang]['lfg']['go'], name, self.translations[self.args.lang]['lfg']['at'], time, description)
                 out = await message.channel.send(msg)
             end_time = time + timedelta(seconds=3600)
             await out.add_reaction('👌')

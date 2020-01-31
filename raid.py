@@ -9,6 +9,26 @@ class LFG():
     conn = ''
     c = ''
     hashids = Hashids()
+    lfg_i = ['null', 'vanguard', 'raid', 'crucible', 'gambit']
+    lfg_categories = {
+        'null': {},
+        'vanguard': {
+            "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/f2154b781b36b19760efcb23695c66fe.png",
+            "color": 7506394
+        },
+        'raid': {
+            "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/8b1bfd1c1ce1cab51d23c78235a6e067.png",
+            "color": 0xF1C40F
+        },
+        'crucible': {
+            "thumbnail": "https://www.bungie.net//common/destiny2_content/icons/cc8e6eea2300a1e27832d52e9453a227.png",
+            "color": 6629649
+        },
+        'gambit': {
+            "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/fc31e8ede7cc15908d6e2dfac25d78ff.png",
+            "color": 1332799
+        }
+    }
 
     def __init__(self, **options):
         super().__init__(**options)
@@ -26,19 +46,22 @@ class LFG():
             self.c.execute('''CREATE TABLE raid
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
                      wanters text, going text, the_role text, group_mode text, dm_message integer, 
-                     lfg_channel integer, channel_name text, server_name text, want_dm text)''')
+                     lfg_channel integer, channel_name text, server_name text, want_dm text, is_embed integer)''')
         except sqlite3.OperationalError:
-            pass
+            try:
+                self.c.execute('''ALTER TABLE raid ADD COLUMN is_embed integer''')
+            except sqlite3.OperationalError:
+                pass
 
         newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
-                   message.guild.name, '[]')]
-        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
+                   message.guild.name, '[]', args['is_embed'])]
+        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
     @staticmethod
     def parse_args(content, message, is_init):
-        time = datetime.now().strftime("%d-%m-%Y %H:%M")
+        time = datetime.now()
 
         args = {}
         roles = []
@@ -47,9 +70,10 @@ class LFG():
                 'group_mode': 'basic',
                 'name': '',
                 'size': 1,
-                'time': datetime.strptime(time, "%d-%m-%Y %H:%M"),
+                'time': datetime.timestamp(time),
                 'description': '',
-                'the_role': ''
+                'the_role': '',
+                'is_embed': 0
             }
         for string in content:
             str_arg = string.split(':')
@@ -73,6 +97,18 @@ class LFG():
                 args['group_mode'] = str_arg[1].lstrip()
             if 'role:' in string or '-r:' in string:
                 roles = [role.strip() for role in str_arg[1].split(';')]
+            if 'embed:' in string or '-e:' in string:
+                if 'true' in str_arg[1].lower() and args['is_embed'] == 0:
+                    args['is_embed'] = 1
+            if 'type:' in string or '-at:' in string:
+                if 'vanguard' in string.lower() or 'pve' in string.lower():
+                    args['is_embed'] = 1
+                if 'raid' in string.lower():
+                    args['is_embed'] = 2
+                if 'crucible' in string.lower() or 'pvp' in string.lower():
+                    args['is_embed'] = 3
+                if 'gambit' in string.lower() or 'reckoning' in string.lower():
+                    args['is_embed'] = 4
 
         if not is_init:
             if len(roles) == 0:
@@ -171,67 +207,62 @@ class LFG():
         self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
         self.conn.commit()
 
-    async def update_group_embed(self, message, translations):
-        role = self.get_cell('group_id', message.id, 'the_role')
+    def make_embed(self, message, translations):
+        is_embed = self.get_cell('group_id', message.id, 'is_embed')
         name = self.get_cell('group_id', message.id, 'name')
         time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
         description = self.get_cell('group_id', message.id, 'description')
-        msg = "{}, {} {}\n{} {}\n{}". \
-            format(role, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
+        dm_id = self.get_cell('group_id', message.id, 'dm_message')
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
         goers = eval(goers.fetchone()[0])
         wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
         wanters = eval(wanters.fetchone()[0])
 
-        ts = datetime.now(timezone(timedelta(0))).astimezone()
-
         embed = {
             'thumbnail': {
-                'url': 'https://www.bungie.net/common/destiny2_content/icons/8b1bfd1c1ce1cab51d23c78235a6e067.png'
+                'url': self.lfg_categories[self.lfg_i[is_embed]]['thumbnail']
             },
-            'fields': [
-                {
-                    "inline": True,
-                    "name": "roles",
-                    "value": role
-                },
-                {
-                    "inline": True,
-                    "name": "id",
-                    "value": self.hashids.encode(message.id)
-                },
-                {
-                    "inline": False,
-                    "name": "description",
-                    "value": description
-                }
-            ],
-            'color': 0xF1C40F,
+            'fields': [],
+            'color': self.lfg_categories[self.lfg_i[is_embed]]['color'],
             'type': 'rich',
             'title': name,
+            'footer': {
+                'text': 'ID: {}'.format(self.hashids.encode(message.id))
+            }
         }
+        if len(description) > 0:
+            embed['fields'].append({
+                "inline": False,
+                "name": translations['lfge']['description'],
+                "value": description})
 
         if len(goers) > 0:
-            embed['fields'].append({"inline": True, "name": "Participants", "value": ""})
-            msg = '{}\n{}'.format(msg, translations['lfg']['participants'])
+            embed['fields'].append({"inline": True, "name": translations['lfge']['goers'], "value": ""})
             for participant in goers:
-                msg = '{} {},'.format(msg, participant)
-                embed['fields'][3]['value'] = '{} {},'.format(embed['fields'][3]['value'], participant)
-            embed['fields'][3]['value'] = '{}'.format(embed['fields'][3]['value'][:-1])
-            msg = '{}'.format(msg[:-1])
-        dm_id = self.get_cell('group_id', message.id, 'dm_message')
+                embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], participant)
+            embed['fields'][-1]['value'] = '{}'.format(embed['fields'][-1]['value'][:-1])
+
         if dm_id == 0:
             if len(wanters) > 0:
-                msg = '{}\n{} '.format(msg, translations['lfg']['wanters'])
+                embed['fields'].append({"inline": True, "name": translations['lfge']['wanters'], "value": ""})
                 for wanter in wanters:
-                    msg = '{} {},'.format(msg, wanter)
-                msg = '{}.'.format(msg[:-1])
-        embed = discord.Embed.from_dict(embed)
-        embed.timestamp = time.replace(tzinfo=ts.tzinfo)
-        await message.edit(embed=embed)
+                    embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], wanter)
+                embed['fields'][-1]['value'] = '{}.'.format(embed['fields'][-1]['value'][:-1])
 
+        embed = discord.Embed.from_dict(embed)
+        ts = datetime.now(timezone(timedelta(0))).astimezone()
+        embed.timestamp = time.replace(tzinfo=ts.tzinfo)
+
+        return embed
 
     async def update_group_msg(self, message, translations):
+        is_embed = self.get_cell('group_id', message.id, 'is_embed')
+
+        if is_embed:
+            embed = self.make_embed(message, translations)
+            await message.edit(content=None, embed=embed)
+            return
+
         role = self.get_cell('group_id', message.id, 'the_role')
         name = self.get_cell('group_id', message.id, 'name')
         time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
