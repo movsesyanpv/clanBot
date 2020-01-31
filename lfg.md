@@ -37,6 +37,27 @@ Use 👌 to add yourself to the list of wishing to participate. The bot should c
 
 Use ❌ to delete the group (works only for the group owner).
 
+## Creating a group in embeds
+
+Add one of these options to [the parameters](#Creating-a-group):
+
+```
+[-e:][embed:] {true/false}
+[-at:][type:] {type of the planned activity}
+```
+
+There are following types of activities:
+ - `vanguard` or `pve`
+ - `crucible` or `pvp`
+ - `raid`
+ - `gambit` or `reckoning`
+ 
+The group embed will look like this (for `-e:true` or `-at: vanguard`):
+ 
+![](images/lfg_bot_embed_en.png)
+
+The group ID is underlined with red (required for [the group editing](#LFG-editing)), the time of start is underlined with yellow.
+
 ## Managing manual groups
 
 When someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate along with some information about the group (time, channel, server):
@@ -99,6 +120,27 @@ The command has the following syntax:
 Нажмите 👌 для добавления себя в список желающих. Бот должен подтвердить реакцию сообщением в ЛС, только в этом случае вы можете быть уверены в успешном добавлении. Для удаления себя из списка желающих уберите 👌.
 
 Нажмите ❌ для удаления сбора (работает только для создателя сбора).
+
+## Создание сборов в embed-сообщениях
+
+К [параметрам](#Создание-группы) добавьте одну из таких опций:
+
+```
+[-e:][embed:] {true/false}
+[-at:][type:] {тип активности}
+```
+
+Типы активностей есть следующие:
+ - `vanguard` или `pve`
+ - `crucible` или `pvp`
+ - `raid`
+ - `gambit` или `reckoning`
+ 
+Сбор получится такой (для `-e:true` или `-at: vanguard`):
+ 
+![](images/lfg_bot_embed_ru.png)
+
+Красной линией подчеркнут идентификатор сбора (нужен для [изменения группы](#Изменение-группы)), желтой - время начала.
 
 ## Управление группами с manual-режимом
 
