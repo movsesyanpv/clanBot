@@ -67,7 +67,15 @@
         "LW": "Последнее желание",
         "SotP": "Истребители прошлого",
         "CoS": "Корона скорби",
-        "GoS": "Сад спасения"
+        "GoS": "Сад спасения",
+        "armsmaster": [
+            "Кинетическое: Револьвер\nЭнергетическое: Снайперская винтовка\nСиловое: Любое",
+            "Кинетическое: Автомат\nЭнергетическое: Автомат\nСиловое: Любое",
+            "Кинетическое: Пистолет\nЭнергетическое: Винтовка разведчика\nСиловое: Меч",
+            "Кинетическое: Пистолет-пулемет\nЭнергетическое: Любое\nСиловое: Гранатомет",
+            "Кинетическое: Любое\nЭнергетическое: Плазменная винтовка\nСиловое: Плазменная винтовка",
+            "Кинетическое: Дробовик\nЭнергетическое: Автомат\nСиловое: Ракетная установка"
+        ]
     },
     "en": {
         "msg": {
@@ -137,7 +145,15 @@
         "LW": "Last Wish",
         "SotP": "Scourge of the Past",
         "CoS": "Crown of Sorrow",
-        "GoS": "Garden of Salvation"
+        "GoS": "Garden of Salvation",
+        "armsmaster": [
+            "Kinetic: Hand Cannon\nEnergy: Sniper Rifle\nPower: Anything",
+            "Kinetic: Auto Rifle\nEnergy: Auto Rifle\nPower: Anything",
+            "Kinetic: Sidearm\nEnergy: Scout Rifle\nPower: Sword",
+            "Kinetic: SMG\nEnergy: Anything\nPower: Grenade Launcher",
+            "Kinetic: Anything\nEnergy: Fusion Rifle\nPower: Fusion Rifle",
+            "Kinetic: Дробовик\nEnergy: Auto Rifle\nPower: Rocket Launcher"
+        ]
     },
     "spiderembeds": {
         "0": "spider"

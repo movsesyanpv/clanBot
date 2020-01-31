@@ -563,6 +563,7 @@ class D2data:
         last_wish_challenges = [1250327262, 3871581136, 1568895666, 4007940282, 2836954349]
         sotp_challenges = [1348944144, 3415614992, 1381881897]
         cos_challenges = [2459033425, 2459033426, 2459033427]
+        eow_loadout = int(weeks_since_first % 6)
 
         for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
             item_hash = key['activityHash']
@@ -584,8 +585,8 @@ class D2data:
                     'value': u"\u2063"
                 }
                 mods = self.get_modifiers(lang, r_json['hash'])
-                # info['value'] = '{}: {}\n\n{}: {}'.format(mods[0]['name'], mods[0]['description'], mods[1]['name'], mods[1]['description'])
-                info['value'] = '{}: {}'.format(mods[0]['name'], mods[0]['description'])
+                info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'], mods[1]['name'],
+                                                           self.translations[lang]['armsmaster'][eow_loadout])
                 self.data['raids']['fields'].append(info)
             if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
                     not r_json['matchmaking']['requiresGuardianOath']:
