@@ -249,7 +249,7 @@ class LFG():
                 embed['fields'].append({"inline": True, "name": translations['lfge']['wanters'], "value": ""})
                 for wanter in wanters:
                     embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], wanter)
-                embed['fields'][-1]['value'] = '{}.'.format(embed['fields'][-1]['value'][:-1])
+                embed['fields'][-1]['value'] = '{}'.format(embed['fields'][-1]['value'][:-1])
 
         embed = discord.Embed.from_dict(embed)
         ts = datetime.now(timezone(timedelta(0))).astimezone()
