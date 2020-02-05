@@ -51,7 +51,7 @@
         "heroicstory": "Ежедневная героическая сюжетная миссия: ",
         "ordeal": "Сумрачный налет: Побоище",
         "nightmare": "Охота на кошмаров:",
-        "adept": ": Адепт",
+        "adept": ": Мастер",
         "Warlock": "Варлок",
         "Titan": "Титан",
         "Hunter": "Охотник",
@@ -82,7 +82,8 @@
             "Кинетическое: Пистолет-пулемет\nЭнергетическое: Любое\nСиловое: Гранатомет",
             "Кинетическое: Любое\nЭнергетическое: Плазменная винтовка\nСиловое: Плазменная винтовка",
             "Кинетическое: Дробовик\nЭнергетическое: Автомат\nСиловое: Ракетная установка"
-        ]
+        ],
+        "exception": "Возникла непредвиденная ошибка. Информация об ошибке отправлена разработчику."
     },
     "en": {
         "msg": {
@@ -136,7 +137,7 @@
         "heroicstory": "Daily Heroic Story Mission: ",
         "ordeal": "Nightfall: The Ordeal",
         "nightmare": "Nightmare Hunt:",
-        "adept": ": Adept",
+        "adept": ": Master",
         "Warlock": "Warlock",
         "Titan": "Titan",
         "Hunter": "Hunter",
@@ -167,7 +168,8 @@
             "Kinetic: SMG\nEnergy: Anything\nPower: Grenade Launcher",
             "Kinetic: Anything\nEnergy: Fusion Rifle\nPower: Fusion Rifle",
             "Kinetic: Дробовик\nEnergy: Auto Rifle\nPower: Rocket Launcher"
-        ]
+        ],
+        "exception": "An unexpected error has occurred. The information was sent to the developer"
     },
     "spiderembeds": {
         "0": "spider"
