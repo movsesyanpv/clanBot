@@ -282,7 +282,9 @@ class LFG():
                 embed['fields'][-1]['value'] = '{}'.format(embed['fields'][-1]['value'][:-1])
 
         if length > 0:
-            embed['fields'].append({"inline": True, "name": translations['lfge']['length'], "value": str(timedelta(seconds=length))})
+            embed['fields'].append({"inline": True,
+                                    "name": translations['lfge']['length'],
+                                    "value": str(timedelta(seconds=length))})
 
         embed = discord.Embed.from_dict(embed)
         ts = datetime.now(timezone(timedelta(0))).astimezone()

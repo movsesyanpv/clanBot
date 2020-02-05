@@ -12,6 +12,7 @@ To get current group creation syntax mention bot with this message: `lfg -man`
 [-s:][size:]{size of the group}
 [-m:][mode:]{type of lfg (basic or manual)}
 [-r:][role:] {names of the roles to mention, separated by ";"}
+[-l:][length:] {the duration of the activity 'XXh XXm'}
 ```
 
 `%d-%m-%Y %H:%M %z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00 +0300`
@@ -95,9 +96,12 @@ The command has the following syntax:
 [-s:][size:] {размер группы}
 [-m:][mode:] {тип подбора (basic или manual)}
 [-r:][role:] {названия упоминаемых ролей, разделенные ";"}
+[-l:][length:] {продолжительность активности в часах и/или минутах в формате %Hh %Mm}
 ```
 
 Следует отметить, что имя каждого параметра пишется строго в соответствии с описанием, вплоть до знаков препинания. Например, за название сбора отвечает параметр `name:` или `-n:` (сокращенный вариант). Для полного имени параметра обязательно двоеточие в конце, для сокращенного варианта обязательно начало на дефис и окончание двоеточием. Параметры нужно писать в **разных строках**
+
+`%Hh %Mm` - формат, в котором полуторачасовая активность будет записана, как `1h 30m` или `1.5h` или `90m`.
 
 `%d-%m-%Y %H:%M %z` - формат времени, в котором полночь по МСК 1 февраля 2000 года будет записана, как `01-02-2000 00:00 +0300`.
 
