@@ -35,7 +35,8 @@
             "roles": "Roles",
             "description": "Описание",
             "goers": "Участники",
-            "wanters": "Резерв"
+            "wanters": "Резерв",
+            "length": "Длительность"
         },
         "xur": {
             "Earth": "Земля",
@@ -119,7 +120,8 @@
             "roles": "Roles",
             "description": "Description",
             "goers": "Participants",
-            "wanters": "Reserve"
+            "wanters": "Reserve",
+            "length": "Duration"
         },
         "xur": {
             "Earth": "Earth",

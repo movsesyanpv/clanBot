@@ -46,17 +46,21 @@ class LFG():
             self.c.execute('''CREATE TABLE raid
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
                      wanters text, going text, the_role text, group_mode text, dm_message integer, 
-                     lfg_channel integer, channel_name text, server_name text, want_dm text, is_embed integer)''')
+                     lfg_channel integer, channel_name text, server_name text, want_dm text, is_embed integer, 
+                     length integer)''')
         except sqlite3.OperationalError:
             try:
                 self.c.execute('''ALTER TABLE raid ADD COLUMN is_embed integer''')
             except sqlite3.OperationalError:
-                pass
+                try:
+                    self.c.execute('''ALTER TABLE raid ADD COLUMN length integer''')
+                except sqlite3.OperationalError:
+                    pass
 
         newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
-                   message.guild.name, '[]', args['is_embed'])]
-        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
+                   message.guild.name, '[]', args['is_embed'], args['length'].total_seconds())]
+        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
     @staticmethod
@@ -73,7 +77,8 @@ class LFG():
                 'time': datetime.timestamp(time),
                 'description': '',
                 'the_role': '',
-                'is_embed': 0
+                'is_embed': 0,
+                'length': timedelta(seconds=-1)
             }
         for string in content:
             str_arg = string.split(':')
@@ -109,6 +114,30 @@ class LFG():
                     args['is_embed'] = 3
                 if 'gambit' in string.lower() or 'reckoning' in string.lower():
                     args['is_embed'] = 4
+            if 'end:' in string or '-te:' in string:
+                try:
+                    time_str = '{}:{}'.format(str_arg[1], str_arg[2])
+                    args['length'] = datetime.strptime(time_str.lstrip(), "%d-%m-%Y %H:%M %z")
+                except (ValueError, IndexError) as e:
+                    continue
+            if 'length:' in string or '-l:' in string:
+                try:
+                    td_str = str_arg[1].split(' ')
+                    td_arr = [0, 0]
+                    for td_part in td_str:
+                        if 'h' in td_part.lower():
+                            td_arr[0] = float(td_part[:-1])
+                        if 'm' in td_part.lower():
+                            td_arr[1] = int(td_part[:-1])
+                    args['length'] = timedelta(hours=td_arr[0], minutes=td_arr[1])
+                except ValueError:
+                    continue
+
+        try:
+            if type(args['length']) is datetime:
+                args['length'] = timedelta(seconds=(args['length'].timestamp() - args['time']))
+        except KeyError:
+            pass
 
         if not is_init:
             if len(roles) == 0:
@@ -217,6 +246,7 @@ class LFG():
         goers = eval(goers.fetchone()[0])
         wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
         wanters = eval(wanters.fetchone()[0])
+        length = self.get_cell('group_id', message.id, 'length')
 
         embed = {
             'thumbnail': {
@@ -248,6 +278,9 @@ class LFG():
                 for wanter in wanters:
                     embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], wanter)
                 embed['fields'][-1]['value'] = '{}.'.format(embed['fields'][-1]['value'][:-1])
+
+        if length > 0:
+            embed['fields'].append({"inline": True, "name": translations['lfge']['length'], "value": str(timedelta(seconds=length))})
 
         embed = discord.Embed.from_dict(embed)
         ts = datetime.now(timezone(timedelta(0))).astimezone()
