@@ -103,8 +103,10 @@ class LFG():
             if 'role:' in string or '-r:' in string:
                 roles = [role.strip() for role in str_arg[1].split(';')]
             if 'embed:' in string or '-e:' in string:
-                if 'true' in str_arg[1].lower() and args['is_embed'] == 0:
-                    args['is_embed'] = 1
+                if 'true' in str_arg[1].lower():
+                    if 'is_embed' in args:
+                        if args['is_embed'] == 0:
+                            args['is_embed'] = 1
             if 'type:' in string or '-at:' in string:
                 if 'vanguard' in string.lower() or 'pve' in string.lower():
                     args['is_embed'] = 1
@@ -277,7 +279,7 @@ class LFG():
                 embed['fields'].append({"inline": True, "name": translations['lfge']['wanters'], "value": ""})
                 for wanter in wanters:
                     embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], wanter)
-                embed['fields'][-1]['value'] = '{}.'.format(embed['fields'][-1]['value'][:-1])
+                embed['fields'][-1]['value'] = '{}'.format(embed['fields'][-1]['value'][:-1])
 
         if length > 0:
             embed['fields'].append({"inline": True, "name": translations['lfge']['length'], "value": str(timedelta(seconds=length))})
