@@ -59,12 +59,11 @@ class LFG():
 
         newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
-                   message.guild.name, '[]', args['is_embed'], args['length'].total_seconds())]
+                   message.guild.name, '[]', args['is_embed'], args['length'])]
         self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
-    @staticmethod
-    def parse_args(content, message, is_init):
+    def parse_args(self, content, message, is_init):
         time = datetime.now()
 
         args = {}
@@ -80,6 +79,13 @@ class LFG():
                 'is_embed': 0,
                 'length': timedelta(seconds=-1)
             }
+        else:
+            text = message.content.split()
+            hashids = Hashids()
+            for word in text:
+                group_id = hashids.decode(word)
+                if len(group_id) > 0:
+                    time_start = self.get_cell('group_id', group_id[0], 'time')
         for string in content:
             str_arg = string.split(':')
             if len(str_arg) < 2:
@@ -137,7 +143,11 @@ class LFG():
 
         try:
             if type(args['length']) is datetime:
-                args['length'] = timedelta(seconds=(args['length'].timestamp() - args['time']))
+                if is_init:
+                    args['length'] = timedelta(seconds=(args['length'].timestamp() - args['time']))
+                else:
+                    args['length'] = timedelta(seconds=(args['length'].timestamp() - time_start))
+            args['length'] = args['length'].total_seconds()
         except KeyError:
             pass
 
