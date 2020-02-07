@@ -8,6 +8,7 @@ from hashids import Hashids
 import sqlite3
 import logging
 import traceback
+from github import Github
 
 import raid as lfg
 import destiny2data as d2
@@ -31,6 +32,8 @@ class ClanBot(discord.Client):
     args = ''
 
     translations = {}
+
+    git = ''
 
     def __init__(self, **options):
         super().__init__(**options)
@@ -61,6 +64,11 @@ class ClanBot(discord.Client):
 
         logging.basicConfig(filename='scheduler.log')
         logging.getLogger('apscheduler').setLevel(logging.DEBUG)
+
+        git_file = open('git.dat', 'r')
+        git_token = git_file.read()
+        self.git = Github(git_token)
+        self.git = self.git.get_repo('movsesyanpv/clanBot')
 
     def get_args(self):
         parser = argparse.ArgumentParser()
@@ -204,11 +212,16 @@ class ClanBot(discord.Client):
                     owner = self.get_user(owner)
                     await self.raid.upd_dm(owner, lfg_message, self.translations[self.args.lang])
         except Exception as e:
-            bot_info = await self.application_info()
-            owner = bot_info.owner
-            if owner.dm_channel is None:
-                await owner.create_dm()
-            await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+            if not self.args.production:
+                bot_info = await self.application_info()
+                owner = bot_info.owner
+                if owner.dm_channel is None:
+                    await owner.create_dm()
+                await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+            else:
+                self.git.create_issue(title='Exception on reaction add',
+                                      body='# Traceback\n\n```{}```'.
+                                      format(traceback.format_exc()))
 
     async def pause_for(self, message, delta):
         self.sched.pause()
@@ -329,17 +342,23 @@ class ClanBot(discord.Client):
                 await message.delete()
                 for upd_type in content[2:]:
                     await self.force_update(upd_type)
+                raise ValueError
                 return
         except Exception as e:
-            bot_info = await self.application_info()
-            owner = bot_info.owner
-            if owner.dm_channel is None:
-                await owner.create_dm()
-            await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-            await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
-            if message.author.dm_channel is None:
-                await message.author.create_dm()
-            await message.author.dm_channel.send(self.translations[self.args.lang]['msg']['error'])
+            if not self.args.production:
+                bot_info = await self.application_info()
+                owner = bot_info.owner
+                if owner.dm_channel is None:
+                    await owner.create_dm()
+                await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+                await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
+                if message.author.dm_channel is None:
+                    await message.author.create_dm()
+                await message.author.dm_channel.send(self.translations[self.args.lang]['error'])
+            else:
+                self.git.create_issue(title='Exception on message',
+                                      body='# Message\n\n{}\n\n# Traceback\n\n```{}```'.
+                                      format(message.content, traceback.format_exc()))
 
     def get_channels(self):
         try:

@@ -83,7 +83,7 @@
             "Кинетическое: Любое\nЭнергетическое: Плазменная винтовка\nСиловое: Плазменная винтовка",
             "Кинетическое: Дробовик\nЭнергетическое: Автомат\nСиловое: Ракетная установка"
         ],
-        "exception": "Возникла непредвиденная ошибка. Информация об ошибке отправлена разработчику."
+        "error": "Возникла непредвиденная ошибка. Информация об ошибке отправлена разработчику."
     },
     "en": {
         "msg": {
@@ -169,7 +169,7 @@
             "Kinetic: Anything\nEnergy: Fusion Rifle\nPower: Fusion Rifle",
             "Kinetic: Дробовик\nEnergy: Auto Rifle\nPower: Rocket Launcher"
         ],
-        "exception": "An unexpected error has occurred. The information was sent to the developer"
+        "error": "An unexpected error has occurred. The information was sent to the developer"
     },
     "spiderembeds": {
         "0": "spider"
