@@ -295,7 +295,7 @@ class ClanBot(discord.Client):
                         await self.raid.edit(message, old_lfg, self.translations[self.args.lang])
                 return
 
-            if 'lfg' in message.content.lower().splitlines()[0] and self.user in message.mentions:
+            if 'lfg' in message.content.lower() and self.user in message.mentions:
                 if '-man' in message.content.lower():
                     await self.send_lfg_man(message.author)
                     await message.delete()
