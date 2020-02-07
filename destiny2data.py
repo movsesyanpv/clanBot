@@ -5,7 +5,7 @@ from urllib.parse import quote
 import pydest
 from bs4 import BeautifulSoup
 
-import oauth
+from bungied2auth import BungieOAuth
 
 
 class D2data:
@@ -51,14 +51,16 @@ class D2data:
         "components": "900,700"
     }
 
-    oauth = False
+    is_oauth = False
 
     char_info = {}
 
-    def __init__(self, translations, oauth, **options):
+    oauth = BungieOAuth(api_data['id'], api_data['secret'])
+
+    def __init__(self, translations, is_oauth, **options):
         super().__init__(**options)
         self.translations = translations
-        self.oauth = oauth
+        self.is_oauth = is_oauth
 
     def get_chars(self):
         platform = 0
@@ -817,8 +819,8 @@ class D2data:
         try:
             f = open('token.json', 'r')
         except FileNotFoundError:
-            if self.oauth:
-                oauth.get_oauth(self.api_data)
+            if self.is_oauth:
+                self.oauth.get_oauth()
             else:
                 print('token file not found!  run the script with --oauth or add a valid token.js file!')
                 return False
@@ -827,16 +829,16 @@ class D2data:
             f = open('token.json', 'r')
             self.token = json.loads(f.read())
         except json.decoder.JSONDecodeError:
-            if self.oauth:
-                oauth.get_oauth(self.api_data)
+            if self.is_oauth:
+                self.oauth.get_oauth()
             else:
                 print('token file invalid!  run the script with --oauth or add a valid token.js file!')
                 return False
 
         # check if token has expired, if so we have to oauth, if not just refresh the token
         if self.token['expires'] < time.time():
-            if self.oauth:
-                oauth.get_oauth(self.api_data)
+            if self.is_oauth:
+                self.oauth.get_oauth()
             else:
                 print('refresh token expired!  run the script with --oauth or add a valid token.js file!')
                 return False
