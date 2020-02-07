@@ -342,7 +342,6 @@ class ClanBot(discord.Client):
                 await message.delete()
                 for upd_type in content[2:]:
                     await self.force_update(upd_type)
-                raise ValueError
                 return
         except Exception as e:
             if not self.args.production:
