@@ -4,7 +4,6 @@ import time
 from urllib.parse import quote
 import pydest
 from bs4 import BeautifulSoup
-
 from bungied2auth import BungieOAuth
 
 
@@ -19,7 +18,7 @@ class D2data:
     headers = {}
 
     data = {
-        'api_fucked_up': False,
+        'api_is_down': False,
         'api_maintenance': False,
         'spider': [],
         'bansheeinventory': [],
@@ -164,7 +163,7 @@ class D2data:
                 self.data['api_maintenance'] = True
                 return resp
             print("{} get error".format(name), json.dumps(resp.json(), indent=4, sort_keys=True) + "\n")
-            self.data['api_fucked_up'] = True
+            self.data['api_is_down'] = True
             return resp
         return resp
 
@@ -309,7 +308,7 @@ class D2data:
                                 self.data['xur']['fields'][i]['value'] = item_name
                             i += 1
         else:
-            self.data['api_fucked_up'] = False
+            self.data['api_is_down'] = False
             loc_field = {
                 "inline": False,
                 "name": self.translations[lang]['msg']['xurloc'],
