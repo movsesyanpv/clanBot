@@ -1,8 +1,10 @@
 {
     "ru": {
         "msg": {
+            "error": "Ошибка",
             "noapi": "API Bungie недоступен",
             "maintenance": "API Bungie на обслуживании",
+            "later": "Информация обновится позже",
             "spider": "Паук продает следующее",
             "xur": "Ассортимент Зура",
             "weapon": "Оружие",
@@ -87,8 +89,10 @@
     },
     "en": {
         "msg": {
+            "error": "Error",
             "noapi": "Bungie API is unavailable",
             "maintenance": "Bungie API is brought down for maintenance",
+            "later": "The information will be updated later",
             "spider": "Spider sells this",
             "xur": "Xur sells this",
             "weapon": "Weapon",

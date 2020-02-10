@@ -41,7 +41,7 @@ class ClanBot(discord.Client):
         translations_file = open('translations.json', 'r', encoding='utf-8')
         self.translations = json.loads(translations_file.read())
         translations_file.close()
-        self.data = d2.D2data(self.translations, self.args.oauth)
+        self.data = d2.D2data(self.translations, self.args.lang, self.args.oauth)
         self.raid = lfg.LFG()
         self.hist_db = sqlite3.connect('history.db')
         self.hist_cursor = self.hist_db.cursor()
@@ -412,9 +412,8 @@ class ClanBot(discord.Client):
             await self.change_presence(activity=game)
             return
 
-        if not self.data.data['api_maintenance'] and not self.data.data['api_fucked_up']:
-            if self.data.data[name]:
-                await self.post_embed(name, self.data.data[name], time_to_delete)
+        if self.data.data[name]:
+            await self.post_embed(name, self.data.data[name], time_to_delete)
 
         game = discord.Game('waiting')
         await self.change_presence(activity=game)

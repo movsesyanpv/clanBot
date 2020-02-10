@@ -56,10 +56,30 @@ class D2data:
 
     oauth = BungieOAuth(api_data['id'], api_data['secret'])
 
-    def __init__(self, translations, is_oauth, **options):
+    def __init__(self, translations, lang, is_oauth, **options):
         super().__init__(**options)
         self.translations = translations
         self.is_oauth = is_oauth
+        self.data['api_is_down'] = {
+            'fields': [{
+                    'inline': True,
+                    'name': translations[lang]['msg']['noapi'],
+                    'value': translations[lang]['msg']['later']
+                    }],
+            'color': 0xff0000,
+            'type': "rich",
+            'title': translations[lang]['msg']['error'],
+        }
+        self.data['api_maintenance'] = {
+            'fields': [{
+                    'inline': True,
+                    'name': translations[lang]['msg']['maintenance'],
+                    'value': translations[lang]['msg']['later']
+                    }],
+            'color': 0xff0000,
+            'type': "rich",
+            'title': translations[lang]['msg']['error'],
+        }
 
     def get_chars(self):
         platform = 0
@@ -144,7 +164,11 @@ class D2data:
         }
 
     def get_bungie_json(self, name, url, params):
-        resp = requests.get(url, params=params, headers=self.headers)
+        try:
+            resp = requests.get(url, params=params, headers=self.headers)
+        except:
+            self.data[name] = self.data['api_is_down']
+            return False
         resp_code = resp.json()['ErrorCode']
         print('getting {}'.format(name))
         curr_try = 2
@@ -153,17 +177,17 @@ class D2data:
             resp = requests.get(url, params=params, headers=self.headers)
             resp_code = resp.json()['ErrorCode']
             if resp_code == 5:
-                self.data['api_maintenance'] = True
+                self.data[name] = self.data['api_maintenance']
                 curr_try -= 1
             curr_try += 1
             time.sleep(5)
         if not resp:
             resp_code = resp.json()['ErrorCode']
             if resp_code == 5:
-                self.data['api_maintenance'] = True
+                self.data[name] = self.data['api_maintenance']
                 return resp
             print("{} get error".format(name), json.dumps(resp.json(), indent=4, sort_keys=True) + "\n")
-            self.data['api_is_down'] = True
+            self.data[name] = self.data['api_is_down']
             return resp
         return resp
 
@@ -234,13 +258,13 @@ class D2data:
     async def get_xur(self, lang):
         char_info = self.char_info
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        # this is gonna break monday-thursday
-        # get xur inventory
+
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'])
         xur_resp = self.get_bungie_json('xur', xur_url, self.vendor_params)
         if not xur_resp and xur_resp.json()['ErrorCode'] != 1627:
             await destiny.close()
+            return
 
         xur_def = await destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
         self.data['xur'] = {
@@ -308,7 +332,7 @@ class D2data:
                                 self.data['xur']['fields'][i]['value'] = item_name
                             i += 1
         else:
-            self.data['api_is_down'] = False
+            # self.data['api_is_down'] = False
             loc_field = {
                 "inline": False,
                 "name": self.translations[lang]['msg']['xurloc'],
@@ -455,6 +479,7 @@ class D2data:
         local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
+            return
 
         self.data['reckoning'] = {
             'thumbnail': {
@@ -485,6 +510,7 @@ class D2data:
         local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
+            return
 
         self.data['nightfalls820'] = {
             'thumbnail': {
@@ -547,6 +573,7 @@ class D2data:
         local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
+            return
 
         self.data['raids'] = {
             'thumbnail': {
@@ -642,6 +669,7 @@ class D2data:
         local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
+            return
 
         self.data['ordeal'] = {
             'thumbnail': {
@@ -685,6 +713,7 @@ class D2data:
         local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
+            return
 
         self.data['nightmares'] = {
             'thumbnail': {
@@ -717,6 +746,7 @@ class D2data:
         local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
+            return
 
         self.data['cruciblerotators'] = {
             'thumbnail': {
@@ -762,6 +792,7 @@ class D2data:
         banshee_resp = self.get_bungie_json('banshee', banshee_url, vendor_params)
         if not banshee_resp:
             await destiny.close()
+            return
 
         banshee_sales = banshee_resp.json()['Response']['sales']['data']
 
