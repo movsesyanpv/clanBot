@@ -120,7 +120,9 @@ class ClanBot(discord.Client):
             e = discord.Embed(title='I will not obey you.', type="rich",
                               url='https://www.youtube.com/watch?v=qn9FkoqYgI4')
             e.set_image(url='https://i.ytimg.com/vi/qn9FkoqYgI4/hqdefault.jpg')
-            await message.channel.send(msg, embed=e)
+            if message.author.dm_channel is None:
+                await message.author.create_dm()
+            await message.channel.dm_channel.send(msg, embed=e)
         return is_owner
 
     async def send_lfg_man(self, author):
@@ -291,8 +293,15 @@ class ClanBot(discord.Client):
                     if len(group_id) > 0:
                         old_lfg = self.raid.get_cell('group_id', group_id[0], 'lfg_channel')
                         old_lfg = self.get_channel(old_lfg)
-                        old_lfg = await old_lfg.fetch_message(group_id[0])
-                        await self.raid.edit(message, old_lfg, self.translations[self.args.lang])
+                        if old_lfg is not None:
+                            old_lfg = await old_lfg.fetch_message(group_id[0])
+                            if old_lfg.author == message.author:
+                                await self.raid.edit(message, old_lfg, self.translations[self.args.lang])
+                            else:
+                                await self.check_ownership(message)
+                                await message.delete()
+                        else:
+                            await message.delete()
                 return
 
             if 'lfg' in message.content.lower() and self.user in message.mentions:
