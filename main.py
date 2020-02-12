@@ -353,6 +353,8 @@ class ClanBot(discord.Client):
                 for upd_type in content[2:]:
                     await self.force_update(upd_type)
                 return
+        except discord.errors.Forbidden:
+            pass
         except Exception as e:
             if 'stop' not in message.content.lower() or (self.user not in message.mentions and str(message.channel.type) != 'private'):
                 if not self.args.production:
@@ -388,7 +390,7 @@ class ClanBot(discord.Client):
                                 cruciblerotators integer, heroicstory integer, forge integer, vanguardstrikes integer, 
                                 reckoning integer )'''.format(server.name.replace('\'', '').replace(' ', '_')))
                 init_values = [server.id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                self.hist_cursor.execute("INSERT INTO {} VALUES (?,?,?,?,?,?,?,?,?,?,?,?)".format(server.name.replace('\'', '').replace(' ', '_')), init_values)
+                self.hist_cursor.execute("INSERT INTO {} VALUES (?,?,?,?,?,?,?,?,?,?,?,?)".format(server.name.replace('\'', '').replace(' ', '_').encode('ascii', 'ignore').decode('ascii')), init_values)
                 self.hist_db.commit()
             except sqlite3.OperationalError:
                 pass
