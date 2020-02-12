@@ -152,24 +152,22 @@ class ClanBot(discord.Client):
             self.raid.rm_people(message.id, user)
             if user.dm_channel is None:
                 await user.create_dm()
-            await user.dm_channel.send(self.translations[self.args.lang]['lfg']['gotcha'])
             await self.raid.update_group_msg(message, self.translations[self.args.lang])
             if self.raid.get_cell('group_id', message.id, 'group_mode') == 'manual':
+                await user.dm_channel.send(self.translations[self.args.lang]['lfg']['gotcha'])
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
                 await self.raid.upd_dm(owner, message.id, self.translations[self.args.lang])
 
     async def on_raw_reaction_add(self, payload):
-        if payload.user_id == self.user.id:
+        user = payload.member
+        if payload.member == self.user:
             return
 
         try:
             message = await self.fetch_channel(payload.channel_id)
             message = await message.fetch_message(payload.message_id)
-            for guild in self.guilds:
-                if guild.id == payload.guild_id:
-                    user = guild.get_member(payload.user_id)
-
+            
             if self.raid.is_raid(message.id):
                 mode = self.raid.get_cell('group_id', message.id, 'group_mode')
                 owner = self.get_user(self.raid.get_cell('group_id', message.id, 'owner'))

@@ -162,7 +162,7 @@ class LFG:
             if role.name.lower() in roles:
                 the_role.append(role)
         if len(the_role) == 0:
-            the_role.append(message.guild.get_role(message.guild.id))
+            the_role.append(message.guild.default_role)
         the_role_str = the_role[0].mention
         for i in the_role[1:]:
             the_role_str = "{}, {}".format(the_role_str, i.mention)
