@@ -388,7 +388,7 @@ class ClanBot(discord.Client):
                 self.hist_cursor.execute('''CREATE TABLE {} ( server_id integer, spider integer, xur integer, 
                                 nightfalls820 integer, ordeal integer, nightmares integer, raids integer, 
                                 cruciblerotators integer, heroicstory integer, forge integer, vanguardstrikes integer, 
-                                reckoning integer )'''.format(server.name.replace('\'', '').replace(' ', '_')))
+                                reckoning integer )'''.format(server.name.replace('\'', '').replace(' ', '_').encode('ascii', 'ignore').decode('ascii')))
                 init_values = [server.id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                 self.hist_cursor.execute("INSERT INTO {} VALUES (?,?,?,?,?,?,?,?,?,?,?,?)".format(server.name.replace('\'', '').replace(' ', '_').encode('ascii', 'ignore').decode('ascii')), init_values)
                 self.hist_db.commit()
