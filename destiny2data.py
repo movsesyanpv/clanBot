@@ -572,7 +572,10 @@ class D2data:
                 "description": modifier_subtitle.text
             }
             modifiers.append(mod)
-        return modifiers
+        if r:
+            return modifiers
+        else:
+            return False
 
     async def get_raids(self, lang):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
@@ -620,8 +623,11 @@ class D2data:
                     'value': u"\u2063"
                 }
                 mods = self.get_modifiers(lang, r_json['hash'])
-                info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'], mods[1]['name'],
-                                                           self.translations[lang]['armsmaster'][eow_loadout])
+                if mods:
+                    info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'], mods[1]['name'],
+                                                               self.translations[lang]['armsmaster'][eow_loadout])
+                else:
+                    info['value'] = self.data['api_is_down']['fields'][0]['name']
                 self.data['raids']['fields'].append(info)
             if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
                     not r_json['matchmaking']['requiresGuardianOath']:
@@ -667,7 +673,10 @@ class D2data:
                     'value': u"\u2063"
                 }
                 mods = self.get_modifiers(lang, r_json['hash'])
-                info['value'] = mods[0]['name']
+                if mods:
+                    info['value'] = mods[0]['name']
+                else:
+                    info['value'] = self.data['api_is_down']['fields'][0]['name']
                 self.data['raids']['fields'].append(info)
 
     async def get_ordeal(self, lang):
