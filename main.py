@@ -41,7 +41,7 @@ class ClanBot(discord.Client):
         translations_file = open('translations.json', 'r', encoding='utf-8')
         self.translations = json.loads(translations_file.read())
         translations_file.close()
-        self.data = d2.D2data(self.translations, self.args.lang, self.args.oauth)
+        self.data = d2.D2data(self.translations, self.args.lang, self.args.oauth, self.args.production, (self.args.key, self.args.cert))
         self.raid = lfg.LFG()
         self.hist_db = sqlite3.connect('history.db')
         self.hist_cursor = self.hist_db.cursor()
@@ -81,6 +81,8 @@ class ClanBot(discord.Client):
         parser.add_argument('-tp', '--testprod', help='Use to launch in test production mode', action='store_true')
         parser.add_argument('-f', '--forceupdate', help='Force update right now', action='store_true')
         parser.add_argument('--oauth', help='Get Bungie access token', action='store_true')
+        parser.add_argument('-k', '--key', help='SSL key', type=str, default='')
+        parser.add_argument('-c', '--cert', help='SSL certificate', type=str, default='')
         self.args = parser.parse_args()
 
     async def force_update(self, upd_type):

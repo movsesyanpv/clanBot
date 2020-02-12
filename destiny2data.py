@@ -54,9 +54,9 @@ class D2data:
 
     char_info = {}
 
-    oauth = BungieOAuth(api_data['id'], api_data['secret'])
+    oauth = ''
 
-    def __init__(self, translations, lang, is_oauth, **options):
+    def __init__(self, translations, lang, is_oauth, prod, context, **options):
         super().__init__(**options)
         self.translations = translations
         self.is_oauth = is_oauth
@@ -80,6 +80,10 @@ class D2data:
             'type': "rich",
             'title': translations[lang]['msg']['error'],
         }
+        if prod:
+            self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], context=context, host='0.0.0.0')
+        else:
+            self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
 
     def get_chars(self):
         platform = 0
