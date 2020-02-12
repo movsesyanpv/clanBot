@@ -436,7 +436,10 @@ class ClanBot(discord.Client):
                             if len(last[0]) > 0:
                                 hist = last[0][0]
                 except sqlite3.OperationalError:
-                    self.hist_cursor.execute('''ALTER TABLE {} ADD COLUMN {} INTEGER'''.format(server.name.replace('\'', '').replace(' ', '_'), upd_type))
+                    try:
+                        self.hist_cursor.execute('''ALTER TABLE {} ADD COLUMN {} INTEGER'''.format(server.name.replace('\'', '').replace(' ', '_'), upd_type))
+                    except sqlite3.OperationalError:
+                        pass
 
                 for channel in server.channels:
                     if '{}\n'.format(channel.id) in self.channels:
