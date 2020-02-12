@@ -115,18 +115,18 @@ class ClanBot(discord.Client):
         if not self.sched.running:
             self.sched.start()
 
-    async def check_ownership(self, message):
+    async def check_ownership(self, message, is_silent=False, admin_check=False):
         bot_info = await self.application_info()
         is_owner = bot_info.owner == message.author
-        if not is_owner:
+        if not is_owner and not is_silent:
             msg = '{}!'.format(message.author.mention)
             e = discord.Embed(title='I will not obey you.', type="rich",
                               url='https://www.youtube.com/watch?v=qn9FkoqYgI4')
             e.set_image(url='https://i.ytimg.com/vi/qn9FkoqYgI4/hqdefault.jpg')
             if message.author.dm_channel is None:
                 await message.author.create_dm()
-            await message.channel.dm_channel.send(msg, embed=e)
-        return is_owner
+            await message.author.dm_channel.send(msg, embed=e)
+        return is_owner or (message.channel.permissions_for(message.author).administrator and admin_check)
 
     async def send_lfg_man(self, author):
         if author.dm_channel is None:
@@ -167,7 +167,7 @@ class ClanBot(discord.Client):
         try:
             message = await self.fetch_channel(payload.channel_id)
             message = await message.fetch_message(payload.message_id)
-            
+
             if self.raid.is_raid(message.id):
                 mode = self.raid.get_cell('group_id', message.id, 'group_mode')
                 owner = self.get_user(self.raid.get_cell('group_id', message.id, 'owner'))
@@ -334,8 +334,7 @@ class ClanBot(discord.Client):
                 return
 
             if 'regnotifier' in message.content.lower() and self.user in message.mentions:
-                if await self.check_ownership(message):
-                    await message.delete()
+                if await self.check_ownership(message, is_silent=True, admin_check=True):
                     self.channels.append(message.channel.id)
                     self.channels = list(set(self.channels))
                     f = open('channelList.dat', 'w')
@@ -344,7 +343,7 @@ class ClanBot(discord.Client):
                     f.close()
                     msg = 'Got it, {}'.format(message.author.mention)
                     await message.channel.send(msg, delete_after=10)
-                    return
+                await message.delete()
                 return
 
             if 'update' in message.content.lower() and self.user in message.mentions:
@@ -354,20 +353,21 @@ class ClanBot(discord.Client):
                     await self.force_update(upd_type)
                 return
         except Exception as e:
-            if not self.args.production:
-                bot_info = await self.application_info()
-                owner = bot_info.owner
-                if owner.dm_channel is None:
-                    await owner.create_dm()
-                await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-                await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
-                if message.author.dm_channel is None:
-                    await message.author.create_dm()
-                await message.author.dm_channel.send(self.translations[self.args.lang]['error'])
-            else:
-                self.git.create_issue(title='Exception on message',
-                                      body='# Message\n\n{}\n\n# Traceback\n\n```{}```'.
-                                      format(message.content, traceback.format_exc()))
+            if 'stop' not in message.content.lower() or (self.user not in message.mentions and str(message.channel.type) != 'private'):
+                if not self.args.production:
+                    bot_info = await self.application_info()
+                    owner = bot_info.owner
+                    if owner.dm_channel is None:
+                        await owner.create_dm()
+                    await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+                    await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
+                    if message.author.dm_channel is None:
+                        await message.author.create_dm()
+                    await message.author.dm_channel.send(self.translations[self.args.lang]['error'])
+                else:
+                    self.git.create_issue(title='Exception on message',
+                                          body='# Message\n\n{}\n\n# Traceback\n\n```{}```'.
+                                          format(message.content, traceback.format_exc()))
 
     def get_channels(self):
         try:
