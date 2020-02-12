@@ -351,6 +351,7 @@ class D2data:
         local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
+            return
 
         self.data['heroicstory'] = {
             'thumbnail': {
@@ -383,6 +384,7 @@ class D2data:
         local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
+            return
 
         self.data['forge'] = {
             'thumbnail': {
@@ -417,6 +419,7 @@ class D2data:
         local_types = self.translations[lang]
         if not activities_resp:
             await destiny.close()
+            return
 
         self.data['vanguardstrikes'] = {
             'thumbnail': {
