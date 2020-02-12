@@ -81,7 +81,7 @@ class D2data:
             'title': translations[lang]['msg']['error'],
         }
         if prod:
-            self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], context=context, host='0.0.0.0')
+            self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], context=context, host='0.0.0.0', port='4200')
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
 
