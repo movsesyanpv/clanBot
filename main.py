@@ -455,7 +455,7 @@ class ClanBot(discord.Client):
                                 await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.format(upd_type, channel.name, server.name))
                         message = await channel.send(embed=embed, delete_after=time_to_delete)
                         hist = message.id
-                self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.name.replace('\'', '').replace(' ', '_'), upd_type), (hist, ))
+                self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.name.replace('\'', '').replace(' ', '_').encode('ascii', 'ignore').decode('ascii'), upd_type), (hist, ))
                 self.hist_db.commit()
 
     def start_up(self):
