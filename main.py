@@ -66,10 +66,11 @@ class ClanBot(discord.Client):
         logging.basicConfig(filename='scheduler.log')
         logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
-        git_file = open('git.dat', 'r')
-        git_token = git_file.read()
-        self.git = Github(git_token)
-        self.git = self.git.get_repo('movsesyanpv/clanBot')
+        if self.args.production:
+            git_file = open('git.dat', 'r')
+            git_token = git_file.read()
+            self.git = Github(git_token)
+            self.git = self.git.get_repo('movsesyanpv/clanBot')
 
     def get_args(self):
         parser = argparse.ArgumentParser()
@@ -426,7 +427,7 @@ class ClanBot(discord.Client):
             for server in self.guilds:
                 hist = 0
                 try:
-                    last = self.hist_cursor.execute('''SELECT {} FROM {}'''.format(upd_type, server.name.replace('\'', '').replace(' ', '_')))
+                    last = self.hist_cursor.execute('''SELECT {} FROM {}'''.format(upd_type, server.name.replace('\'', '').replace(' ', '_').encode('ascii', 'ignore').decode('ascii')))
                     last = last.fetchall()
                     if last is not None:
                         if len(last) > 0:
