@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from hashids import Hashids
 
 
-class LFG():
+class LFG:
     conn = ''
     c = ''
     hashids = Hashids()
