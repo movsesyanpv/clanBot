@@ -41,7 +41,7 @@ class ClanBot(discord.Client):
         translations_file = open('translations.json', 'r', encoding='utf-8')
         self.translations = json.loads(translations_file.read())
         translations_file.close()
-        self.data = d2.D2data(self.translations, self.args.lang, self.args.oauth, self.args.production, (self.args.key, self.args.cert))
+        self.data = d2.D2data(self.translations, self.args.lang, self.args.oauth, self.args.production, (self.args.cert, self.args.key))
         self.raid = lfg.LFG()
         self.hist_db = sqlite3.connect('history.db')
         self.hist_cursor = self.hist_db.cursor()
