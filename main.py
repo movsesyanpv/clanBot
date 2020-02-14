@@ -12,6 +12,7 @@ from github import Github
 
 import raid as lfg
 import destiny2data as d2
+import unauthorized
 
 
 class ClanBot(discord.Client):
@@ -119,14 +120,12 @@ class ClanBot(discord.Client):
     async def check_ownership(self, message, is_silent=False, admin_check=False):
         bot_info = await self.application_info()
         is_owner = bot_info.owner == message.author
-        if not is_owner and not is_silent:
-            msg = '{}!'.format(message.author.mention)
-            e = discord.Embed(title='I will not obey you.', type="rich",
-                              url='https://www.youtube.com/watch?v=qn9FkoqYgI4')
-            e.set_image(url='https://i.ytimg.com/vi/qn9FkoqYgI4/hqdefault.jpg')
-            if message.author.dm_channel is None:
-                await message.author.create_dm()
-            await message.author.dm_channel.send(msg, embed=e)
+        # if not is_owner and not is_silent:
+        msg = '{}!'.format(message.author.mention)
+        e = unauthorized.get_unauth_response()
+        if message.author.dm_channel is None:
+            await message.author.create_dm()
+        await message.author.dm_channel.send(msg, embed=e)
         return is_owner or (message.channel.permissions_for(message.author).administrator and admin_check)
 
     async def send_lfg_man(self, author):
