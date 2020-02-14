@@ -439,7 +439,7 @@ class ClanBot(discord.Client):
                     try:
                         self.hist_cursor.execute('''ALTER TABLE {} ADD COLUMN {} INTEGER'''.format(server.name.replace('\'', '').replace(' ', '_'), upd_type))
                     except sqlite3.OperationalError:
-                        pass
+                        await self.update_history()
 
                 for channel in server.channels:
                     if '{}\n'.format(channel.id) in self.channels:
