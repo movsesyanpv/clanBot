@@ -350,6 +350,18 @@ class ClanBot(discord.Client):
                 await message.delete()
                 return
 
+            if 'rmnotifier' in message.content.lower() and self.user in message.mentions:
+                if await self.check_ownership(message, is_silent=True, admin_check=True):
+                    self.channels.pop(self.channels.index(str(message.channel.id)+'\n'))
+                    f = open('channelList.dat', 'w')
+                    for channel in self.channels:
+                        f.write('{}\n'.format(channel))
+                    f.close()
+                    msg = 'Got it, {}'.format(message.author.mention)
+                    await message.channel.send(msg, delete_after=10)
+                await message.delete()
+                return
+
             if 'update' in message.content.lower() and self.user in message.mentions:
                 content = message.content.lower().split()
                 await message.delete()
