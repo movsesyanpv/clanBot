@@ -388,15 +388,18 @@ class ClanBot(discord.Client):
         await self.change_presence(activity=game)
         for server in self.guilds:
             try:
-                self.hist_cursor.execute('''CREATE TABLE {} ( server_id integer, spider integer, xur integer, 
+                self.hist_cursor.execute('''CREATE TABLE \'{}\' ( server_name text, spider integer, xur integer, 
                                 nightfalls820 integer, ordeal integer, nightmares integer, raids integer, 
                                 cruciblerotators integer, heroicstory integer, forge integer, vanguardstrikes integer, 
-                                reckoning integer )'''.format(server.name.replace('\'', '').replace(' ', '_').encode('ascii', 'ignore').decode('ascii')))
-                init_values = [server.id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                self.hist_cursor.execute("INSERT INTO {} VALUES (?,?,?,?,?,?,?,?,?,?,?,?)".format(server.name.replace('\'', '').replace(' ', '_').encode('ascii', 'ignore').decode('ascii')), init_values)
+                                reckoning integer )'''.format(server.id))
+                init_values = [server.name, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                self.hist_cursor.execute("INSERT INTO \'{}\' VALUES (?,?,?,?,?,?,?,?,?,?,?,?)".format(server.id), init_values)
                 self.hist_db.commit()
             except sqlite3.OperationalError:
-                pass
+                try:
+                    self.hist_cursor.execute('''UPDATE \'{}\' SET server_name=?'''.format(server.id), (server.name, ))
+                except sqlite3.OperationalError:
+                    pass
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
@@ -432,7 +435,7 @@ class ClanBot(discord.Client):
             for server in self.guilds:
                 hist = 0
                 try:
-                    last = self.hist_cursor.execute('''SELECT {} FROM {}'''.format(upd_type, server.name.replace('\'', '').replace(' ', '_').encode('ascii', 'ignore').decode('ascii')))
+                    last = self.hist_cursor.execute('''SELECT {} FROM \'{}\''''.format(upd_type, server.id))
                     last = last.fetchall()
                     if last is not None:
                         if len(last) > 0:
@@ -440,7 +443,7 @@ class ClanBot(discord.Client):
                                 hist = last[0][0]
                 except sqlite3.OperationalError:
                     try:
-                        self.hist_cursor.execute('''ALTER TABLE {} ADD COLUMN {} INTEGER'''.format(server.name.replace('\'', '').replace(' ', '_'), upd_type))
+                        self.hist_cursor.execute('''ALTER TABLE \'{}\' ADD COLUMN {} INTEGER'''.format(server.id, upd_type))
                     except sqlite3.OperationalError:
                         await self.update_history()
 
@@ -451,14 +454,14 @@ class ClanBot(discord.Client):
                                 last = await channel.fetch_message(hist)
                                 try:
                                     await last.delete()
-                                except:
+                                except ValueError:
                                     pass
                             except discord.NotFound:
                                 bot_info = await self.application_info()
                                 await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.format(upd_type, channel.name, server.name))
                         message = await channel.send(embed=embed, delete_after=time_to_delete)
                         hist = message.id
-                self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.name.replace('\'', '').replace(' ', '_').encode('ascii', 'ignore').decode('ascii'), upd_type), (hist, ))
+                self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.id, upd_type), (hist, ))
                 self.hist_db.commit()
 
     def start_up(self):
