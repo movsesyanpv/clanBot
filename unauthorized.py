@@ -4,9 +4,9 @@ import json
 
 
 def get_unauth_response():
-    conn = sqlite3.connect('internal.db')
-    c = conn.cursor()
     try:
+        conn = sqlite3.connect('internal.db')
+        c = conn.cursor()
         e = c.execute('''SELECT embed FROM \'401responses\' ORDER BY RANDOM() LIMIT 1;''').fetchone()
         e = discord.Embed.from_dict(json.loads(e[0]))
     except sqlite3.OperationalError:
