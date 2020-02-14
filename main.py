@@ -454,11 +454,15 @@ class ClanBot(discord.Client):
                                 last = await channel.fetch_message(hist)
                                 try:
                                     await last.delete()
-                                except:
+                                except discord.errors.Forbidden:
                                     pass
+                                except discord.errors.HTTPException:
+                                    bot_info = await self.application_info()
+                                    await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
                             except discord.NotFound:
                                 bot_info = await self.application_info()
-                                await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.format(upd_type, channel.name, server.name))
+                                await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.
+                                                          format(upd_type, channel.name, server.name))
                         message = await channel.send(embed=embed, delete_after=time_to_delete)
                         hist = message.id
                 self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.id, upd_type), (hist, ))
