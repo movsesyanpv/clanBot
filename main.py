@@ -186,7 +186,10 @@ class ClanBot(discord.Client):
                 if str(payload.emoji) != '👌':
                     for reaction in message.reactions:
                         if str(reaction.emoji) == str(payload.emoji):
-                            await reaction.remove(user)
+                            try:
+                                await reaction.remove(user)
+                            except discord.errors.Forbidden:
+                                pass
                             return
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
