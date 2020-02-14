@@ -454,7 +454,7 @@ class ClanBot(discord.Client):
                                 last = await channel.fetch_message(hist)
                                 try:
                                     await last.delete()
-                                except ValueError:
+                                except:
                                     pass
                             except discord.NotFound:
                                 bot_info = await self.application_info()
