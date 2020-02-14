@@ -94,6 +94,8 @@ class LFG:
                 args['name'] = str_arg[1].lstrip()
             if 'time:' in string or '-t:' in string:
                 try:
+                    if len(str_arg) < 3:
+                        raise ValueError
                     time_str = '{}:{}'.format(str_arg[1], str_arg[2])
                     args['time'] = datetime.strptime(time_str.lstrip(), "%d-%m-%Y %H:%M %z")
                 except ValueError:
