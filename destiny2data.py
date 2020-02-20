@@ -32,7 +32,15 @@ class D2data:
         'reckoningboss': [],
         'vanguardstrikes': [],
         'cruciblerotators': [],
-        'raids': []
+        'raids': [],
+        'silver': [],
+        'featured_bd': [],
+        'bd': [],
+        'seasonal_bd': [],
+        'seasonal_consumables': [],
+        'seasonal_silver': [],
+        'seasonal_featured_bd': [],
+        'seasonal_eververse': []
     }
 
     wait_codes = [1672]
@@ -124,8 +132,10 @@ class D2data:
             }
             char_search_resp = requests.get(char_search_url, params=char_search_params, headers=self.headers)
             chars = char_search_resp.json()['Response']['characters']['data']
-            char_id = chars[sorted(chars.keys())[0]]['characterId']
-            self.char_info['charid'] = char_id
+            char_ids = []
+            for key in sorted(chars.keys()):
+                char_ids.append(chars[key]['characterId'])
+            self.char_info['charid'] = char_ids
 
             char_file = open('char.json', 'w')
             char_file.write(json.dumps(self.char_info))
@@ -195,12 +205,353 @@ class D2data:
             return resp
         return resp
 
+    async def get_vendor_sales(self, lang, vendor_resp, cats, exceptions=[]):
+        destiny = pydest.Pydest(self.headers['X-API-Key'])
+
+        embed_sales = []
+
+        tess_sales = vendor_resp.json()['Response']['sales']['data']
+        for key in cats:
+            item = tess_sales[str(key)]
+            item_hash = item['itemHash']
+            if item_hash not in exceptions:
+                currency = item['costs'][0]
+                definition = 'DestinyInventoryItemDefinition'
+                item_resp = await destiny.decode_hash(item_hash, definition, language=lang)
+                currency_resp = await destiny.decode_hash(currency['itemHash'], definition, language=lang)
+
+                item_name_list = item_resp['displayProperties']['name'].split()
+                item_name = ' '.join(item_name_list)
+                currency_cost = str(currency['quantity'])
+                currency_item = currency_resp['displayProperties']['name']
+
+                item_data = {
+                    'inline': True,
+                    'name': item_name.capitalize(),
+                    'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
+                                                currency_item.capitalize())
+                }
+                embed_sales.append(item_data)
+        await destiny.close()
+        return embed_sales
+
+    async def get_featured_bd(self, lang):
+        destiny = pydest.Pydest(self.headers['X-API-Key'])
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+        self.data['featured_bd'] = {
+            'thumbnail': {
+                'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+            },
+            'fields': [],
+            'color': 0x0000aa,
+            'type': "rich",
+            'title': self.translations[lang]['msg']['featured_bd'],
+        }
+
+        char_info = self.char_info
+
+        tmp_fields = []
+        for char in char_info["charid"]:
+            tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
+                format(char_info['platform'], char_info['membershipid'], char)
+            tess_resp = self.get_bungie_json('featured bright dust for {}'.format(char), tess_url, self.vendor_params)
+            if not tess_resp:
+                await destiny.close()
+                return
+            tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
+
+            items_to_get = tess_cats[3]['itemIndexes']  # 5 - featured silver, 3 - featured BD, 4, 11 - BD items
+            tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [353932628, 3260482534, 3536420626])
+
+        for i in range(0, len(tmp_fields)):
+            if tmp_fields[i] not in tmp_fields[i+1:]:
+                self.data['featured_bd']['fields'].append(tmp_fields[i])
+
+        await destiny.close()
+
+    async def get_bd(self, lang):
+        destiny = pydest.Pydest(self.headers['X-API-Key'])
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+        self.data['bd'] = {
+            'thumbnail': {
+                'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+            },
+            'fields': [],
+            'color': 0x0000aa,
+            'type': "rich",
+            'title': self.translations[lang]['msg']['bd'],
+        }
+
+        char_info = self.char_info
+
+        tmp_fields = []
+        for char in char_info["charid"]:
+            tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
+                format(char_info['platform'], char_info['membershipid'], char)
+            tess_resp = self.get_bungie_json('bright dust for {}'.format(char), tess_url, self.vendor_params)
+            if not tess_resp:
+                await destiny.close()
+                return
+            tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
+
+            items_to_get = tess_cats[4]['itemIndexes'] + tess_cats[11]['itemIndexes']
+            tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [353932628, 3260482534, 3536420626])
+
+        for i in range(0, len(tmp_fields)):
+            if tmp_fields[i] not in tmp_fields[i+1:]:
+                self.data['bd']['fields'].append(tmp_fields[i])
+
+        await destiny.close()
+
+    async def get_featured_silver(self, lang):
+        destiny = pydest.Pydest(self.headers['X-API-Key'])
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+        self.data['silver'] = {
+            'thumbnail': {
+                'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+            },
+            'fields': [],
+            'color': 0x0000aa,
+            'type': "rich",
+            'title': self.translations[lang]['msg']['silver'],
+        }
+
+        char_info = self.char_info
+
+        tmp_fields = []
+        for char in char_info["charid"]:
+            tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
+                format(char_info['platform'], char_info['membershipid'], char)
+            tess_resp = self.get_bungie_json('featured silver for {}'.format(char), tess_url, self.vendor_params)
+            if not tess_resp:
+                await destiny.close()
+                return
+            tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
+
+            items_to_get = tess_cats[5]['itemIndexes']  # 5 - featured silver, 3 - featured BD, 4, 11 - BD items
+            tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [827183327])
+
+        for i in range(0, len(tmp_fields)):
+            if tmp_fields[i] not in tmp_fields[i+1:]:
+                self.data['silver']['fields'].append(tmp_fields[i])
+
+        await destiny.close()
+
+    async def get_seasonal_eververse(self, lang):
+        await self.get_seasonal_bd(lang)
+        await self.get_seasonal_consumables(lang)
+        await self.get_seasonal_featured_bd(lang)
+        await self.get_seasonal_featured_silver(lang)
+
+        for i in range(0, len(self.data['seasonal_bd'])):
+            self.data['seasonal_eververse'].append(self.data['seasonal_silver'][i])
+            self.data['seasonal_eververse'].append(self.data['seasonal_featured_bd'][i])
+            self.data['seasonal_eververse'].append(self.data['seasonal_bd'][i])
+            self.data['seasonal_eververse'].append(self.data['seasonal_consumables'][i])
+
+    async def get_seasonal_featured_silver(self, lang):
+        destiny = pydest.Pydest(self.headers['X-API-Key'])
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+
+        self.data['seasonal_silver'].clear()
+
+        data = {
+            'thumbnail': {
+                'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+            },
+            'fields': [],
+            'color': 0x0000aa,
+            'type': "rich",
+            'title': self.translations[lang]['msg']['silver'],
+        }
+
+        n_items = 0
+        curr_week = dict.copy(data)
+        i_week = 1
+        class_items = 0
+        for i, item in enumerate(tess_def['itemList']):
+            if n_items >= 5 and n_items - class_items / 3 * 2 >= 5:
+                curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['silver'],
+                                                      self.translations[lang]['msg']['week'], i_week)
+                i_week = i_week + 1
+                self.data['seasonal_silver'].append(dict.copy(curr_week))
+                n_items = 0
+                curr_week['fields'] = []
+                class_items = 0
+            if item['displayCategoryIndex'] == 3:
+                definition = 'DestinyInventoryItemDefinition'
+                next_def = await destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
+                item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
+                currency_resp = await destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                currency_cost = str(item['currencies'][0]['quantity'])
+                currency_item = currency_resp['displayProperties']['name']
+                item_data = {
+                    'inline': True,
+                    'name': item_def['displayProperties']['name'],
+                    'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
+                                                currency_item.capitalize())
+                }
+                curr_week['fields'].append(item_data)
+                n_items = n_items + 1
+                if item_def['classType'] < 3 or any(
+                        class_name in item_def['itemTypeDisplayName'].lower() for class_name in
+                        ['hunter', 'warlock', 'titan']):
+                    class_items = class_items + 1
+        await destiny.close()
+
+    async def get_seasonal_featured_bd(self, lang):
+        destiny = pydest.Pydest(self.headers['X-API-Key'])
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+
+        self.data['seasonal_featured_bd'].clear()
+
+        data = {
+            'thumbnail': {
+                'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+            },
+            'fields': [],
+            'color': 0x0000aa,
+            'type': "rich",
+            'title': self.translations[lang]['msg']['featured_bd'],
+        }
+
+        n_items = 0
+        curr_week = dict.copy(data)
+        i_week = 1
+        class_items = 0
+        for i, item in enumerate(tess_def['itemList']):
+            if n_items >= 4 and n_items - class_items / 3 * 2 >= 4:
+                curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['featured_bd'],
+                                                      self.translations[lang]['msg']['week'], i_week)
+                i_week = i_week + 1
+                self.data['seasonal_featured_bd'].append(dict.copy(curr_week))
+                n_items = 0
+                curr_week['fields'] = []
+                class_items = 0
+            if item['displayCategoryIndex'] == 4:
+                definition = 'DestinyInventoryItemDefinition'
+                next_def = await destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
+                item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
+                currency_resp = await destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                currency_cost = str(item['currencies'][0]['quantity'])
+                currency_item = currency_resp['displayProperties']['name']
+                item_data = {
+                    'inline': True,
+                    'name': item_def['displayProperties']['name'],
+                    'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
+                                                currency_item.capitalize())
+                }
+                curr_week['fields'].append(item_data)
+                n_items = n_items + 1
+                if item_def['classType'] < 3 or any(
+                        class_name in item_def['itemTypeDisplayName'].lower() for class_name in
+                        ['hunter', 'warlock', 'titan']):
+                    class_items = class_items + 1
+        await destiny.close()
+
+    async def get_seasonal_consumables(self, lang):
+        destiny = pydest.Pydest(self.headers['X-API-Key'])
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+
+        self.data['seasonal_consumables'].clear()
+
+        data = {
+            'thumbnail': {
+                'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+            },
+            'fields': [],
+            'color': 0x0000aa,
+            'type': "rich",
+            'title': self.translations[lang]['msg']['bd_consumables'],
+        }
+
+        n_items = 0
+        curr_week = dict.copy(data)
+        i_week = 1
+        class_items = 0
+        for i, item in enumerate(tess_def['itemList']):
+            if n_items >= 4 and n_items - class_items / 3 * 2 >= 4:
+                curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['bd_consumables'],
+                                                      self.translations[lang]['msg']['week'], i_week)
+                i_week = i_week + 1
+                self.data['seasonal_consumables'].append(dict.copy(curr_week))
+                n_items = 0
+                curr_week['fields'] = []
+                class_items = 0
+            if item['displayCategoryIndex'] == 10:
+                definition = 'DestinyInventoryItemDefinition'
+                next_def = await destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
+                item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
+                currency_resp = await destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                currency_cost = str(item['currencies'][0]['quantity'])
+                currency_item = currency_resp['displayProperties']['name']
+                item_data = {
+                    'inline': True,
+                    'name': item_def['displayProperties']['name'],
+                    'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
+                                                currency_item.capitalize())
+                }
+                curr_week['fields'].append(item_data)
+                n_items = n_items + 1
+                if item_def['classType'] < 3 or any(
+                        class_name in item_def['itemTypeDisplayName'].lower() for class_name in
+                        ['hunter', 'warlock', 'titan']):
+                    class_items = class_items + 1
+        await destiny.close()
+
+    async def get_seasonal_bd(self, lang):
+        destiny = pydest.Pydest(self.headers['X-API-Key'])
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+
+        self.data['seasonal_bd'].clear()
+
+        data = {
+            'thumbnail': {
+                'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+            },
+            'fields': [],
+            'color': 0x0000aa,
+            'type': "rich",
+            'title': self.translations[lang]['msg']['bd'],
+        }
+
+        n_items = 0
+        curr_week = dict.copy(data)
+        i_week = 1
+        class_items = 0
+        for i, item in enumerate(tess_def['itemList']):
+            if n_items >= 7 and n_items - class_items/3*2 >= 7:
+                curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['bd'], self.translations[lang]['msg']['week'], i_week)
+                i_week = i_week + 1
+                self.data['seasonal_bd'].append(dict.copy(curr_week))
+                n_items = 0
+                curr_week['fields'] = []
+                class_items = 0
+            if item['displayCategoryIndex'] == 9:
+                definition = 'DestinyInventoryItemDefinition'
+                next_def = await destiny.decode_hash(tess_def['itemList'][i+1]['itemHash'], definition, language=lang)
+                item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
+                currency_resp = await destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                currency_cost = str(item['currencies'][0]['quantity'])
+                currency_item = currency_resp['displayProperties']['name']
+                item_data = {
+                    'inline': True,
+                    'name': item_def['displayProperties']['name'],
+                    'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
+                                                currency_item.capitalize())
+                }
+                curr_week['fields'].append(item_data)
+                n_items = n_items + 1
+                if item_def['classType'] < 3 or any(class_name in item_def['itemTypeDisplayName'].lower() for class_name in ['hunter', 'warlock', 'titan']):
+                    class_items = class_items + 1
+        await destiny.close()
+
     async def get_spider(self, lang):
         char_info = self.char_info
         destiny = pydest.Pydest(self.headers['X-API-Key'])
 
         spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'. \
-            format(char_info['platform'], char_info['membershipid'], char_info['charid'])
+            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         spider_resp = self.get_bungie_json('spider', spider_url, self.vendor_params)
         if not spider_resp:
             await destiny.close()
@@ -264,7 +615,7 @@ class D2data:
         destiny = pydest.Pydest(self.headers['X-API-Key'])
 
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
-            format(char_info['platform'], char_info['membershipid'], char_info['charid'])
+            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         xur_resp = self.get_bungie_json('xur', xur_url, self.vendor_params)
         if not xur_resp and xur_resp.json()['ErrorCode'] != 1627:
             await destiny.close()
@@ -804,7 +1155,7 @@ class D2data:
         destiny = pydest.Pydest(self.headers['X-API-Key'])
 
         banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
-            format(char_info['platform'], char_info['membershipid'], char_info['charid'])
+            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         banshee_resp = self.get_bungie_json('banshee', banshee_url, vendor_params)
         if not banshee_resp:
             await destiny.close()
@@ -856,7 +1207,7 @@ class D2data:
         char_info = self.char_info
 
         activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
-            format(char_info['platform'], char_info['membershipid'], char_info['charid'])
+            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         activities_resp = self.get_bungie_json(name, activities_url, self.activities_params)
         return activities_resp
 

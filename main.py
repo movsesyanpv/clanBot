@@ -26,7 +26,10 @@ class ClanBot(discord.Client):
 
     lfgs = []
 
-    channels = []
+    notifiers = []
+    seasonal_ch = []
+    channel_db = ''
+    channel_cursor = ''
 
     raid = ''
 
@@ -46,6 +49,8 @@ class ClanBot(discord.Client):
         self.raid = lfg.LFG()
         self.hist_db = sqlite3.connect('history.db')
         self.hist_cursor = self.hist_db.cursor()
+        self.channel_db = sqlite3.connect('channels.db')
+        self.channel_cursor = self.channel_db.cursor()
 
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
@@ -103,6 +108,12 @@ class ClanBot(discord.Client):
             await self.universal_update(self.data.get_spider, 'spider', 86400)
         if 'xur' in upd_type:
             await self.universal_update(self.data.get_xur, 'xur', 345600)
+        if 'tess' in upd_type:
+            await self.universal_update(self.data.get_featured_silver, 'silver', 604800)
+            await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800)
+            await self.universal_update(self.data.get_bd, 'bd', 604800)
+        if 'seasonal' in upd_type:
+            await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=self.notifiers)
         if self.args.forceupdate:
             await self.logout()
             await self.close()
@@ -337,13 +348,14 @@ class ClanBot(discord.Client):
                 return
 
             if 'regnotifier' in message.content.lower() and self.user in message.mentions:
+                content = message.content.lower().split()
+                notifier_type = 'notifiers'
+                if len(content) >= 3 and 'seasonal' in message.content.lower():
+                    notifier_type = content[2]
                 if await self.check_ownership(message, is_silent=True, admin_check=True):
-                    self.channels.append(message.channel.id)
-                    self.channels = list(set(self.channels))
-                    f = open('channelList.dat', 'w')
-                    for channel in self.channels:
-                        f.write('{}\n'.format(channel))
-                    f.close()
+                    self.channel_cursor.execute('''INSERT or IGNORE into {} values (?)'''.format(notifier_type), (message.channel.id,))
+                    self.channel_db.commit()
+                    self.get_channels()
                     msg = 'Got it, {}'.format(message.author.mention)
                     await message.channel.send(msg, delete_after=10)
                 await message.delete()
@@ -351,9 +363,9 @@ class ClanBot(discord.Client):
 
             if 'rmnotifier' in message.content.lower() and self.user in message.mentions:
                 if await self.check_ownership(message, is_silent=True, admin_check=True):
-                    self.channels.pop(self.channels.index(str(message.channel.id)+'\n'))
+                    self.notifiers.pop(self.notifiers.index(str(message.channel.id) + '\n'))
                     f = open('channelList.dat', 'w')
-                    for channel in self.channels:
+                    for channel in self.notifiers:
                         f.write('{}\n'.format(channel))
                     f.close()
                     msg = 'Got it, {}'.format(message.author.mention)
@@ -388,11 +400,29 @@ class ClanBot(discord.Client):
 
     def get_channels(self):
         try:
-            f = open('channelList.dat', 'r')
-            self.channels = f.readlines()
-            f.close()
-        except FileNotFoundError:
-            pass
+            self.channel_cursor.execute('''CREATE TABLE notifiers (channel_id integer)''')
+            self.channel_cursor.execute('''CREATE UNIQUE INDEX notifiers_id ON notifiers(channel_id)''')
+            self.channel_db.commit()
+        except sqlite3.OperationalError:
+            try:
+                channels = self.channel_cursor.execute('''SELECT channel_id FROM notifiers''')
+                channels = channels.fetchall()
+                for entry in channels:
+                    self.notifiers.append(entry[0])
+            except sqlite3.OperationalError:
+                pass
+        try:
+            self.channel_cursor.execute('''CREATE TABLE seasonal (channel_id integer)''')
+            self.channel_cursor.execute('''CREATE UNIQUE INDEX seasonal_id ON seasonal(channel_id)''')
+            self.channel_db.commit()
+        except sqlite3.OperationalError:
+            try:
+                channels = self.channel_cursor.execute('''SELECT channel_id FROM seasonal''')
+                channels = channels.fetchall()
+                for entry in channels:
+                    self.seasonal_ch.append(entry[0])
+            except sqlite3.OperationalError:
+                pass
 
     async def update_history(self):
         game = discord.Game('updating history')
@@ -414,12 +444,15 @@ class ClanBot(discord.Client):
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
-    async def universal_update(self, getter, name, time_to_delete):
+    async def universal_update(self, getter, name, time_to_delete=None, channels=None):
         await self.wait_until_ready()
         game = discord.Game('updating {}'.format(name))
         await self.change_presence(activity=game)
 
         lang = self.args.lang
+
+        if channels is None:
+            channels = self.notifiers
 
         try:
             await getter(lang)
@@ -434,37 +467,56 @@ class ClanBot(discord.Client):
             return
 
         if self.data.data[name]:
-            await self.post_embed(name, self.data.data[name], time_to_delete)
+            await self.post_embed(name, self.data.data[name], time_to_delete, channels)
 
         game = discord.Game('waiting')
         await self.change_presence(activity=game)
 
-    async def post_embed(self, upd_type, src_dict, time_to_delete):
+    async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
         if not self.args.nomessage:
-            embed = discord.Embed.from_dict(src_dict)
+            if type(src_dict) == list:
+                embed = []
+                for field in src_dict:
+                    embed.append(discord.Embed.from_dict(field))
+            else:
+                embed = discord.Embed.from_dict(src_dict)
 
             for server in self.guilds:
                 hist = 0
                 try:
                     last = self.hist_cursor.execute('''SELECT {} FROM \'{}\''''.format(upd_type, server.id))
-                    last = last.fetchall()
+                    last = last.fetchone()
                     if last is not None:
-                        if len(last) > 0:
-                            if len(last[0]) > 0:
-                                hist = last[0][0]
+                        if type(src_dict) == list:
+                            hist = eval(last[0])
+                        else:
+                            if len(last) > 0:
+                                hist = last[0]
                 except sqlite3.OperationalError:
                     try:
-                        self.hist_cursor.execute('''ALTER TABLE \'{}\' ADD COLUMN {} INTEGER'''.format(server.id, upd_type))
+                        if type(src_dict) == list:
+                            self.hist_cursor.execute(
+                                '''ALTER TABLE \'{}\' ADD COLUMN {} text'''.format(server.id, upd_type))
+                        else:
+                            self.hist_cursor.execute('''ALTER TABLE \'{}\' ADD COLUMN {} INTEGER'''.format(server.id, upd_type))
                     except sqlite3.OperationalError:
                         await self.update_history()
 
                 for channel in server.channels:
-                    if '{}\n'.format(channel.id) in self.channels:
+                    if '{}\n'.format(channel.id) in channels:
                         if hist and not self.args.noclear:
                             try:
-                                last = await channel.fetch_message(hist)
+                                if type(hist) == list:
+                                    last = []
+                                    for msg in hist:
+                                        last.append(await channel.fetch_message(msg))
+                                else:
+                                    last = await channel.fetch_message(hist)
                                 try:
-                                    await last.delete()
+                                    if type(hist) == list:
+                                        await channel.delete_messages(last)
+                                    else:
+                                        await last.delete()
                                 except discord.errors.Forbidden:
                                     pass
                                 except discord.errors.HTTPException:
@@ -474,8 +526,15 @@ class ClanBot(discord.Client):
                                 bot_info = await self.application_info()
                                 await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.
                                                           format(upd_type, channel.name, server.name))
-                        message = await channel.send(embed=embed, delete_after=time_to_delete)
-                        hist = message.id
+                        if type(embed) == list:
+                            hist = []
+                            for e in embed:
+                                message = await channel.send(embed=e, delete_after=time_to_delete)
+                                hist.append(message.id)
+                            hist = str(hist)
+                        else:
+                            message = await channel.send(embed=embed, delete_after=time_to_delete)
+                            hist = message.id
                 self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.id, upd_type), (hist, ))
                 self.hist_db.commit()
 

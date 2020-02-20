@@ -21,7 +21,11 @@
             "xurloc": "Местоположение",
             "cost": "Цена",
             "xurtitle": "Зур",
-            "raids": "Рейды"
+            "raids": "Рейды",
+            "silver": "Серебро",
+            "featured_bd": "Яркая пыль (первая страница)",
+            "bd": "Яркая пыль",
+            "week": ", неделя"
         },
         "lfg": {
             "go": "Предлагаю сходить в",
@@ -109,7 +113,12 @@
             "xurloc": "Location",
             "cost": "Cost",
             "xurtitle": "Xur",
-            "raids": "Raids"
+            "raids": "Raids",
+            "silver": "Featured Silver items",
+            "featured_bd": "Featured Bright Dust items",
+            "bd": "Bright Dust items",
+            "week": ", week",
+            "bd_consumables": "Bright Dust consumables"
         },
         "lfg": {
             "go": "Go",
