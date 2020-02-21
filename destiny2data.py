@@ -5,6 +5,8 @@ from urllib.parse import quote
 import pydest
 from bs4 import BeautifulSoup
 from bungied2auth import BungieOAuth
+from datetime import datetime, timezone, timedelta
+from dateutil.parser import *
 
 
 class D2data:
@@ -40,7 +42,8 @@ class D2data:
         'seasonal_consumables': [],
         'seasonal_silver': [],
         'seasonal_featured_bd': [],
-        'seasonal_eververse': []
+        'seasonal_eververse': [],
+        'default': []
     }
 
     wait_codes = [1672]
@@ -183,7 +186,10 @@ class D2data:
         except:
             self.data[name] = self.data['api_is_down']
             return False
-        resp_code = resp.json()['ErrorCode']
+        try:
+            resp_code = resp.json()['ErrorCode']
+        except KeyError:
+            resp_code = 1
         print('getting {}'.format(name))
         curr_try = 2
         while resp_code in self.wait_codes and curr_try <= self.max_retries:
@@ -243,7 +249,7 @@ class D2data:
                 'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
             },
             'fields': [],
-            'color': 0x0000aa,
+            'color': 0x38479F,
             'type': "rich",
             'title': self.translations[lang]['msg']['featured_bd'],
         }
@@ -277,7 +283,7 @@ class D2data:
                 'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
             },
             'fields': [],
-            'color': 0x0000aa,
+            'color': 0x38479F,
             'type': "rich",
             'title': self.translations[lang]['msg']['bd'],
         }
@@ -311,7 +317,7 @@ class D2data:
                 'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
             },
             'fields': [],
-            'color': 0x0000aa,
+            'color': 0x38479F,
             'type': "rich",
             'title': self.translations[lang]['msg']['silver'],
         }
@@ -338,20 +344,37 @@ class D2data:
         await destiny.close()
 
     async def get_seasonal_eververse(self, lang):
-        await self.get_seasonal_bd(lang)
-        await self.get_seasonal_consumables(lang)
-        await self.get_seasonal_featured_bd(lang)
-        await self.get_seasonal_featured_silver(lang)
+        start = self.get_season_start()
+        await self.get_seasonal_bd(lang, start)
+        await self.get_seasonal_consumables(lang, start)
+        await self.get_seasonal_featured_bd(lang, start)
+        await self.get_seasonal_featured_silver(lang, start)
 
-        for i in range(0, len(self.data['seasonal_bd'])):
+        for i in range(0, len(self.data['seasonal_consumables'])):
             self.data['seasonal_eververse'].append(self.data['seasonal_silver'][i])
             self.data['seasonal_eververse'].append(self.data['seasonal_featured_bd'][i])
             self.data['seasonal_eververse'].append(self.data['seasonal_bd'][i])
             self.data['seasonal_eververse'].append(self.data['seasonal_consumables'][i])
 
-    async def get_seasonal_featured_silver(self, lang):
+    def get_season_start(self):
+        manifest_url = 'https://www.bungie.net/Platform/Destiny2/Manifest/'
+        manifest_json = self.get_bungie_json('default', manifest_url, {})
+        season_url = 'https://www.bungie.net{}'.format(manifest_json.json()['Response']['jsonWorldComponentContentPaths']['en']['DestinySeasonDefinition'])
+        season_json = self.get_bungie_json('default', season_url, {}).json()
+
+        for season in season_json:
+            try:
+                start = isoparse(season_json[season]['startDate'])
+                end = isoparse(season_json[season]['endDate'])
+                if start <= datetime.now(tz=timezone.utc) <= end:
+                    current_season = season
+                    return start
+            except KeyError:
+                pass
+
+    async def get_seasonal_featured_silver(self, lang, start):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         self.data['seasonal_silver'].clear()
 
@@ -360,7 +383,7 @@ class D2data:
                 'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
             },
             'fields': [],
-            'color': 0x0000aa,
+            'color': 0x38479F,
             'type': "rich",
             'title': self.translations[lang]['msg']['silver'],
         }
@@ -373,12 +396,13 @@ class D2data:
             if n_items >= 5 and n_items - class_items / 3 * 2 >= 5:
                 curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['silver'],
                                                       self.translations[lang]['msg']['week'], i_week)
+                curr_week['timestamp'] = datetime.utcfromtimestamp(start.timestamp() + (i_week - 1) * 604800).isoformat()
                 i_week = i_week + 1
                 self.data['seasonal_silver'].append(dict.copy(curr_week))
                 n_items = 0
                 curr_week['fields'] = []
                 class_items = 0
-            if item['displayCategoryIndex'] == 3:
+            if item['displayCategoryIndex'] == 3 and item['itemHash'] != 827183327:
                 definition = 'DestinyInventoryItemDefinition'
                 next_def = await destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
                 item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
@@ -399,9 +423,9 @@ class D2data:
                     class_items = class_items + 1
         await destiny.close()
 
-    async def get_seasonal_featured_bd(self, lang):
+    async def get_seasonal_featured_bd(self, lang, start):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         self.data['seasonal_featured_bd'].clear()
 
@@ -410,7 +434,7 @@ class D2data:
                 'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
             },
             'fields': [],
-            'color': 0x0000aa,
+            'color': 0x38479F,
             'type': "rich",
             'title': self.translations[lang]['msg']['featured_bd'],
         }
@@ -423,12 +447,13 @@ class D2data:
             if n_items >= 4 and n_items - class_items / 3 * 2 >= 4:
                 curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['featured_bd'],
                                                       self.translations[lang]['msg']['week'], i_week)
+                curr_week['timestamp'] = datetime.utcfromtimestamp(start.timestamp() + (i_week - 1) * 604800).isoformat()
                 i_week = i_week + 1
                 self.data['seasonal_featured_bd'].append(dict.copy(curr_week))
                 n_items = 0
                 curr_week['fields'] = []
                 class_items = 0
-            if item['displayCategoryIndex'] == 4:
+            if item['displayCategoryIndex'] == 4 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
                 definition = 'DestinyInventoryItemDefinition'
                 next_def = await destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
                 item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
@@ -449,9 +474,9 @@ class D2data:
                     class_items = class_items + 1
         await destiny.close()
 
-    async def get_seasonal_consumables(self, lang):
+    async def get_seasonal_consumables(self, lang, start):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         self.data['seasonal_consumables'].clear()
 
@@ -460,7 +485,7 @@ class D2data:
                 'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
             },
             'fields': [],
-            'color': 0x0000aa,
+            'color': 0x38479F,
             'type': "rich",
             'title': self.translations[lang]['msg']['bd_consumables'],
         }
@@ -473,12 +498,13 @@ class D2data:
             if n_items >= 4 and n_items - class_items / 3 * 2 >= 4:
                 curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['bd_consumables'],
                                                       self.translations[lang]['msg']['week'], i_week)
+                curr_week['timestamp'] = datetime.utcfromtimestamp(start.timestamp() + (i_week - 1) * 604800).isoformat()
                 i_week = i_week + 1
                 self.data['seasonal_consumables'].append(dict.copy(curr_week))
                 n_items = 0
                 curr_week['fields'] = []
                 class_items = 0
-            if item['displayCategoryIndex'] == 10:
+            if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
                 definition = 'DestinyInventoryItemDefinition'
                 next_def = await destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
                 item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
@@ -499,9 +525,9 @@ class D2data:
                     class_items = class_items + 1
         await destiny.close()
 
-    async def get_seasonal_bd(self, lang):
+    async def get_seasonal_bd(self, lang, start):
         destiny = pydest.Pydest(self.headers['X-API-Key'])
-        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         self.data['seasonal_bd'].clear()
 
@@ -510,7 +536,7 @@ class D2data:
                 'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
             },
             'fields': [],
-            'color': 0x0000aa,
+            'color': 0x38479F,
             'type': "rich",
             'title': self.translations[lang]['msg']['bd'],
         }
@@ -522,12 +548,13 @@ class D2data:
         for i, item in enumerate(tess_def['itemList']):
             if n_items >= 7 and n_items - class_items/3*2 >= 7:
                 curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['bd'], self.translations[lang]['msg']['week'], i_week)
+                curr_week['timestamp'] = datetime.utcfromtimestamp(start.timestamp() + (i_week - 1) * 604800).isoformat()
                 i_week = i_week + 1
                 self.data['seasonal_bd'].append(dict.copy(curr_week))
                 n_items = 0
                 curr_week['fields'] = []
                 class_items = 0
-            if item['displayCategoryIndex'] == 9:
+            if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
                 definition = 'DestinyInventoryItemDefinition'
                 next_def = await destiny.decode_hash(tess_def['itemList'][i+1]['itemHash'], definition, language=lang)
                 item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
@@ -542,7 +569,7 @@ class D2data:
                 }
                 curr_week['fields'].append(item_data)
                 n_items = n_items + 1
-                if item_def['classType'] < 3 or any(class_name in item_def['itemTypeDisplayName'].lower() for class_name in ['hunter', 'warlock', 'titan']):
+                if item_def['classType'] < 3 or any(class_name in item_def['itemTypeDisplayName'].lower() for class_name in self.translations[lang]['classnames']):
                     class_items = class_items + 1
         await destiny.close()
 
