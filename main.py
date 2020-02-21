@@ -63,9 +63,10 @@ class ClanBot(discord.Client):
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_featured_bd, 'featured_bd', 604800])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_bd, 'bd', 604800])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
-        self.sched.add_job(self.universal_update, 'cron', hour='1', minute='0', second='10', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
 
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
 
@@ -104,6 +105,8 @@ class ClanBot(discord.Client):
             await self.universal_update(self.data.get_nightmares, 'nightmares', 604800)
             await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800)
             await self.universal_update(self.data.get_raids, 'raids', 604800)
+            await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800)
+            await self.universal_update(self.data.get_bd, 'bd', 604800)
         if 'spider' in upd_type:
             await self.universal_update(self.data.get_spider, 'spider', 86400)
         if 'xur' in upd_type:
