@@ -184,7 +184,8 @@
             "Kinetic: Anything\nEnergy: Fusion Rifle\nPower: Fusion Rifle",
             "Kinetic: Дробовик\nEnergy: Auto Rifle\nPower: Rocket Launcher"
         ],
-        "error": "An unexpected error has occurred. The information was sent to the developer"
+        "error": "An unexpected error has occurred. The information was sent to the developer",
+        "classnames": ["hunter", "warlock", "titan"]
     },
     "spiderembeds": {
         "0": "spider"
@@ -204,6 +205,5 @@
         "2": "nightmares",
         "3": "reckoningboss",
         "4": "cruciblerotators"
-    },
-    "classnames": ["hunter", "warlock", "titan"]
+    }
 }
