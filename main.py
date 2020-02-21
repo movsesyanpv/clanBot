@@ -527,7 +527,11 @@ class ClanBot(discord.Client):
                                     last = await channel.fetch_message(hist)
                                 try:
                                     if type(hist) == list:
-                                        await channel.delete_messages(last)
+                                        if len(hist) < 100:
+                                            await channel.delete_messages(last)
+                                        else:
+                                            for week in [last[i:i + 4] for i in range(0, len(last), 4)]:
+                                                await channel.delete_messages(week)
                                     else:
                                         await last.delete()
                                 except discord.errors.Forbidden:
