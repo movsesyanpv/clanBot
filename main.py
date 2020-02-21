@@ -113,7 +113,7 @@ class ClanBot(discord.Client):
             await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800)
             await self.universal_update(self.data.get_bd, 'bd', 604800)
         if 'seasonal' in upd_type:
-            await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=self.notifiers)
+            await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=self.seasonal_ch)
         if self.args.forceupdate:
             await self.logout()
             await self.close()
@@ -362,12 +362,15 @@ class ClanBot(discord.Client):
                 return
 
             if 'rmnotifier' in message.content.lower() and self.user in message.mentions:
+                content = message.content.lower().split()
+                notifier_type = 'notifiers'
+                if len(content) >= 3 and 'seasonal' in message.content.lower():
+                    notifier_type = content[2]
                 if await self.check_ownership(message, is_silent=True, admin_check=True):
-                    self.notifiers.pop(self.notifiers.index(str(message.channel.id) + '\n'))
-                    f = open('channelList.dat', 'w')
-                    for channel in self.notifiers:
-                        f.write('{}\n'.format(channel))
-                    f.close()
+                    self.channel_cursor.execute('''DELETE FROM {} WHERE channel_id=?'''.format(notifier_type),
+                                                (message.channel.id,))
+                    self.channel_db.commit()
+                    self.get_channels()
                     msg = 'Got it, {}'.format(message.author.mention)
                     await message.channel.send(msg, delete_after=10)
                 await message.delete()
@@ -399,6 +402,8 @@ class ClanBot(discord.Client):
                                           format(message.content, traceback.format_exc()))
 
     def get_channels(self):
+        self.notifiers.clear()
+        self.seasonal_ch.clear()
         try:
             self.channel_cursor.execute('''CREATE TABLE notifiers (channel_id integer)''')
             self.channel_cursor.execute('''CREATE UNIQUE INDEX notifiers_id ON notifiers(channel_id)''')
@@ -454,6 +459,11 @@ class ClanBot(discord.Client):
         if channels is None:
             channels = self.notifiers
 
+        if len(channels) == 0:
+            game = discord.Game('waiting')
+            await self.change_presence(activity=game)
+            return
+
         try:
             await getter(lang)
         except Exception as e:
@@ -503,7 +513,7 @@ class ClanBot(discord.Client):
                         await self.update_history()
 
                 for channel in server.channels:
-                    if '{}\n'.format(channel.id) in channels:
+                    if channel.id in channels:
                         if hist and not self.args.noclear:
                             try:
                                 if type(hist) == list:
