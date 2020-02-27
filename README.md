@@ -18,13 +18,14 @@ Go and register an application at [Bungie's developer portal](https://www.bungie
 
 ```
 OAuth Client Type is set to Confidential
-Redirect URL is set to localhost:4200/redirect
+Redirect URL is set to localhost:4200/redirect or https://YOURDOMAIN:4200/redirect
 and all of the scopes are checked (this definitely excessive but hey, it works).
 ```
 
 Create the file `api.json` in the folder with the script and fill it out with all the necessary info from your application's page (the template for the file is above).
 
-On first run, the script will launch a flask server and tell you to navigate to localhost:4200.  When you navigate to there, you must open the developer console and open to the network tab.  Click the link, scroll to the bottom of bungie's page, and click the authorize button.  When you do so, nothing will happen, but you'll see a redirect network event that is cancelled.  You need to copy the link that was attempted to direct to, and go there directly.  If all is well, the script will proceed to the next stage.
+On first run, the script will launch a flask server and tell you to navigate to `localhost:4200`.  When you navigate to there, you must open the developer console and open to the network tab.  Click the link, scroll to the bottom of bungie's page, and click the authorize button.  When you do so, nothing will happen, but you'll see a redirect network event that is cancelled.  You need to copy the link that was attempted to direct to, and go there directly.  If all is well, the script will proceed to the next stage.
+When using https, just navigate to `https://YOURDOMAIN:4200` and the rest is pretty straightforward.
 
 Now that you've got oauth taken care of, when you run the script no flask server will kick up, instead it will simply ask what platform you play on (answer with 1, 2, or 3) and for your platform's username.  Once it has this info, it'll go and do its thing, building a data file and committing it to the repository.
 
@@ -36,7 +37,9 @@ Python 3.6+ is required
 
 ```
 usage: main.py [-h] [-nc] [-p] [-nm] [-l LANG] [-t TYPE] [-tp] [-f] [--oauth]
+               [-k KEY] [-c CERT]
 
+optional arguments:
   -h, --help            show this help message and exit
   -nc, --noclear        Don't clear last message of the type
   -p, --production      Use to launch in production mode
@@ -46,26 +49,6 @@ usage: main.py [-h] [-nc] [-p] [-nm] [-l LANG] [-t TYPE] [-tp] [-f] [--oauth]
   -tp, --testprod       Use to launch in test production mode
   -f, --forceupdate     Force update right now
   --oauth               Get Bungie access token
+  -k KEY, --key KEY     SSL key
+  -c CERT, --cert CERT  SSL certificate
 ```
-
-# Bot commands
-
-## DMable commands
-
-1. `[bot mention] stop` - stop the bot. Mention is required in non-dm channels. Available only to the bot's owner.
-
-## Group channel commands
-
-These don't work in dm channels.
-
-2. `{bot mention} lfg {lfg details}` - create lfg.
-3. `{bot mention} regnotifier` - register current channel as reset notifier channel.
-4. `{bot mention} update {[daily] [weekly] [spider] [xur]}` - force updates in notifier channels.
-
-# Reset info
-
-To begin receiving Destiny 2 reset information a notifier channel should be registered. After that the bot will be automatically posting daily weekly spider and xur updates. The bot will also try to clean up old messages. If the deletion fails it will inform it's owner about that.
-
-# LFG
-
-Check [the LFG manual](lfg.md) for instructions.
