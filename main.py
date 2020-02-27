@@ -264,6 +264,8 @@ class ClanBot(discord.Client):
         try:
             if 'help lfg' in message.content.lower() and (self.user in message.mentions or str(message.channel.type) == 'private'):
                 await self.help_lfg(message.channel)
+                if str(message.channel.type) != 'private':
+                    await message.delete()
                 return
 
             if 'help' in message.content.lower() and str(message.channel.type) == 'private':
