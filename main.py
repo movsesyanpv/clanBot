@@ -17,7 +17,7 @@ import unauthorized
 
 
 class ClanBot(discord.Client):
-    version = '2.5'
+    version = '2.5.1'
 
     sched = AsyncIOScheduler(timezone='UTC')
     hist_db = ''
@@ -568,7 +568,7 @@ class ClanBot(discord.Client):
 
     async def help(self, author):
         help_translations = self.translations[self.args.lang]['help']
-        help_msg = '```{} v{}\n{}\n'.format(self.user.name, self.version, help_translations['list'])
+        help_msg = '`{} v{}`\n{}\n'.format(self.user.name, self.version, help_translations['list'])
         commands = [
             ['help', help_translations['help']],
             ['lfglist', help_translations['lfglist']],
@@ -581,14 +581,14 @@ class ClanBot(discord.Client):
             ['@{} update TYPE'.format(self.user.name), help_translations['update']]
         ]
 
-        help_msg = '{}\t{}```'.format(help_msg, tabulate(commands, tablefmt='plain', colalign=('left', 'left')).replace('\n', '\n\t'))
+        help_msg = '{}```\t{}```'.format(help_msg, tabulate(commands, tablefmt='plain', colalign=('left', 'left')).replace('\n', '\n\t'))
         if author.dm_channel is None:
             await author.create_dm()
         await author.dm_channel.send(help_msg)
 
     async def help_lfg(self, channel):
         help_translations = self.translations[self.args.lang]['help_lfg']
-        help_msg = '```{} v{}\n{}\n'.format(self.user.name, self.version, help_translations['creation'])
+        help_msg = '`{} v{}`\n{}\n'.format(self.user.name, self.version, help_translations['creation'])
         args = [
             ['[-n:][name:]', help_translations['name']],
             ['[-t:][time:]', help_translations['time']],
@@ -599,11 +599,21 @@ class ClanBot(discord.Client):
             ['[-l:][length:]', help_translations['length']],
             ['[-at:][type:]', help_translations['type']]
         ]
-        help_msg = '{}\t{}```\n'.format(help_msg, tabulate(args, tablefmt='plain', colalign=('left', 'left')).replace('\n', '\n\t'))
+        help_msg = '{}```\t{}```'.format(help_msg, tabulate(args, tablefmt='plain', colalign=('left', 'left')).replace('\n', '\n\t'))
+        await channel.send(help_msg)
 
-        help_msg = '{}```{}\n'.format(help_msg, help_translations['example_title'])
-        help_msg = '{}@{} {}\n```'.format(help_msg, self.user.name, help_translations['example_lfg'])
+        help_msg = '{}\n'.format(help_translations['creation_note'])
+        await channel.send(help_msg)
 
+        help_msg = '{}\n'.format(help_translations['example_title'])
+        help_msg = '{}```@{} {}```'.format(help_msg, self.user.name, help_translations['example_lfg'])
+        await channel.send(help_msg)
+
+        help_msg = '{}\n'.format(help_translations['edit_title'])
+        help_msg = '{}{}\n'.format(help_msg, help_translations['manual'])
+        await channel.send(help_msg)
+
+        help_msg = '{}\n'.format(help_translations['use_lfg'])
         await channel.send(help_msg)
 
 
