@@ -17,7 +17,7 @@ import unauthorized
 
 
 class ClanBot(discord.Client):
-    version = '2.5.1'
+    version = '2.5.2'
 
     sched = AsyncIOScheduler(timezone='UTC')
     hist_db = ''
@@ -262,7 +262,7 @@ class ClanBot(discord.Client):
             return
 
         try:
-            if 'help lfg' in message.content.lower() and str(message.channel.type) == 'private':
+            if 'help lfg' in message.content.lower() and (self.user in message.mentions or str(message.channel.type) == 'private'):
                 await self.help_lfg(message.channel)
                 return
 
