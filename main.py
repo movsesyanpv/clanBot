@@ -9,6 +9,7 @@ import sqlite3
 import logging
 import traceback
 from github import Github
+from tabulate import tabulate
 
 import raid as lfg
 import destiny2data as d2
@@ -16,6 +17,7 @@ import unauthorized
 
 
 class ClanBot(discord.Client):
+    version = '2.5'
 
     sched = AsyncIOScheduler(timezone='UTC')
     hist_db = ''
@@ -142,13 +144,6 @@ class ClanBot(discord.Client):
             await message.author.dm_channel.send(msg, embed=e)
         return is_owner or (message.channel.permissions_for(message.author).administrator and admin_check)
 
-    async def send_lfg_man(self, author):
-        if author.dm_channel is None:
-            await author.create_dm()
-
-        msg = self.translations[self.args.lang]['lfg']['syntax']
-        await author.dm_channel.send(msg)
-
     async def on_raw_reaction_remove(self, payload):
         user = self.get_user(payload.user_id)
         if user == self.user:
@@ -267,11 +262,19 @@ class ClanBot(discord.Client):
             return
 
         try:
+            if 'help lfg' in message.content.lower() and str(message.channel.type) == 'private':
+                await self.help_lfg(message.channel)
+                return
+
+            if 'help' in message.content.lower() and str(message.channel.type) == 'private':
+                await self.help(message.author)
+                return
+
             if 'lfglist' in message.content.lower() and str(message.channel.type) == 'private':
                 await self.raid.dm_lfgs(message.author)
                 return
 
-            if 'stop' in message.content.lower() and (self.user in message.mentions or str(message.channel.type) == 'private'):
+            if 'stop' in message.content.lower() and str(message.channel.type) == 'private':
                 if await self.check_ownership(message):
                     msg = 'Ok, {}'.format(message.author.mention)
                     for i in self.emojis:
@@ -283,7 +286,7 @@ class ClanBot(discord.Client):
                     return
                 return
 
-            if 'plan maintenance' in message.content.lower() and (self.user in message.mentions or str(message.channel.type) == 'private'):
+            if 'plan maintenance' in message.content.lower() and str(message.channel.type) == 'private':
                 if await self.check_ownership(message):
                     try:
                         content = message.content.splitlines()
@@ -324,7 +327,9 @@ class ClanBot(discord.Client):
 
             if 'lfg' in message.content.lower() and self.user in message.mentions:
                 if '-man' in message.content.lower():
-                    await self.send_lfg_man(message.author)
+                    if message.author.dm_channel is None:
+                        await message.author.create_dm
+                    await self.help_lfg(message.author.dm_channel)
                     await message.delete()
                     return
                 self.raid.add(message)
@@ -449,7 +454,7 @@ class ClanBot(discord.Client):
                     self.hist_cursor.execute('''UPDATE \'{}\' SET server_name=?'''.format(server.id), (server.name, ))
                 except sqlite3.OperationalError:
                     pass
-        game = discord.Game('waiting')
+        game = discord.Game('v{}'.format(self.version))
         await self.change_presence(activity=game)
 
     async def universal_update(self, getter, name, time_to_delete=None, channels=None):
@@ -463,7 +468,7 @@ class ClanBot(discord.Client):
             channels = self.notifiers
 
         if len(channels) == 0:
-            game = discord.Game('waiting')
+            game = discord.Game('v{}'.format(self.version))
             await self.change_presence(activity=game)
             return
 
@@ -475,14 +480,14 @@ class ClanBot(discord.Client):
             if owner.dm_channel is None:
                 await owner.create_dm()
             await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-            game = discord.Game('waiting')
+            game = discord.Game('v{}'.format(self.version))
             await self.change_presence(activity=game)
             return
 
         if self.data.data[name]:
             await self.post_embed(name, self.data.data[name], time_to_delete, channels)
 
-        game = discord.Game('waiting')
+        game = discord.Game('v{}'.format(self.version))
         await self.change_presence(activity=game)
 
     async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
@@ -560,6 +565,46 @@ class ClanBot(discord.Client):
         token = self.api_data['token']
         print('hmm')
         self.run(token)
+
+    async def help(self, author):
+        help_translations = self.translations[self.args.lang]['help']
+        help_msg = '```{} v{}\n{}\n'.format(self.user.name, self.version, help_translations['list'])
+        commands = [
+            ['help', help_translations['help']],
+            ['lfglist', help_translations['lfglist']],
+            ['stop', help_translations['stop']],
+            ['plan maintenance', help_translations['maintenance']],
+            ['@{} lfg ARGS'.format(self.user.name), help_translations['lfg']],
+            ['@{} edit lfg ID ARGS'.format(self.user.name), help_translations['edit_lfg']],
+            ['@{} regnotifier TYPE'.format(self.user.name), help_translations['regnotifier']],
+            ['@{} rmnotifier TYPE'.format(self.user.name), help_translations['rmnotifier']],
+            ['@{} update TYPE'.format(self.user.name), help_translations['update']]
+        ]
+
+        help_msg = '{}\t{}```'.format(help_msg, tabulate(commands, tablefmt='plain', colalign=('left', 'left')).replace('\n', '\n\t'))
+        if author.dm_channel is None:
+            await author.create_dm()
+        await author.dm_channel.send(help_msg)
+
+    async def help_lfg(self, channel):
+        help_translations = self.translations[self.args.lang]['help_lfg']
+        help_msg = '```{} v{}\n{}\n'.format(self.user.name, self.version, help_translations['creation'])
+        args = [
+            ['[-n:][name:]', help_translations['name']],
+            ['[-t:][time:]', help_translations['time']],
+            ['[-d:][description:]', help_translations['description']],
+            ['[-s:][size:]', help_translations['size']],
+            ['[-m:][mode:]', help_translations['mode']],
+            ['[-r:][role:]', help_translations['role']],
+            ['[-l:][length:]', help_translations['length']],
+            ['[-at:][type:]', help_translations['type']]
+        ]
+        help_msg = '{}\t{}```\n'.format(help_msg, tabulate(args, tablefmt='plain', colalign=('left', 'left')).replace('\n', '\n\t'))
+
+        help_msg = '{}```{}\n'.format(help_msg, help_translations['example_title'])
+        help_msg = '{}@{} {}\n```'.format(help_msg, self.user.name, help_translations['example_lfg'])
+
+        await channel.send(help_msg)
 
 
 if __name__ == '__main__':

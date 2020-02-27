@@ -35,7 +35,6 @@
             "wanters": "Желающие:",
             "newBlood": "Появились новые желающие в:",
             "gotcha": "Эмошку увидел.",
-            "syntax": "Синтаксис команды `lfg` следующий:\n```{{упоминание бота}} lfg\n[-n:][name:] {название группы или активности}\n[-t:][time:] {время начала в формате %d-%m-%Y %H:%M %z}\n[-d:][description:] {описание планируемого, указание длительности (по желанию)}\n[-s:][size:] {размер группы}\n[-m:][mode:] {тип подбора (basic или manual)}\n````%d-%m-%Y %H:%M %z` - формат времени, в котором полночь по МСК 1 февраля 2000 года будет записана, как `01-02-2000 00:00 +0300`.\nПри basic подборе состав формируется в порядке проставления реакций, в manual - попадание в состав происходит после подтверждения реакции автором сбора.",
             "server": "сервера"
         },
         "lfge": {
@@ -91,7 +90,33 @@
             "Кинетическое: Дробовик\nЭнергетическое: Автомат\nСиловое: Ракетная установка"
         ],
         "error": "Возникла непредвиденная ошибка. Информация об ошибке отправлена разработчику.",
-        "classnames": ["охотник", "варлок", "титан"]
+        "classnames": ["охотник", "варлок", "титан"],
+        "help": {
+            "list": "Список доступных команд",
+            "help": "Вывести это сообщение",
+            "lfglist": "Напечатать список LFG",
+            "stop": "Остановить бота. Доступно только для хозяев бота",
+            "maintenance": "Заблокировать автообновления на указанный период времени. Доступно только для хозяев бота",
+            "lfg": "Создать сбор в группу. Для подробностей используйте 'help lfg'",
+            "edit_lfg": "Редактировать сбор. ARGS совпадают с 'lfg', ID можно получить из 'lfglist'",
+            "regnotifier": "Зарегистрировать канал для получения автообновлений. TYPE может быть 'notifier' для обычных обновлений или 'seasonal' для сезонной информации об Эверверс",
+            "rmnotifier": "Убрать регистрацию канала. TYPE совпадает с 'regnotifier'",
+            "update": "Получить обновления от Bungie указанного TYPE. Несколько типов должны разделяться пробелами"
+        },
+        "help_lfg":
+        {
+            "creation": "Список аргументов команды 'lfg'. Аргументы должны быть на разных строках.",
+            "name": "Имя группы или планируемой активности",
+            "time": "Время начала в формате %d-%m-%Y %H:%M%z",
+            "description": "Описание активности",
+            "size": "Размер группы",
+            "mode": "Тип подбора (basic или manual)",
+            "role": "Имена упоминаемых ролей, разделенные ';'. Стандартные значения: 'Guardian, Recruit, Destiny'",
+            "length": "Продолжительность активности в формате 'XXh XXm'",
+            "type": "Тип активности: (pve, pvp, gambit/reckoning, raid)",
+            "example_title": "Пример команды для создания сбора:",
+            "example_lfg": "lfg\n-at: pve\n-s: 3\n-n: Сумрачный налет\n-t: 13-02-2020 19:00 +0300\n-d: Фарм высших осколков\n-m: basic\n-r: Guardian\n-l: 01h 30m"
+        }
     },
     "en": {
         "msg": {
@@ -129,7 +154,6 @@
             "wanters": "Want to go:",
             "newBlood": "Yo, there are new guys for:",
             "gotcha": "Got your emote.",
-            "syntax": "The syntax is:\n```{bot mention} lfg\n[-n:][name:] {lfg name or planned activity}\n[-t:][time:] {time of the activity start, format %d-%m-%Y %H:%M %z}\n[-d:][description:] {description of the activity}\n[-s:][size:] {size of the group}\n[-m:][mode:] {type of lfg (basic or manual)}\n````%d-%m-%Y %H:%M %z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00 +0300`",
             "server": "of"
         },
         "lfge": {
@@ -182,10 +206,36 @@
             "Kinetic: Sidearm\nEnergy: Scout Rifle\nPower: Sword",
             "Kinetic: SMG\nEnergy: Anything\nPower: Grenade Launcher",
             "Kinetic: Anything\nEnergy: Fusion Rifle\nPower: Fusion Rifle",
-            "Kinetic: Дробовик\nEnergy: Auto Rifle\nPower: Rocket Launcher"
+            "Kinetic: Shotgun\nEnergy: Auto Rifle\nPower: Rocket Launcher"
         ],
         "error": "An unexpected error has occurred. The information was sent to the developer",
-        "classnames": ["hunter", "warlock", "titan"]
+        "classnames": ["hunter", "warlock", "titan"],
+        "help": {
+            "list": "Here's the list of all available commands",
+            "help": "Print this message",
+            "lfglist": "Print your LFG list",
+            "stop": "Stop the bot. Available only to the bot's owners",
+            "maintenance": "Prevent updates at given time frame. Available only to the bot's owners",
+            "lfg": "Create an LFG message. For more information use 'help lfg'",
+            "edit_lfg": "Edit LFG message. ARGS are the same as in 'lfg', ID can be extracted from 'lfglist'",
+            "regnotifier": "Register notifier channel. TYPE can be either 'notifier' for regular updates or 'seasonal' for seasonal eververse info",
+            "rmnotifier": "Deregister notifier channel. TYPE is the same, as in 'regnotifier'",
+            "update": "Get updates from Bungie for the given TYPE. The types should be separated with spaces"
+        },
+        "help_lfg":
+        {
+            "creation": "List of 'lfg' command arguments. The arguments must be on the separate lines.",
+            "name": "LFG name or planned activity",
+            "time": "Time of the activity start, format %d-%m-%Y %H:%M%z",
+            "description": "Description of the activity",
+            "size": "Size of the group",
+            "mode": "Type of lfg(basic or manual)",
+            "role": "Names of the roles to mention, separated by ';'. Defaults to 'Guardian, Recruit, Destiny'",
+            "length": "The duration of the activity, format 'XXh XXm'",
+            "type": "Activity type: (pve, pvp, gambit/reckoning, raid)",
+            "example_title": "Here's an example of LFG creation command:",
+            "example_lfg": "lfg\n-at: pve\n-s: 3\n-n: Nightfall\n-t: 13-02-2020 19:00 +0300\n-d: Farm ascendant shards\n-m: basic\n-r: Guardian\n-l: 01h 30m"
+        }
     },
     "spiderembeds": {
         "0": "spider"

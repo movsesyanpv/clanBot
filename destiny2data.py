@@ -436,7 +436,7 @@ class D2data:
             'fields': [],
             'color': 0x38479F,
             'type': "rich",
-            'title': self.translations[lang]['msg']['featured_bd'],
+            'title': self.translations[lang]['msg']['featured_bd']
         }
 
         n_items = 0
