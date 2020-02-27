@@ -4,6 +4,8 @@ import argparse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta, timezone
 import asyncio
+
+from discord.ext.commands.bot import Bot
 from hashids import Hashids
 import sqlite3
 import logging
@@ -11,13 +13,15 @@ import traceback
 from github import Github
 from tabulate import tabulate
 
+from discord.ext import commands
+
 import raid as lfg
 import destiny2data as d2
 import unauthorized
 
 
-class ClanBot(discord.Client):
-    version = '2.5.2'
+class ClanBot(commands.Bot):
+    version = '2.6'
 
     sched = AsyncIOScheduler(timezone='UTC')
     hist_db = ''
@@ -132,6 +136,10 @@ class ClanBot(discord.Client):
             await self.force_update(self.args.type)
         if not self.sched.running:
             self.sched.start()
+        self.add_command(self.lfg)
+        self.add_command(self.lfglist)
+        self.add_command(self.stop)
+        self.add_command(self.help_lfg)
 
     async def check_ownership(self, message, is_silent=False, admin_check=False):
         bot_info = await self.application_info()
@@ -257,6 +265,90 @@ class ClanBot(discord.Client):
                 await dm_message.delete()
             self.raid.del_entry(payload.message_id)
 
+    @discord.ext.commands.command()
+    @discord.ext.commands.dm_only()
+    @discord.ext.commands.is_owner()
+    async def stop(ctx):
+        msg = 'Ok, {}'.format(ctx.author.mention)
+        for i in ctx.bot.emojis:
+            msg = '{} {}'.format(msg, i)
+        await ctx.message.channel.send(msg)
+        ctx.bot.sched.shutdown(wait=True)
+        await ctx.bot.logout()
+        await ctx.bot.close()
+        return
+
+    @discord.ext.commands.command()
+    @discord.ext.commands.dm_only()
+    async def lfglist(ctx):
+        await ctx.bot.raid.dm_lfgs(ctx.author)
+        return
+
+    @discord.ext.commands.command()
+    @discord.ext.commands.guild_only()
+    async def lfg(ctx):
+        message = ctx.message
+        if '-man' in message.content.lower():
+            if message.author.dm_channel is None:
+                await message.author.create_dm
+            await ctx.bot.help_lfg(message.author.dm_channel)
+            await message.delete()
+            return
+        ctx.bot.raid.add(message)
+        role = ctx.bot.raid.get_cell('group_id', message.id, 'the_role')
+        name = ctx.bot.raid.get_cell('group_id', message.id, 'name')
+        time = datetime.fromtimestamp(ctx.bot.raid.get_cell('group_id', message.id, 'time'))
+        is_embed = ctx.bot.raid.get_cell('group_id', message.id, 'is_embed')
+        description = ctx.bot.raid.get_cell('group_id', message.id, 'description')
+        msg = "{}, {} {}\n{} {}\n{}".format(role, ctx.bot.translations[ctx.bot.args.lang]['lfg']['go'], name,
+                                            ctx.bot.translations[ctx.bot.args.lang]['lfg']['at'], time, description)
+        if is_embed:
+            embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[ctx.bot.args.lang])
+            out = await message.channel.send(content=msg)
+            await out.edit(content=None, embed=embed)
+        else:
+            out = await message.channel.send(msg)
+        end_time = time + timedelta(seconds=ctx.bot.raid.get_cell('group_id', message.id, 'length'))
+        await out.add_reaction('👌')
+        await out.add_reaction('❌')
+        ctx.bot.raid.set_id(out.id, message.id)
+        await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[ctx.bot.args.lang])
+        # self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
+        await message.delete()
+        return
+
+    async def on_command_error(self, ctx, exception):
+        if isinstance(exception, commands.NoPrivateMessage):
+            await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a private message!")
+
+        elif isinstance(exception, commands.PrivateMessageOnly):
+            await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a guild channel!")
+
+        elif isinstance(exception, commands.CommandNotFound):
+            await ctx.send("\N{WARNING SIGN} That command doesn't exist!")
+
+        elif isinstance(exception, commands.DisabledCommand):
+            await ctx.send("\N{WARNING SIGN} Sorry, this command is disabled!")
+
+        elif isinstance(exception, commands.MissingPermissions):
+            await ctx.send(f"\N{WARNING SIGN} You do not have permissions to use this command.")
+
+        elif isinstance(exception, commands.CommandOnCooldown):
+            await ctx.send(f"{ctx.author.mention} slow down! Try that again in {exception.retry_after:.1f} seconds")
+
+        elif isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.BadArgument):
+            await ctx.send(f"\N{WARNING SIGN} {exception}")
+
+        elif isinstance(exception, commands.NotOwner):
+            msg = '{}!'.format(ctx.author.mention)
+            e = unauthorized.get_unauth_response()
+            if ctx.author.dm_channel is None:
+                await ctx.author.create_dm()
+            await ctx.author.dm_channel.send(msg, embed=e)
+
+        elif isinstance(exception, commands.CommandInvokeError):
+            raise exception
+
     async def on_message(self, message):
         if message.author == self.user:
             return
@@ -268,7 +360,7 @@ class ClanBot(discord.Client):
                     await message.delete()
                 return
 
-            if 'help' in message.content.lower() and str(message.channel.type) == 'private':
+            if 'man' in message.content.lower() and str(message.channel.type) == 'private':
                 await self.help(message.author)
                 return
 
@@ -303,10 +395,10 @@ class ClanBot(discord.Client):
                     return
                 return
 
-            if str(message.channel.type) == 'private':
-                msg = 'Can\'t do this a private chat, {}'.format(message.author.mention)
-                await message.channel.send(msg)
-                return
+            # if str(message.channel.type) == 'private':
+            #     msg = 'Can\'t do this a private chat, {}'.format(message.author.mention)
+            #     await message.channel.send(msg)
+            #     return
 
             if 'edit lfg' in message.content.lower() and self.user in message.mentions:
                 text = message.content.split()
@@ -325,36 +417,6 @@ class ClanBot(discord.Client):
                                 await message.delete()
                         else:
                             await message.delete()
-                return
-
-            if 'lfg' in message.content.lower() and self.user in message.mentions:
-                if '-man' in message.content.lower():
-                    if message.author.dm_channel is None:
-                        await message.author.create_dm
-                    await self.help_lfg(message.author.dm_channel)
-                    await message.delete()
-                    return
-                self.raid.add(message)
-                role = self.raid.get_cell('group_id', message.id, 'the_role')
-                name = self.raid.get_cell('group_id', message.id, 'name')
-                time = datetime.fromtimestamp(self.raid.get_cell('group_id', message.id, 'time'))
-                is_embed = self.raid.get_cell('group_id', message.id, 'is_embed')
-                description = self.raid.get_cell('group_id', message.id, 'description')
-                msg = "{}, {} {}\n{} {}\n{}".format(role, self.translations[self.args.lang]['lfg']['go'], name,
-                                                    self.translations[self.args.lang]['lfg']['at'], time, description)
-                if is_embed:
-                    embed = self.raid.make_embed(message, self.translations[self.args.lang])
-                    out = await message.channel.send(content=msg)
-                    await out.edit(content=None, embed=embed)
-                else:
-                    out = await message.channel.send(msg)
-                end_time = time + timedelta(seconds=self.raid.get_cell('group_id', message.id, 'length'))
-                await out.add_reaction('👌')
-                await out.add_reaction('❌')
-                self.raid.set_id(out.id, message.id)
-                await self.raid.update_group_msg(out, self.translations[self.args.lang])
-                # self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
-                await message.delete()
                 return
 
             if 'regnotifier' in message.content.lower() and self.user in message.mentions:
@@ -392,8 +454,13 @@ class ClanBot(discord.Client):
                 for upd_type in content[2:]:
                     await self.force_update(upd_type)
                 return
+            await self.process_commands(message)
         except discord.errors.Forbidden:
             pass
+        except discord.ext.commands.errors.NoPrivateMessage:
+            msg = 'Can\'t do this a private chat, {}'.format(message.author.mention)
+            await message.channel.send(msg)
+            return
         except Exception as e:
             if 'stop' not in message.content.lower() or (self.user not in message.mentions and str(message.channel.type) != 'private'):
                 if not self.args.production:
@@ -588,9 +655,11 @@ class ClanBot(discord.Client):
             await author.create_dm()
         await author.dm_channel.send(help_msg)
 
-    async def help_lfg(self, channel):
-        help_translations = self.translations[self.args.lang]['help_lfg']
-        help_msg = '`{} v{}`\n{}\n'.format(self.user.name, self.version, help_translations['creation'])
+    @discord.ext.commands.command()
+    async def help_lfg(ctx):
+        channel = ctx.message.channel
+        help_translations = ctx.bot.translations[ctx.bot.args.lang]['help_lfg']
+        help_msg = '`{} v{}`\n{}\n'.format(ctx.bot.user.name, ctx.bot.version, help_translations['creation'])
         args = [
             ['[-n:][name:]', help_translations['name']],
             ['[-t:][time:]', help_translations['time']],
@@ -608,7 +677,7 @@ class ClanBot(discord.Client):
         await channel.send(help_msg)
 
         help_msg = '{}\n'.format(help_translations['example_title'])
-        help_msg = '{}```@{} {}```'.format(help_msg, self.user.name, help_translations['example_lfg'])
+        help_msg = '{}```@{} {}```'.format(help_msg, ctx.bot.user.name, help_translations['example_lfg'])
         await channel.send(help_msg)
 
         help_msg = '{}\n'.format(help_translations['edit_title'])
@@ -620,5 +689,5 @@ class ClanBot(discord.Client):
 
 
 if __name__ == '__main__':
-    b = ClanBot()
+    b = ClanBot(command_prefix=commands.when_mentioned)
     b.start_up()
