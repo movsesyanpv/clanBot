@@ -120,13 +120,13 @@
             "additional_info": "Отправьте `{}help команда` для подробной информации о `команде`.",
             "commands": {
                 "update": {
-                    "info": "Получите обновления указанного `TYPE`. Типы должны быть отделены друг от друга пробелами. Доступные типы:\n - `daily` для героических сюжетных миссий, модификаторов налетов и суда, кузницы и паука\n - `weekly` для доступных сумраков и кошмаров, текущего побоища и сменяемых плейлистов горнила\n - `spider` для цен на ресурсы\n - `xur` для местоположения Зура и доступных экзотических предметов,\n - `tess` для текущего состояния Эверверс\n - `seasonal` для прогнозов инвентаря Тесс на текущий сезон\nОбновления выкладываются в каналах, зарегистрированных с помощью `regnotifier`. Все, кроме `seasonal` выкладывается в `notifier` каналах."
+                    "info": "Получите обновления указанного `TYPE`. Типы должны быть отделены друг от друга пробелами. Доступные типы:\n - `daily` для героических сюжетных миссий, модификаторов налетов и суда, кузницы и паука\n - `weekly` для доступных сумраков и кошмаров, текущего побоища и сменяемых плейлистов горнила\n - `spider` для цен на ресурсы\n - `xur` для местоположения Зура и доступных экзотических предметов,\n - `tess` для текущего состояния Эверверс\n - `seasonal` для прогнозов инвентаря Тесс на текущий сезон\nОбновления выкладываются в каналах, зарегистрированных с помощью `regnotifier`. Все, кроме `seasonal` выкладывается в `notifier` каналах. Доступно только для хозяев бота. Рискните."
                 },
                 "rmnotifier": {
-                    "info": "`TYPE` может быть либо 'notifier' для 'обычных' обновлений (daily, weekly, и т.д.), либо 'seasonal' для сезонных прогнозов Эверверс. Стандартное значение (если отсутствует корректное значение `TYPE`) - 'notifier'."
+                    "info": "`TYPE` может быть либо 'notifier' для 'обычных' обновлений (daily, weekly, и т.д.), либо 'seasonal' для сезонных прогнозов Эверверс. Стандартное значение (если отсутствует корректное значение `TYPE`) - 'notifier'. Доступно для администраторов сервера."
                 },
                 "regnotifier": {
-                    "info": "`TYPE` может быть либо 'notifier' для 'обычных' обновлений (daily, weekly, и т.д.), либо 'seasonal' для сезонных прогнозов Эверверс. Стандартное значение (если отсутствует корректное значение `TYPE`) - 'notifier'."
+                    "info": "`TYPE` может быть либо 'notifier' для 'обычных' обновлений (daily, weekly, и т.д.), либо 'seasonal' для сезонных прогнозов Эверверс. Стандартное значение (если отсутствует корректное значение `TYPE`) - 'notifier'. Доступно для администраторов сервера."
                 },
                 "planmaintenance": {
                     "info": "Доступно только для хозяев бота. Рискните."
@@ -275,13 +275,13 @@
             "additional_info": "Type `{}help command` for more info on a `command`.",
             "commands": {
                 "update": {
-                    "info": "Get updates from Bungie for the given `TYPE`. The types should be separated with spaces. Available types:\n - `daily` for  heroic story missions, strike and reckoning modifiers, forge and spider\n - `weekly` for available nightfalls and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics,\n - `tess` for the current state of the Eververse\n - `seasonal` for the predictions of Tess' stock over the current season\nUpdates are posted in the channels, that were registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels."
+                    "info": "Get updates from Bungie for the given `TYPE`. The types should be separated with spaces. Available types:\n - `daily` for  heroic story missions, strike and reckoning modifiers, forge and spider\n - `weekly` for available nightfalls and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics,\n - `tess` for the current state of the Eververse\n - `seasonal` for the predictions of Tess' stock over the current season\nUpdates are posted in the channels, that were registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the bot's owner."
                 },
                 "rmnotifier": {
-                    "info": "`TYPE` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'seasonal' for seasonal Eververse info. Defaults to 'notifier'."
+                    "info": "`TYPE` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'seasonal' for seasonal Eververse info. Defaults to 'notifier'. Available only to the servers admins."
                 },
                 "regnotifier": {
-                    "info": "`TYPE` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'seasonal' for seasonal Eververse info. Defaults to 'notifier'."
+                    "info": "`TYPE` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'seasonal' for seasonal Eververse info. Defaults to 'notifier'. Available only to the servers admins."
                 },
                 "planmaintenance": {
                     "info": "Available only to the bot's owners."
