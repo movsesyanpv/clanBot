@@ -688,6 +688,14 @@ class ClanBot(commands.Bot):
         await channel.send(help_msg)
 
 
+def get_prefix(client, message):
+    prefixes = ['?']
+    if message.guild:
+        prefixes = []
+
+    return commands.when_mentioned_or(*prefixes)(client, message)
+
+
 if __name__ == '__main__':
-    b = ClanBot(command_prefix=commands.when_mentioned)
+    b = ClanBot(command_prefix=get_prefix)
     b.start_up()
