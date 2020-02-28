@@ -35,7 +35,18 @@
             "wanters": "Желающие:",
             "newBlood": "Появились новые желающие в:",
             "gotcha": "Эмошку увидел.",
-            "server": "сервера"
+            "server": "сервера",
+            "name": "Какое название группы (куда собираете)?",
+            "description": "Какое описание у группы?",
+            "time": "Когда начинаете? (формат `%d-%m-%Y %H:%M%z`)",
+            "size": "Сколько человек в группе?",
+            "length": "Какова длительность? (формат `%Hh %Mm`)\nОтправьте 0, если не хотите ее указывать",
+            "type": "Какой тип активности? (pve, pvp, gambit/reckoning, raid)",
+            "mode": "Какой тип подбора участников? (`manual` если вы хотите вручную одобрять кандидатов)",
+            "role": "Имена пингуемых ролей, разделенные `;`",
+            "check": "Верна ли информация? Да/Нет\nИмя: {}\nОписание: {}\nВремя начала: {}\nРазмер группы: {}\nДлительность в часах: {}\nТип активности: {}\nПодбор: {}",
+            "no": "нет",
+            "again": "Проверьте корректность ввода и повторите заново."
         },
         "lfge": {
             "roles": "Roles",
@@ -182,7 +193,18 @@
             "wanters": "Want to go:",
             "newBlood": "Yo, there are new guys for:",
             "gotcha": "Got your emote.",
-            "server": "of"
+            "server": "of",
+            "name": "Provide the name of the activity",
+            "description": "Describe, what are you going to do there",
+            "time": "When are you going to start (format `%d-%m-%Y %H:%M%z`)",
+            "size": "What is the group size?",
+            "length": "How long are you planning to do this?",
+            "type": "What is the type of the activity? (pve, pvp, gambit/reckoning, raid)",
+            "mode": "What is the mode for this group? (`manual` if you want to approve everyone)",
+            "role": "Name the roles to mention, separated by `;`",
+            "check": "Is the info correct?\nName: {}\nDescription: {}\nTime of start: {}\nGroup size: {}\nLength: {}\nActivity type: {}\nMode: {}",
+            "no": "no",
+            "again": "Check your input and repeat the process."
         },
         "lfge": {
             "roles": "Roles",

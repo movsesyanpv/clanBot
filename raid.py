@@ -108,9 +108,14 @@ class LFG:
             if 'description:' in string or '-d:' in string:
                 args['description'] = str_arg[1].lstrip()
             if 'size:' in string or '-s:' in string:
-                args['size'] = int(str_arg[1])
+                try:
+                    args['size'] = int(str_arg[1])
+                except ValueError:
+                    args['size'] = 3
             if 'mode:' in string or '-m:' in string:
                 args['group_mode'] = str_arg[1].lstrip()
+                if args['group_mode'] != 'manual':
+                    args['group_mode'] = 'basic'
             if 'role:' in string or '-r:' in string:
                 roles = [role.strip() for role in str_arg[1].split(';')]
             if 'embed:' in string or '-e:' in string:
@@ -180,6 +185,10 @@ class LFG:
 
     def set_id(self, new_id, group_id):
         self.c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_id, group_id))
+        self.conn.commit()
+
+    def set_owner(self, new_owner, group_id):
+        self.c.execute('''UPDATE raid SET owner=? WHERE group_id=?''', (new_owner, group_id))
         self.conn.commit()
 
     def is_raid(self, message_id):

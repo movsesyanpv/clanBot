@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from hashids import Hashids
 
 
@@ -15,16 +15,7 @@ class Group(commands.Cog):
         await ctx.bot.raid.dm_lfgs(ctx.author)
         return
 
-    @discord.ext.commands.command()
-    @discord.ext.commands.guild_only()
-    async def lfg(self, ctx):
-        message = ctx.message
-        if '-man' in message.content.lower():
-            if message.author.dm_channel is None:
-                await message.author.create_dm
-            await ctx.bot.help_lfg(message.author.dm_channel)
-            await message.delete()
-            return
+    async def guild_lfg(self, ctx, message):
         ctx.bot.raid.add(message)
         role = ctx.bot.raid.get_cell('group_id', message.id, 'the_role')
         name = ctx.bot.raid.get_cell('group_id', message.id, 'name')
@@ -46,7 +37,73 @@ class Group(commands.Cog):
         await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[ctx.bot.args.lang])
         # self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
         await message.delete()
+        return out.id
+
+    async def dm_lfg(self, ctx):
+        def check(ms):
+            return ms.channel == ctx.author.dm_channel and ms.author == ctx.message.author
+
+        if ctx.author.dm_channel is None:
+            await ctx.author.create_dm()
+        dm = ctx.author.dm_channel
+
+        translations = ctx.bot.translations[ctx.bot.args.lang]['lfg']
+
+        await dm.send(content=translations['name'])
+        msg = await self.bot.wait_for('message', check=check)
+        name = msg.content
+
+        await dm.send(content=translations['description'])
+        msg = await self.bot.wait_for('message', check=check)
+        description = msg.content
+
+        await dm.send(content=translations['time'])
+        msg = await self.bot.wait_for('message', check=check)
+        time = msg.content
+
+        await dm.send(content=translations['size'])
+        msg = await self.bot.wait_for('message', check=check)
+        size = msg.content
+
+        await dm.send(content=translations['length'])
+        msg = await self.bot.wait_for('message', check=check)
+        length = msg.content
+
+        await dm.send(content=translations['type'])
+        msg = await self.bot.wait_for('message', check=check)
+        a_type = msg.content
+
+        await dm.send(content=translations['mode'])
+        msg = await self.bot.wait_for('message', check=check)
+        mode = msg.content
+
+        at = ['null', 'vanguard', 'raid', 'crucible', 'gambit']
+        ts = datetime.now(timezone(timedelta(0))).astimezone()
+        args = ctx.bot.raid.parse_args('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}'.format(name, description, time, size, length, a_type, mode).splitlines(), ctx.message, True)
+        ts = datetime.fromtimestamp(args['time']).replace(tzinfo=ts.tzinfo)
+        await dm.send(translations['check']
+                      .format(args['name'], args['description'], ts, args['size'],
+                              args['length'], at[args['is_embed']], args['group_mode']))
+        msg = await self.bot.wait_for('message', check=check)
+        if msg.content.lower() == translations['no']:
+            await dm.send(translations['again'])
+            await ctx.message.delete()
+            return
+
+        tmp = await ctx.send('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}'.format(name, description, time, size, length, a_type, mode))
+        group_id = await self.guild_lfg(ctx, tmp)
+        ctx.bot.raid.set_owner(ctx.author.id, group_id)
+        await ctx.message.delete()
+
         return
+
+    @commands.command(aliases=['сбор', 'лфг'])
+    @commands.guild_only()
+    async def lfg(self, ctx):
+        if len(ctx.message.content.splitlines()) > 1:
+            await self.guild_lfg(ctx, ctx.message)
+        else:
+            await self.dm_lfg(ctx)
 
     @commands.command(aliases=['editlfg', 'editLfg', 'editLFG'])
     @commands.guild_only()

@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.6'
+    version = '2.7'
     cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
 
     sched = AsyncIOScheduler(timezone='UTC')
