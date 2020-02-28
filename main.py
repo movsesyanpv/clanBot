@@ -11,7 +11,6 @@ import sqlite3
 import logging
 import traceback
 from github import Github
-from tabulate import tabulate
 
 from discord.ext import commands
 
@@ -22,6 +21,7 @@ import unauthorized
 
 class ClanBot(commands.Bot):
     version = '2.6'
+    cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
 
     sched = AsyncIOScheduler(timezone='UTC')
     hist_db = ''
@@ -136,10 +136,10 @@ class ClanBot(commands.Bot):
             await self.force_update(self.args.type)
         if not self.sched.running:
             self.sched.start()
-        self.add_command(self.lfg)
-        self.add_command(self.lfglist)
-        self.add_command(self.stop)
-        self.add_command(self.help_lfg)
+        self.remove_command('help')
+        for cog in self.cogs:
+            self.load_extension(cog)
+        return
 
     async def check_ownership(self, message, is_silent=False, admin_check=False):
         bot_info = await self.application_info()
@@ -265,58 +265,6 @@ class ClanBot(commands.Bot):
                 await dm_message.delete()
             self.raid.del_entry(payload.message_id)
 
-    @discord.ext.commands.command()
-    @discord.ext.commands.dm_only()
-    @discord.ext.commands.is_owner()
-    async def stop(ctx):
-        msg = 'Ok, {}'.format(ctx.author.mention)
-        for i in ctx.bot.emojis:
-            msg = '{} {}'.format(msg, i)
-        await ctx.message.channel.send(msg)
-        ctx.bot.sched.shutdown(wait=True)
-        await ctx.bot.logout()
-        await ctx.bot.close()
-        return
-
-    @discord.ext.commands.command()
-    @discord.ext.commands.dm_only()
-    async def lfglist(ctx):
-        await ctx.bot.raid.dm_lfgs(ctx.author)
-        return
-
-    @discord.ext.commands.command()
-    @discord.ext.commands.guild_only()
-    async def lfg(ctx):
-        message = ctx.message
-        if '-man' in message.content.lower():
-            if message.author.dm_channel is None:
-                await message.author.create_dm
-            await ctx.bot.help_lfg(message.author.dm_channel)
-            await message.delete()
-            return
-        ctx.bot.raid.add(message)
-        role = ctx.bot.raid.get_cell('group_id', message.id, 'the_role')
-        name = ctx.bot.raid.get_cell('group_id', message.id, 'name')
-        time = datetime.fromtimestamp(ctx.bot.raid.get_cell('group_id', message.id, 'time'))
-        is_embed = ctx.bot.raid.get_cell('group_id', message.id, 'is_embed')
-        description = ctx.bot.raid.get_cell('group_id', message.id, 'description')
-        msg = "{}, {} {}\n{} {}\n{}".format(role, ctx.bot.translations[ctx.bot.args.lang]['lfg']['go'], name,
-                                            ctx.bot.translations[ctx.bot.args.lang]['lfg']['at'], time, description)
-        if is_embed:
-            embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[ctx.bot.args.lang])
-            out = await message.channel.send(content=msg)
-            await out.edit(content=None, embed=embed)
-        else:
-            out = await message.channel.send(msg)
-        end_time = time + timedelta(seconds=ctx.bot.raid.get_cell('group_id', message.id, 'length'))
-        await out.add_reaction('👌')
-        await out.add_reaction('❌')
-        ctx.bot.raid.set_id(out.id, message.id)
-        await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[ctx.bot.args.lang])
-        # self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
-        await message.delete()
-        return
-
     async def on_command_error(self, ctx, exception):
         if isinstance(exception, commands.NoPrivateMessage):
             await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a private message!")
@@ -354,106 +302,6 @@ class ClanBot(commands.Bot):
             return
 
         try:
-            if 'help lfg' in message.content.lower() and (self.user in message.mentions or str(message.channel.type) == 'private'):
-                await self.help_lfg(message.channel)
-                if str(message.channel.type) != 'private':
-                    await message.delete()
-                return
-
-            if 'man' in message.content.lower() and str(message.channel.type) == 'private':
-                await self.help(message.author)
-                return
-
-            if 'lfglist' in message.content.lower() and str(message.channel.type) == 'private':
-                await self.raid.dm_lfgs(message.author)
-                return
-
-            if 'stop' in message.content.lower() and str(message.channel.type) == 'private':
-                if await self.check_ownership(message):
-                    msg = 'Ok, {}'.format(message.author.mention)
-                    for i in self.emojis:
-                        msg = '{} {}'.format(msg, i)
-                    await message.channel.send(msg)
-                    self.sched.shutdown(wait=True)
-                    await self.logout()
-                    await self.close()
-                    return
-                return
-
-            if 'plan maintenance' in message.content.lower() and str(message.channel.type) == 'private':
-                if await self.check_ownership(message):
-                    try:
-                        content = message.content.splitlines()
-                        start = datetime.strptime(content[1], "%d-%m-%Y %H:%M %z")
-                        finish = datetime.strptime(content[2], "%d-%m-%Y %H:%M %z")
-                        delta = finish-start
-                        self.sched.add_job(self.pause_for, 'date', run_date=start, args=[message, delta], misfire_grace_time=600)
-                    except Exception as e:
-                        await message.channel.send('exception `{}`\nUse following format:```plan maintenance\n'
-                                                   '<start time formatted %d-%m-%Y %H:%M %z>\n'
-                                                   '<finish time formatted %d-%m-%Y %H:%M %z>```'.format(str(e)))
-                    return
-                return
-
-            # if str(message.channel.type) == 'private':
-            #     msg = 'Can\'t do this a private chat, {}'.format(message.author.mention)
-            #     await message.channel.send(msg)
-            #     return
-
-            if 'edit lfg' in message.content.lower() and self.user in message.mentions:
-                text = message.content.split()
-                hashids = Hashids()
-                for word in text:
-                    group_id = hashids.decode(word)
-                    if len(group_id) > 0:
-                        old_lfg = self.raid.get_cell('group_id', group_id[0], 'lfg_channel')
-                        old_lfg = self.get_channel(old_lfg)
-                        if old_lfg is not None:
-                            old_lfg = await old_lfg.fetch_message(group_id[0])
-                            if old_lfg.author == message.author:
-                                await self.raid.edit(message, old_lfg, self.translations[self.args.lang])
-                            else:
-                                await self.check_ownership(message)
-                                await message.delete()
-                        else:
-                            await message.delete()
-                return
-
-            if 'regnotifier' in message.content.lower() and self.user in message.mentions:
-                content = message.content.lower().split()
-                notifier_type = 'notifiers'
-                if len(content) >= 3 and 'seasonal' in message.content.lower():
-                    notifier_type = content[2]
-                if await self.check_ownership(message, is_silent=True, admin_check=True):
-                    self.channel_cursor.execute('''INSERT or IGNORE into {} values (?)'''.format(notifier_type), (message.channel.id,))
-                    self.channel_db.commit()
-                    self.get_channels()
-                    msg = 'Got it, {}'.format(message.author.mention)
-                    await message.channel.send(msg, delete_after=10)
-                await message.delete()
-                return
-
-            if 'rmnotifier' in message.content.lower() and self.user in message.mentions:
-                content = message.content.lower().split()
-                notifier_type = 'notifiers'
-                if len(content) >= 3 and 'seasonal' in message.content.lower():
-                    notifier_type = content[2]
-                if await self.check_ownership(message, is_silent=True, admin_check=True):
-                    self.channel_cursor.execute('''DELETE FROM {} WHERE channel_id=?'''.format(notifier_type),
-                                                (message.channel.id,))
-                    self.channel_db.commit()
-                    self.get_channels()
-                    msg = 'Got it, {}'.format(message.author.mention)
-                    await message.channel.send(msg, delete_after=10)
-                await message.delete()
-                return
-
-            if 'update' in message.content.lower() and self.user in message.mentions:
-                content = message.content.lower().split()
-                await message.delete()
-                for upd_type in content[2:]:
-                    await self.force_update(upd_type)
-                return
             await self.process_commands(message)
         except discord.errors.Forbidden:
             pass
@@ -634,58 +482,6 @@ class ClanBot(commands.Bot):
         token = self.api_data['token']
         print('hmm')
         self.run(token)
-
-    async def help(self, author):
-        help_translations = self.translations[self.args.lang]['help']
-        help_msg = '`{} v{}`\n{}\n'.format(self.user.name, self.version, help_translations['list'])
-        commands = [
-            ['help', help_translations['help']],
-            ['lfglist', help_translations['lfglist']],
-            ['stop', help_translations['stop']],
-            ['plan maintenance', help_translations['maintenance']],
-            ['@{} lfg ARGS'.format(self.user.name), help_translations['lfg']],
-            ['@{} edit lfg ID ARGS'.format(self.user.name), help_translations['edit_lfg']],
-            ['@{} regnotifier TYPE'.format(self.user.name), help_translations['regnotifier']],
-            ['@{} rmnotifier TYPE'.format(self.user.name), help_translations['rmnotifier']],
-            ['@{} update TYPE'.format(self.user.name), help_translations['update']]
-        ]
-
-        help_msg = '{}```\t{}```'.format(help_msg, tabulate(commands, tablefmt='plain', colalign=('left', 'left')).replace('\n', '\n\t'))
-        if author.dm_channel is None:
-            await author.create_dm()
-        await author.dm_channel.send(help_msg)
-
-    @discord.ext.commands.command()
-    async def help_lfg(ctx):
-        channel = ctx.message.channel
-        help_translations = ctx.bot.translations[ctx.bot.args.lang]['help_lfg']
-        help_msg = '`{} v{}`\n{}\n'.format(ctx.bot.user.name, ctx.bot.version, help_translations['creation'])
-        args = [
-            ['[-n:][name:]', help_translations['name']],
-            ['[-t:][time:]', help_translations['time']],
-            ['[-d:][description:]', help_translations['description']],
-            ['[-s:][size:]', help_translations['size']],
-            ['[-m:][mode:]', help_translations['mode']],
-            ['[-r:][role:]', help_translations['role']],
-            ['[-l:][length:]', help_translations['length']],
-            ['[-at:][type:]', help_translations['type']]
-        ]
-        help_msg = '{}```\t{}```'.format(help_msg, tabulate(args, tablefmt='plain', colalign=('left', 'left')).replace('\n', '\n\t'))
-        await channel.send(help_msg)
-
-        help_msg = '{}\n'.format(help_translations['creation_note'])
-        await channel.send(help_msg)
-
-        help_msg = '{}\n'.format(help_translations['example_title'])
-        help_msg = '{}```@{} {}```'.format(help_msg, ctx.bot.user.name, help_translations['example_lfg'])
-        await channel.send(help_msg)
-
-        help_msg = '{}\n'.format(help_translations['edit_title'])
-        help_msg = '{}{}\n'.format(help_msg, help_translations['manual'])
-        await channel.send(help_msg)
-
-        help_msg = '{}\n'.format(help_translations['use_lfg'])
-        await channel.send(help_msg)
 
 
 def get_prefix(client, message):
