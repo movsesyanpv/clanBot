@@ -17,7 +17,7 @@ import unauthorized
 
 
 class ClanBot(discord.Client):
-    version = '2.5.2'
+    version = '2.5.3'
 
     sched = AsyncIOScheduler(timezone='UTC')
     hist_db = ''
@@ -132,6 +132,14 @@ class ClanBot(discord.Client):
             await self.force_update(self.args.type)
         if not self.sched.running:
             self.sched.start()
+
+    async def on_guild_join(self, guild):
+        await self.update_history()
+
+    async def on_guild_remove(self, guild):
+        self.hist_cursor.execute('''DROP TABLE IF EXISTS \'{}\''''.format(guild.id))
+        self.hist_db.commit()
+        self.raid.purge_guild(guild.id)
 
     async def check_ownership(self, message, is_silent=False, admin_check=False):
         bot_info = await self.application_info()

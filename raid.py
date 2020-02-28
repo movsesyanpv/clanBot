@@ -47,7 +47,7 @@ class LFG:
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
                      wanters text, going text, the_role text, group_mode text, dm_message integer, 
                      lfg_channel integer, channel_name text, server_name text, want_dm text, is_embed integer, 
-                     length integer)''')
+                     length integer, server_id integer)''')
         except sqlite3.OperationalError:
             try:
                 self.c.execute('''ALTER TABLE raid ADD COLUMN is_embed integer''')
@@ -55,12 +55,15 @@ class LFG:
                 try:
                     self.c.execute('''ALTER TABLE raid ADD COLUMN length integer''')
                 except sqlite3.OperationalError:
-                    pass
+                    try:
+                        self.c.execute('''ALTER TABLE raid ADD COLUMN server_id integer''')
+                    except sqlite3.OperationalError:
+                        pass
 
         newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
-                   message.guild.name, '[]', args['is_embed'], args['length'])]
-        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
+                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id)]
+        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
     def parse_args(self, content, message, is_init):
@@ -441,4 +444,8 @@ class LFG:
             new_lfg = old_lfg
         await message.delete()
         await self.update_group_msg(new_lfg, translations)
+        self.conn.commit()
+
+    def purge_guild(self, guild_id):
+        self.c.executemany('''DELETE FROM raid WHERE server_id LIKE (?)''', [(guild_id,)])
         self.conn.commit()
