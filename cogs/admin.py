@@ -105,7 +105,7 @@ class Admin(commands.Cog):
             pass
         elif cog in ['lfg', 'editlfg']:
             help_translations = help_translations['commands']['lfg']
-            help_msg = '`{} v{}`\n{}\n'.format(ctx.bot.user.name, ctx.bot.version, help_translations['creation'])
+            help_msg = '`{} v{}`\n{}\n{}\n'.format(ctx.bot.user.name, ctx.bot.version, help_translations['info'], help_translations['creation'])
             args = [
                 ['[-n:][name:]', help_translations['name']],
                 ['[-t:][time:]', help_translations['time']],
