@@ -6,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 import asyncio
 
 from discord.ext.commands.bot import Bot
-from hashids import Hashids
 import sqlite3
 import logging
 import traceback

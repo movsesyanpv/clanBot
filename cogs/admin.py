@@ -46,16 +46,18 @@ class Admin(commands.Cog):
         aliases=['man', 'hlep', 'чотут', 'ман', 'инструкция']
     )
     async def help_command(self, ctx, cog='all'):
-        if cog == 'all':
-            help_translations = ctx.bot.translations[ctx.bot.args.lang]['help']
+        channel = ctx.message.channel
+        help_translations = ctx.bot.translations[ctx.bot.args.lang]['help']
+        cog = cog.lower()
+        if cog in ['all', 'help']:
             help_msg = '`{} v{}`\n{}\n'.format(ctx.bot.user.name, ctx.bot.version, help_translations['list'])
             command_list = [
                 ['help', help_translations['help']],
                 ['lfglist', help_translations['lfglist']],
                 ['stop', help_translations['stop']],
-                ['plan maintenance', help_translations['maintenance']],
+                ['planMaintenance', help_translations['maintenance']],
                 ['lfg ARGS', help_translations['lfg']],
-                ['edit lfg ID ARGS', help_translations['edit_lfg']],
+                ['editLfg ID ARGS', help_translations['edit_lfg']],
                 ['regnotifier TYPE', help_translations['regnotifier']],
                 ['rmnotifier TYPE', help_translations['rmnotifier']],
                 ['update TYPE', help_translations['update']]
@@ -64,11 +66,45 @@ class Admin(commands.Cog):
             help_msg = '{}```\t{}```'.format(help_msg,
                                              tabulate(command_list, tablefmt='plain', colalign=('left', 'left'))
                                              .replace('\n', '\n\t'))
+            if str(ctx.bot.user.id) in ctx.prefix:
+                prefix = '@{} '.format(ctx.bot.user.name)
+            else:
+                prefix = ctx.prefix
+            help_msg = '{}{}'.format(help_msg, help_translations['additional_info'].format(prefix))
             await ctx.message.channel.send(help_msg)
             pass
-        elif cog == 'lfg':
-            channel = ctx.message.channel
-            help_translations = ctx.bot.translations[ctx.bot.args.lang]['help_lfg']
+        elif cog == 'update':
+            translations = help_translations['commands']['update']
+            help_msg = '`{} v{}`\n{}'.format(ctx.bot.user.name, ctx.bot.version, translations['info'])
+            await channel.send(help_msg)
+            pass
+        elif cog == 'rmnotifier':
+            translations = help_translations['commands']['rmnotifier']
+            help_msg = '`{} v{}`\n{}'.format(ctx.bot.user.name, ctx.bot.version, translations['info'])
+            await channel.send(help_msg)
+            pass
+        elif cog == 'regnotifier':
+            translations = help_translations['commands']['regnotifier']
+            help_msg = '`{} v{}`\n{}'.format(ctx.bot.user.name, ctx.bot.version, translations['info'])
+            await channel.send(help_msg)
+            pass
+        elif cog == 'planmaintenance':
+            translations = help_translations['commands']['planmaintenance']
+            help_msg = '`{} v{}`\n{}'.format(ctx.bot.user.name, ctx.bot.version, translations['info'])
+            await channel.send(help_msg)
+            pass
+        elif cog == 'stop':
+            translations = help_translations['commands']['stop']
+            help_msg = '`{} v{}`\n{}'.format(ctx.bot.user.name, ctx.bot.version, translations['info'])
+            await channel.send(help_msg)
+            pass
+        elif cog == 'lfglist':
+            translations = help_translations['commands']['lfglist']
+            help_msg = '`{} v{}`\n{}'.format(ctx.bot.user.name, ctx.bot.version, translations['info'])
+            await channel.send(help_msg)
+            pass
+        elif cog in ['lfg', 'editlfg']:
+            help_translations = help_translations['commands']['lfg']
             help_msg = '`{} v{}`\n{}\n'.format(ctx.bot.user.name, ctx.bot.version, help_translations['creation'])
             args = [
                 ['[-n:][name:]', help_translations['name']],
