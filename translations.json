@@ -44,7 +44,7 @@
             "type": "Какой тип активности? (pve, pvp, gambit/reckoning, raid)",
             "mode": "Какой тип подбора участников? (`manual` если вы хотите вручную одобрять кандидатов)",
             "role": "Имена пингуемых ролей, разделенные `;`",
-            "check": "Верна ли информация? Да/Нет\nИмя: {}\nОписание: {}\nВремя начала: {}\nРазмер группы: {}\nДлительность в часах: {}\nТип активности: {}\nПодбор: {}",
+            "check": "Верна ли информация? Да/Нет\nИмя: {}\nОписание: {}\nВремя начала: {}\nРазмер группы: {}\nДлительность в часах: {}\nТип активности: {}\nПодбор: {}\nРоли: {}",
             "no": "нет",
             "again": "Проверьте корректность ввода и повторите заново."
         },
@@ -203,7 +203,7 @@
             "type": "What is the type of the activity? (pve, pvp, gambit/reckoning, raid)",
             "mode": "What is the mode for this group? (`manual` if you want to approve everyone)",
             "role": "Name the roles to mention, separated by `;`",
-            "check": "Is the info correct?\nName: {}\nDescription: {}\nTime of start: {}\nGroup size: {}\nLength: {}\nActivity type: {}\nMode: {}",
+            "check": "Is the info correct?\nName: {}\nDescription: {}\nTime of start: {}\nGroup size: {}\nLength: {}\nActivity type: {}\nMode: {}\nRoles: {}",
             "no": "no",
             "again": "Check your input and repeat the process."
         },
