@@ -9,9 +9,10 @@ class LFG:
     conn = ''
     c = ''
     hashids = Hashids()
-    lfg_i = ['null', 'vanguard', 'raid', 'crucible', 'gambit']
+    lfg_i = ['null', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
     lfg_categories = {
         'null': {},
+        'default': {},
         'vanguard': {
             "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/f2154b781b36b19760efcb23695c66fe.png",
             "color": 7506394
@@ -124,14 +125,16 @@ class LFG:
                         if args['is_embed'] == 0:
                             args['is_embed'] = 1
             if 'type:' in string or '-at:' in string:
-                if 'vanguard' in string.lower() or 'pve' in string.lower():
+                if 'default' in string.lower():
                     args['is_embed'] = 1
-                if 'raid' in string.lower():
+                if 'vanguard' in string.lower() or 'pve' in string.lower():
                     args['is_embed'] = 2
-                if 'crucible' in string.lower() or 'pvp' in string.lower():
+                if 'raid' in string.lower():
                     args['is_embed'] = 3
-                if 'gambit' in string.lower() or 'reckoning' in string.lower():
+                if 'crucible' in string.lower() or 'pvp' in string.lower():
                     args['is_embed'] = 4
+                if 'gambit' in string.lower() or 'reckoning' in string.lower():
+                    args['is_embed'] = 5
             if 'end:' in string or '-te:' in string:
                 try:
                     time_str = '{}:{}'.format(str_arg[1], str_arg[2])
@@ -165,12 +168,15 @@ class LFG:
             if len(roles) == 0:
                 return args
 
-        the_role = []
-        if len(roles) == 0 and is_init:
-            roles = ['guardian', 'recruit', 'destiny']
-        for role in message.guild.roles:
-            if role.name.lower() in roles:
-                the_role.append(role)
+        for i in [0, 1]:
+            the_role = []
+            if len(roles) == 0 and is_init or len(the_role) > 0:
+                roles = ['guardian', 'recruit', 'destiny']
+            for role in message.guild.roles:
+                if role.name.lower() in roles:
+                    the_role.append(role)
+            if len(the_role) == 0:
+                roles.clear()
         if len(the_role) == 0:
             the_role.append(message.guild.default_role)
         the_role_str = the_role[0].mention
@@ -273,6 +279,12 @@ class LFG:
         wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
         wanters = eval(wanters.fetchone()[0])
         length = self.get_cell('group_id', message.id, 'length')
+
+        if is_embed == 1:
+            self.lfg_categories[self.lfg_i[is_embed]] = {
+                'thumbnail': str(message.guild.icon_url_as(format='png', static_format='png', size=1024)).split('?')[0],
+                'color': 0x000000
+            }
 
         embed = {
             'thumbnail': {
