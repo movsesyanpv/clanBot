@@ -87,7 +87,7 @@ class Group(commands.Cog):
         ts = datetime.fromtimestamp(args['time']).replace(tzinfo=ts.tzinfo)
         await dm.send(translations['check']
                       .format(args['name'], args['description'], ts, args['size'],
-                              args['length'], at[args['is_embed']], args['group_mode'], role))
+                              args['length']/3600, at[args['is_embed']], args['group_mode'], role))
         msg = await self.bot.wait_for('message', check=check)
         if msg.content.lower() == translations['no']:
             await dm.send(translations['again'])
