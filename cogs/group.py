@@ -77,20 +77,24 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         mode = msg.content
 
-        at = ['null', 'vanguard', 'raid', 'crucible', 'gambit']
+        await dm.send(content=translations['role'])
+        msg = await self.bot.wait_for('message', check=check)
+        role = msg.content
+
+        at = ['default', 'vanguard', 'raid', 'crucible', 'gambit']
         ts = datetime.now(timezone(timedelta(0))).astimezone()
-        args = ctx.bot.raid.parse_args('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}'.format(name, description, time, size, length, a_type, mode).splitlines(), ctx.message, True)
+        args = ctx.bot.raid.parse_args('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, a_type, mode, role).splitlines(), ctx.message, True)
         ts = datetime.fromtimestamp(args['time']).replace(tzinfo=ts.tzinfo)
         await dm.send(translations['check']
                       .format(args['name'], args['description'], ts, args['size'],
-                              args['length'], at[args['is_embed']], args['group_mode']))
+                              args['length']/3600, at[args['is_embed']], args['group_mode'], role))
         msg = await self.bot.wait_for('message', check=check)
         if msg.content.lower() == translations['no']:
             await dm.send(translations['again'])
             await ctx.message.delete()
             return
 
-        tmp = await ctx.send('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}'.format(name, description, time, size, length, a_type, mode))
+        tmp = await ctx.send('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, at[args['is_embed']], mode, role))
         group_id = await self.guild_lfg(ctx, tmp)
         ctx.bot.raid.set_owner(ctx.author.id, group_id)
         await ctx.message.delete()
