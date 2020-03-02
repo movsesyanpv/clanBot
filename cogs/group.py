@@ -36,7 +36,8 @@ class Group(commands.Cog):
         ctx.bot.raid.set_id(out.id, message.id)
         await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang])
         # self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
-        await message.delete()
+        if ctx.guild.me.guild_permissions.manage_messages:
+            await ctx.message.delete()
         return out.id
 
     async def dm_lfg(self, ctx, lang):
@@ -91,13 +92,15 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         if msg.content.lower() == translations['no']:
             await dm.send(translations['again'])
-            await ctx.message.delete()
+            if ctx.guild.me.guild_permissions.manage_messages:
+                await ctx.message.delete()
             return
 
         tmp = await ctx.send('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, at[args['is_embed']], mode, role))
         group_id = await self.guild_lfg(ctx, tmp, lang)
         ctx.bot.raid.set_owner(ctx.author.id, group_id)
-        await ctx.message.delete()
+        if ctx.guild.me.guild_permissions.manage_messages:
+            await ctx.message.delete()
 
         return
 
@@ -128,9 +131,11 @@ class Group(commands.Cog):
                     await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang])
                 else:
                     await ctx.bot.check_ownership(message)
-                    await message.delete()
+                    if ctx.guild.me.guild_permissions.manage_messages:
+                        await ctx.message.delete()
             else:
-                await message.delete()
+                if ctx.guild.me.guild_permissions.manage_messages:
+                    await ctx.message.delete()
         return
 
 

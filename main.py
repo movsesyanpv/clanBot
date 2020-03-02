@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.8'
+    version = '2.8.1'
     cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
 
@@ -140,6 +140,16 @@ class ClanBot(commands.Bot):
 
     async def on_guild_join(self, guild):
         await self.update_history()
+        if guild.owner.dm_channel is None:
+            await guild.owner.create_dm()
+        start = await guild.owner.dm_channel.send('Thank you for inviting me to your guild!\n')
+        prefixes = get_prefix(self, start)
+        prefix = '?'
+        for i in prefixes:
+            if '@' not in i:
+                prefix = i
+        await guild.owner.dm_channel.send('The `{}help` command will get you the command list.\n'
+                                          'Please set my language for the guild with `@{} setlang LANG`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.'.format(prefix, self.user.name, str(self.langs).replace('[', '').replace(']', '').replace('\'', '')))
 
     async def on_guild_remove(self, guild):
         self.guild_cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))

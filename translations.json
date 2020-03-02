@@ -1,5 +1,6 @@
 {
     "ru": {
+        "nick": "Дустанатор",
         "msg": {
             "error": "Ошибка",
             "noapi": "API Bungie недоступен",
@@ -163,6 +164,7 @@
         }
     },
     "en": {
+        "nick": "",
         "msg": {
             "error": "Error",
             "noapi": "Bungie API is unavailable",

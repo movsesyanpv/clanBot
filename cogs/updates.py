@@ -22,7 +22,8 @@ class Updates(commands.Cog):
             ctx.bot.get_channels()
             msg = 'Got it, {}'.format(message.author.mention)
             await message.channel.send(msg, delete_after=10)
-        await message.delete()
+        if ctx.guild.me.guild_permissions.manage_messages:
+            await message.delete()
         return
 
     @commands.command()
@@ -40,7 +41,8 @@ class Updates(commands.Cog):
             ctx.bot.get_channels()
             msg = 'Got it, {}'.format(message.author.mention)
             await message.channel.send(msg, delete_after=10)
-        await message.delete()
+        if ctx.guild.me.guild_permissions.manage_messages:
+            await message.delete()
         return
 
     @commands.command()
@@ -51,15 +53,19 @@ class Updates(commands.Cog):
             ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''', (lang, ctx.message.guild.id))
             ctx.bot.guild_db.commit()
         msg = 'Got it, {}'.format(message.author.mention)
+        if ctx.guild.me.guild_permissions.change_nickname:
+            await ctx.guild.me.edit(nick=ctx.bot.translations[lang]['nick'], reason='language change')
         await message.channel.send(msg, delete_after=10)
-        await message.delete()
+        if ctx.guild.me.guild_permissions.manage_messages:
+            await message.delete()
         return
 
     @commands.command()
     @commands.is_owner()
     async def update(self, ctx, *args):
         if ctx.message.guild is not None:
-            await ctx.message.delete()
+            if ctx.guild.me.guild_permissions.manage_messages:
+                await ctx.message.delete()
         for upd_type in args:
             await ctx.bot.force_update(upd_type)
         return
