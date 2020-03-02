@@ -149,6 +149,7 @@ class ClanBot(commands.Bot):
             if '@' not in i:
                 prefix = i
         await guild.owner.dm_channel.send('The `{}help` command will get you the command list.\n'
+                                          'To set up automatic Destiny 2 information updates use `regnotifier` command.\n'
                                           'Please set my language for the guild with `@{} setlang LANG`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.'.format(prefix, self.user.name, str(self.langs).replace('[', '').replace(']', '').replace('\'', '')))
 
     async def on_guild_remove(self, guild):
