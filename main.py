@@ -538,7 +538,7 @@ class ClanBot(commands.Bot):
                     else:
                         message = await channel.send(embed=embed, delete_after=time_to_delete)
                         hist = message.id
-            self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type), (hist, server.id))
+            self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type), (str(hist), server.id))
             self.guild_db.commit()
 
     def start_up(self):
