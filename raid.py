@@ -192,7 +192,10 @@ class LFG:
         self.conn.commit()
 
     def is_raid(self, message_id):
-        cell = self.c.execute('SELECT group_id FROM raid WHERE group_id=?', (message_id,))
+        try:
+            cell = self.c.execute('SELECT group_id FROM raid WHERE group_id=?', (message_id,))
+        except sqlite3.OperationalError:
+            return False
         cell = cell.fetchall()
         if len(cell) == 0:
             return False
@@ -201,7 +204,10 @@ class LFG:
             return message_id == cell[0]
 
     def get_cell(self, search_field, group_id, field):
-        cell = self.c.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,)).fetchone()
+        try:
+            cell = self.c.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,)).fetchone()
+        except sqlite3.OperationalError:
+            return None
         if cell is not None:
             if len(cell) > 0:
                 return cell[0]
