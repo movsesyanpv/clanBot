@@ -15,17 +15,17 @@ class Group(commands.Cog):
         await ctx.bot.raid.dm_lfgs(ctx.author)
         return
 
-    async def guild_lfg(self, ctx, message):
+    async def guild_lfg(self, ctx, message, lang):
         ctx.bot.raid.add(message)
         role = ctx.bot.raid.get_cell('group_id', message.id, 'the_role')
         name = ctx.bot.raid.get_cell('group_id', message.id, 'name')
         time = datetime.fromtimestamp(ctx.bot.raid.get_cell('group_id', message.id, 'time'))
         is_embed = ctx.bot.raid.get_cell('group_id', message.id, 'is_embed')
         description = ctx.bot.raid.get_cell('group_id', message.id, 'description')
-        msg = "{}, {} {}\n{} {}\n{}".format(role, ctx.bot.translations[ctx.bot.args.lang]['lfg']['go'], name,
-                                            ctx.bot.translations[ctx.bot.args.lang]['lfg']['at'], time, description)
+        msg = "{}, {} {}\n{} {}\n{}".format(role, ctx.bot.translations[lang]['lfg']['go'], name,
+                                            ctx.bot.translations[lang]['lfg']['at'], time, description)
         if is_embed:
-            embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[ctx.bot.args.lang])
+            embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[lang])
             out = await message.channel.send(content=msg)
             await out.edit(content=None, embed=embed)
         else:
@@ -34,12 +34,12 @@ class Group(commands.Cog):
         await out.add_reaction('👌')
         await out.add_reaction('❌')
         ctx.bot.raid.set_id(out.id, message.id)
-        await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[ctx.bot.args.lang])
+        await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang])
         # self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
         await message.delete()
         return out.id
 
-    async def dm_lfg(self, ctx):
+    async def dm_lfg(self, ctx, lang):
         def check(ms):
             return ms.channel == ctx.author.dm_channel and ms.author == ctx.message.author
 
@@ -47,7 +47,7 @@ class Group(commands.Cog):
             await ctx.author.create_dm()
         dm = ctx.author.dm_channel
 
-        translations = ctx.bot.translations[ctx.bot.args.lang]['lfg']
+        translations = ctx.bot.translations[lang]['lfg']
 
         await dm.send(content=translations['name'])
         msg = await self.bot.wait_for('message', check=check)
@@ -95,7 +95,7 @@ class Group(commands.Cog):
             return
 
         tmp = await ctx.send('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, at[args['is_embed']], mode, role))
-        group_id = await self.guild_lfg(ctx, tmp)
+        group_id = await self.guild_lfg(ctx, tmp, lang)
         ctx.bot.raid.set_owner(ctx.author.id, group_id)
         await ctx.message.delete()
 
@@ -104,15 +104,17 @@ class Group(commands.Cog):
     @commands.command(aliases=['сбор', 'лфг'])
     @commands.guild_only()
     async def lfg(self, ctx):
+        lang = ctx.bot.guild_lang(ctx.message.guild.id)
         if len(ctx.message.content.splitlines()) > 1:
-            await self.guild_lfg(ctx, ctx.message)
+            await self.guild_lfg(ctx, ctx.message, lang)
         else:
-            await self.dm_lfg(ctx)
+            await self.dm_lfg(ctx, lang)
 
     @commands.command(aliases=['editlfg', 'editLfg', 'editLFG'])
     @commands.guild_only()
     async def edit_lfg(self, ctx, arg_id, *args):
         message = ctx.message
+        lang = ctx.bot.guild_lang(ctx.message.guild.id)
         text = message.content.split()
         hashids = Hashids()
         group_id = hashids.decode(arg_id)
@@ -123,7 +125,7 @@ class Group(commands.Cog):
             if old_lfg is not None and owner is not None:
                 old_lfg = await old_lfg.fetch_message(group_id[0])
                 if owner == message.author.id:
-                    await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[ctx.bot.args.lang])
+                    await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang])
                 else:
                     await ctx.bot.check_ownership(message)
                     await message.delete()

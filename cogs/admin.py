@@ -43,11 +43,17 @@ class Admin(commands.Cog):
         name='help',
         description='The help command!',
         usage='cog',
-        aliases=['man', 'hlep', 'чотут', 'ман', 'инструкция']
+        aliases=['man', 'hlep', 'чотут', 'ман', 'инструкция', 'ruhelp', 'helpru']
     )
-    async def help_command(self, ctx, cog='all'):
+    async def help_command(self, ctx, lang=None, cog='all'):
         channel = ctx.message.channel
-        help_translations = ctx.bot.translations[ctx.bot.args.lang]['help']
+        if ctx.message.guild is not None and lang is None:
+            lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        if lang not in ctx.bot.langs:
+            lang = 'en'
+        if ctx.invoked_with in ['чотут', 'ман', 'инструкция', 'ruhelp', 'helpru']:
+            lang = 'ru'
+        help_translations = ctx.bot.translations[lang]['help']
         cog = cog.lower()
         if cog in ['all', 'help']:
             help_msg = '`{} v{}`\n{}\n'.format(ctx.bot.user.name, ctx.bot.version, help_translations['list'])
@@ -55,6 +61,7 @@ class Admin(commands.Cog):
                 ['help', help_translations['help']],
                 ['lfglist', help_translations['lfglist']],
                 ['stop', help_translations['stop']],
+                ['setlang', help_translations['setlang']],
                 ['planMaintenance', help_translations['maintenance']],
                 ['lfg ARGS', help_translations['lfg']],
                 ['editLfg ID ARGS', help_translations['edit_lfg']],
@@ -70,7 +77,7 @@ class Admin(commands.Cog):
                 prefix = '@{} '.format(ctx.bot.user.name)
             else:
                 prefix = ctx.prefix
-            help_msg = '{}{}'.format(help_msg, help_translations['additional_info'].format(prefix))
+            help_msg = '{}{}'.format(help_msg, help_translations['additional_info'].format(prefix, prefix))
             await ctx.message.channel.send(help_msg)
             pass
         elif cog == 'update':

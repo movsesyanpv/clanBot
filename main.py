@@ -19,12 +19,13 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.7.1'
+    version = '2.8'
     cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
+    langs = ['en', 'ru']
 
     sched = AsyncIOScheduler(timezone='UTC')
-    hist_db = ''
-    hist_cursor = ''
+    guild_db = ''
+    guild_cursor = ''
 
     api_data_file = open('api.json', 'r')
     api_data = json.loads(api_data_file.read())
@@ -33,8 +34,6 @@ class ClanBot(commands.Bot):
 
     notifiers = []
     seasonal_ch = []
-    channel_db = ''
-    channel_cursor = ''
 
     raid = ''
 
@@ -50,12 +49,10 @@ class ClanBot(commands.Bot):
         translations_file = open('translations.json', 'r', encoding='utf-8')
         self.translations = json.loads(translations_file.read())
         translations_file.close()
-        self.data = d2.D2data(self.translations, self.args.lang, self.args.oauth, self.args.production, (self.args.cert, self.args.key))
+        self.data = d2.D2data(self.translations, self.langs, self.args.oauth, self.args.production, (self.args.cert, self.args.key))
         self.raid = lfg.LFG()
-        self.hist_db = sqlite3.connect('history.db')
-        self.hist_cursor = self.hist_db.cursor()
-        self.channel_db = sqlite3.connect('channels.db')
-        self.channel_cursor = self.channel_db.cursor()
+        self.guild_db = sqlite3.connect('guild.db')
+        self.guild_cursor = self.guild_db.cursor()
 
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
@@ -89,8 +86,8 @@ class ClanBot(commands.Bot):
         parser.add_argument('-nc', '--noclear', help='Don\'t clear last message of the type', action='store_true')
         parser.add_argument('-p', '--production', help='Use to launch in production mode', action='store_true')
         parser.add_argument('-nm', '--nomessage', help='Don\'t post any messages', action='store_true')
-        parser.add_argument('-l', '--lang', type=str, help='Language of data', default='en')
-        parser.add_argument('-t', '--type', type=str, help='Type of message. Use with -f')
+        parser.add_argument('-l', '--lang', nargs='+', help='Language of data', default=['en'])
+        parser.add_argument('-t', '--type', nargs='+', help='Type of message. Use with -f')
         parser.add_argument('-tp', '--testprod', help='Use to launch in test production mode', action='store_true')
         parser.add_argument('-f', '--forceupdate', help='Force update right now', action='store_true')
         parser.add_argument('--oauth', help='Get Bungie access token', action='store_true')
@@ -129,6 +126,7 @@ class ClanBot(commands.Bot):
     async def on_ready(self):
         await self.data.token_update()
         await self.update_history()
+        await self.update_langs()
         self.get_channels()
         self.data.get_chars()
         if self.args.forceupdate:
@@ -144,8 +142,11 @@ class ClanBot(commands.Bot):
         await self.update_history()
 
     async def on_guild_remove(self, guild):
-        self.hist_cursor.execute('''DROP TABLE IF EXISTS \'{}\''''.format(guild.id))
-        self.hist_db.commit()
+        self.guild_cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
+        self.guild_cursor.execute('''DELETE FROM language WHERE server_id=?''', (guild.id,))
+        self.guild_cursor.execute('''DELETE FROM seasonal WHERE server_id=?''', (guild.id,))
+        self.guild_cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
+        self.guild_db.commit()
         self.raid.purge_guild(guild.id)
 
     async def check_ownership(self, message, is_silent=False, admin_check=False):
@@ -342,45 +343,74 @@ class ClanBot(commands.Bot):
         self.notifiers.clear()
         self.seasonal_ch.clear()
         try:
-            self.channel_cursor.execute('''CREATE TABLE notifiers (channel_id integer)''')
-            self.channel_cursor.execute('''CREATE UNIQUE INDEX notifiers_id ON notifiers(channel_id)''')
-            self.channel_db.commit()
+            self.guild_cursor.execute('''CREATE TABLE notifiers (channel_id integer, server_id integer)''')
+            self.guild_cursor.execute('''CREATE UNIQUE INDEX notifiers_id ON notifiers(channel_id)''')
+            self.guild_db.commit()
         except sqlite3.OperationalError:
             try:
-                channels = self.channel_cursor.execute('''SELECT channel_id FROM notifiers''')
+                channels = self.guild_cursor.execute('''SELECT channel_id FROM notifiers''')
                 channels = channels.fetchall()
                 for entry in channels:
                     self.notifiers.append(entry[0])
             except sqlite3.OperationalError:
                 pass
         try:
-            self.channel_cursor.execute('''CREATE TABLE seasonal (channel_id integer)''')
-            self.channel_cursor.execute('''CREATE UNIQUE INDEX seasonal_id ON seasonal(channel_id)''')
-            self.channel_db.commit()
+            self.guild_cursor.execute('''CREATE TABLE seasonal (channel_id integer, server_id integer)''')
+            self.guild_cursor.execute('''CREATE UNIQUE INDEX seasonal_id ON seasonal(channel_id)''')
+            self.guild_db.commit()
         except sqlite3.OperationalError:
             try:
-                channels = self.channel_cursor.execute('''SELECT channel_id FROM seasonal''')
+                channels = self.guild_cursor.execute('''SELECT channel_id FROM seasonal''')
                 channels = channels.fetchall()
                 for entry in channels:
                     self.seasonal_ch.append(entry[0])
             except sqlite3.OperationalError:
                 pass
 
+    def guild_lang(self, guild_id):
+        try:
+            self.guild_cursor.execute('''SELECT lang FROM language WHERE server_id=?''', (guild_id, ))
+            lang = self.guild_cursor.fetchone()
+            if len(lang) > 0:
+                return lang[0]
+            else:
+                return 'en'
+        except:
+            return 'en'
+
+    async def update_langs(self):
+        game = discord.Game('updating langs')
+        await self.change_presence(activity=game)
+
+        for server in self.guilds:
+            try:
+                self.guild_cursor.execute('''CREATE TABLE language (server_id integer, lang text)''')
+                self.guild_cursor.execute('''CREATE UNIQUE INDEX lang ON language(server_id)''')
+                self.guild_cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?)''', [server.id, 'en'])
+            except sqlite3.OperationalError:
+                try:
+                    self.guild_cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?)''', [server.id, 'en'])
+                except sqlite3.OperationalError:
+                    pass
+        self.guild_db.commit()
+
+        game = discord.Game('v{}'.format(self.version))
+        await self.change_presence(activity=game)
+
     async def update_history(self):
         game = discord.Game('updating history')
         await self.change_presence(activity=game)
         for server in self.guilds:
             try:
-                self.hist_cursor.execute('''CREATE TABLE \'{}\' ( server_name text, spider integer, xur integer, 
-                                nightfalls820 integer, ordeal integer, nightmares integer, raids integer, 
-                                cruciblerotators integer, heroicstory integer, forge integer, vanguardstrikes integer, 
-                                reckoning integer )'''.format(server.id))
-                init_values = [server.name, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                self.hist_cursor.execute("INSERT INTO \'{}\' VALUES (?,?,?,?,?,?,?,?,?,?,?,?)".format(server.id), init_values)
-                self.hist_db.commit()
+                self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer)''')
+                self.guild_cursor.execute('''CREATE UNIQUE INDEX hist ON history(server_id)''')
+                init_values = [server.name, server.id]
+                self.guild_cursor.execute("INSERT or IGNORE INTO history VALUES (?,?)", init_values)
+                self.guild_db.commit()
             except sqlite3.OperationalError:
                 try:
-                    self.hist_cursor.execute('''UPDATE \'{}\' SET server_name=?'''.format(server.id), (server.name, ))
+                    init_values = [server.name, server.id]
+                    self.guild_cursor.execute("INSERT or IGNORE INTO history VALUES (?,?)", init_values)
                 except sqlite3.OperationalError:
                     pass
         game = discord.Game('v{}'.format(self.version))
@@ -391,7 +421,7 @@ class ClanBot(commands.Bot):
         game = discord.Game('updating {}'.format(name))
         await self.change_presence(activity=game)
 
-        lang = self.args.lang
+        lang = self.langs
 
         if channels is None:
             channels = self.notifiers
@@ -413,81 +443,92 @@ class ClanBot(commands.Bot):
             await self.change_presence(activity=game)
             return
 
-        if self.data.data[name]:
-            await self.post_embed(name, self.data.data[name], time_to_delete, channels)
+        for locale in self.args.lang:
+            if not self.data.data[locale][name]:
+                game = discord.Game('v{}'.format(self.version))
+                await self.change_presence(activity=game)
+                return
+        await self.post_embed(name, self.data.data, time_to_delete, channels)
 
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(activity=game)
 
     async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
-        if not self.args.nomessage:
-            if type(src_dict) == list:
-                embed = []
-                for field in src_dict:
-                    embed.append(discord.Embed.from_dict(field))
-            else:
-                embed = discord.Embed.from_dict(src_dict)
+        for server in self.guilds:
+            lang = self.guild_lang(server.id)
+            if not self.args.nomessage:
+                if type(src_dict[lang][upd_type]) == list:
+                    embed = []
+                    for field in src_dict[lang][upd_type]:
+                        embed.append(discord.Embed.from_dict(field))
+                else:
+                    embed = discord.Embed.from_dict(src_dict[lang][upd_type])
 
-            for server in self.guilds:
-                hist = 0
-                try:
-                    last = self.hist_cursor.execute('''SELECT {} FROM \'{}\''''.format(upd_type, server.id))
-                    last = last.fetchone()
-                    if last is not None:
-                        if type(src_dict) == list:
+            hist = 0
+            try:
+                last = self.guild_cursor.execute('''SELECT {} FROM history WHERE server_id=?'''.format(upd_type), (server.id,))
+                last = last.fetchone()
+                if last is not None:
+                    if type(src_dict[lang][upd_type]) == list:
+                        if last[0] is not None:
                             hist = eval(last[0])
                         else:
-                            if len(last) > 0:
+                            hist = [0]
+                    else:
+                        if len(last) > 0:
+                            if last[0] is not None:
                                 hist = last[0]
-                except sqlite3.OperationalError:
-                    try:
-                        if type(src_dict) == list:
-                            self.hist_cursor.execute(
-                                '''ALTER TABLE \'{}\' ADD COLUMN {} text'''.format(server.id, upd_type))
-                        else:
-                            self.hist_cursor.execute('''ALTER TABLE \'{}\' ADD COLUMN {} INTEGER'''.format(server.id, upd_type))
-                    except sqlite3.OperationalError:
-                        await self.update_history()
 
-                for channel in server.channels:
-                    if channel.id in channels:
-                        if hist and not self.args.noclear:
+            except sqlite3.OperationalError:
+                try:
+                    if type(src_dict[lang][upd_type]) == list:
+                        self.guild_cursor.execute(
+                            '''ALTER TABLE history ADD COLUMN {} text'''.format(upd_type))
+                    else:
+                        self.guild_cursor.execute('''ALTER TABLE history ADD COLUMN {} INTEGER'''.format(upd_type))
+                    self.guild_db.commit()
+                except sqlite3.OperationalError:
+                    await self.update_history()
+
+            for channel in server.channels:
+                if channel.id in channels:
+                    if hist and not self.args.noclear:
+                        try:
+                            if type(hist) == list:
+                                last = []
+                                for msg in hist:
+                                    last.append(await channel.fetch_message(msg))
+                            else:
+                                last = await channel.fetch_message(hist)
                             try:
                                 if type(hist) == list:
-                                    last = []
-                                    for msg in hist:
-                                        last.append(await channel.fetch_message(msg))
-                                else:
-                                    last = await channel.fetch_message(hist)
-                                try:
-                                    if type(hist) == list:
-                                        if len(hist) < 100:
-                                            await channel.delete_messages(last)
-                                        else:
-                                            for week in [last[i:i + 4] for i in range(0, len(last), 4)]:
-                                                await channel.delete_messages(week)
+                                    if len(hist) < 100:
+                                        await channel.delete_messages(last)
                                     else:
-                                        await last.delete()
-                                except discord.errors.Forbidden:
-                                    pass
-                                except discord.errors.HTTPException:
-                                    bot_info = await self.application_info()
-                                    await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-                            except discord.NotFound:
+                                        for week in [last[i:i + 4] for i in range(0, len(last), 4)]:
+                                            await channel.delete_messages(week)
+                                else:
+                                    await last.delete()
+                            except discord.errors.Forbidden:
+                                pass
+                            except discord.errors.HTTPException:
                                 bot_info = await self.application_info()
-                                await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.
-                                                          format(upd_type, channel.name, server.name))
-                        if type(embed) == list:
-                            hist = []
-                            for e in embed:
-                                message = await channel.send(embed=e, delete_after=time_to_delete)
-                                hist.append(message.id)
-                            hist = str(hist)
-                        else:
-                            message = await channel.send(embed=embed, delete_after=time_to_delete)
-                            hist = message.id
-                self.hist_cursor.execute('''UPDATE \'{}\' SET {}=?'''.format(server.id, upd_type), (hist, ))
-                self.hist_db.commit()
+                                await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+                        except discord.NotFound:
+                            bot_info = await self.application_info()
+                            await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.
+                                                      format(upd_type, channel.name, server.name))
+                    if type(embed) == list:
+                        hist = []
+                        for e in embed:
+                            message = await channel.send(embed=e, delete_after=time_to_delete)
+                            hist.append(message.id)
+                        hist = str(hist)
+                    else:
+                        message = await channel.send(embed=embed, delete_after=time_to_delete)
+                        hist = message.id
+            self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type), (hist, server.id))
+            self.guild_db.commit()
 
     def start_up(self):
         self.get_args()

@@ -111,14 +111,18 @@
             "help": "Вывести это сообщение",
             "lfglist": "Напечатать список LFG",
             "stop": "Остановить бота",
+            "setlang": "Задать язык сервера",
             "maintenance": "Заблокировать автообновления на указанный период времени",
             "lfg": "Создать сбор в группу",
             "edit_lfg": "Редактировать сбор",
             "regnotifier": "Зарегистрировать канал для получения автообновлений",
             "rmnotifier": "Убрать регистрацию канала",
             "update": "Получить обновления от Bungie указанного TYPE",
-            "additional_info": "Отправьте `{}help команда` для подробной информации о `команде`.",
+            "additional_info": "Отправьте `{}help язык команда` для подробной информации о `команде` на `языке`. Доступны языки `en`, `ru`.\nОтправьте `{}ruhelp команда` для подробной информации о `команде` по-русски.",
             "commands": {
+                "setlang": {
+                    "info": "Доступны языки `en`, `ru`. Доступно для администраторов сервера."
+                },
                 "update": {
                     "info": "Получите обновления указанного `TYPE`. Типы должны быть отделены друг от друга пробелами. Доступные типы:\n - `daily` для героических сюжетных миссий, модификаторов налетов и суда, кузницы и паука\n - `weekly` для доступных сумраков и кошмаров, текущего побоища и сменяемых плейлистов горнила\n - `spider` для цен на ресурсы\n - `xur` для местоположения Зура и доступных экзотических предметов,\n - `tess` для текущего состояния Эверверс\n - `seasonal` для прогнозов инвентаря Тесс на текущий сезон\nОбновления выкладываются в каналах, зарегистрированных с помощью `regnotifier`. Все, кроме `seasonal` выкладывается в `notifier` каналах. Доступно только для хозяев бота. Рискните."
                 },
@@ -266,14 +270,18 @@
             "help": "Print this message",
             "lfglist": "Print your LFG list",
             "stop": "Stop the bot",
+            "setlang": "Set server language",
             "maintenance": "Prevent updates at given time frame",
             "lfg": "Create an LFG message",
             "edit_lfg": "Edit LFG message",
             "regnotifier": "Register notifier channel",
             "rmnotifier": "Deregister notifier channel",
             "update": "Get updates from Bungie for the given TYPE",
-            "additional_info": "Type `{}help command` for more info on a `command`.",
+            "additional_info": "Type `{}help language command` for more info on a `command` in `language`. Available languages are `en`, `ru`.\nType `{}ruhelp command` for more info on a `command` in russian.",
             "commands": {
+                "setlang": {
+                    "info": "Available languages are `en`, `ru`. Available only to the servers admins."
+                },
                 "update": {
                     "info": "Get updates from Bungie for the given `TYPE`. The types should be separated with spaces. Available types:\n - `daily` for  heroic story missions, strike and reckoning modifiers, forge and spider\n - `weekly` for available nightfalls and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics,\n - `tess` for the current state of the Eververse\n - `seasonal` for the predictions of Tess' stock over the current season\nUpdates are posted in the channels, that were registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the bot's owner."
                 },
