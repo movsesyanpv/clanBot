@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.8.3'
+    version = '2.8.4'
     cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
@@ -35,6 +35,7 @@ class ClanBot(commands.Bot):
 
     notifiers = []
     seasonal_ch = []
+    update_ch = []
 
     raid = ''
 
@@ -366,33 +367,30 @@ class ClanBot(commands.Bot):
                                           body='# Message\n\n{}\n\n# Traceback\n\n```{}```'.
                                           format(message.content, traceback.format_exc()))
 
+    def get_channel_type(self, ch_type):
+        channel_list = []
+        try:
+            self.guild_cursor.execute('''CREATE TABLE {} (channel_id integer, server_id integer)'''.format(ch_type))
+            self.guild_cursor.execute('''CREATE UNIQUE INDEX {}_id ON {}(channel_id)'''.format(ch_type, ch_type))
+            self.guild_db.commit()
+        except sqlite3.OperationalError:
+            try:
+                channels = self.guild_cursor.execute('''SELECT channel_id FROM {}'''.format(ch_type))
+                channels = channels.fetchall()
+                for entry in channels:
+                    channel_list.append(entry[0])
+            except sqlite3.OperationalError:
+                pass
+        return channel_list
+
     def get_channels(self):
         self.notifiers.clear()
         self.seasonal_ch.clear()
-        try:
-            self.guild_cursor.execute('''CREATE TABLE notifiers (channel_id integer, server_id integer)''')
-            self.guild_cursor.execute('''CREATE UNIQUE INDEX notifiers_id ON notifiers(channel_id)''')
-            self.guild_db.commit()
-        except sqlite3.OperationalError:
-            try:
-                channels = self.guild_cursor.execute('''SELECT channel_id FROM notifiers''')
-                channels = channels.fetchall()
-                for entry in channels:
-                    self.notifiers.append(entry[0])
-            except sqlite3.OperationalError:
-                pass
-        try:
-            self.guild_cursor.execute('''CREATE TABLE seasonal (channel_id integer, server_id integer)''')
-            self.guild_cursor.execute('''CREATE UNIQUE INDEX seasonal_id ON seasonal(channel_id)''')
-            self.guild_db.commit()
-        except sqlite3.OperationalError:
-            try:
-                channels = self.guild_cursor.execute('''SELECT channel_id FROM seasonal''')
-                channels = channels.fetchall()
-                for entry in channels:
-                    self.seasonal_ch.append(entry[0])
-            except sqlite3.OperationalError:
-                pass
+        self.update_ch.clear()
+
+        self.notifiers = self.get_channel_type('notifiers')
+        self.seasonal_ch = self.get_channel_type('seasonal')
+        self.update_ch = self.get_channel_type('updates')
 
     def guild_lang(self, guild_id):
         try:
@@ -558,6 +556,13 @@ class ClanBot(commands.Bot):
                         hist = message.id
             self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type), (str(hist), server.id))
             self.guild_db.commit()
+
+    async def post_updates(self, version, content):
+        msg = '`{} v{}`\n{}'.format(self.user.name, version, content)
+        for server in self.guilds:
+            for channel in server.channels:
+                if channel.id in self.update_ch:
+                    await channel.send(msg)
 
     def start_up(self):
         self.get_args()

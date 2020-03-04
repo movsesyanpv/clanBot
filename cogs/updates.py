@@ -12,9 +12,11 @@ class Updates(commands.Cog):
     async def regnotifier(self, ctx, *args):
         message = ctx.message
         content = message.content.lower().split()
+        available_types = ['notifiers', 'seasonal', 'updates']
         notifier_type = 'notifiers'
-        if len(content) >= 3 and 'seasonal' in message.content.lower():
-            notifier_type = content[2]
+        if len(args) > 0:
+            if args[0] in available_types:
+                notifier_type = args[0]
         if await ctx.bot.check_ownership(message, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
                                         (message.channel.id, message.guild.id))

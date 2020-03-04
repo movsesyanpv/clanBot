@@ -5,6 +5,7 @@ from tabulate import tabulate
 from datetime import datetime
 import updater
 import os
+import main
 
 
 class Admin(commands.Cog):
@@ -48,6 +49,12 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def upgrade(self, ctx):
         os.system('git pull')
+        b = main.ClanBot(command_prefix='>')
+        content = ctx.message.content.splitlines()[1]
+        if len(ctx.message.content.splitlines()) > 2:
+            for string in ctx.message.content.splitlines()[2:]:
+                content = '{}\n{}'.format(content, string)
+        await ctx.bot.post_updates(b.version, content)
         importlib.reload(updater)
         updater.go()
         await self.stop(ctx)
