@@ -12,6 +12,7 @@ from dateutil.parser import *
 class D2data:
     api_data_file = open('api.json', 'r')
     api_data = json.loads(api_data_file.read())
+    destiny = ''
 
     icon_prefix = "https://www.bungie.net"
 
@@ -156,6 +157,7 @@ class D2data:
             'X-API-Key': self.api_data['key'],
             'Authorization': 'Bearer ' + resp['access_token']
         }
+        self.destiny = pydest.Pydest(self.headers['X-API-Key'])
 
     def get_bungie_json(self, name, url, params, lang):
         try:
@@ -189,8 +191,6 @@ class D2data:
         return resp
 
     async def get_vendor_sales(self, lang, vendor_resp, cats, exceptions=[]):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
-
         embed_sales = []
 
         tess_sales = vendor_resp.json()['Response']['sales']['data']
@@ -200,8 +200,8 @@ class D2data:
             if item_hash not in exceptions:
                 currency = item['costs'][0]
                 definition = 'DestinyInventoryItemDefinition'
-                item_resp = await destiny.decode_hash(item_hash, definition, language=lang)
-                currency_resp = await destiny.decode_hash(currency['itemHash'], definition, language=lang)
+                item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
+                currency_resp = await self.destiny.decode_hash(currency['itemHash'], definition, language=lang)
 
                 item_name_list = item_resp['displayProperties']['name'].split()
                 item_name = ' '.join(item_name_list)
@@ -215,13 +215,11 @@ class D2data:
                                                 currency_item.capitalize())
                 }
                 embed_sales.append(item_data)
-        await destiny.close()
         return embed_sales
 
     async def get_featured_bd(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
-            tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+            tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['featured_bd'] = {
                 'thumbnail': {
                     'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
@@ -240,7 +238,7 @@ class D2data:
                     format(char_info['platform'], char_info['membershipid'], char)
                 tess_resp = self.get_bungie_json('featured bright dust for {}'.format(char), tess_url, self.vendor_params, lang)
                 if not tess_resp:
-                    await destiny.close()
+                    await self.destiny.close()
                     return
                 tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
 
@@ -251,12 +249,9 @@ class D2data:
                 if tmp_fields[i] not in tmp_fields[i+1:]:
                     self.data[lang]['featured_bd']['fields'].append(tmp_fields[i])
 
-        await destiny.close()
-
     async def get_bd(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
-            tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+            tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['bd'] = {
                 'thumbnail': {
                     'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
@@ -275,7 +270,6 @@ class D2data:
                     format(char_info['platform'], char_info['membershipid'], char)
                 tess_resp = self.get_bungie_json('bright dust for {}'.format(char), tess_url, self.vendor_params, lang)
                 if not tess_resp:
-                    await destiny.close()
                     return
                 tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
 
@@ -286,12 +280,9 @@ class D2data:
                 if tmp_fields[i] not in tmp_fields[i+1:]:
                     self.data[lang]['bd']['fields'].append(tmp_fields[i])
 
-        await destiny.close()
-
     async def get_featured_silver(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
-            tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
+            tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['silver'] = {
                 'thumbnail': {
                     'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
@@ -310,7 +301,6 @@ class D2data:
                     format(char_info['platform'], char_info['membershipid'], char)
                 tess_resp = self.get_bungie_json('featured silver for {}'.format(char), tess_url, self.vendor_params, lang)
                 if not tess_resp:
-                    await destiny.close()
                     return
                 tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
 
@@ -320,8 +310,6 @@ class D2data:
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i+1:]:
                     self.data[lang]['silver']['fields'].append(tmp_fields[i])
-
-        await destiny.close()
 
     async def get_seasonal_eververse(self, langs):
         start = self.get_season_start()
@@ -354,8 +342,7 @@ class D2data:
                 pass
 
     async def get_seasonal_featured_silver(self, langs, start):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
-        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
+        tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         for lang in langs:
             self.data[lang]['seasonal_silver'].clear()
@@ -386,9 +373,9 @@ class D2data:
                     class_items = 0
                 if item['displayCategoryIndex'] == 3 and item['itemHash'] != 827183327:
                     definition = 'DestinyInventoryItemDefinition'
-                    next_def = await destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
-                    item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                    next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
+                    item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
                     currency_item = currency_resp['displayProperties']['name']
                     item_data = {
@@ -403,11 +390,9 @@ class D2data:
                             class_name in item_def['itemTypeDisplayName'].lower() for class_name in
                             ['hunter', 'warlock', 'titan']):
                         class_items = class_items + 1
-        await destiny.close()
 
     async def get_seasonal_featured_bd(self, langs, start):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
-        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
+        tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         for lang in langs:
             self.data[lang]['seasonal_featured_bd'].clear()
@@ -438,9 +423,9 @@ class D2data:
                     class_items = 0
                 if item['displayCategoryIndex'] == 4 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
                     definition = 'DestinyInventoryItemDefinition'
-                    next_def = await destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
-                    item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                    next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
+                    item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
                     currency_item = currency_resp['displayProperties']['name']
                     item_data = {
@@ -455,11 +440,9 @@ class D2data:
                             class_name in item_def['itemTypeDisplayName'].lower() for class_name in
                             ['hunter', 'warlock', 'titan']):
                         class_items = class_items + 1
-        await destiny.close()
 
     async def get_seasonal_consumables(self, langs, start):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
-        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
+        tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         for lang in langs:
             self.data[lang]['seasonal_consumables'].clear()
@@ -490,9 +473,9 @@ class D2data:
                     class_items = 0
                 if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
                     definition = 'DestinyInventoryItemDefinition'
-                    next_def = await destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
-                    item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                    next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
+                    item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
                     currency_item = currency_resp['displayProperties']['name']
                     item_data = {
@@ -507,11 +490,9 @@ class D2data:
                             class_name in item_def['itemTypeDisplayName'].lower() for class_name in
                             ['hunter', 'warlock', 'titan']):
                         class_items = class_items + 1
-        await destiny.close()
 
     async def get_seasonal_bd(self, langs, start):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
-        tess_def = await destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
+        tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         for lang in langs:
             self.data[lang]['seasonal_bd'].clear()
@@ -541,9 +522,9 @@ class D2data:
                     class_items = 0
                 if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
                     definition = 'DestinyInventoryItemDefinition'
-                    next_def = await destiny.decode_hash(tess_def['itemList'][i+1]['itemHash'], definition, language=lang)
-                    item_def = await destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                    next_def = await self.destiny.decode_hash(tess_def['itemList'][i+1]['itemHash'], definition, language=lang)
+                    item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
                     currency_item = currency_resp['displayProperties']['name']
                     item_data = {
@@ -556,23 +537,20 @@ class D2data:
                     n_items = n_items + 1
                     if item_def['classType'] < 3 or any(class_name in item_def['itemTypeDisplayName'].lower() for class_name in self.translations[lang]['classnames']):
                         class_items = class_items + 1
-        await destiny.close()
 
     async def get_spider(self, lang):
         char_info = self.char_info
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
 
         spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         for locale in lang:
             spider_resp = self.get_bungie_json('spider', spider_url, self.vendor_params, locale)
             if not spider_resp:
-                await destiny.close()
                 return
             spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
             spider_sales = spider_resp.json()['Response']['sales']['data']
 
-            spider_def = await destiny.decode_hash(863940356, 'DestinyVendorDefinition', language=locale)
+            spider_def = await self.destiny.decode_hash(863940356, 'DestinyVendorDefinition', language=locale)
 
             self.data[locale]['spider'] = {
                 'thumbnail': {
@@ -594,8 +572,8 @@ class D2data:
                 if not item_hash == 1812969468:
                     currency = item['costs'][0]
                     definition = 'DestinyInventoryItemDefinition'
-                    item_resp = await destiny.decode_hash(item_hash, definition, language=locale)
-                    currency_resp = await destiny.decode_hash(currency['itemHash'], definition, language=locale)
+                    item_resp = await self.destiny.decode_hash(item_hash, definition, language=locale)
+                    currency_resp = await self.destiny.decode_hash(currency['itemHash'], definition, language=locale)
 
                     # query bungie api for name of item and name of currency
                     item_name_list = item_resp['displayProperties']['name'].split()[1:]
@@ -611,7 +589,6 @@ class D2data:
                                                     currency_item.capitalize())
                     }
                     self.data[locale]['spider']['fields'].append(item_data)
-        await destiny.close()
 
     @staticmethod
     def get_xur_loc():
@@ -625,17 +602,15 @@ class D2data:
 
     async def get_xur(self, langs):
         char_info = self.char_info
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
 
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         for lang in langs:
             xur_resp = self.get_bungie_json('xur', xur_url, self.vendor_params, lang)
             if not xur_resp and xur_resp.json()['ErrorCode'] != 1627:
-                await destiny.close()
                 return
 
-            xur_def = await destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
+            xur_def = await self.destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['xur'] = {
                 'thumbnail': {
                     'url': self.icon_prefix + xur_def['displayProperties']['smallTransparentIcon']
@@ -671,7 +646,7 @@ class D2data:
                     item_hash = xur_sales[key]['itemHash']
                     if not item_hash == 4285666432:
                         definition = 'DestinyInventoryItemDefinition'
-                        item_resp = await destiny.decode_hash(item_hash, definition, language=lang)
+                        item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
                         item_name = item_resp['displayProperties']['name']
                         if item_resp['itemType'] == 2:
                             item_sockets = item_resp['sockets']['socketEntries']
@@ -708,15 +683,12 @@ class D2data:
                     "value": self.translations[lang]['xur']['noxur']
                 }
                 self.data[lang]['xur']['fields'].append(loc_field)
-        await destiny.close()
 
     async def get_heroic_story(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
             activities_resp = await self.get_activities_response('heroic story missions', lang)
             local_types = self.translations[lang]
             if not activities_resp:
-                await destiny.close()
                 return
 
             self.data[lang]['heroicstory'] = {
@@ -733,7 +705,7 @@ class D2data:
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
 
                 if local_types['heroicstory'] in r_json['displayProperties']['name']:
                     info = {
@@ -742,15 +714,12 @@ class D2data:
                         "value": r_json['selectionScreenDisplayProperties']['description']
                     }
                     self.data[lang]['heroicstory']['fields'].append(info)
-        await destiny.close()
 
     async def get_forge(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
             activities_resp = await self.get_activities_response('forge', lang)
             local_types = self.translations[lang]
             if not activities_resp:
-                await destiny.close()
                 return
 
             self.data[lang]['forge'] = {
@@ -766,11 +735,11 @@ class D2data:
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
 
                 if local_types['forge'] in r_json['displayProperties']['name']:
                     forge_def = 'DestinyDestinationDefinition'
-                    place = await destiny.decode_hash(r_json['destinationHash'], forge_def, language=lang)
+                    place = await self.destiny.decode_hash(r_json['destinationHash'], forge_def, language=lang)
                     self.data[lang]['forge']['thumbnail']['url'] = self.icon_prefix + r_json['displayProperties']['icon']
                     info = {
                         "inline": True,
@@ -778,15 +747,12 @@ class D2data:
                         "value": place['displayProperties']['name']
                     }
                     self.data[lang]['forge']['fields'].append(info)
-        await destiny.close()
 
     async def get_strike_modifiers(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
             activities_resp = await self.get_activities_response('strike modifiers', lang)
             local_types = self.translations[lang]
             if not activities_resp:
-                await destiny.close()
                 return
 
             self.data[lang]['vanguardstrikes'] = {
@@ -802,14 +768,13 @@ class D2data:
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
 
                 if local_types['heroicstory'] in r_json['displayProperties']['name']:
-                    self.data[lang]['vanguardstrikes']['fields'] = await self.decode_modifiers(key, destiny, lang)
+                    self.data[lang]['vanguardstrikes']['fields'] = await self.decode_modifiers(key, lang)
                 if self.translations[lang]['strikes'] in r_json['displayProperties']['name']:
                     self.data[lang]['vanguardstrikes']['thumbnail']['url'] = self.icon_prefix +\
                                                                        r_json['displayProperties']['icon']
-        await destiny.close()
 
     async def get_reckoning_boss(self, lang):
         first_reset_time = 1539709200
@@ -849,12 +814,10 @@ class D2data:
         return data
 
     async def get_reckoning_modifiers(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
             activities_resp = await self.get_activities_response('reckoning modifiers', lang)
             local_types = self.translations[lang]
             if not activities_resp:
-                await destiny.close()
                 return
 
             self.data[lang]['reckoning'] = {
@@ -873,20 +836,17 @@ class D2data:
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
 
                 if self.translations[lang]['reckoning'] in r_json['displayProperties']['name']:
-                    mods = await self.decode_modifiers(key, destiny, lang)
+                    mods = await self.decode_modifiers(key, lang)
                     self.data[lang]['reckoning']['fields'] = [*self.data[lang]['reckoning']['fields'], *mods]
-        await destiny.close()
 
     async def get_nightfall820(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
             activities_resp = await self.get_activities_response('820 nightfalls', lang)
             local_types = self.translations[lang]
             if not activities_resp:
-                await destiny.close()
                 return
 
             self.data[lang]['nightfalls820'] = {
@@ -902,7 +862,7 @@ class D2data:
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 try:
                     recommended_light = key['recommendedLight']
                     if recommended_light == 820:
@@ -923,8 +883,6 @@ class D2data:
                         self.data[lang]['nightfalls820']['fields'].append(info)
                 except KeyError:
                     pass
-
-        await destiny.close()
 
     @staticmethod
     def get_modifiers(lang, act_hash):
@@ -948,12 +906,10 @@ class D2data:
             return False
 
     async def get_raids(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
             activities_resp = await self.get_activities_response('raids', lang)
             local_types = self.translations[lang]
             if not activities_resp:
-                await destiny.close()
                 return
 
             self.data[lang]['raids'] = {
@@ -977,7 +933,7 @@ class D2data:
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 if str(r_json['hash']) in self.translations[lang]['levi_order'] and \
                         not r_json['matchmaking']['requiresGuardianOath']:
                     info = {
@@ -1008,8 +964,8 @@ class D2data:
                         'value': u"\u2063"
                     }
                     curr_challenge = last_wish_challenges[int(weeks_since_first % 5)]
-                    curr_challenge = await destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
-                                                               language=lang)
+                    curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                                                                    language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
@@ -1020,8 +976,8 @@ class D2data:
                         'value': u"\u2063"
                     }
                     curr_challenge = sotp_challenges[int(weeks_since_first % 3)]
-                    curr_challenge = await destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
-                                                               language=lang)
+                    curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                                                                    language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['CoS'] in r_json['displayProperties']['name'] and \
@@ -1032,8 +988,8 @@ class D2data:
                         'value': u"\u2063"
                     }
                     curr_challenge = cos_challenges[int(weeks_since_first % 3)]
-                    curr_challenge = await destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
-                                                               language=lang)
+                    curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                                                                    language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
@@ -1051,12 +1007,10 @@ class D2data:
                     self.data[lang]['raids']['fields'].append(info)
 
     async def get_ordeal(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
             activities_resp = await self.get_activities_response('ordeal', lang)
             local_types = self.translations[lang]
             if not activities_resp:
-                await destiny.close()
                 return
 
             self.data[lang]['ordeal'] = {
@@ -1075,7 +1029,7 @@ class D2data:
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 if r_json['activityTypeHash'] == 4110605575:
                     strikes.append({"name": r_json['displayProperties']['name'],
                                     "description": r_json['displayProperties']['description']})
@@ -1093,15 +1047,12 @@ class D2data:
                     if strike['name'] in self.data[lang]['ordeal']['fields'][0]['name']:
                         self.data[lang]['ordeal']['fields'][0]['value'] = strike['description']
                         break
-        await destiny.close()
 
     async def get_nightmares(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
             activities_resp = await self.get_activities_response('nightmares', lang)
             local_types = self.translations[lang]
             if not activities_resp:
-                await destiny.close()
                 return
 
             self.data[lang]['nightmares'] = {
@@ -1118,7 +1069,7 @@ class D2data:
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 if local_types['nightmare'] in r_json['displayProperties']['name'] and \
                         local_types['adept'] in r_json['displayProperties']['name']:
                     info = {
@@ -1127,15 +1078,12 @@ class D2data:
                         'value': r_json['displayProperties']['description']
                     }
                     self.data[lang]['nightmares']['fields'].append(info)
-        await destiny.close()
 
     async def get_crucible_rotators(self, langs):
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
         for lang in langs:
             activities_resp = await self.get_activities_response('crucible rotators', lang)
             local_types = self.translations[lang]
             if not activities_resp:
-                await destiny.close()
                 return
 
             self.data[lang]['cruciblerotators'] = {
@@ -1151,11 +1099,11 @@ class D2data:
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 if r_json['destinationHash'] == 2777041980:
                     if len(r_json['challenges']) > 0:
                         obj_def = 'DestinyObjectiveDefinition'
-                        objective = await destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
+                        objective = await self.destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
                         if self.translations[lang]['rotator'] in objective['displayProperties']['name']:
                             if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
                                 if 'icon' in r_json['displayProperties']:
@@ -1171,17 +1119,14 @@ class D2data:
                                 "value": r_json['displayProperties']['description']
                             }
                             self.data[lang]['cruciblerotators']['fields'].append(info)
-        await destiny.close()
 
     async def get_banshee(self, lang, vendor_params, wait_codes, max_retries):
         char_info = self.char_info
-        destiny = pydest.Pydest(self.headers['X-API-Key'])
 
         banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         banshee_resp = self.get_bungie_json('banshee', banshee_url, vendor_params)
         if not banshee_resp:
-            await destiny.close()
             return
 
         banshee_sales = banshee_resp.json()['Response']['sales']['data']
@@ -1191,14 +1136,13 @@ class D2data:
             definition = 'DestinyInventoryItemDefinition'
 
             if not item_hash == 2731650749 and not item_hash == 1493877378:
-                r_json = await destiny.decode_hash(item_hash, definition, language=lang)
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
 
-                # query bungie api for name of item and name of currency
                 item_name = r_json['displayProperties']['name']
                 try:
                     item_perk_hash = r_json['perks'][0]['perkHash']
                     definition = 'DestinySandboxPerkDefinition'
-                    perk_resp = await destiny.decode_hash(item_perk_hash, definition, language=lang)
+                    perk_resp = await self.destiny.decode_hash(item_perk_hash, definition, language=lang)
                     item_desc = perk_resp['displayProperties']['description']
                 except IndexError:
                     item_desc = ""
@@ -1208,16 +1152,13 @@ class D2data:
                     'desc': item_desc
                 }
 
-                # put result in a well formatted string in the data dict
                 self.data['bansheeinventory'].append(mod)
-        await destiny.close()
 
-    @staticmethod
-    async def decode_modifiers(key, destiny, lang):
+    async def decode_modifiers(self, key, lang):
         data = []
         for mod_key in key['modifierHashes']:
             mod_def = 'DestinyActivityModifierDefinition'
-            mod_json = await destiny.decode_hash(mod_key, mod_def, lang)
+            mod_json = await self.destiny.decode_hash(mod_key, mod_def, lang)
             mod = {
                 'inline': True,
                 "name": mod_json['displayProperties']['name'],
