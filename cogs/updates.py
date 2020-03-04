@@ -61,14 +61,25 @@ class Updates(commands.Cog):
         return
 
     @commands.command()
-    @commands.is_owner()
     async def update(self, ctx, *args):
+        get = True
+        channels = None
         if ctx.message.guild is not None:
-            if ctx.guild.me.guild_permissions.manage_messages:
-                await ctx.message.delete()
-        for upd_type in args:
-            await ctx.bot.force_update(upd_type)
+            if await ctx.bot.check_ownership(ctx.message, is_silent=True, admin_check=True):
+                if ctx.guild.me.guild_permissions.manage_messages:
+                    await ctx.message.delete()
+                get = False
+                channels = [ctx.message.channel.id]
+            else:
+                if ctx.guild.me.guild_permissions.manage_messages:
+                    await ctx.message.delete()
+                return
+        else:
+            if not await ctx.bot.check_ownership(ctx.message):
+                return
+        await ctx.bot.force_update(args, get=get, channels=channels)
         return
+
 
 def setup(bot):
     bot.add_cog(Updates(bot))

@@ -22,6 +22,7 @@ class ClanBot(commands.Bot):
     version = '2.8.2'
     cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
+    all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
 
     sched = AsyncIOScheduler(timezone='UTC')
     guild_db = ''
@@ -95,30 +96,48 @@ class ClanBot(commands.Bot):
         parser.add_argument('-c', '--cert', help='SSL certificate', type=str, default='')
         self.args = parser.parse_args()
 
-    async def force_update(self, upd_type):
+    async def force_update(self, upd_type, post=True, get=True, channels=None):
         if 'daily' in upd_type:
-            await self.universal_update(self.data.get_heroic_story, 'heroicstory', 86400)
-            await self.universal_update(self.data.get_forge, 'forge', 86400)
-            await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400)
-            await self.universal_update(self.data.get_reckoning_modifiers, 'reckoning', 86400)
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_heroic_story, 'heroicstory', 86400, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_forge, 'forge', 86400, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_reckoning_modifiers, 'reckoning', 86400, post=post, get=get, channels=channels)
         if 'weekly' in upd_type:
-            await self.universal_update(self.data.get_nightfall820, 'nightfalls820', 604800)
-            await self.universal_update(self.data.get_ordeal, 'ordeal', 604800)
-            await self.universal_update(self.data.get_nightmares, 'nightmares', 604800)
-            await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800)
-            await self.universal_update(self.data.get_raids, 'raids', 604800)
-            await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800)
-            await self.universal_update(self.data.get_bd, 'bd', 604800)
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_nightfall820, 'nightfalls820', 604800, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_ordeal, 'ordeal', 604800, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_nightmares, 'nightmares', 604800, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_raids, 'raids', 604800, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=get, channels=channels)
         if 'spider' in upd_type:
-            await self.universal_update(self.data.get_spider, 'spider', 86400)
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_spider, 'spider', 86400, post=post, get=get, channels=channels)
         if 'xur' in upd_type:
-            await self.universal_update(self.data.get_xur, 'xur', 345600)
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_xur, 'xur', 345600, post=post, get=get, channels=channels)
         if 'tess' in upd_type:
-            await self.universal_update(self.data.get_featured_silver, 'silver', 604800)
-            await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800)
-            await self.universal_update(self.data.get_bd, 'bd', 604800)
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=get, channels=channels)
         if 'seasonal' in upd_type:
-            await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=self.seasonal_ch)
+            if channels is None:
+                channels = self.seasonal_ch
+            if (post and list(set(channels).intersection(self.seasonal_ch))) or get:
+                await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=channels, post=post, get=get)
         if self.args.forceupdate:
             await self.data.destiny.close()
             await self.logout()
@@ -132,6 +151,7 @@ class ClanBot(commands.Bot):
         self.data.get_chars()
         if self.args.forceupdate:
             await self.force_update(self.args.type)
+        await self.force_update(self.all_types, post=False)
         if not self.sched.running:
             for lang in self.langs:
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
@@ -140,6 +160,7 @@ class ClanBot(commands.Bot):
         self.remove_command('help')
         for cog in self.cogs:
             self.load_extension(cog)
+        print('ready')
         return
 
     async def on_guild_join(self, guild):
@@ -431,7 +452,7 @@ class ClanBot(commands.Bot):
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(activity=game)
 
-    async def universal_update(self, getter, name, time_to_delete=None, channels=None):
+    async def universal_update(self, getter, name, time_to_delete=None, channels=None, post=True, get=True):
         await self.wait_until_ready()
         game = discord.Game('updating {}'.format(name))
         await self.change_presence(activity=game)
@@ -441,29 +462,31 @@ class ClanBot(commands.Bot):
         if channels is None:
             channels = self.notifiers
 
-        if len(channels) == 0:
+        if len(channels) == 0 and not get:
             game = discord.Game('v{}'.format(self.version))
             await self.change_presence(activity=game)
             return
 
-        try:
-            await getter(lang)
-        except Exception as e:
-            bot_info = await self.application_info()
-            owner = bot_info.owner
-            if owner.dm_channel is None:
-                await owner.create_dm()
-            await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-            game = discord.Game('v{}'.format(self.version))
-            await self.change_presence(activity=game)
-            return
-
-        for locale in self.args.lang:
-            if not self.data.data[locale][name]:
+        if get:
+            try:
+                await getter(lang)
+            except Exception as e:
+                bot_info = await self.application_info()
+                owner = bot_info.owner
+                if owner.dm_channel is None:
+                    await owner.create_dm()
+                await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
                 game = discord.Game('v{}'.format(self.version))
                 await self.change_presence(activity=game)
                 return
-        await self.post_embed(name, self.data.data, time_to_delete, channels)
+
+            for locale in self.args.lang:
+                if not self.data.data[locale][name]:
+                    game = discord.Game('v{}'.format(self.version))
+                    await self.change_presence(activity=game)
+                    return
+        if post:
+            await self.post_embed(name, self.data.data, time_to_delete, channels)
 
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(activity=game)
