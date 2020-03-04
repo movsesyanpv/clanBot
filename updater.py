@@ -2,7 +2,7 @@ import os
 
 
 def go():
-    # print('this is new')
+    print('this is new')
     migrate_db()
 
 
