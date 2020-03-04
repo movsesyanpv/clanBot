@@ -563,12 +563,13 @@ class ClanBot(commands.Bot):
             self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type), (str(hist), server.id))
             self.guild_db.commit()
 
-    async def post_updates(self, version, content):
+    async def post_updates(self, version, content, lang):
         msg = '`{} v{}`\n{}'.format(self.user.name, version, content)
         for server in self.guilds:
-            for channel in server.channels:
-                if channel.id in self.update_ch:
-                    await channel.send(msg)
+            if lang == self.guild_lang(server.id):
+                for channel in server.channels:
+                    if channel.id in self.update_ch:
+                        await channel.send(msg)
 
     def start_up(self):
         self.get_args()

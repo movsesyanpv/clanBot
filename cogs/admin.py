@@ -47,7 +47,7 @@ class Admin(commands.Cog):
     @commands.command()
     @commands.dm_only()
     @commands.is_owner()
-    async def upgrade(self, ctx):
+    async def upgrade(self, ctx, lang='en'):
         os.system('git pull')
         b = main.ClanBot(command_prefix='>')
         strings = ctx.message.content.splitlines()
@@ -56,7 +56,7 @@ class Admin(commands.Cog):
             if len(strings) > 2:
                 for string in ctx.message.content.splitlines()[2:]:
                     content = '{}\n{}'.format(content, string)
-            await ctx.bot.post_updates(b.version, content)
+            await ctx.bot.post_updates(b.version, content, lang)
         importlib.reload(updater)
         updater.go()
         await self.stop(ctx)
