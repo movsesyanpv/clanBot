@@ -49,6 +49,7 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def upgrade(self, ctx, lang='en'):
         os.system('git pull')
+        importlib.reload(main)
         b = main.ClanBot(command_prefix='>')
         strings = ctx.message.content.splitlines()
         if len(strings) > 1:
