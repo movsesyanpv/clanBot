@@ -1,7 +1,10 @@
 from discord.ext import commands
+import importlib
 import discord
 from tabulate import tabulate
 from datetime import datetime
+import updater
+import os
 
 
 class Admin(commands.Cog):
@@ -18,6 +21,7 @@ class Admin(commands.Cog):
             msg = '{} {}'.format(msg, i)
         await ctx.message.channel.send(msg)
         ctx.bot.sched.shutdown(wait=True)
+        await ctx.bot.data.destiny.close()
         await ctx.bot.logout()
         await ctx.bot.close()
         return
@@ -38,6 +42,14 @@ class Admin(commands.Cog):
                                            'formatted %d-%m-%Y %H:%M %z>\n<finish time formatted %d-%m-%Y %H:%M '
                                            '%z>```'.format(str(e)))
         return
+
+    @commands.command()
+    @commands.dm_only()
+    @commands.is_owner()
+    async def upgrade(self, ctx):
+        os.system('git pull')
+        importlib.reload(updater)
+        await self.stop(ctx)
 
     @commands.command(
         name='help',
