@@ -78,20 +78,15 @@ class Admin(commands.Cog):
             lang = 'ru'
         help_translations = ctx.bot.translations[lang]['help']
         cog = cog.lower()
+        command_list = []
         if cog in ['all', 'help']:
             help_msg = '`{} v{}`\n{}\n'.format(ctx.bot.user.name, ctx.bot.version, help_translations['list'])
-            command_list = [
-                ['help', help_translations['help']],
-                ['lfglist', help_translations['lfglist']],
-                ['stop', help_translations['stop']],
-                ['setlang', help_translations['setlang']],
-                ['planMaintenance', help_translations['maintenance']],
-                ['lfg ARGS', help_translations['lfg']],
-                ['editLfg ID ARGS', help_translations['edit_lfg']],
-                ['regnotifier TYPE', help_translations['regnotifier']],
-                ['rmnotifier TYPE', help_translations['rmnotifier']],
-                ['update TYPE', help_translations['update']]
-            ]
+            for command in ctx.bot.commands:
+                if command.name in help_translations.keys():
+                    command_desc = help_translations[command.name]
+                else:
+                    command_desc = '???'
+                command_list.append([command.name, command_desc])
 
             help_msg = '{}```\t{}```'.format(help_msg,
                                              tabulate(command_list, tablefmt='plain', colalign=('left', 'left'))
