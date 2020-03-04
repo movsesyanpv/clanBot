@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.8.4'
+    version = '2.8.5'
     cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
@@ -161,7 +161,7 @@ class ClanBot(commands.Bot):
         self.remove_command('help')
         for cog in self.cogs:
             self.load_extension(cog)
-        print('ready')
+        await self.dm_owner('Ready for action')
         return
 
     async def on_guild_join(self, guild):
@@ -185,6 +185,12 @@ class ClanBot(commands.Bot):
         self.guild_cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
         self.guild_db.commit()
         self.raid.purge_guild(guild.id)
+
+    async def dm_owner(self, text):
+        bot_info = await self.application_info()
+        if bot_info.owner.dm_channel is None:
+            await bot_info.owner.create_dm()
+        await bot_info.owner.dm_channel.send(text)
 
     async def check_ownership(self, message, is_silent=False, admin_check=False):
         bot_info = await self.application_info()

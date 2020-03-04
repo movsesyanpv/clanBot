@@ -119,7 +119,7 @@
             "regnotifier": "Зарегистрировать канал для получения автообновлений",
             "rmnotifier": "Убрать регистрацию канала",
             "update": "Получить обновления от Bungie указанного TYPE",
-            "additional_info": "Отправьте `{}help язык команда` для подробной информации о `команде` на `языке`. Доступны языки `en`, `ru`.\nОтправьте `{}ruhelp команда` для подробной информации о `команде` по-русски.",
+            "additional_info": "Отправьте `{}help команда язык` для подробной информации о `команде` на `языке`. Доступны языки `en`, `ru`.\nОтправьте `{}ruhelp команда` для подробной информации о `команде` по-русски.",
             "commands": {
                 "setlang": {
                     "info": "Доступны языки `en`, `ru`. Доступно для администраторов сервера."
@@ -279,7 +279,7 @@
             "regnotifier": "Register notifier channel",
             "rmnotifier": "Deregister notifier channel",
             "update": "Get updates from Bungie for the given TYPE",
-            "additional_info": "Type `{}help language command` for more info on a `command` in `language`. Available languages are `en`, `ru`.\nType `{}ruhelp command` for more info on a `command` in russian.",
+            "additional_info": "Type `{}help command language` for more info on a `command` in `language`. Available languages are `en`, `ru`.\nType `{}ruhelp command` for more info on a `command` in russian.",
             "commands": {
                 "setlang": {
                     "info": "Available languages are `en`, `ru`. Available only to the server's admins."

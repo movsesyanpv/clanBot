@@ -50,11 +50,13 @@ class Admin(commands.Cog):
     async def upgrade(self, ctx):
         os.system('git pull')
         b = main.ClanBot(command_prefix='>')
-        content = ctx.message.content.splitlines()[1]
-        if len(ctx.message.content.splitlines()) > 2:
-            for string in ctx.message.content.splitlines()[2:]:
-                content = '{}\n{}'.format(content, string)
-        await ctx.bot.post_updates(b.version, content)
+        strings = ctx.message.content.splitlines()
+        if len(strings) > 1:
+            content = strings[1]
+            if len(strings) > 2:
+                for string in ctx.message.content.splitlines()[2:]:
+                    content = '{}\n{}'.format(content, string)
+            await ctx.bot.post_updates(b.version, content)
         importlib.reload(updater)
         updater.go()
         await self.stop(ctx)
@@ -65,7 +67,7 @@ class Admin(commands.Cog):
         usage='cog',
         aliases=['man', 'hlep', 'чотут', 'ман', 'инструкция', 'ruhelp', 'helpru']
     )
-    async def help_command(self, ctx, lang=None, cog='all'):
+    async def help_command(self, ctx, cog='all', lang=None):
         channel = ctx.message.channel
         if ctx.message.guild is not None and lang is None:
             lang = ctx.bot.guild_lang(ctx.message.guild.id)
