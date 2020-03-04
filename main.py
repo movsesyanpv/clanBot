@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.8.2'
+    version = '2.8.3'
     cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
@@ -310,54 +310,45 @@ class ClanBot(commands.Bot):
             self.raid.del_entry(payload.message_id)
 
     async def on_command_error(self, ctx, exception):
-        if isinstance(exception, commands.NoPrivateMessage):
-            await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a private message!")
-
-        elif isinstance(exception, commands.PrivateMessageOnly):
-            await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a guild channel!", delete_after=60)
-            await ctx.message.delete()
-
-        elif isinstance(exception, commands.CommandNotFound):
-            await ctx.send("\N{WARNING SIGN} That command doesn't exist!", delete_after=60)
-            await ctx.message.delete()
-
-        elif isinstance(exception, commands.DisabledCommand):
-            await ctx.send("\N{WARNING SIGN} Sorry, this command is disabled!", delete_after=60)
-            await ctx.message.delete()
-
-        elif isinstance(exception, commands.MissingPermissions):
-            await ctx.send(f"\N{WARNING SIGN} You do not have permissions to use this command.", delete_after=60)
-            await ctx.message.delete()
-
-        elif isinstance(exception, commands.CommandOnCooldown):
-            await ctx.send(f"{ctx.author.mention} slow down! Try that again in {exception.retry_after:.1f} seconds", delete_after=60)
-            await ctx.message.delete()
-
-        elif isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.BadArgument):
-            await ctx.send(f"\N{WARNING SIGN} {exception}")
-
-        elif isinstance(exception, commands.NotOwner):
-            msg = '{}!'.format(ctx.author.mention)
-            e = unauthorized.get_unauth_response()
-            if ctx.author.dm_channel is None:
-                await ctx.author.create_dm()
-            await ctx.author.dm_channel.send(msg, embed=e)
-
-        elif isinstance(exception, commands.CommandInvokeError):
-            raise exception
-
-    async def on_message(self, message):
-        if message.author == self.user:
-            return
-
+        message = ctx.message
         try:
-            await self.process_commands(message)
+            if isinstance(exception, commands.NoPrivateMessage):
+                await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a private message!")
+
+            elif isinstance(exception, commands.PrivateMessageOnly):
+                await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a guild channel!", delete_after=60)
+                await ctx.message.delete()
+
+            elif isinstance(exception, commands.CommandNotFound):
+                await ctx.send("\N{WARNING SIGN} That command doesn't exist!", delete_after=60)
+                await ctx.message.delete()
+
+            elif isinstance(exception, commands.DisabledCommand):
+                await ctx.send("\N{WARNING SIGN} Sorry, this command is disabled!", delete_after=60)
+                await ctx.message.delete()
+
+            elif isinstance(exception, commands.MissingPermissions):
+                await ctx.send(f"\N{WARNING SIGN} You do not have permissions to use this command.", delete_after=60)
+                await ctx.message.delete()
+
+            elif isinstance(exception, commands.CommandOnCooldown):
+                await ctx.send(f"{ctx.author.mention} slow down! Try that again in {exception.retry_after:.1f} seconds", delete_after=60)
+                await ctx.message.delete()
+
+            elif isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.BadArgument):
+                await ctx.send(f"\N{WARNING SIGN} {exception}")
+
+            elif isinstance(exception, commands.NotOwner):
+                msg = '{}!'.format(ctx.author.mention)
+                e = unauthorized.get_unauth_response()
+                if ctx.author.dm_channel is None:
+                    await ctx.author.create_dm()
+                await ctx.author.dm_channel.send(msg, embed=e)
+
+            elif isinstance(exception, commands.CommandInvokeError):
+                raise exception
         except discord.errors.Forbidden:
             pass
-        except discord.ext.commands.errors.NoPrivateMessage:
-            msg = 'Can\'t do this a private chat, {}'.format(message.author.mention)
-            await message.channel.send(msg)
-            return
         except Exception as e:
             if 'stop' not in message.content.lower() or (self.user not in message.mentions and str(message.channel.type) != 'private'):
                 if not self.args.production:
@@ -369,7 +360,7 @@ class ClanBot(commands.Bot):
                     await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
                     if message.author.dm_channel is None:
                         await message.author.create_dm()
-                    await message.author.dm_channel.send(self.translations[self.args.lang]['error'])
+                    await message.author.dm_channel.send(self.translations['en']['error'])
                 else:
                     self.git.create_issue(title='Exception on message',
                                           body='# Message\n\n{}\n\n# Traceback\n\n```{}```'.
