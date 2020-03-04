@@ -106,7 +106,6 @@ class D2data:
                     membership_id = search[0]['membershipId']
                     self.char_info['membershipid'] = membership_id
 
-            # get the first character and just roll with that
             char_search_url = 'https://www.bungie.net/platform/Destiny2/' + platform + '/Profile/' + membership_id + '/'
             char_search_params = {
                 'components': '200'
@@ -121,7 +120,6 @@ class D2data:
             char_file = open('char.json', 'w')
             char_file.write(json.dumps(self.char_info))
 
-    # refresh the saved token
     def refresh_token(self, re_token):
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -145,7 +143,6 @@ class D2data:
             return
         resp = r.json()
 
-        # save new refresh_token/expiration in token.json
         token = {
             'refresh': resp['refresh_token'],
             'expires': time.time() + resp['refresh_expires_in']
@@ -373,7 +370,7 @@ class D2data:
                     class_items = 0
                 if item['displayCategoryIndex'] == 3 and item['itemHash'] != 827183327:
                     definition = 'DestinyInventoryItemDefinition'
-                    next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
+                    # next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
@@ -423,7 +420,7 @@ class D2data:
                     class_items = 0
                 if item['displayCategoryIndex'] == 4 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
                     definition = 'DestinyInventoryItemDefinition'
-                    next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
+                    # next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
@@ -473,7 +470,7 @@ class D2data:
                     class_items = 0
                 if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
                     definition = 'DestinyInventoryItemDefinition'
-                    next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
+                    # next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
@@ -522,7 +519,7 @@ class D2data:
                     class_items = 0
                 if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
                     definition = 'DestinyInventoryItemDefinition'
-                    next_def = await self.destiny.decode_hash(tess_def['itemList'][i+1]['itemHash'], definition, language=lang)
+                    # next_def = await self.destiny.decode_hash(tess_def['itemList'][i+1]['itemHash'], definition, language=lang)
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
@@ -562,10 +559,8 @@ class D2data:
                 'title': self.translations[locale]['msg']['spider'],
             }
 
-            # if spider inventory breaks, look here
             items_to_get = spider_cats[0]['itemIndexes']
 
-            # iterate through keys in spider_sales, except masterwork cores (everyone knows about those)
             for key in items_to_get:
                 item = spider_sales[str(key)]
                 item_hash = item['itemHash']
@@ -575,13 +570,11 @@ class D2data:
                     item_resp = await self.destiny.decode_hash(item_hash, definition, language=locale)
                     currency_resp = await self.destiny.decode_hash(currency['itemHash'], definition, language=locale)
 
-                    # query bungie api for name of item and name of currency
                     item_name_list = item_resp['displayProperties']['name'].split()[1:]
                     item_name = ' '.join(item_name_list)
                     currency_cost = str(currency['quantity'])
                     currency_item = currency_resp['displayProperties']['name']
 
-                    # put result in a well formatted string in the data dict
                     item_data = {
                         'inline': True,
                         'name': item_name.capitalize(),
@@ -641,7 +634,6 @@ class D2data:
 
                 self.data[lang]['xur']['fields'].append(weapon)
 
-                # go through keys in xur inventory (except the first one, that's 5 of swords and is there every week)
                 for key in sorted(xur_sales.keys()):
                     item_hash = xur_sales[key]['itemHash']
                     if not item_hash == 4285666432:
@@ -676,7 +668,6 @@ class D2data:
                                     self.data[lang]['xur']['fields'][i]['value'] = item_name
                                 i += 1
             else:
-                # self.data['api_is_down'] = False
                 loc_field = {
                     "inline": False,
                     "name": self.translations[lang]['msg']['xurloc'],

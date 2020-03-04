@@ -67,8 +67,6 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_featured_bd, 'featured_bd', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_bd, 'bd', 604800])
-        for lang in self.langs:
-            self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[lang])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
 
@@ -122,6 +120,7 @@ class ClanBot(commands.Bot):
         if 'seasonal' in upd_type:
             await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=self.seasonal_ch)
         if self.args.forceupdate:
+            await self.data.destiny.close()
             await self.logout()
             await self.close()
 
@@ -134,6 +133,9 @@ class ClanBot(commands.Bot):
         if self.args.forceupdate:
             await self.force_update(self.args.type)
         if not self.sched.running:
+            for lang in self.langs:
+                self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
+                                   second='10', misfire_grace_time=86300, args=[lang])
             self.sched.start()
         self.remove_command('help')
         for cog in self.cogs:
