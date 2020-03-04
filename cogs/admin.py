@@ -49,6 +49,7 @@ class Admin(commands.Cog):
     async def upgrade(self, ctx):
         os.system('git pull')
         importlib.reload(updater)
+        updater.go()
         await self.stop(ctx)
 
     @commands.command(
