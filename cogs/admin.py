@@ -18,8 +18,6 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def stop(self, ctx):
         msg = 'Ok, {}'.format(ctx.author.mention)
-        for i in ctx.bot.emojis:
-            msg = '{} {}'.format(msg, i)
         await ctx.message.channel.send(msg)
         ctx.bot.sched.shutdown(wait=True)
         await ctx.bot.data.destiny.close()
