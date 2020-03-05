@@ -82,7 +82,7 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         role = msg.content
 
-        at = ['default', 'vanguard', 'raid', 'crucible', 'gambit']
+        at = ['empty', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         args = ctx.bot.raid.parse_args('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, a_type, mode, role).splitlines(), ctx.message, True)
         ts = datetime.fromtimestamp(args['time']).replace(tzinfo=ts.tzinfo)
@@ -92,14 +92,14 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         if msg.content.lower() == translations['no']:
             await dm.send(translations['again'])
-            if ctx.guild.me.guild_permissions.manage_messages:
+            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                 await ctx.message.delete()
             return
 
         tmp = await ctx.send('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, at[args['is_embed']], mode, role))
         group_id = await self.guild_lfg(ctx, tmp, lang)
         ctx.bot.raid.set_owner(ctx.author.id, group_id)
-        if ctx.guild.me.guild_permissions.manage_messages:
+        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
             await ctx.message.delete()
 
         return
@@ -131,10 +131,10 @@ class Group(commands.Cog):
                     await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang])
                 else:
                     await ctx.bot.check_ownership(message)
-                    if ctx.guild.me.guild_permissions.manage_messages:
+                    if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                         await ctx.message.delete()
             else:
-                if ctx.guild.me.guild_permissions.manage_messages:
+                if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                     await ctx.message.delete()
         return
 

@@ -171,7 +171,7 @@ class LFG:
         for i in [0, 1]:
             the_role = []
             if len(roles) == 0 and is_init or len(the_role) > 0:
-                roles = ['guardian', 'recruit', 'destiny']
+                roles = ['guardian', 'recruit', 'destiny', 'friend sot']
             for role in message.guild.roles:
                 if role.name.lower() in roles:
                     the_role.append(role)
