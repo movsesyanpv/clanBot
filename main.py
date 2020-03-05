@@ -220,12 +220,13 @@ class ClanBot(commands.Bot):
             self.raid.rm_people(message.id, user)
             if user.dm_channel is None:
                 await user.create_dm()
-            await self.raid.update_group_msg(message, self.translations[self.args.lang])
+            lang = self.guild_lang(payload.guild_id)
+            await self.raid.update_group_msg(message, self.translations[lang])
             if self.raid.get_cell('group_id', message.id, 'group_mode') == 'manual':
-                await user.dm_channel.send(self.translations[self.args.lang]['lfg']['gotcha'])
+                await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'])
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
-                await self.raid.upd_dm(owner, message.id, self.translations[self.args.lang])
+                await self.raid.upd_dm(owner, message.id, self.translations[lang])
 
     async def on_raw_reaction_add(self, payload):
         user = payload.member
@@ -261,13 +262,14 @@ class ClanBot(commands.Bot):
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
                 self.raid.add_people(message.id, user)
+                lang = self.guild_lang(payload.guild_id)
                 if user.dm_channel is None:
                     await user.create_dm()
                 if mode == 'manual':
-                    await user.dm_channel.send(self.translations[self.args.lang]['lfg']['gotcha'], delete_after=30)
-                    await self.raid.upd_dm(owner, message.id, self.translations[self.args.lang])
+                    await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'], delete_after=30)
+                    await self.raid.upd_dm(owner, message.id, self.translations[lang])
                 if mode == 'basic':
-                    await self.raid.update_group_msg(message, self.translations[self.args.lang])
+                    await self.raid.update_group_msg(message, self.translations[lang])
                 return
 
             raid_dm = self.raid.get_cell('dm_message', message.id, 'dm_message')
@@ -281,10 +283,11 @@ class ClanBot(commands.Bot):
                     message = await self.fetch_channel(channel)
                     message = await message.fetch_message(lfg_message)
                     await self.raid.add_going(lfg_message, number)
-                    await self.raid.update_group_msg(message, self.translations[self.args.lang])
+                    lang = self.guild_lang(payload.guild_id)
+                    await self.raid.update_group_msg(message, self.translations[lang])
                     owner = self.raid.get_cell('group_id', message.id, 'owner')
                     owner = self.get_user(owner)
-                    await self.raid.upd_dm(owner, lfg_message, self.translations[self.args.lang])
+                    await self.raid.upd_dm(owner, lfg_message, self.translations[lang])
         except Exception as e:
             if not self.args.production:
                 bot_info = await self.application_info()
