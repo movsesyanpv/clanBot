@@ -320,10 +320,13 @@ class LFG:
             }
         }
         if len(description) > 0:
-            embed['fields'].append({
-                "inline": False,
-                "name": translations['lfge']['description'],
-                "value": description})
+            if len(description) < 256:
+                embed['fields'].append({
+                    "inline": False,
+                    "name": translations['lfge']['description'],
+                    "value": description})
+            else:
+                embed['description'] = description
 
         if len(goers) > 0:
             embed['fields'].append({"inline": True, "name": translations['lfge']['goers'], "value": ""})
