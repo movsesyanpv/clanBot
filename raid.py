@@ -70,6 +70,13 @@ class LFG:
     def parse_args(self, content, message, is_init):
         time = datetime.now()
 
+        def merge_arg(str_args):
+            arg = str_args[1]
+            if len(str_args) > 2:
+                for fragment in str_args[2:]:
+                    arg = '{}:{}'.format(arg, fragment)
+            return arg
+
         args = {}
         roles = []
         if is_init:
@@ -95,7 +102,8 @@ class LFG:
             if len(str_arg) < 2:
                 continue
             if 'name:' in string or '-n:' in string:
-                args['name'] = str_arg[1].lstrip()
+                name = merge_arg(str_arg)
+                args['name'] = name.lstrip()
             if 'time:' in string or '-t:' in string:
                 try:
                     if len(str_arg) < 3:
@@ -113,7 +121,8 @@ class LFG:
                         args['time'] = datetime.strptime(time, "%d-%m-%Y %H:%M")
                 args['time'] = datetime.timestamp(args['time'])
             if 'description:' in string or '-d:' in string:
-                args['description'] = str_arg[1].lstrip()
+                description = merge_arg(str_arg)
+                args['description'] = description.lstrip()
             if 'size:' in string or '-s:' in string:
                 try:
                     args['size'] = int(str_arg[1])
