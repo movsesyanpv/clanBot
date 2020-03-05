@@ -103,8 +103,14 @@ class LFG:
                     time_str = '{}:{}'.format(str_arg[1], str_arg[2])
                     args['time'] = datetime.strptime(time_str.lstrip(), "%d-%m-%Y %H:%M %z")
                 except ValueError:
-                    time = datetime.now().strftime("%d-%m-%Y %H:%M")
-                    args['time'] = datetime.strptime(time, "%d-%m-%Y %H:%M")
+                    try:
+                        if len(str_arg) < 3:
+                            raise ValueError
+                        time_str = '{}:{}'.format(str_arg[1], str_arg[2])
+                        args['time'] = datetime.strptime(time_str.lstrip(), "%d-%m-%Y %H:%M")
+                    except ValueError:
+                        time = datetime.now().strftime("%d-%m-%Y %H:%M")
+                        args['time'] = datetime.strptime(time, "%d-%m-%Y %H:%M")
                 args['time'] = datetime.timestamp(args['time'])
             if 'description:' in string or '-d:' in string:
                 args['description'] = str_arg[1].lstrip()
@@ -143,12 +149,12 @@ class LFG:
                     continue
             if 'length:' in string or '-l:' in string:
                 try:
-                    td_str = str_arg[1].split(' ')
+                    td_str = str_arg[1].replace(',', '.').split(' ')
                     td_arr = [0, 0]
                     for td_part in td_str:
-                        if 'h' in td_part.lower():
+                        if 'h' in td_part.lower() or 'ч' in td_part.lower():
                             td_arr[0] = float(td_part[:-1])
-                        if 'm' in td_part.lower():
+                        if 'm' in td_part.lower() or 'м' in td_part.lower():
                             td_arr[1] = int(td_part[:-1])
                     args['length'] = timedelta(hours=td_arr[0], minutes=td_arr[1])
                 except ValueError:

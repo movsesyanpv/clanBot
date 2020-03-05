@@ -36,8 +36,8 @@ class Group(commands.Cog):
         ctx.bot.raid.set_id(out.id, message.id)
         await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang])
         # self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
-        if ctx.guild.me.guild_permissions.manage_messages:
-            await ctx.message.delete()
+        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+            await message.delete()
         return out.id
 
     async def dm_lfg(self, ctx, lang):
@@ -58,7 +58,8 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         description = msg.content
 
-        await dm.send(content=translations['time'])
+        ts = datetime.now(timezone(timedelta(0))).astimezone()
+        await dm.send(content=translations['time'].format(datetime.now().strftime('%d-%m-%Y %H:%M'), datetime.now().replace(tzinfo=ts.tzinfo).strftime('%d-%m-%Y %H:%M%z')))
         msg = await self.bot.wait_for('message', check=check)
         time = msg.content
 
@@ -82,8 +83,7 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         role = msg.content
 
-        at = ['empty', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
-        ts = datetime.now(timezone(timedelta(0))).astimezone()
+        at = ['default', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
         args = ctx.bot.raid.parse_args('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, a_type, mode, role).splitlines(), ctx.message, True)
         ts = datetime.fromtimestamp(args['time']).replace(tzinfo=ts.tzinfo)
         await dm.send(translations['check']
