@@ -551,7 +551,7 @@ class LFG:
         self.conn.commit()
 
     def get_all(self):
-        lfg_list = self.c.execute('SELECT group_id, lfg_channel FROM raid')
+        lfg_list = self.c.execute('SELECT group_id, lfg_channel, time FROM raid')
         lfg_list = lfg_list.fetchall()
 
         return lfg_list

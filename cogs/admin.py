@@ -2,7 +2,7 @@ from discord.ext import commands
 import importlib
 import discord
 from tabulate import tabulate
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import updater
 import os
 import main
@@ -75,7 +75,12 @@ class Admin(commands.Cog):
         for lfg in lfg_list:
             try:
                 channel = await ctx.bot.fetch_channel(lfg[1])
-                await channel.fetch_message(lfg[0])
+                lfg_msg = await channel.fetch_message(lfg[0])
+                start = datetime.fromtimestamp(lfg[2])
+                if (datetime.now() - start) > timedelta(days=30):
+                    await lfg_msg.delete()
+                    ctx.bot.raid.del_entry(lfg[0])
+                    i = i + 1
             except discord.errors.NotFound:
                 ctx.bot.raid.del_entry(lfg[0])
                 i = i + 1
