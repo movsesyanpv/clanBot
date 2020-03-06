@@ -63,6 +63,27 @@ class Admin(commands.Cog):
         await self.stop(ctx)
 
     @commands.command(
+        description='Delete groups that are unavailable or inactive'
+    )
+    @commands.dm_only()
+    @commands.is_owner()
+    async def lfgcleanup(self, ctx):
+        lfg_list = ctx.bot.raid.get_all()
+        msg = 'Done, removed {} entries.'
+
+        i = 0
+        for lfg in lfg_list:
+            try:
+                channel = await ctx.bot.fetch_channel(lfg[1])
+                await channel.fetch_message(lfg[0])
+            except discord.errors.NotFound:
+                ctx.bot.raid.del_entry(lfg[0])
+                i = i + 1
+
+        await ctx.message.channel.send(msg.format(i))
+
+
+    @commands.command(
         name='help',
         description='The help command!',
         usage='cog',

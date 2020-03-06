@@ -549,3 +549,9 @@ class LFG:
     def purge_guild(self, guild_id):
         self.c.executemany('''DELETE FROM raid WHERE server_id LIKE (?)''', [(guild_id,)])
         self.conn.commit()
+
+    def get_all(self):
+        lfg_list = self.c.execute('SELECT group_id, lfg_channel FROM raid')
+        lfg_list = lfg_list.fetchall()
+
+        return lfg_list
