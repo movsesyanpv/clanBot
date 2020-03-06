@@ -47,14 +47,17 @@
             "role": "Имена пингуемых ролей, разделенные `;`. Отправьте `-` для автоматического выбора ролей. Пример: guardian; recruit",
             "check": "Верна ли информация? Да/Нет\nИмя: {}\nОписание: {}\nВремя начала: {}\nРазмер группы: {}\nДлительность в часах: {}\nТип активности: {}\nПодбор: {}\nРоли: {}",
             "no": "нет",
-            "again": "Создание сбора отменено. Повторите его создание."
+            "again": "Создание сбора отменено. Повторите его создание.",
+            "too_long": "Слишком длинный ответ ({} символов). Длина ограничена {} символами. Необходимо повторить ввод.\n{}"
         },
         "lfge": {
             "roles": "Roles",
             "description": "Описание",
             "goers": "Участники",
             "wanters": "Резерв",
-            "length": "Длительность"
+            "length": "Длительность",
+            "total_goers": "Всего участников",
+            "total_wanters": "Размер резерва"
         },
         "xur": {
             "Earth": "Земля",
@@ -211,14 +214,17 @@
             "role": "Name the roles to mention, separated by `;`",
             "check": "Is the info correct?\nName: {}\nDescription: {}\nTime of start: {}\nGroup size: {}\nLength: {}\nActivity type: {}\nMode: {}\nRoles: {}",
             "no": "no",
-            "again": "Check your input and repeat the process."
+            "again": "Check your input and repeat the process.",
+            "too_long": "The answer is too long ({} symbols). Maximum length is {} symbols. You will need to answer again.\n{}"
         },
         "lfge": {
             "roles": "Roles",
             "description": "Description",
             "goers": "Participants",
             "wanters": "Reserve",
-            "length": "Duration"
+            "length": "Duration",
+            "total_goers": "Total participants",
+            "total_wanters": "Total reserve"
         },
         "xur": {
             "Earth": "Earth",

@@ -145,6 +145,7 @@ class ClanBot(commands.Bot):
             await self.close()
 
     async def on_ready(self):
+        await self.change_presence(status=discord.Status.dnd)
         await self.data.token_update()
         await self.update_history()
         await self.update_langs()
@@ -162,6 +163,7 @@ class ClanBot(commands.Bot):
         for cog in self.cogs:
             self.load_extension(cog)
         await self.dm_owner('Ready for action')
+        await self.change_presence(status=discord.Status.online)
         return
 
     async def on_guild_join(self, guild):

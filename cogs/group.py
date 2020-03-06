@@ -44,19 +44,25 @@ class Group(commands.Cog):
         def check(ms):
             return ms.channel == ctx.author.dm_channel and ms.author == ctx.message.author
 
+        async def get_proper_length_arg(arg_name, max_len):
+            await dm.send(content=translations[arg_name])
+            q_msg = await self.bot.wait_for('message', check=check)
+            arg = q_msg.content
+            while len(arg) > max_len:
+                await dm.send(content=translations['too_long'].format(len(arg), max_len, translations[arg_name]))
+                q_msg = await self.bot.wait_for('message', check=check)
+                arg = q_msg.content
+            return arg
+
         if ctx.author.dm_channel is None:
             await ctx.author.create_dm()
         dm = ctx.author.dm_channel
 
         translations = ctx.bot.translations[lang]['lfg']
 
-        await dm.send(content=translations['name'])
-        msg = await self.bot.wait_for('message', check=check)
-        name = msg.content
+        name = await get_proper_length_arg('name', 256)
 
-        await dm.send(content=translations['description'])
-        msg = await self.bot.wait_for('message', check=check)
-        description = msg.content
+        description = await get_proper_length_arg('description', 2048)
 
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         await dm.send(content=translations['time'].format(datetime.now().strftime('%d-%m-%Y %H:%M'), datetime.now().replace(tzinfo=ts.tzinfo).strftime('%d-%m-%Y %H:%M%z')))

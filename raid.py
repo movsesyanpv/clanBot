@@ -196,7 +196,8 @@ class LFG:
             the_role.append(message.guild.default_role)
         the_role_str = the_role[0].mention
         for i in the_role[1:]:
-            the_role_str = "{}, {}".format(the_role_str, i.mention)
+            if len("{}, {}".format(the_role_str, i.mention)) < 2000:
+                the_role_str = "{}, {}".format(the_role_str, i.mention)
         args['the_role'] = the_role_str
         return args
 
@@ -278,11 +279,13 @@ class LFG:
             if len(wanters) > 0:
                 goers.append(wanters[0])
                 wanters.pop(0)
-                w_dm.pop(0)
+                if len(w_dm) > 0:
+                    w_dm.pop(0)
         if user.mention in wanters:
             i = wanters.index(user.mention)
             wanters.pop(i)
-            w_dm.pop(i)
+            if len(w_dm) > 0:
+                w_dm.pop(i)
 
         self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
         self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
@@ -295,6 +298,7 @@ class LFG:
         time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
         description = self.get_cell('group_id', message.id, 'description')
         dm_id = self.get_cell('group_id', message.id, 'dm_message')
+        size = self.get_cell('group_id', message.id, 'size')
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
         goers = eval(goers.fetchone()[0])
         wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
@@ -319,36 +323,83 @@ class LFG:
                 'text': 'ID: {}'.format(self.hashids.encode(message.id))
             }
         }
+
+        embed_length = len(name) + len(embed['footer']['text'])
         if len(description) > 0:
-            if len(description) < 256:
+            if len(description) < 1024:
                 embed['fields'].append({
                     "inline": False,
                     "name": translations['lfge']['description'],
                     "value": description})
+                embed_length = embed_length + len(description) + len(translations['lfge']['description'])
             else:
                 embed['description'] = description
-
-        if len(goers) > 0:
-            embed['fields'].append({"inline": True, "name": translations['lfge']['goers'], "value": ""})
-            for participant in goers:
-                embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], participant)
-            embed['fields'][-1]['value'] = '{}'.format(embed['fields'][-1]['value'][:-1])
-
-        if dm_id == 0:
-            if len(wanters) > 0:
-                embed['fields'].append({"inline": True, "name": translations['lfge']['wanters'], "value": ""})
-                for wanter in wanters:
-                    embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], wanter)
-                embed['fields'][-1]['value'] = '{}'.format(embed['fields'][-1]['value'][:-1])
+                embed_length = embed_length + len(description)
 
         if length > 0:
             embed['fields'].append({"inline": True,
                                     "name": translations['lfge']['length'],
                                     "value": str(timedelta(seconds=length))})
+            embed_length = embed_length + len(translations['lfge']['length']) + len(str(timedelta(seconds=length)))
+
+        if len(goers) > 43:
+            embed['fields'].append({"inline": True,
+                                    "name": translations['lfge']['total_goers'],
+                                    "value": '{}/{}'.format(len(goers), size)})
+            embed_length = embed_length + len(translations['lfge']['total_goers']) + len('{}/{}'.format(len(goers), size))
+            if len(wanters) > 0:
+                embed['fields'].append({"inline": True,
+                                        "name": translations['lfge']['total_wanters'],
+                                        "value": '{}'.format(len(wanters))})
+                embed_length = embed_length + len(translations['lfge']['total_wanters']) + len('{}'.format(len(wanters)))
+        if len(wanters) > 43 and embed['fields'][-1]['value'] != str(len(wanters)):
+            embed['fields'].append({"inline": True,
+                                    "name": translations['lfge']['total_wanters'],
+                                    "value": '{}'.format(len(wanters))})
+            embed_length = embed_length + len(translations['lfge']['total_wanters']) + len('{}'.format(len(wanters)))
+
+        if len(goers) > 0:
+            embed['fields'].append({"inline": False, "name": translations['lfge']['goers'], "value": ""})
+            embed_length = embed_length + len(translations['lfge']['goers'])
+            for participant in goers:
+                if len('{} {},'.format(embed['fields'][-1]['value'], participant)) > 1024 and len(embed['fields']) < 25:
+                    if len(translations['lfge']['goers']) + embed_length > 5550:
+                        break
+                    embed_length = embed_length + len(embed['fields'][-1]['value'])
+                    embed['fields'].append({"inline": False, "name": translations['lfge']['goers'], "value": ""})
+                    embed_length = embed_length + len(translations['lfge']['goers'])
+                if embed_length + len('{} {},'.format(embed['fields'][-1]['value'], participant)) < 6000:
+                    embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], participant)
+            embed['fields'][-1]['value'] = '{}'.format(embed['fields'][-1]['value'][:-1])
+            embed_length = embed_length + len(embed['fields'][-1]['value'])
+
+        if dm_id == 0:
+            if len(wanters) > 0 and embed_length < 5550 and len(embed['fields']) < 25:
+                if embed_length + len(translations['lfge']['wanters']) < 5550:
+                    embed['fields'].append({"inline": False, "name": translations['lfge']['wanters'], "value": ""})
+                    embed_length = embed_length + len(translations['lfge']['wanters'])
+                    for wanter in wanters:
+                        if len('{} {},'.format(embed['fields'][-1]['value'], wanter)) > 1024 and len(
+                                embed['fields']) < 25:
+                            if len(translations['lfge']['goers']) + embed_length > 5550:
+                                break
+                            embed_length = embed_length + len(embed['fields'][-1]['value'])
+                            embed['fields'].append({"inline": False, "name": translations['lfge']['wanters'], "value": ""})
+                            embed_length = embed_length + len(translations['lfge']['goers'])
+                        if embed_length + len('{} {},'.format(embed['fields'][-1]['value'], wanter)) < 6000:
+                            embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], wanter)
+                    embed['fields'][-1]['value'] = '{}'.format(embed['fields'][-1]['value'][:-1])
+                    embed_length = embed_length + len(embed['fields'][-1]['value'])
+
+        while embed_length > 6000:
+            embed_length = embed_length - len(embed['fields'][-1]['value']) - len(embed['fields'][-1]['name'])
+            embed['fields'] = embed['fields'][:-1]
 
         embed = discord.Embed.from_dict(embed)
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         embed.timestamp = time.replace(tzinfo=ts.tzinfo)
+
+        print(embed_length)
 
         return embed
 
@@ -366,6 +417,10 @@ class LFG:
         description = self.get_cell('group_id', message.id, 'description')
         msg = "{}, {} {}\n{} {}\n{}". \
             format(role, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
+        if len(msg) > 2000:
+            msg = "{}, {} {}".format(role, translations['lfg']['go'], name)
+            if len(msg) > 2000:
+                msg = role
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
         goers = eval(goers.fetchone()[0])
         wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
