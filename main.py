@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.8.6'
+    version = '2.8.7'
     cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
@@ -234,8 +234,13 @@ class ClanBot(commands.Bot):
             return
 
         try:
-            message = await self.fetch_channel(payload.channel_id)
-            message = await message.fetch_message(payload.message_id)
+            try:
+                message = await self.fetch_channel(payload.channel_id)
+                message = await message.fetch_message(payload.message_id)
+            except discord.errors.NotFound:
+                if self.raid.is_raid(payload.message_id):
+                    self.raid.del_entry(payload.message_id)
+                return
 
             if self.raid.is_raid(message.id):
                 mode = self.raid.get_cell('group_id', message.id, 'group_mode')
