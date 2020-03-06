@@ -67,26 +67,11 @@ class Admin(commands.Cog):
     )
     @commands.dm_only()
     @commands.is_owner()
-    async def lfgcleanup(self, ctx):
-        lfg_list = ctx.bot.raid.get_all()
+    async def lfgcleanup(self, ctx, days=30):
         msg = 'Done, removed {} entries.'
+        n = await ctx.bot.lfg_cleanup(days)
 
-        i = 0
-        for lfg in lfg_list:
-            try:
-                channel = await ctx.bot.fetch_channel(lfg[1])
-                lfg_msg = await channel.fetch_message(lfg[0])
-                start = datetime.fromtimestamp(lfg[2])
-                if (datetime.now() - start) > timedelta(days=30):
-                    await lfg_msg.delete()
-                    ctx.bot.raid.del_entry(lfg[0])
-                    i = i + 1
-            except discord.errors.NotFound:
-                ctx.bot.raid.del_entry(lfg[0])
-                i = i + 1
-
-        await ctx.message.channel.send(msg.format(i))
-
+        await ctx.message.channel.send(msg.format(n))
 
     @commands.command(
         name='help',

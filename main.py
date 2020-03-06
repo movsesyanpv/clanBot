@@ -73,6 +73,7 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
 
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
+        self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
 
         logging.basicConfig(filename='scheduler.log')
         logging.getLogger('apscheduler').setLevel(logging.DEBUG)
@@ -306,6 +307,24 @@ class ClanBot(commands.Bot):
                 self.git.create_issue(title='Exception on reaction add',
                                       body='# Traceback\n\n```{}```'.
                                       format(traceback.format_exc()))
+
+    async def lfg_cleanup(self, days):
+        lfg_list = self.raid.get_all()
+
+        i = 0
+        for lfg in lfg_list:
+            try:
+                channel = await self.fetch_channel(lfg[1])
+                lfg_msg = await channel.fetch_message(lfg[0])
+                start = datetime.fromtimestamp(lfg[2])
+                if (datetime.now() - start) > timedelta(days=days):
+                    await lfg_msg.delete()
+                    self.raid.del_entry(lfg[0])
+                    i = i + 1
+            except discord.errors.NotFound:
+                self.raid.del_entry(lfg[0])
+                i = i + 1
+        return i
 
     async def pause_for(self, message, delta):
         self.sched.pause()
