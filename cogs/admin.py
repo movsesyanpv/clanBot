@@ -42,7 +42,9 @@ class Admin(commands.Cog):
                                            '%z>```'.format(str(e)))
         return
 
-    @commands.command()
+    @commands.command(
+        description='Pull the latest version from git and restart'
+    )
     @commands.dm_only()
     @commands.is_owner()
     async def upgrade(self, ctx, lang='en'):
@@ -83,8 +85,9 @@ class Admin(commands.Cog):
                 if command.name in help_translations.keys():
                     command_desc = help_translations[command.name]
                 else:
-                    command_desc = '???'
-                command_list.append([command.name, command_desc])
+                    command_desc = command.description
+                if not (command.cog_name == 'Admin' and command.name != 'help') or await ctx.bot.is_owner(ctx.author):
+                    command_list.append([command.name, command_desc])
 
             help_msg = '{}```\t{}```'.format(help_msg,
                                              tabulate(command_list, tablefmt='plain', colalign=('left', 'left'))
