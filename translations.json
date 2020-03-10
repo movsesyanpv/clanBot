@@ -26,7 +26,7 @@
             "silver": "Популярные предметы за серебро",
             "featured_bd": "Популярные предметы за яркую пыль",
             "bd": "Товары за яркую пыль",
-            "week": ", неделя",
+            "week": ", часть",
             "bd_consumables": "Потребляемые предметы за яркую пыль"
         },
         "lfg": {
@@ -193,7 +193,7 @@
             "silver": "Featured Silver items",
             "featured_bd": "Featured Bright Dust items",
             "bd": "Bright Dust items",
-            "week": ", week",
+            "week": ", part",
             "bd_consumables": "Bright Dust consumables"
         },
         "lfg": {

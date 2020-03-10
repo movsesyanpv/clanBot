@@ -195,15 +195,19 @@ class D2data:
             item = tess_sales[str(key)]
             item_hash = item['itemHash']
             if item_hash not in exceptions:
-                currency = item['costs'][0]
                 definition = 'DestinyInventoryItemDefinition'
                 item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
-                currency_resp = await self.destiny.decode_hash(currency['itemHash'], definition, language=lang)
-
                 item_name_list = item_resp['displayProperties']['name'].split()
                 item_name = ' '.join(item_name_list)
-                currency_cost = str(currency['quantity'])
-                currency_item = currency_resp['displayProperties']['name']
+                if len(item['costs']) > 0:
+                    currency = item['costs'][0]
+                    currency_resp = await self.destiny.decode_hash(currency['itemHash'], definition, language=lang)
+
+                    currency_cost = str(currency['quantity'])
+                    currency_item = currency_resp['displayProperties']['name']
+                else:
+                    currency_cost = 'N/A'
+                    currency_item = ''
 
                 item_data = {
                     'inline': True,
@@ -240,7 +244,7 @@ class D2data:
                 tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
 
                 items_to_get = tess_cats[3]['itemIndexes']  # 5 - featured silver, 3 - featured BD, 4, 11 - BD items
-                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [353932628, 3260482534, 3536420626])
+                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [353932628, 3260482534, 3536420626, 3187955025, 2638689062])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i+1:]:
@@ -270,8 +274,8 @@ class D2data:
                     return
                 tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
 
-                items_to_get = tess_cats[4]['itemIndexes'] + tess_cats[11]['itemIndexes']
-                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [353932628, 3260482534, 3536420626])
+                items_to_get = tess_cats[4]['itemIndexes'] + tess_cats[10]['itemIndexes']
+                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [353932628, 3260482534, 3536420626, 3187955025, 2638689062])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i+1:]:
@@ -301,7 +305,7 @@ class D2data:
                     return
                 tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
 
-                items_to_get = tess_cats[5]['itemIndexes']  # 5 - featured silver, 3 - featured BD, 4, 11 - BD items
+                items_to_get = tess_cats[2]['itemIndexes']
                 tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [827183327])
 
             for i in range(0, len(tmp_fields)):
@@ -316,11 +320,15 @@ class D2data:
         await self.get_seasonal_featured_silver(langs, start)
 
         for lang in langs:
-            for i in range(0, len(self.data[lang]['seasonal_consumables'])):
-                self.data[lang]['seasonal_eververse'].append(self.data[lang]['seasonal_silver'][i])
-                self.data[lang]['seasonal_eververse'].append(self.data[lang]['seasonal_featured_bd'][i])
-                self.data[lang]['seasonal_eververse'].append(self.data[lang]['seasonal_bd'][i])
-                self.data[lang]['seasonal_eververse'].append(self.data[lang]['seasonal_consumables'][i])
+            for part in self.data[lang]['seasonal_silver']:
+                self.data[lang]['seasonal_eververse'].append(part)
+            for part in self.data[lang]['seasonal_consumables']:
+                self.data[lang]['seasonal_eververse'].append(part)
+            for part in self.data[lang]['seasonal_featured_bd']:
+                self.data[lang]['seasonal_eververse'].append(part)
+            for part in self.data[lang]['seasonal_bd']:
+                self.data[lang]['seasonal_eververse'].append(part)
+        return
 
     def get_season_start(self):
         manifest_url = 'https://www.bungie.net/Platform/Destiny2/Manifest/'
@@ -359,10 +367,9 @@ class D2data:
             i_week = 1
             class_items = 0
             for i, item in enumerate(tess_def['itemList']):
-                if n_items >= 5 and n_items - class_items / 3 * 2 >= 5:
+                if n_items == 25:
                     curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['silver'],
                                                           self.translations[lang]['msg']['week'], i_week)
-                    curr_week['timestamp'] = datetime.utcfromtimestamp(start.timestamp() + (i_week - 1) * 604800).isoformat()
                     i_week = i_week + 1
                     self.data[lang]['seasonal_silver'].append(dict.copy(curr_week))
                     n_items = 0
@@ -370,7 +377,6 @@ class D2data:
                     class_items = 0
                 if item['displayCategoryIndex'] == 3 and item['itemHash'] != 827183327:
                     definition = 'DestinyInventoryItemDefinition'
-                    # next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
@@ -409,18 +415,16 @@ class D2data:
             i_week = 1
             class_items = 0
             for i, item in enumerate(tess_def['itemList']):
-                if n_items >= 4 and n_items - class_items / 3 * 2 >= 4:
+                if n_items == 25:
                     curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['featured_bd'],
                                                           self.translations[lang]['msg']['week'], i_week)
-                    curr_week['timestamp'] = datetime.utcfromtimestamp(start.timestamp() + (i_week - 1) * 604800).isoformat()
                     i_week = i_week + 1
                     self.data[lang]['seasonal_featured_bd'].append(dict.copy(curr_week))
                     n_items = 0
                     curr_week['fields'] = []
                     class_items = 0
-                if item['displayCategoryIndex'] == 4 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
+                if item['displayCategoryIndex'] == 4 and item['itemHash'] not in [353932628, 3260482534, 3536420626, 3187955025, 2638689062]:
                     definition = 'DestinyInventoryItemDefinition'
-                    # next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
@@ -459,18 +463,16 @@ class D2data:
             i_week = 1
             class_items = 0
             for i, item in enumerate(tess_def['itemList']):
-                if n_items >= 4 and n_items - class_items / 3 * 2 >= 4:
+                if n_items == 25:
                     curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['bd_consumables'],
                                                           self.translations[lang]['msg']['week'], i_week)
-                    curr_week['timestamp'] = datetime.utcfromtimestamp(start.timestamp() + (i_week - 1) * 604800).isoformat()
                     i_week = i_week + 1
                     self.data[lang]['seasonal_consumables'].append(dict.copy(curr_week))
                     n_items = 0
                     curr_week['fields'] = []
                     class_items = 0
-                if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
+                if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626, 3187955025, 2638689062]:
                     definition = 'DestinyInventoryItemDefinition'
-                    # next_def = await self.destiny.decode_hash(tess_def['itemList'][i + 1]['itemHash'], definition, language=lang)
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
@@ -509,17 +511,15 @@ class D2data:
             i_week = 1
             class_items = 0
             for i, item in enumerate(tess_def['itemList']):
-                if n_items >= 7 and n_items - class_items/3*2 >= 7:
+                if n_items == 25:
                     curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['bd'], self.translations[lang]['msg']['week'], i_week)
-                    curr_week['timestamp'] = datetime.utcfromtimestamp(start.timestamp() + (i_week - 1) * 604800).isoformat()
                     i_week = i_week + 1
                     self.data[lang]['seasonal_bd'].append(dict.copy(curr_week))
                     n_items = 0
                     curr_week['fields'] = []
                     class_items = 0
-                if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626]:
+                if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626, 3187955025, 2638689062]:
                     definition = 'DestinyInventoryItemDefinition'
-                    # next_def = await self.destiny.decode_hash(tess_def['itemList'][i+1]['itemHash'], definition, language=lang)
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])

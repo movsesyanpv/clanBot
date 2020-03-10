@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.8.7'
+    version = '2.9'
     cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
@@ -160,9 +160,6 @@ class ClanBot(commands.Bot):
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
                                    second='10', misfire_grace_time=86300, args=[lang])
             self.sched.start()
-        self.remove_command('help')
-        for cog in self.cogs:
-            self.load_extension(cog)
         await self.dm_owner('Ready for action')
         await self.change_presence(status=discord.Status.online)
         return
@@ -565,10 +562,8 @@ class ClanBot(commands.Bot):
                             try:
                                 if type(hist) == list:
                                     if len(hist) < 100:
-                                        await channel.delete_messages(last)
-                                    else:
-                                        for week in [last[i:i + 4] for i in range(0, len(last), 4)]:
-                                            await channel.delete_messages(week)
+                                        for msg in last:
+                                            await msg.delete()
                                 else:
                                     await last.delete()
                             except discord.errors.Forbidden:
@@ -604,6 +599,9 @@ class ClanBot(commands.Bot):
         self.get_args()
         token = self.api_data['token']
         print('hmm')
+        self.remove_command('help')
+        for cog in self.cogs:
+            self.load_extension(cog)
         self.run(token)
 
 
