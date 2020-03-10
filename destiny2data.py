@@ -320,6 +320,7 @@ class D2data:
         await self.get_seasonal_featured_silver(langs, start)
 
         for lang in langs:
+            self.data[lang]['seasonal_eververse'].clear()
             for part in self.data[lang]['seasonal_silver']:
                 self.data[lang]['seasonal_eververse'].append(part)
             for part in self.data[lang]['seasonal_consumables']:
