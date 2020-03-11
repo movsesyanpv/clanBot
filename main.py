@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.9'
+    version = '2.9.1'
     cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
@@ -476,7 +476,7 @@ class ClanBot(commands.Bot):
     async def universal_update(self, getter, name, time_to_delete=None, channels=None, post=True, get=True):
         await self.wait_until_ready()
         game = discord.Game('updating {}'.format(name))
-        await self.change_presence(activity=game)
+        await self.change_presence(activity=game, status=discord.Status.dnd)
 
         lang = self.langs
 
@@ -510,7 +510,7 @@ class ClanBot(commands.Bot):
             await self.post_embed(name, self.data.data, time_to_delete, channels)
 
         game = discord.Game('v{}'.format(self.version))
-        await self.change_presence(activity=game)
+        await self.change_presence(activity=game, status=discord.Status.online)
 
     async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
         for server in self.guilds:
