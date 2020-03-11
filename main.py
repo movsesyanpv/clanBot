@@ -20,7 +20,7 @@ import unauthorized
 
 class ClanBot(commands.Bot):
     version = '2.9.1'
-    cogs = ['cogs.admin', 'cogs.updates', 'cogs.group']
+    cog_list = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
 
@@ -600,7 +600,7 @@ class ClanBot(commands.Bot):
         token = self.api_data['token']
         print('hmm')
         self.remove_command('help')
-        for cog in self.cogs:
+        for cog in self.cog_list:
             self.load_extension(cog)
         self.run(token)
 
