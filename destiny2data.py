@@ -219,6 +219,17 @@ class D2data:
         return embed_sales
 
     async def get_featured_bd(self, langs):
+        resp_time = datetime.utcnow().isoformat()
+        tess_resp = []
+        for char in self.char_info['charid']:
+            tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
+                format(self.char_info['platform'], self.char_info['membershipid'], char)
+            resp = self.get_bungie_json('featured bright dust for {}'.format(char), tess_url, self.vendor_params)
+            if not resp:
+                return
+            tess_resp.append(resp)
+            resp_time = datetime.utcnow().isoformat()
+
         for lang in langs:
             tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['featured_bd'] = {
@@ -232,21 +243,13 @@ class D2data:
                 'footer': {'text': self.translations[lang]['msg']['resp_time']}
             }
 
-            char_info = self.char_info
-
             tmp_fields = []
-            for char in char_info["charid"]:
-                tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
-                    format(char_info['platform'], char_info['membershipid'], char)
-                tess_resp = self.get_bungie_json('featured bright dust for {}'.format(char), tess_url, self.vendor_params, lang)
-                resp_time = datetime.utcnow().isoformat()
-                if not tess_resp:
-                    await self.destiny.close()
-                    return
-                tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
-
-                items_to_get = tess_cats[3]['itemIndexes']  # 5 - featured silver, 3 - featured BD, 4, 11 - BD items
-                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [353932628, 3260482534, 3536420626, 3187955025, 2638689062])
+            for resp in tess_resp:
+                tess_cats = resp.json()['Response']['categories']['data']['categories']
+                items_to_get = tess_cats[4]['itemIndexes'] + tess_cats[10]['itemIndexes']
+                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get,
+                                                                      [353932628, 3260482534, 3536420626, 3187955025,
+                                                                       2638689062])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i+1:]:
@@ -254,6 +257,17 @@ class D2data:
             self.data[lang]['featured_bd']['timestamp'] = resp_time
 
     async def get_bd(self, langs):
+        resp_time = datetime.utcnow().isoformat()
+        tess_resp = []
+        for char in self.char_info['charid']:
+            tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
+                        format(self.char_info['platform'], self.char_info['membershipid'], char)
+            resp = self.get_bungie_json('bright dust for {}'.format(char), tess_url, self.vendor_params)
+            if not resp:
+                return
+            tess_resp.append(resp)
+            resp_time = datetime.utcnow().isoformat()
+
         for lang in langs:
             tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['bd'] = {
@@ -267,20 +281,13 @@ class D2data:
                 'footer': {'text': self.translations[lang]['msg']['resp_time']}
             }
 
-            char_info = self.char_info
-
             tmp_fields = []
-            for char in char_info["charid"]:
-                tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
-                    format(char_info['platform'], char_info['membershipid'], char)
-                tess_resp = self.get_bungie_json('bright dust for {}'.format(char), tess_url, self.vendor_params, lang)
-                resp_time = datetime.utcnow().isoformat()
-                if not tess_resp:
-                    return
-                tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
-
+            for resp in tess_resp:
+                tess_cats = resp.json()['Response']['categories']['data']['categories']
                 items_to_get = tess_cats[4]['itemIndexes'] + tess_cats[10]['itemIndexes']
-                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [353932628, 3260482534, 3536420626, 3187955025, 2638689062])
+                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get,
+                                                                      [353932628, 3260482534, 3536420626, 3187955025,
+                                                                       2638689062])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i+1:]:
@@ -288,6 +295,17 @@ class D2data:
             self.data[lang]['bd']['timestamp'] = resp_time
 
     async def get_featured_silver(self, langs):
+        resp_time = datetime.utcnow().isoformat()
+        tess_resp = []
+        for char in self.char_info['charid']:
+            tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
+                format(self.char_info['platform'], self.char_info['membershipid'], char)
+            resp = self.get_bungie_json('silver for {}'.format(char), tess_url, self.vendor_params)
+            if not resp:
+                return
+            tess_resp.append(resp)
+            resp_time = datetime.utcnow().isoformat()
+
         for lang in langs:
             tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['silver'] = {
@@ -301,20 +319,11 @@ class D2data:
                 'footer': {'text': self.translations[lang]['msg']['resp_time']}
             }
 
-            char_info = self.char_info
-
             tmp_fields = []
-            for char in char_info["charid"]:
-                tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
-                    format(char_info['platform'], char_info['membershipid'], char)
-                tess_resp = self.get_bungie_json('featured silver for {}'.format(char), tess_url, self.vendor_params, lang)
-                resp_time = datetime.utcnow().isoformat()
-                if not tess_resp:
-                    return
-                tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
-
+            for resp in tess_resp:
+                tess_cats = resp.json()['Response']['categories']['data']['categories']
                 items_to_get = tess_cats[2]['itemIndexes']
-                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, tess_resp, items_to_get, [827183327])
+                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get, [827183327])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i+1:]:

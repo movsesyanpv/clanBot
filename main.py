@@ -118,6 +118,7 @@ class ClanBot(commands.Bot):
                 await self.universal_update(self.data.get_raids, 'raids', 604800, post=post, get=get, channels=channels)
                 await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=get, channels=channels)
                 await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=False, get=get, channels=channels)
         if 'spider' in upd_type:
             if channels is None:
                 channels = self.notifiers
@@ -132,9 +133,9 @@ class ClanBot(commands.Bot):
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=post, get=False, channels=channels)
+                await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=False, channels=channels)
+                await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=False, channels=channels)
         if 'seasonal' in upd_type:
             if channels is None:
                 channels = self.seasonal_ch
