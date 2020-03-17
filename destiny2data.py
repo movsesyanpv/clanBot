@@ -156,7 +156,7 @@ class D2data:
         }
         self.destiny = pydest.Pydest(self.headers['X-API-Key'])
 
-    def get_bungie_json(self, name, url, params, lang):
+    def get_bungie_json(self, name, url, params, lang=''):
         try:
             resp = requests.get(url, params=params, headers=self.headers)
         except:
@@ -229,6 +229,7 @@ class D2data:
                 'color': 0x38479F,
                 'type': "rich",
                 'title': self.translations[lang]['msg']['featured_bd'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']}
             }
 
             char_info = self.char_info
@@ -238,6 +239,7 @@ class D2data:
                 tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                     format(char_info['platform'], char_info['membershipid'], char)
                 tess_resp = self.get_bungie_json('featured bright dust for {}'.format(char), tess_url, self.vendor_params, lang)
+                resp_time = datetime.utcnow().isoformat()
                 if not tess_resp:
                     await self.destiny.close()
                     return
@@ -249,6 +251,7 @@ class D2data:
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i+1:]:
                     self.data[lang]['featured_bd']['fields'].append(tmp_fields[i])
+            self.data[lang]['featured_bd']['timestamp'] = resp_time
 
     async def get_bd(self, langs):
         for lang in langs:
@@ -261,6 +264,7 @@ class D2data:
                 'color': 0x38479F,
                 'type': "rich",
                 'title': self.translations[lang]['msg']['bd'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']}
             }
 
             char_info = self.char_info
@@ -270,6 +274,7 @@ class D2data:
                 tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                     format(char_info['platform'], char_info['membershipid'], char)
                 tess_resp = self.get_bungie_json('bright dust for {}'.format(char), tess_url, self.vendor_params, lang)
+                resp_time = datetime.utcnow().isoformat()
                 if not tess_resp:
                     return
                 tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
@@ -280,6 +285,7 @@ class D2data:
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i+1:]:
                     self.data[lang]['bd']['fields'].append(tmp_fields[i])
+            self.data[lang]['bd']['timestamp'] = resp_time
 
     async def get_featured_silver(self, langs):
         for lang in langs:
@@ -292,6 +298,7 @@ class D2data:
                 'color': 0x38479F,
                 'type': "rich",
                 'title': self.translations[lang]['msg']['silver'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']}
             }
 
             char_info = self.char_info
@@ -301,6 +308,7 @@ class D2data:
                 tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                     format(char_info['platform'], char_info['membershipid'], char)
                 tess_resp = self.get_bungie_json('featured silver for {}'.format(char), tess_url, self.vendor_params, lang)
+                resp_time = datetime.utcnow().isoformat()
                 if not tess_resp:
                     return
                 tess_cats = tess_resp.json()['Response']['categories']['data']['categories']
@@ -311,6 +319,7 @@ class D2data:
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i+1:]:
                     self.data[lang]['silver']['fields'].append(tmp_fields[i])
+            self.data[lang]['silver']['timestamp'] = resp_time
 
     async def get_seasonal_eververse(self, langs):
         start = self.get_season_start()
@@ -505,6 +514,7 @@ class D2data:
                 'color': 0x38479F,
                 'type': "rich",
                 'title': self.translations[lang]['msg']['bd'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']}
             }
 
             n_items = 0
@@ -541,13 +551,12 @@ class D2data:
 
         spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
+        spider_resp = self.get_bungie_json('spider', spider_url, self.vendor_params)
+        if not spider_resp:
+            return
+        spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
+        resp_time = datetime.utcnow().isoformat()
         for locale in lang:
-            spider_resp = self.get_bungie_json('spider', spider_url, self.vendor_params, locale)
-            if not spider_resp:
-                return
-            spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
-            spider_sales = spider_resp.json()['Response']['sales']['data']
-
             spider_def = await self.destiny.decode_hash(863940356, 'DestinyVendorDefinition', language=locale)
 
             self.data[locale]['spider'] = {
@@ -558,31 +567,13 @@ class D2data:
                 'color': 7102001,
                 'type': "rich",
                 'title': self.translations[locale]['msg']['spider'],
+                'footer': {'text': self.translations[locale]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             items_to_get = spider_cats[0]['itemIndexes']
 
-            for key in items_to_get:
-                item = spider_sales[str(key)]
-                item_hash = item['itemHash']
-                if not item_hash == 1812969468:
-                    currency = item['costs'][0]
-                    definition = 'DestinyInventoryItemDefinition'
-                    item_resp = await self.destiny.decode_hash(item_hash, definition, language=locale)
-                    currency_resp = await self.destiny.decode_hash(currency['itemHash'], definition, language=locale)
-
-                    item_name_list = item_resp['displayProperties']['name'].split()[1:]
-                    item_name = ' '.join(item_name_list)
-                    currency_cost = str(currency['quantity'])
-                    currency_item = currency_resp['displayProperties']['name']
-
-                    item_data = {
-                        'inline': True,
-                        'name': item_name.capitalize(),
-                        'value': "{}: {} {}".format(self.translations[locale]['msg']['cost'], currency_cost,
-                                                    currency_item.capitalize())
-                    }
-                    self.data[locale]['spider']['fields'].append(item_data)
+            self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + await self.get_vendor_sales(locale, spider_resp, items_to_get, [1812969468])
 
     @staticmethod
     def get_xur_loc():
@@ -599,10 +590,11 @@ class D2data:
 
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
+        xur_resp = self.get_bungie_json('xur', xur_url, self.vendor_params)
+        if not xur_resp and xur_resp.json()['ErrorCode'] != 1627:
+            return
+        resp_time = datetime.utcnow().isoformat()
         for lang in langs:
-            xur_resp = self.get_bungie_json('xur', xur_url, self.vendor_params, lang)
-            if not xur_resp and xur_resp.json()['ErrorCode'] != 1627:
-                return
 
             xur_def = await self.destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['xur'] = {
@@ -613,6 +605,8 @@ class D2data:
                 'color': 0x3DD5D6,
                 'type': "rich",
                 'title': self.translations[lang]['msg']['xurtitle'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             if not xur_resp.json()['ErrorCode'] == 1627:
@@ -637,7 +631,7 @@ class D2data:
 
                 for key in sorted(xur_sales.keys()):
                     item_hash = xur_sales[key]['itemHash']
-                    if not item_hash == 4285666432:
+                    if item_hash not in [4285666432, 2293314698]:
                         definition = 'DestinyInventoryItemDefinition'
                         item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
                         item_name = item_resp['displayProperties']['name']
@@ -677,11 +671,12 @@ class D2data:
                 self.data[lang]['xur']['fields'].append(loc_field)
 
     async def get_heroic_story(self, langs):
+        activities_resp = await self.get_activities_response('heroic story missions')
+        if not activities_resp:
+            return
+        resp_time = datetime.utcnow().isoformat()
         for lang in langs:
-            activities_resp = await self.get_activities_response('heroic story missions', lang)
             local_types = self.translations[lang]
-            if not activities_resp:
-                return
 
             self.data[lang]['heroicstory'] = {
                 'thumbnail': {
@@ -691,7 +686,9 @@ class D2data:
                 'fields': [],
                 'color': 10070709,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['heroicstory']
+                'title': self.translations[lang]['msg']['heroicstory'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -708,11 +705,12 @@ class D2data:
                     self.data[lang]['heroicstory']['fields'].append(info)
 
     async def get_forge(self, langs):
+        activities_resp = await self.get_activities_response('forge')
+        if not activities_resp:
+            return
+        resp_time = datetime.utcnow().isoformat()
         for lang in langs:
-            activities_resp = await self.get_activities_response('forge', lang)
             local_types = self.translations[lang]
-            if not activities_resp:
-                return
 
             self.data[lang]['forge'] = {
                 'thumbnail': {
@@ -721,7 +719,9 @@ class D2data:
                 'fields': [],
                 'color': 3678761,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['forge']
+                'title': self.translations[lang]['msg']['forge'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -741,11 +741,12 @@ class D2data:
                     self.data[lang]['forge']['fields'].append(info)
 
     async def get_strike_modifiers(self, langs):
+        activities_resp = await self.get_activities_response('strike modifiers')
+        if not activities_resp:
+            return
+        resp_time = datetime.utcnow().isoformat()
         for lang in langs:
-            activities_resp = await self.get_activities_response('strike modifiers', lang)
             local_types = self.translations[lang]
-            if not activities_resp:
-                return
 
             self.data[lang]['vanguardstrikes'] = {
                 'thumbnail': {
@@ -754,7 +755,9 @@ class D2data:
                 'fields': [],
                 'color': 7506394,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['strikesmods']
+                'title': self.translations[lang]['msg']['strikesmods'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -788,7 +791,7 @@ class D2data:
             ],
             "color": 1332799,
             "type": "rich",
-            "title": self.translations[lang]['msg']['reckoningboss']
+            "title": self.translations[lang]['msg']['reckoningboss'],
         }
 
     def add_reckoning_boss(self, lang):
@@ -806,11 +809,12 @@ class D2data:
         return data
 
     async def get_reckoning_modifiers(self, langs):
+        activities_resp = await self.get_activities_response('reckoning modifiers')
+        if not activities_resp:
+            return
+        resp_time = datetime.utcnow().isoformat()
         for lang in langs:
-            activities_resp = await self.get_activities_response('reckoning modifiers', lang)
             local_types = self.translations[lang]
-            if not activities_resp:
-                return
 
             self.data[lang]['reckoning'] = {
                 'thumbnail': {
@@ -820,7 +824,9 @@ class D2data:
                 'fields': [],
                 'color': 1332799,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['reckoningmods']
+                'title': self.translations[lang]['msg']['reckoningmods'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             self.data[lang]['reckoning']['fields'] = self.add_reckoning_boss(lang)
@@ -835,11 +841,12 @@ class D2data:
                     self.data[lang]['reckoning']['fields'] = [*self.data[lang]['reckoning']['fields'], *mods]
 
     async def get_nightfall820(self, langs):
+        activities_resp = await self.get_activities_response('820 nightfalls')
+        if not activities_resp:
+            return
+        resp_time = datetime.utcnow().isoformat()
         for lang in langs:
-            activities_resp = await self.get_activities_response('820 nightfalls', lang)
             local_types = self.translations[lang]
-            if not activities_resp:
-                return
 
             self.data[lang]['nightfalls820'] = {
                 'thumbnail': {
@@ -848,7 +855,9 @@ class D2data:
                 'fields': [],
                 'color': 7506394,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['nightfalls820']
+                'title': self.translations[lang]['msg']['nightfalls820'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -898,11 +907,12 @@ class D2data:
             return False
 
     async def get_raids(self, langs):
+        activities_resp = await self.get_activities_response('raids')
+        if not activities_resp:
+            return
+        resp_time = datetime.utcnow().isoformat()
         for lang in langs:
-            activities_resp = await self.get_activities_response('raids', lang)
             local_types = self.translations[lang]
-            if not activities_resp:
-                return
 
             self.data[lang]['raids'] = {
                 'thumbnail': {
@@ -911,7 +921,9 @@ class D2data:
                 'fields': [],
                 'color': 0xF1C40F,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['raids']
+                'title': self.translations[lang]['msg']['raids'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             first_reset_time = 1580230800
@@ -942,6 +954,7 @@ class D2data:
                         'value': u"\u2063"
                     }
                     mods = self.get_modifiers(lang, r_json['hash'])
+                    resp_time = datetime.utcnow().isoformat()
                     if mods:
                         info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'], mods[1]['name'],
                                                                    self.translations[lang]['armsmaster'][eow_loadout])
@@ -992,18 +1005,21 @@ class D2data:
                         'value': u"\u2063"
                     }
                     mods = self.get_modifiers(lang, r_json['hash'])
+                    resp_time = datetime.utcnow().isoformat()
                     if mods:
                         info['value'] = mods[0]['name']
                     else:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
                     self.data[lang]['raids']['fields'].append(info)
+            self.data[lang]['raids']['timestamp'] = resp_time
 
     async def get_ordeal(self, langs):
+        activities_resp = await self.get_activities_response('ordeal')
+        if not activities_resp:
+            return
+        resp_time = datetime.utcnow().isoformat()
         for lang in langs:
-            activities_resp = await self.get_activities_response('ordeal', lang)
             local_types = self.translations[lang]
-            if not activities_resp:
-                return
 
             self.data[lang]['ordeal'] = {
                 'thumbnail': {
@@ -1013,7 +1029,9 @@ class D2data:
                 'fields': [],
                 'color': 5331575,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['ordeal']
+                'title': self.translations[lang]['msg']['ordeal'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             strikes = []
@@ -1041,11 +1059,12 @@ class D2data:
                         break
 
     async def get_nightmares(self, langs):
+        activities_resp = await self.get_activities_response('nightmares')
+        if not activities_resp:
+            return
+        resp_time = datetime.utcnow().isoformat()
         for lang in langs:
-            activities_resp = await self.get_activities_response('nightmares', lang)
             local_types = self.translations[lang]
-            if not activities_resp:
-                return
 
             self.data[lang]['nightmares'] = {
                 'thumbnail': {
@@ -1055,7 +1074,9 @@ class D2data:
                 'fields': [],
                 'color': 6037023,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['nightmares']
+                'title': self.translations[lang]['msg']['nightmares'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -1072,11 +1093,12 @@ class D2data:
                     self.data[lang]['nightmares']['fields'].append(info)
 
     async def get_crucible_rotators(self, langs):
+        activities_resp = await self.get_activities_response('crucible rotators')
+        if not activities_resp:
+            return
+        resp_time = datetime.utcnow().isoformat()
         for lang in langs:
-            activities_resp = await self.get_activities_response('crucible rotators', lang)
             local_types = self.translations[lang]
-            if not activities_resp:
-                return
 
             self.data[lang]['cruciblerotators'] = {
                 'thumbnail': {
@@ -1085,7 +1107,9 @@ class D2data:
                 'fields': [],
                 'color': 6629649,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['cruciblerotators']
+                'title': self.translations[lang]['msg']['cruciblerotators'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
             }
 
             for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
@@ -1112,40 +1136,6 @@ class D2data:
                             }
                             self.data[lang]['cruciblerotators']['fields'].append(info)
 
-    async def get_banshee(self, lang, vendor_params, wait_codes, max_retries):
-        char_info = self.char_info
-
-        banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
-            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
-        banshee_resp = self.get_bungie_json('banshee', banshee_url, vendor_params)
-        if not banshee_resp:
-            return
-
-        banshee_sales = banshee_resp.json()['Response']['sales']['data']
-
-        for key in sorted(banshee_sales):
-            item_hash = banshee_sales[key]['itemHash']
-            definition = 'DestinyInventoryItemDefinition'
-
-            if not item_hash == 2731650749 and not item_hash == 1493877378:
-                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
-
-                item_name = r_json['displayProperties']['name']
-                try:
-                    item_perk_hash = r_json['perks'][0]['perkHash']
-                    definition = 'DestinySandboxPerkDefinition'
-                    perk_resp = await self.destiny.decode_hash(item_perk_hash, definition, language=lang)
-                    item_desc = perk_resp['displayProperties']['description']
-                except IndexError:
-                    item_desc = ""
-
-                mod = {
-                    'name': item_name,
-                    'desc': item_desc
-                }
-
-                self.data['bansheeinventory'].append(mod)
-
     async def decode_modifiers(self, key, lang):
         data = []
         for mod_key in key['modifierHashes']:
@@ -1159,7 +1149,7 @@ class D2data:
             data.append(mod)
         return data
 
-    async def get_activities_response(self, name, lang):
+    async def get_activities_response(self, name, lang=''):
         char_info = self.char_info
 
         activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \

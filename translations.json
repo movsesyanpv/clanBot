@@ -27,7 +27,8 @@
             "featured_bd": "Популярные предметы за яркую пыль",
             "bd": "Товары за яркую пыль",
             "week": ", часть",
-            "bd_consumables": "Потребляемые предметы за яркую пыль"
+            "bd_consumables": "Потребляемые предметы за яркую пыль",
+            "resp_time": "Данные обновлены"
         },
         "lfg": {
             "go": "Предлагаю сходить в",
@@ -194,7 +195,8 @@
             "featured_bd": "Featured Bright Dust items",
             "bd": "Bright Dust items",
             "week": ", part",
-            "bd_consumables": "Bright Dust consumables"
+            "bd_consumables": "Bright Dust consumables",
+            "resp_time": "Data updated at"
         },
         "lfg": {
             "go": "Go",
