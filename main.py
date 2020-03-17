@@ -568,6 +568,8 @@ class ClanBot(commands.Bot):
                                     await last.delete()
                             except discord.errors.Forbidden:
                                 pass
+                            except discord.NotFound:
+                                raise discord.NotFound
                             except discord.errors.HTTPException:
                                 bot_info = await self.application_info()
                                 await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
