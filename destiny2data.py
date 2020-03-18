@@ -156,9 +156,11 @@ class D2data:
         }
         self.destiny = pydest.Pydest(self.headers['X-API-Key'])
 
-    def get_bungie_json(self, name, url, params, lang=None):
+    def get_bungie_json(self, name, url, params, lang=None, string=None):
         if lang is None:
             lang = list(self.data.keys())
+        if string is None:
+            string = str(name)
         try:
             resp = requests.get(url, params=params, headers=self.headers)
         except:
@@ -169,7 +171,11 @@ class D2data:
             resp_code = resp.json()['ErrorCode']
         except KeyError:
             resp_code = 1
-        print('getting {} {}'.format(name, lang))
+        except json.decoder.JSONDecodeError:
+            for locale in lang:
+                self.data[locale][name] = self.data[locale]['api_is_down']
+            return False
+        print('getting {} {}'.format(string, lang))
         curr_try = 2
         while resp_code in self.wait_codes and curr_try <= self.max_retries:
             print('{}, attempt {}'.format(resp_code, curr_try))
@@ -230,7 +236,7 @@ class D2data:
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = self.get_bungie_json('featured bright dust for {}'.format(char), tess_url, self.vendor_params)
+            resp = self.get_bungie_json('featured_bd', tess_url, self.vendor_params, string='featured bright dust for {}'.format(char))
             if not resp:
                 return
             tess_resp.append(resp)
@@ -268,7 +274,7 @@ class D2data:
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                         format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = self.get_bungie_json('bright dust for {}'.format(char), tess_url, self.vendor_params)
+            resp = self.get_bungie_json('bd', tess_url, self.vendor_params, string='bright dust for {}'.format(char))
             if not resp:
                 return
             tess_resp.append(resp)
@@ -306,7 +312,7 @@ class D2data:
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = self.get_bungie_json('silver for {}'.format(char), tess_url, self.vendor_params)
+            resp = self.get_bungie_json('silver', tess_url, self.vendor_params, string='silver for {}'.format(char))
             if not resp:
                 return
             tess_resp.append(resp)
@@ -686,7 +692,7 @@ class D2data:
                 self.data[lang]['xur']['fields'].append(loc_field)
 
     async def get_heroic_story(self, langs):
-        activities_resp = await self.get_activities_response('heroic story missions')
+        activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions')
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -756,7 +762,7 @@ class D2data:
                     self.data[lang]['forge']['fields'].append(info)
 
     async def get_strike_modifiers(self, langs):
-        activities_resp = await self.get_activities_response('strike modifiers')
+        activities_resp = await self.get_activities_response('vanguardstrikes', string='strike modifiers')
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -824,7 +830,7 @@ class D2data:
         return data
 
     async def get_reckoning_modifiers(self, langs):
-        activities_resp = await self.get_activities_response('reckoning modifiers')
+        activities_resp = await self.get_activities_response('reckoning', string='reckoning modifiers')
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -856,7 +862,7 @@ class D2data:
                     self.data[lang]['reckoning']['fields'] = [*self.data[lang]['reckoning']['fields'], *mods]
 
     async def get_nightfall820(self, langs):
-        activities_resp = await self.get_activities_response('820 nightfalls')
+        activities_resp = await self.get_activities_response('nightfalls820', string='820 nightfalls')
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -1108,7 +1114,7 @@ class D2data:
                     self.data[lang]['nightmares']['fields'].append(info)
 
     async def get_crucible_rotators(self, langs):
-        activities_resp = await self.get_activities_response('crucible rotators')
+        activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators')
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -1164,12 +1170,12 @@ class D2data:
             data.append(mod)
         return data
 
-    async def get_activities_response(self, name, lang=None):
+    async def get_activities_response(self, name, lang=None, string=None):
         char_info = self.char_info
 
         activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
-        activities_resp = self.get_bungie_json(name, activities_url, self.activities_params, lang)
+        activities_resp = self.get_bungie_json(name, activities_url, self.activities_params, lang, string)
         return activities_resp
 
     async def token_update(self):
