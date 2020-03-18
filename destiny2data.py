@@ -156,11 +156,14 @@ class D2data:
         }
         self.destiny = pydest.Pydest(self.headers['X-API-Key'])
 
-    def get_bungie_json(self, name, url, params, lang=''):
+    def get_bungie_json(self, name, url, params, lang=None):
+        if lang is None:
+            lang = list(self.data.keys())
         try:
             resp = requests.get(url, params=params, headers=self.headers)
         except:
-            self.data[lang][name] = self.data[lang]['api_is_down']
+            for locale in lang:
+                self.data[locale][name] = self.data[locale]['api_is_down']
             return False
         try:
             resp_code = resp.json()['ErrorCode']
@@ -173,17 +176,20 @@ class D2data:
             resp = requests.get(url, params=params, headers=self.headers)
             resp_code = resp.json()['ErrorCode']
             if resp_code == 5:
-                self.data[lang][name] = self.data[lang]['api_maintenance']
+                for locale in lang:
+                    self.data[locale][name] = self.data[locale]['api_maintenance']
                 curr_try -= 1
             curr_try += 1
             time.sleep(5)
         if not resp:
             resp_code = resp.json()['ErrorCode']
             if resp_code == 5:
-                self.data[lang][name] = self.data[lang]['api_maintenance']
+                for locale in lang:
+                    self.data[locale][name] = self.data[locale]['api_maintenance']
                 return resp
             print("{} get error".format(name), json.dumps(resp.json(), indent=4, sort_keys=True) + "\n")
-            self.data[lang][name] = self.data[lang]['api_is_down']
+            for locale in lang:
+                self.data[locale][name] = self.data[locale]['api_is_down']
             return resp
         return resp
 
@@ -1158,7 +1164,7 @@ class D2data:
             data.append(mod)
         return data
 
-    async def get_activities_response(self, name, lang=''):
+    async def get_activities_response(self, name, lang=None):
         char_info = self.char_info
 
         activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
