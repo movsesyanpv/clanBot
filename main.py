@@ -442,14 +442,24 @@ class ClanBot(commands.Bot):
 
         for server in self.guilds:
             try:
-                self.guild_cursor.execute('''CREATE TABLE language (server_id integer, lang text)''')
+                self.guild_cursor.execute('''CREATE TABLE language (server_id integer, lang text, server_name text)''')
                 self.guild_cursor.execute('''CREATE UNIQUE INDEX lang ON language(server_id)''')
-                self.guild_cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?)''', [server.id, 'en'])
+                self.guild_cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?)''', [server.id, 'en', server.name])
             except sqlite3.OperationalError:
                 try:
-                    self.guild_cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?)''', [server.id, 'en'])
+                    self.guild_cursor.execute('''ALTER TABLE language ADD COLUMN server_name text''')
                 except sqlite3.OperationalError:
-                    pass
+                    try:
+                        self.guild_cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?,?)''',
+                                                  [server.id, 'en', server.name])
+                    except:
+                        pass
+            try:
+                self.guild_cursor.execute('''UPDATE language SET server_name=? WHERE server_id=?''',
+                                          (server.name, server.id))
+            except:
+                pass
+
         self.guild_db.commit()
 
         game = discord.Game('v{}'.format(self.version))
