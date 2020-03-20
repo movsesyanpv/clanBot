@@ -155,13 +155,13 @@ class ClanBot(commands.Bot):
         self.data.get_chars()
         if self.args.forceupdate:
             await self.force_update(self.args.type)
-        await self.force_update(self.all_types, post=False)
         if not self.sched.running:
+            await self.force_update(self.all_types, post=False)
             for lang in self.langs:
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
                                    second='10', misfire_grace_time=86300, args=[lang])
             self.sched.start()
-        await self.dm_owner('Ready for action')
+            await self.dm_owner('Ready for action')
         await self.change_presence(status=discord.Status.online)
         return
 
