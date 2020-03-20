@@ -48,7 +48,7 @@ class LFG:
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
                      wanters text, going text, the_role text, group_mode text, dm_message integer, 
                      lfg_channel integer, channel_name text, server_name text, want_dm text, is_embed integer, 
-                     length integer, server_id integer)''')
+                     length integer, server_id integer, group_role integer, group_channel integer)''')
         except sqlite3.OperationalError:
             try:
                 self.c.execute('''ALTER TABLE raid ADD COLUMN is_embed integer''')
@@ -59,12 +59,16 @@ class LFG:
                     try:
                         self.c.execute('''ALTER TABLE raid ADD COLUMN server_id integer''')
                     except sqlite3.OperationalError:
-                        pass
+                        try:
+                            self.c.execute('''ALTER TABLE raid ADD COLUMN group_role integer''')
+                            self.c.execute('''ALTER TABLE raid ADD COLUMN group_channel integer''')
+                        except sqlite3.OperationalError:
+                            pass
 
         newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
-                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id)]
-        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
+                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id, 0, 0)]
+        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
     def parse_args(self, content, message, is_init):
@@ -213,6 +217,10 @@ class LFG:
         self.c.execute('''UPDATE raid SET owner=? WHERE group_id=?''', (new_owner, group_id))
         self.conn.commit()
 
+    def set_group_space(self, group_id, group_role, group_channel):
+        self.c.execute('''UPDATE raid SET group_role=?, group_channel=? WHERE group_id=?''', (group_role, group_channel, group_id))
+        self.conn.commit()
+
     def is_raid(self, message_id):
         try:
             cell = self.c.execute('SELECT group_id FROM raid WHERE group_id=?', (message_id,))
@@ -235,6 +243,17 @@ class LFG:
                 return cell[0]
             else:
                 return None
+
+    def get_cell_array(self, search_field, group_id, field):
+        try:
+            arr = self.c.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,))
+            arr = eval(arr.fetchone()[0])
+        except sqlite3.OperationalError:
+            return []
+        except AttributeError:
+            return []
+
+        return arr
 
     def add_people(self, group_id, user):
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
@@ -555,3 +574,9 @@ class LFG:
         lfg_list = lfg_list.fetchall()
 
         return lfg_list
+
+    def is_goer(self, message, user):
+        goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
+        goers = eval(goers.fetchone()[0])
+
+        return user.mention in goers

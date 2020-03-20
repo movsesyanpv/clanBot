@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.9.2'
+    version = '2.10'
     cog_list = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
@@ -218,7 +218,17 @@ class ClanBot(commands.Bot):
         if self.raid.is_raid(message.id):
             if str(payload.emoji) != '👌':
                 return
+            was_goer = self.raid.is_goer(message, user)
             self.raid.rm_people(message.id, user)
+            if message.guild.me.guild_permissions.manage_roles:
+                role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
+                if role is not None and was_goer:
+                    await user.remove_roles(role, reason='User removed 👌')
+                    goers = self.raid.get_cell_array('group_id', message.id, 'going')
+                    for goer in goers:
+                        user_goer = await message.guild.fetch_member(int(goer.replace('<@', '').replace('!', '').replace('>', '')))
+                        if role not in user_goer.roles and user_goer is not None:
+                            await user_goer.add_roles(role, reason='Previous participant opted out')
             if user.dm_channel is None:
                 await user.create_dm()
             lang = self.guild_lang(payload.guild_id)
@@ -254,6 +264,14 @@ class ClanBot(commands.Bot):
                         if dm_id != 0:
                             dm_message = await owner.dm_channel.fetch_message(dm_id)
                             await dm_message.delete()
+                    if message.guild.me.guild_permissions.manage_channels and message.guild.me.guild_permissions.manage_roles:
+                        role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
+                        group_ch = message.guild.get_channel(self.raid.get_cell('group_id', message.id, 'group_channel'))
+                        if role is not None:
+                            await role.delete(reason='LFG deletion')
+                        if group_ch is not None:
+                            if group_ch.permissions_for(message.guild.me).manage_channels:
+                                await group_ch.delete(reason='LFG deletion')
                     self.raid.del_entry(message.id)
                     await message.delete()
                     return
@@ -268,6 +286,10 @@ class ClanBot(commands.Bot):
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
                 self.raid.add_people(message.id, user)
+                if message.guild.me.guild_permissions.manage_roles:
+                    role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
+                    if role is not None and self.raid.is_goer(message, user):
+                        await user.add_roles(role, reason='User pressed 👌')
                 lang = self.guild_lang(payload.guild_id)
                 if user.dm_channel is None:
                     await user.create_dm()
