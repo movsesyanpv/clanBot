@@ -1201,6 +1201,11 @@ class D2data:
         else:
             return -1
 
+    async def get_member_metric_wrapper(self, member, metric):
+        member_id = member['destinyUserInfo']['membershipId']
+        member_type = member['destinyUserInfo']['membershipType']
+        return [member['destinyUserInfo']['LastSeenDisplayName'], await self.get_player_metric(member_type, member_id, metric)]
+
     async def get_clan_leaderboard(self, clan_id, metric, number):
         url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
         clan_resp = self.get_bungie_json('clan members', url, change_msg=False)
@@ -1208,13 +1213,10 @@ class D2data:
             try:
                 metric_list = []
                 for member in clan_resp.json()['Response']['results']:
-                    member_id = member['destinyUserInfo']['membershipId']
-                    member_type = member['destinyUserInfo']['membershipType']
-                    member_stat = [member['destinyUserInfo']['LastSeenDisplayName'], await self.get_player_metric(member_type, member_id, metric)]
-                    if member_stat[1] is not None:
-                        if member_stat[1] > 0:
-                            metric_list.append(member_stat)
+                    metric_list.append(await self.get_member_metric_wrapper(member, metric))
                 metric_list.sort(reverse=True, key=lambda x: x[1])
+                while metric_list[-1][1] <= 0:
+                    metric_list.pop(-1)
                 return metric_list[:number]
             except KeyError:
                 return []
