@@ -121,7 +121,7 @@ class Group(commands.Cog):
         if ctx.guild.me.guild_permissions.manage_channels and ctx.guild.me.guild_permissions.manage_roles:
             name = ctx.bot.raid.get_cell('group_id', group_id, 'name')
             hashids = Hashids()
-            group = hashids.encode(ctx.message.id)
+            group = hashids.encode(group_id)
             group_role = await ctx.guild.create_role(name='{} | {}'.format(name, group), mentionable=True, reason='LFG creation')
             overwrites = {
                 ctx.guild.default_role: discord.PermissionOverwrite(connect=False, view_channel=False),
