@@ -5,6 +5,8 @@ from tabulate import tabulate
 from datetime import datetime, timedelta, timezone
 import updater
 import os
+import sqlite3
+
 import main
 
 
@@ -114,34 +116,41 @@ class Admin(commands.Cog):
             help_msg = '{}{}'.format(help_msg, help_translations['additional_info'].format(prefix, prefix))
             await ctx.message.channel.send(help_msg)
             pass
-        elif cog == 'update':
-            translations = help_translations['commands']['update']
+        elif cog in ['setclan', 'lfglist', 'stop', 'planmaintenance', 'regnotifier', 'rmnotifier', 'update']:
+            translations = help_translations['commands'][cog]
             help_msg = '`{} v{}`\n{}'.format(name, ctx.bot.version, translations['info'])
             await channel.send(help_msg)
             pass
-        elif cog == 'rmnotifier':
-            translations = help_translations['commands']['rmnotifier']
+        elif cog == 'top':
+            translations = help_translations['commands'][cog]
             help_msg = '`{} v{}`\n{}'.format(name, ctx.bot.version, translations['info'])
             await channel.send(help_msg)
             pass
-        elif cog == 'regnotifier':
-            translations = help_translations['commands']['regnotifier']
-            help_msg = '`{} v{}`\n{}'.format(name, ctx.bot.version, translations['info'])
-            await channel.send(help_msg)
-            pass
-        elif cog == 'planmaintenance':
-            translations = help_translations['commands']['planmaintenance']
-            help_msg = '`{} v{}`\n{}'.format(name, ctx.bot.version, translations['info'])
-            await channel.send(help_msg)
-            pass
-        elif cog == 'stop':
-            translations = help_translations['commands']['stop']
-            help_msg = '`{} v{}`\n{}'.format(name, ctx.bot.version, translations['info'])
-            await channel.send(help_msg)
-            pass
-        elif cog == 'lfglist':
-            translations = help_translations['commands']['lfglist']
-            help_msg = '`{} v{}`\n{}'.format(name, ctx.bot.version, translations['info'])
+            metric_list = []
+            try:
+                internal_db = sqlite3.connect('internal.db')
+                internal_cursor = internal_db.cursor()
+                internal_cursor.execute('''SELECT name, hash FROM metrics''')
+                metrics = internal_cursor.fetchall()
+                if len(metrics) > 0:
+                    for metric in metrics:
+                        metric_list.append(['`{}'.format(metric[0]), '`https://data.destinysets.com/i/Metric:{}'.format(metric[1])])
+            except sqlite3.OperationalError:
+                pass
+            help_msg = '{}'.format(tabulate(metric_list, tablefmt='plain', colalign=('left', 'left')))
+            if len(help_msg) > 2000:
+                help_lines = help_msg.splitlines()
+                help_msg = ''
+                while len(help_lines) > 1:
+                    if len(help_msg) + 1 + len(help_lines[0]) <= 2000:
+                        help_msg = '{}\n{}'.format(help_msg, help_lines[0])
+                    else:
+                        await channel.send(help_msg)
+                        help_msg = ''
+                    if len(help_lines) > 1:
+                        help_lines.pop(0)
+                    else:
+                        break
             await channel.send(help_msg)
             pass
         elif cog in ['lfg', 'editlfg']:

@@ -123,8 +123,16 @@
             "regnotifier": "Зарегистрировать канал для получения автообновлений",
             "rmnotifier": "Убрать регистрацию канала",
             "update": "Получить обновления от Bungie указанного TYPE",
+            "setclan": "Привязать клан к серверу",
+            "top": "Вывести топ игроков клана по одной из метрик",
             "additional_info": "Отправьте `{}help команда язык` для подробной информации о `команде` на `языке`. Доступны языки `en`, `ru`.\nОтправьте `{}ruhelp команда` для подробной информации о `команде` по-русски.",
             "commands": {
+                "setclan": {
+                    "info": "Привязать клан к серверу. Возможна привязка по названию либо по числовому идентификатору клана. При успешном поиске клана бот выведет имя клана и его идентификатор."
+                },
+                "top": {
+                    "info": "Вывести топ игроков клана по одной из метрик. Информация о метрике доступна по ссылке. Возможно использование хешей метрик для получения статистики."
+                },
                 "setlang": {
                     "info": "Доступны языки `en`, `ru`. Доступно для администраторов сервера."
                 },
@@ -287,8 +295,16 @@
             "regnotifier": "Register notifier channel",
             "rmnotifier": "Deregister notifier channel",
             "update": "Get updates from Bungie for the given TYPE",
+            "setclan": "Set Destiny 2 clan for the server.",
+            "top": "Print top players for one of the available metrics.",
             "additional_info": "Type `{}help command language` for more info on a `command` in `language`. Available languages are `en`, `ru`.\nType `{}ruhelp command` for more info on a `command` in russian.",
             "commands": {
+                "setclan": {
+                    "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
+                },
+                "top": {
+                    "info": "Print top players for one of the available metrics. Metric's description is available through the link. You can also pass the metric's hash to the command."
+                },
                 "setlang": {
                     "info": "Available languages are `en`, `ru`. Available only to the server's admins."
                 },

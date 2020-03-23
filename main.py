@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.10'
+    version = '2.11'
     cog_list = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
@@ -458,6 +458,20 @@ class ClanBot(commands.Bot):
         except:
             return 'en'
 
+    def update_clans(self):
+        for server in self.guilds:
+            try:
+                self.guild_cursor.execute('''CREATE TABLE clans (server_name text, server_id integer, clan_name text, clan_id integer)''')
+                self.guild_cursor.execute('''CREATE UNIQUE INDEX clan ON clans(server_id)''')
+                self.guild_cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?,?,?)''', [server.name, server.id, '', 0])
+            except sqlite3.OperationalError:
+                try:
+                    self.guild_cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?,?,?)''', [server.name, server.id, '', 0])
+                except:
+                    pass
+
+        self.guild_db.commit()
+
     async def update_langs(self):
         game = discord.Game('updating langs')
         await self.change_presence(activity=game)
@@ -466,7 +480,7 @@ class ClanBot(commands.Bot):
             try:
                 self.guild_cursor.execute('''CREATE TABLE language (server_id integer, lang text, server_name text)''')
                 self.guild_cursor.execute('''CREATE UNIQUE INDEX lang ON language(server_id)''')
-                self.guild_cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?)''', [server.id, 'en', server.name])
+                self.guild_cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?,?)''', [server.id, 'en', server.name])
             except sqlite3.OperationalError:
                 try:
                     self.guild_cursor.execute('''ALTER TABLE language ADD COLUMN server_name text''')
@@ -483,6 +497,8 @@ class ClanBot(commands.Bot):
                 pass
 
         self.guild_db.commit()
+
+        self.update_clans()
 
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(activity=game)

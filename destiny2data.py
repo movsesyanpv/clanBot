@@ -37,6 +37,10 @@ class D2data:
         "components": "900,700"
     }
 
+    metric_params = {
+        "components": "1100"
+    }
+
     is_oauth = False
 
     char_info = {}
@@ -156,46 +160,54 @@ class D2data:
         }
         self.destiny = pydest.Pydest(self.headers['X-API-Key'])
 
-    def get_bungie_json(self, name, url, params, lang=None, string=None):
+    def get_bungie_json(self, name, url, params=None, lang=None, string=None, change_msg=True):
         if lang is None:
             lang = list(self.data.keys())
+            lang_str = ''
+        else:
+            lang_str = lang
         if string is None:
             string = str(name)
         try:
             resp = requests.get(url, params=params, headers=self.headers)
         except:
-            for locale in lang:
-                self.data[locale][name] = self.data[locale]['api_is_down']
+            if change_msg:
+                for locale in lang:
+                    self.data[locale][name] = self.data[locale]['api_is_down']
             return False
         try:
             resp_code = resp.json()['ErrorCode']
         except KeyError:
             resp_code = 1
         except json.decoder.JSONDecodeError:
-            for locale in lang:
-                self.data[locale][name] = self.data[locale]['api_is_down']
+            if change_msg:
+                for locale in lang:
+                    self.data[locale][name] = self.data[locale]['api_is_down']
             return False
-        print('getting {} {}'.format(string, lang))
+        print('getting {} {}'.format(string, lang_str))
         curr_try = 2
         while resp_code in self.wait_codes and curr_try <= self.max_retries:
             print('{}, attempt {}'.format(resp_code, curr_try))
             resp = requests.get(url, params=params, headers=self.headers)
             resp_code = resp.json()['ErrorCode']
             if resp_code == 5:
-                for locale in lang:
-                    self.data[locale][name] = self.data[locale]['api_maintenance']
+                if change_msg:
+                    for locale in lang:
+                        self.data[locale][name] = self.data[locale]['api_maintenance']
                 curr_try -= 1
             curr_try += 1
             time.sleep(5)
         if not resp:
             resp_code = resp.json()['ErrorCode']
             if resp_code == 5:
-                for locale in lang:
-                    self.data[locale][name] = self.data[locale]['api_maintenance']
+                if change_msg:
+                    for locale in lang:
+                        self.data[locale][name] = self.data[locale]['api_maintenance']
                 return resp
             print("{} get error".format(name), json.dumps(resp.json(), indent=4, sort_keys=True) + "\n")
-            for locale in lang:
-                self.data[locale][name] = self.data[locale]['api_is_down']
+            if change_msg:
+                for locale in lang:
+                    self.data[locale][name] = self.data[locale]['api_is_down']
             return resp
         return resp
 
@@ -1177,6 +1189,35 @@ class D2data:
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         activities_resp = self.get_bungie_json(name, activities_url, self.activities_params, lang, string)
         return activities_resp
+
+    async def get_player_metric(self, membership_type, membership_id, metric):
+        url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
+        metric_resp = self.get_bungie_json('metric {} for {}'.format(metric, membership_id), url, params=self.metric_params, change_msg=False)
+        if metric_resp:
+            try:
+                return metric_resp.json()['Response']['metrics']['data']['metrics'][str(metric)]['objectiveProgress']['progress']
+            except KeyError:
+                return -1
+        else:
+            return -1
+
+    async def get_clan_leaderboard(self, clan_id, metric, number):
+        url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
+        clan_resp = self.get_bungie_json('clan members', url, change_msg=False)
+        if clan_resp:
+            try:
+                metric_list = []
+                for member in clan_resp.json()['Response']['results']:
+                    member_id = member['destinyUserInfo']['membershipId']
+                    member_type = member['destinyUserInfo']['membershipType']
+                    member_stat = [member['destinyUserInfo']['LastSeenDisplayName'], await self.get_player_metric(member_type, member_id, metric)]
+                    if member_stat[1] is not None:
+                        if member_stat[1] > 0:
+                            metric_list.append(member_stat)
+                metric_list.sort(reverse=True, key=lambda x: x[1])
+                return metric_list[:number]
+            except KeyError:
+                return []
 
     async def token_update(self):
         # check to see if token.json exists, if not we have to start with oauth
