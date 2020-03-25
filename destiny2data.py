@@ -1,4 +1,3 @@
-import requests
 import json
 import time
 from urllib.parse import quote
@@ -7,6 +6,7 @@ from bs4 import BeautifulSoup
 from bungied2auth import BungieOAuth
 from datetime import datetime, timezone, timedelta
 from dateutil.parser import *
+import aiohttp
 
 
 class D2data:
@@ -77,8 +77,9 @@ class D2data:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], context=context, host='0.0.0.0', port='4200')
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
+        self.session = aiohttp.ClientSession()
 
-    def get_chars(self):
+    async def get_chars(self):
         platform = 0
         membership_id = ''
         try:
@@ -103,7 +104,7 @@ class D2data:
                 search_url = 'https://www.bungie.net/platform/Destiny2/SearchDestinyPlayer/' + str(
                     platform) + '/' + quote(
                     name) + '/'
-                search_resp = requests.get(search_url, headers=self.headers)
+                search_resp = await self.session.get(search_url, headers=self.headers)
                 search = search_resp.json()['Response']
                 if len(search) > 0:
                     valid_input = True
@@ -114,7 +115,7 @@ class D2data:
             char_search_params = {
                 'components': '200'
             }
-            char_search_resp = requests.get(char_search_url, params=char_search_params, headers=self.headers)
+            char_search_resp = await self.session.get(char_search_url, params=char_search_params, headers=self.headers)
             chars = char_search_resp.json()['Response']['characters']['data']
             char_ids = []
             for key in sorted(chars.keys()):
@@ -124,7 +125,7 @@ class D2data:
             char_file = open('char.json', 'w')
             char_file.write(json.dumps(self.char_info))
 
-    def refresh_token(self, re_token):
+    async def refresh_token(self, re_token):
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
@@ -134,10 +135,10 @@ class D2data:
             'client_id': self.api_data['id'],
             'client_secret': self.api_data['secret']
         }
-        r = requests.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
+        r = await self.session.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
         while not r:
             print("re_token get error", json.dumps(r.json(), indent=4, sort_keys=True) + "\n")
-            r = requests.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
+            r = await self.session.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
             if not r:
                 if not r.json()['error_description'] == 'DestinyThrottledByGameServer':
                     break
@@ -145,7 +146,7 @@ class D2data:
         if not r:
             print("re_token get error", json.dumps(r.json(), indent=4, sort_keys=True) + "\n")
             return
-        resp = r.json()
+        resp = await r.json()
 
         token = {
             'refresh': resp['refresh_token'],
@@ -160,7 +161,7 @@ class D2data:
         }
         self.destiny = pydest.Pydest(self.headers['X-API-Key'])
 
-    def get_bungie_json(self, name, url, params=None, lang=None, string=None, change_msg=True):
+    async def get_bungie_json(self, name, url, params=None, lang=None, string=None, change_msg=True):
         if lang is None:
             lang = list(self.data.keys())
             lang_str = ''
@@ -169,14 +170,15 @@ class D2data:
         if string is None:
             string = str(name)
         try:
-            resp = requests.get(url, params=params, headers=self.headers)
+            resp = await self.session.get(url, params=params, headers=self.headers)
         except:
             if change_msg:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
             return False
         try:
-            resp_code = resp.json()['ErrorCode']
+            resp_code = await resp.json()
+            resp_code = resp_code['ErrorCode']
         except KeyError:
             resp_code = 1
         except json.decoder.JSONDecodeError:
@@ -188,8 +190,9 @@ class D2data:
         curr_try = 2
         while resp_code in self.wait_codes and curr_try <= self.max_retries:
             print('{}, attempt {}'.format(resp_code, curr_try))
-            resp = requests.get(url, params=params, headers=self.headers)
-            resp_code = resp.json()['ErrorCode']
+            resp = await self.session.get(url, params=params, headers=self.headers)
+            resp_code = await resp.json()
+            resp_code = resp_code['ErrorCode']
             if resp_code == 5:
                 if change_msg:
                     for locale in lang:
@@ -198,7 +201,8 @@ class D2data:
             curr_try += 1
             time.sleep(5)
         if not resp:
-            resp_code = resp.json()['ErrorCode']
+            resp_code = await resp.json()
+            resp_code = resp_code['ErrorCode']
             if resp_code == 5:
                 if change_msg:
                     for locale in lang:
@@ -214,7 +218,8 @@ class D2data:
     async def get_vendor_sales(self, lang, vendor_resp, cats, exceptions=[]):
         embed_sales = []
 
-        tess_sales = vendor_resp.json()['Response']['sales']['data']
+        vendor_json = await vendor_resp.json()
+        tess_sales = vendor_json['Response']['sales']['data']
         for key in cats:
             item = tess_sales[str(key)]
             item_hash = item['itemHash']
@@ -248,7 +253,7 @@ class D2data:
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = self.get_bungie_json('featured_bd', tess_url, self.vendor_params, string='featured bright dust for {}'.format(char))
+            resp = await self.get_bungie_json('featured_bd', tess_url, self.vendor_params, string='featured bright dust for {}'.format(char))
             if not resp:
                 return
             tess_resp.append(resp)
@@ -269,7 +274,8 @@ class D2data:
 
             tmp_fields = []
             for resp in tess_resp:
-                tess_cats = resp.json()['Response']['categories']['data']['categories']
+                resp_json = await resp.json()
+                tess_cats = resp_json['Response']['categories']['data']['categories']
                 items_to_get = tess_cats[3]['itemIndexes']
                 tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get,
                                                                       [353932628, 3260482534, 3536420626, 3187955025,
@@ -286,7 +292,7 @@ class D2data:
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                         format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = self.get_bungie_json('bd', tess_url, self.vendor_params, string='bright dust for {}'.format(char))
+            resp = await self.get_bungie_json('bd', tess_url, self.vendor_params, string='bright dust for {}'.format(char))
             if not resp:
                 return
             tess_resp.append(resp)
@@ -307,7 +313,8 @@ class D2data:
 
             tmp_fields = []
             for resp in tess_resp:
-                tess_cats = resp.json()['Response']['categories']['data']['categories']
+                resp_json = await resp.json()
+                tess_cats = resp_json['Response']['categories']['data']['categories']
                 items_to_get = tess_cats[4]['itemIndexes'] + tess_cats[10]['itemIndexes']
                 tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get,
                                                                       [353932628, 3260482534, 3536420626, 3187955025,
@@ -324,7 +331,7 @@ class D2data:
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = self.get_bungie_json('silver', tess_url, self.vendor_params, string='silver for {}'.format(char))
+            resp = await self.get_bungie_json('silver', tess_url, self.vendor_params, string='silver for {}'.format(char))
             if not resp:
                 return
             tess_resp.append(resp)
@@ -345,7 +352,8 @@ class D2data:
 
             tmp_fields = []
             for resp in tess_resp:
-                tess_cats = resp.json()['Response']['categories']['data']['categories']
+                resp_json = await resp.json()
+                tess_cats = resp_json['Response']['categories']['data']['categories']
                 items_to_get = tess_cats[2]['itemIndexes']
                 tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get, [827183327])
 
@@ -355,7 +363,7 @@ class D2data:
             self.data[lang]['silver']['timestamp'] = resp_time
 
     async def get_seasonal_eververse(self, langs):
-        start = self.get_season_start()
+        start = await self.get_season_start()
         await self.get_seasonal_bd(langs, start)
         await self.get_seasonal_consumables(langs, start)
         await self.get_seasonal_featured_bd(langs, start)
@@ -373,11 +381,13 @@ class D2data:
                 self.data[lang]['seasonal_eververse'].append(part)
         return
 
-    def get_season_start(self):
+    async def get_season_start(self):
         manifest_url = 'https://www.bungie.net/Platform/Destiny2/Manifest/'
-        manifest_json = self.get_bungie_json('default', manifest_url, {}, '')
-        season_url = 'https://www.bungie.net{}'.format(manifest_json.json()['Response']['jsonWorldComponentContentPaths']['en']['DestinySeasonDefinition'])
-        season_json = self.get_bungie_json('default', season_url, {}, '').json()
+        manifest_resp = await self.get_bungie_json('default', manifest_url, {}, '')
+        manifest_json = await manifest_resp.json()
+        season_url = 'https://www.bungie.net{}'.format(manifest_json['Response']['jsonWorldComponentContentPaths']['en']['DestinySeasonDefinition'])
+        season_resp = await self.get_bungie_json('default', season_url, {}, '')
+        season_json = await season_resp.json()
 
         for season in season_json:
             try:
@@ -584,10 +594,11 @@ class D2data:
 
         spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
-        spider_resp = self.get_bungie_json('spider', spider_url, self.vendor_params)
+        spider_resp = await self.get_bungie_json('spider', spider_url, self.vendor_params)
         if not spider_resp:
             return
-        spider_cats = spider_resp.json()['Response']['categories']['data']['categories']
+        spider_json = await spider_resp.json()
+        spider_cats = spider_json['Response']['categories']['data']['categories']
         resp_time = datetime.utcnow().isoformat()
         for locale in lang:
             spider_def = await self.destiny.decode_hash(863940356, 'DestinyVendorDefinition', language=locale)
@@ -608,10 +619,9 @@ class D2data:
 
             self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + await self.get_vendor_sales(locale, spider_resp, items_to_get, [1812969468])
 
-    @staticmethod
-    def get_xur_loc():
+    async def get_xur_loc(self):
         url = 'https://wherethefuckisxur.com/'
-        r = requests.get(url)
+        r = await self.session.get(url)
         soup = BeautifulSoup(r.text, features="html.parser")
         modifier_list = soup.find('div', {'class': 'xur-location'})
         loc = modifier_list.find('h1', {'class': 'page-title'})
@@ -623,7 +633,7 @@ class D2data:
 
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
-        xur_resp = self.get_bungie_json('xur', xur_url, self.vendor_params)
+        xur_resp = await self.get_bungie_json('xur', xur_url, self.vendor_params)
         if not xur_resp and xur_resp.json()['ErrorCode'] != 1627:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -642,7 +652,8 @@ class D2data:
                 'timestamp': resp_time
             }
 
-            if not xur_resp.json()['ErrorCode'] == 1627:
+            xur_json = await xur_resp.json()
+            if not xur_json['ErrorCode'] == 1627:
                 loc_field = {
                     "inline": False,
                     "name": self.translations[lang]['msg']['xurloc'],
@@ -658,7 +669,7 @@ class D2data:
                     self.data[lang]['xur']['fields'].append(loc_field)
                 except:
                     pass
-                xur_sales = xur_resp.json()['Response']['sales']['data']
+                xur_sales = xur_json['Response']['sales']['data']
 
                 self.data[lang]['xur']['fields'].append(weapon)
 
@@ -724,7 +735,8 @@ class D2data:
                 'timestamp': resp_time
             }
 
-            for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+            activities_json = await activities_resp.json()
+            for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
@@ -757,7 +769,8 @@ class D2data:
                 'timestamp': resp_time
             }
 
-            for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+            activities_json = await activities_resp.json()
+            for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
@@ -793,7 +806,8 @@ class D2data:
                 'timestamp': resp_time
             }
 
-            for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+            activities_json = await activities_resp.json()
+            for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
@@ -864,7 +878,8 @@ class D2data:
 
             self.data[lang]['reckoning']['fields'] = self.add_reckoning_boss(lang)
 
-            for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+            activities_json = await activities_resp.json()
+            for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
@@ -893,7 +908,8 @@ class D2data:
                 'timestamp': resp_time
             }
 
-            for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+            activities_json = await activities_resp.json()
+            for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
@@ -918,11 +934,11 @@ class D2data:
                 except KeyError:
                     pass
 
-    @staticmethod
-    def get_modifiers(lang, act_hash):
+    async def get_modifiers(self, lang, act_hash):
         url = 'https://www.bungie.net/{}/Explore/Detail/DestinyActivityDefinition/{}'.format(lang, act_hash)
-        r = requests.get(url)
-        soup = BeautifulSoup(r.text, features="html.parser")
+        r = await self.session.get(url)
+        r = await r.text()
+        soup = BeautifulSoup(r, features="html.parser")
         modifier_list = soup.find_all('div', {'data-identifier': 'modifier-information'})
         modifiers = []
         for item in modifier_list:
@@ -967,7 +983,8 @@ class D2data:
             cos_challenges = [2459033425, 2459033426, 2459033427]
             eow_loadout = int(weeks_since_first % 6)
 
-            for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+            activities_json = await activities_resp.json()
+            for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
@@ -986,7 +1003,7 @@ class D2data:
                         'name': self.translations[lang]['lairs'],
                         'value': u"\u2063"
                     }
-                    mods = self.get_modifiers(lang, r_json['hash'])
+                    mods = await self.get_modifiers(lang, r_json['hash'])
                     resp_time = datetime.utcnow().isoformat()
                     if mods:
                         info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'], mods[1]['name'],
@@ -1037,7 +1054,7 @@ class D2data:
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    mods = self.get_modifiers(lang, r_json['hash'])
+                    mods = await self.get_modifiers(lang, r_json['hash'])
                     resp_time = datetime.utcnow().isoformat()
                     if mods:
                         info['value'] = mods[0]['name']
@@ -1069,7 +1086,8 @@ class D2data:
 
             strikes = []
 
-            for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+            activities_json = await activities_resp.json()
+            for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
@@ -1112,7 +1130,8 @@ class D2data:
                 'timestamp': resp_time
             }
 
-            for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+            activities_json = await activities_resp.json()
+            for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
@@ -1145,7 +1164,8 @@ class D2data:
                 'timestamp': resp_time
             }
 
-            for key in activities_resp.json()['Response']['activities']['data']['availableActivities']:
+            activities_json = await activities_resp.json()
+            for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
@@ -1187,15 +1207,16 @@ class D2data:
 
         activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
-        activities_resp = self.get_bungie_json(name, activities_url, self.activities_params, lang, string)
+        activities_resp = await self.get_bungie_json(name, activities_url, self.activities_params, lang, string)
         return activities_resp
 
     async def get_player_metric(self, membership_type, membership_id, metric):
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
-        metric_resp = self.get_bungie_json('metric {} for {}'.format(metric, membership_id), url, params=self.metric_params, change_msg=False)
+        metric_resp = await self.get_bungie_json('metric {} for {}'.format(metric, membership_id), url, params=self.metric_params, change_msg=False)
         if metric_resp:
+            metric_json = await metric_resp.json()
             try:
-                return metric_resp.json()['Response']['metrics']['data']['metrics'][str(metric)]['objectiveProgress']['progress']
+                return metric_json['Response']['metrics']['data']['metrics'][str(metric)]['objectiveProgress']['progress']
             except KeyError:
                 return -1
         else:
@@ -1208,11 +1229,12 @@ class D2data:
 
     async def get_clan_leaderboard(self, clan_id, metric, number):
         url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
-        clan_resp = self.get_bungie_json('clan members', url, change_msg=False)
+        clan_resp = await self.get_bungie_json('clan members', url, change_msg=False)
         if clan_resp:
+            clan_json = await clan_resp.json()
             try:
                 metric_list = []
-                for member in clan_resp.json()['Response']['results']:
+                for member in clan_json['Response']['results']:
                     metric_list.append(await self.get_member_metric_wrapper(member, metric))
                 metric_list.sort(reverse=True, key=lambda x: x[1])
                 while metric_list[-1][1] <= 0:
@@ -1250,4 +1272,4 @@ class D2data:
                 print('refresh token expired!  run the script with --oauth or add a valid token.js file!')
                 return False
         else:
-            self.refresh_token(self.token['refresh'])
+            await self.refresh_token(self.token['refresh'])
