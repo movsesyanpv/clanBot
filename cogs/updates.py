@@ -71,8 +71,8 @@ class Updates(commands.Cog):
             for arg in args:
                 clan_id = '{} {}'.format(clan_id, arg)
             url = 'https://www.bungie.net/Platform/GroupV2/Name/{}/1/'.format(clan_id)
-        clan_json = await ctx.bot.data.get_bungie_json('clan'.format(clan_id), url, string='clan {}'.format(clan_id))
-        clan_json = clan_json.json()
+        clan_resp = await ctx.bot.data.get_bungie_json('clan'.format(clan_id), url, string='clan {}'.format(clan_id))
+        clan_json = await clan_resp.json()
         try:
             code = clan_json['ErrorCode']
         except KeyError:
