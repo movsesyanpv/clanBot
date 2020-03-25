@@ -120,7 +120,7 @@ class Updates(commands.Cog):
             lang = ctx.bot.guild_lang(ctx.message.guild.id)
             top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
             max_len = min(number, len(top_list))
-            await ctx.channel.send('{}```{}```'.format(top_name['displayProperties']['description'], tabulate(top_list, tablefmt='plain', colalign=('left', 'left'), showindex=range(1, max_len+1))))
+            await ctx.channel.send('{}```{}```'.format(top_name['displayProperties']['description'], tabulate(top_list, tablefmt='plain', colalign=('left', 'left'))))
         else:
             await ctx.channel.send('Clan not found or not registered.', delete_after=10)
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:

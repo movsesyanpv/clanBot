@@ -1239,7 +1239,28 @@ class D2data:
                 metric_list.sort(reverse=True, key=lambda x: x[1])
                 while metric_list[-1][1] <= 0:
                     metric_list.pop(-1)
-                return metric_list[:number]
+
+                for place in metric_list[1:]:
+                    delta = 0
+                    try:
+                        index = metric_list.index(place)
+                    except ValueError:
+                        continue
+                    if metric_list[index][1] == metric_list[index-1][1]:
+                        metric_list[index][0] = '{}\n{}'.format(metric_list[index-1][0], metric_list[index][0])
+                        metric_list.pop(index-1)
+
+                indexed_list = metric_list.copy()
+                i = 1
+                for place in indexed_list:
+                    old_i = i
+                    index = indexed_list.index(place)
+                    indexed_list[index] = [i, *indexed_list[index]]
+                    i = i + len(indexed_list[index][1].splitlines())
+                while indexed_list[-1][0] > number:
+                    indexed_list.pop(-1)
+
+                return indexed_list[:old_i]
             except KeyError:
                 return []
 
