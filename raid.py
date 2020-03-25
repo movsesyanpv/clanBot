@@ -187,23 +187,26 @@ class LFG:
             if len(roles) == 0:
                 return args
 
+        args['the_role'] = self.find_roles(is_init, message.guild, roles)
+        return args
+
+    def find_roles(self, is_init, guild, roles):
         for i in [0, 1]:
             the_role = []
             if len(roles) == 0 and is_init or len(the_role) > 0:
                 roles = ['guardian', 'recruit', 'destiny', 'friend sot']
-            for role in message.guild.roles:
+            for role in guild.roles:
                 if role.name.lower() in roles:
                     the_role.append(role)
             if len(the_role) == 0:
                 roles.clear()
         if len(the_role) == 0:
-            the_role.append(message.guild.default_role)
+            the_role.append(guild.default_role)
         the_role_str = the_role[0].mention
         for i in the_role[1:]:
             if len("{}, {}".format(the_role_str, i.mention)) < 2000:
                 the_role_str = "{}, {}".format(the_role_str, i.mention)
-        args['the_role'] = the_role_str
-        return args
+        return the_role_str
 
     def del_entry(self, group_id):
         self.c.executemany('''DELETE FROM raid WHERE group_id LIKE (?)''', [(group_id,)])
