@@ -11,14 +11,12 @@ class Updates(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def regnotifier(self, ctx, *args):
+    async def regnotifier(self, ctx, upd_type='notifiers'):
         message = ctx.message
-        content = message.content.lower().split()
         available_types = ['notifiers', 'seasonal', 'updates']
         notifier_type = 'notifiers'
-        if len(args) > 0:
-            if args[0] in available_types:
-                notifier_type = args[0]
+        if upd_type in available_types:
+            notifier_type = upd_type
         if await ctx.bot.check_ownership(message, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
                                         (message.channel.id, message.guild.id))
@@ -32,12 +30,12 @@ class Updates(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def rmnotifier(self, ctx, *args):
+    async def rmnotifier(self, ctx, upd_type='notifiers'):
         message = ctx.message
-        content = message.content.lower().split()
+        available_types = ['notifiers', 'seasonal', 'updates']
         notifier_type = 'notifiers'
-        if len(content) >= 3 and 'seasonal' in message.content.lower():
-            notifier_type = content[2]
+        if upd_type in available_types:
+            notifier_type = upd_type
         if await ctx.bot.check_ownership(message, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''DELETE FROM {} WHERE channel_id=?'''.format(notifier_type),
                                         (message.channel.id,))

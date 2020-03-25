@@ -27,7 +27,7 @@ class Admin(commands.Cog):
         await ctx.bot.close()
         return
 
-    @commands.command(aliases=['planMaintenance'])
+    @commands.command(aliases=['planMaintenance', 'planmaintenance'])
     @commands.dm_only()
     @commands.is_owner()
     async def plan_maintenance(self, ctx):
@@ -96,8 +96,18 @@ class Admin(commands.Cog):
         help_translations = ctx.bot.translations[lang]['help']
         cog = cog.lower()
         command_list = []
-        if cog in ['all', 'help']:
-            help_msg = '`{} v{}`\n{}\n'.format(name, ctx.bot.version, help_translations['list'])
+        help_msg = '`{} v{}`'.format(name, ctx.bot.version)
+        await channel.send(help_msg)
+        aliases = ''
+        if cog != 'all':
+            command = ctx.bot.all_commands[cog]
+            aliases = command.name
+            for alias in command.aliases:
+                aliases = '{}, {}'.format(aliases, alias)
+            if len(command.aliases) > 0:
+                await channel.send(help_translations['aliases'].format(aliases))
+        if cog == 'all' or 'help' in aliases:
+            help_msg = '{}\n'.format(help_translations['list'])
             for command in ctx.bot.commands:
                 if command.name in help_translations.keys():
                     command_desc = help_translations[command.name]
@@ -116,14 +126,9 @@ class Admin(commands.Cog):
             help_msg = '{}{}'.format(help_msg, help_translations['additional_info'].format(prefix, prefix))
             await ctx.message.channel.send(help_msg)
             pass
-        elif cog in ['setclan', 'lfglist', 'stop', 'planmaintenance', 'regnotifier', 'rmnotifier', 'update']:
-            translations = help_translations['commands'][cog]
-            help_msg = '`{} v{}`\n{}'.format(name, ctx.bot.version, translations['info'])
-            await channel.send(help_msg)
-            pass
-        elif cog == 'top':
-            translations = help_translations['commands'][cog]
-            help_msg = '`{} v{}`\n{}'.format(name, ctx.bot.version, translations['info'])
+        elif command.name == 'top':
+            translations = help_translations['commands'][command.name]
+            help_msg = '{}'.format(translations['info'])
             await channel.send(help_msg)
             pass
             metric_list = []
@@ -153,9 +158,9 @@ class Admin(commands.Cog):
                         break
             await channel.send(help_msg)
             pass
-        elif cog in ['lfg', 'editlfg']:
+        elif command.name in ['lfg', 'edit_lfg']:
             help_translations = help_translations['commands']['lfg']
-            help_msg = '`{} v{}`\n{}\n{}\n'.format(name, ctx.bot.version, help_translations['info'], help_translations['creation'])
+            help_msg = '{}\n{}\n'.format(help_translations['info'], help_translations['creation'])
             args = [
                 ['[-n:][name:]', help_translations['name']],
                 ['[-t:][time:]', help_translations['time']],
@@ -183,6 +188,24 @@ class Admin(commands.Cog):
             await channel.send(help_msg)
 
             help_msg = '{}\n'.format(help_translations['use_lfg'])
+            await channel.send(help_msg)
+            pass
+        else:
+            command_string = command.name
+            for arg in command.clean_params:
+                if command.name == 'setclan' and arg == 'args':
+                    continue
+                if 'empty' not in str(command.clean_params[arg].default):
+                    command_string = '{} [{}]'.format(command_string, arg)
+                else:
+                    command_string = '{} {{{}}}'.format(command_string, arg)
+            await channel.send(help_translations['parameters'].format(command_string))
+            if command.name in help_translations['commands'].keys():
+                translations = help_translations['commands'][command.name]
+                command_desc = translations['info']
+            else:
+                command_desc = command.description
+            help_msg = '{}'.format(command_desc)
             await channel.send(help_msg)
             pass
 

@@ -126,6 +126,8 @@
             "setclan": "Привязать клан к серверу",
             "top": "Вывести топ игроков клана по одной из метрик",
             "additional_info": "Отправьте `{}help команда язык` для подробной информации о `команде` на `языке`. Доступны языки `en`, `ru`.\nОтправьте `{}ruhelp команда` для подробной информации о `команде` по-русски.",
+            "aliases": "Может вызываться с одним из следующих имен:```{}```",
+            "parameters": "Использование:```{}```",
             "commands": {
                 "setclan": {
                     "info": "Привязать клан к серверу. Возможна привязка по названию либо по числовому идентификатору клана. При успешном поиске клана бот выведет имя клана и его идентификатор."
@@ -145,7 +147,7 @@
                 "regnotifier": {
                     "info": "`TYPE` может быть либо 'notifier' для 'обычных' обновлений (daily, weekly, и т.д.), 'seasonal' для сезонных прогнозов Эверверс и 'updates' для обновлений бота. Стандартное значение (если отсутствует корректное значение `TYPE`) - 'notifier'. Доступно для администраторов сервера."
                 },
-                "planmaintenance": {
+                "plan_maintenance": {
                     "info": "Доступно только для хозяев бота. Рискните."
                 },
                 "stop": {
@@ -298,6 +300,8 @@
             "setclan": "Set Destiny 2 clan for the server.",
             "top": "Print top players for one of the available metrics.",
             "additional_info": "Type `{}help command language` for more info on a `command` in `language`. Available languages are `en`, `ru`.\nType `{}ruhelp command` for more info on a `command` in russian.",
+            "aliases": "Can be called with the following names:```{}```",
+            "parameters": "Usage:```{}```",
             "commands": {
                 "setclan": {
                     "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
@@ -309,15 +313,15 @@
                     "info": "Available languages are `en`, `ru`. Available only to the server's admins."
                 },
                 "update": {
-                    "info": "Get updates from Bungie for the given `TYPE`. The types should be separated with spaces. Available types:\n - `daily` for  heroic story missions, strike and reckoning modifiers, forge and spider\n - `weekly` for available nightfalls and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics,\n - `tess` for the current state of the Eververse\n - `seasonal` for the predictions of Tess' stock over the current season\nUpdates are posted in the channel, the command was invoked, if the channel was registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the server's admins."
+                    "info": "Get updates from Bungie for the given `args`. The types should be separated with spaces. Available args:\n - `daily` for  heroic story missions, strike and reckoning modifiers, forge and spider\n - `weekly` for available nightfalls and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics,\n - `tess` for the current state of the Eververse\n - `seasonal` for the predictions of Tess' stock over the current season\nUpdates are posted in the channel, the command was invoked, if the channel was registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the server's admins."
                 },
                 "rmnotifier": {
-                    "info": "`TYPE` can be either 'notifier' for regular updates (daily, weekly, etc.), 'seasonal' for seasonal Eververse info or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
+                    "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.), 'seasonal' for seasonal Eververse info or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
                 },
                 "regnotifier": {
-                    "info": "`TYPE` can be either 'notifier' for regular updates (daily, weekly, etc.), 'seasonal' for seasonal Eververse info or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
+                    "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.), 'seasonal' for seasonal Eververse info or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
                 },
-                "planmaintenance": {
+                "plan_maintenance": {
                     "info": "Available only to the bot's owners."
                 },
                 "stop": {

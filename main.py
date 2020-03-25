@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.11.1'
+    version = '2.11.2'
     cog_list = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
@@ -177,7 +177,9 @@ class ClanBot(commands.Bot):
                 prefix = i
         await guild.owner.dm_channel.send('The `{}help` command will get you the command list.\n'
                                           'To set up automatic Destiny 2 information updates use `regnotifier` command.\n'
-                                          'Please set my language for the guild with `@{} setlang LANG`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.\nFeel free to ask for help at my Discord Server: https://discord.gg/JEbzECp'.format(prefix, self.user.name, str(self.langs).replace('[', '').replace(']', '').replace('\'', '')))
+                                          'Please set my language for the guild with `@{} setlang LANG`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.\n'
+                                          'Feel free to ask for help at my Discord Server: https://discord.gg/JEbzECp'.
+                                          format(prefix, self.user.name, str(self.langs).replace('[', '').replace(']', '').replace('\'', '')))
 
     async def on_guild_remove(self, guild):
         self.guild_cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
