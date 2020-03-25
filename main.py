@@ -147,7 +147,6 @@ class ClanBot(commands.Bot):
             await self.close()
 
     async def on_ready(self):
-        await self.change_presence(status=discord.Status.dnd)
         await self.data.token_update()
         await self.update_history()
         await self.update_langs()
@@ -161,8 +160,8 @@ class ClanBot(commands.Bot):
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
                                    second='10', misfire_grace_time=86300, args=[lang])
             self.sched.start()
-            await self.dm_owner('Ready for action')
-        await self.change_presence(status=discord.Status.online)
+        game = discord.Game('v{}'.format(self.version))
+        await self.change_presence(status=discord.Status.online, activity=game)
         return
 
     async def on_guild_join(self, guild):
@@ -243,7 +242,7 @@ class ClanBot(commands.Bot):
 
     async def on_raw_reaction_add(self, payload):
         user = payload.member
-        if payload.member == self.user:
+        if payload.user_id == self.user.id:
             return
 
         try:
