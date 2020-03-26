@@ -58,7 +58,8 @@
             "wanters": "Резерв",
             "length": "Длительность",
             "total_goers": "Всего участников",
-            "total_wanters": "Размер резерва"
+            "total_wanters": "Размер резерва",
+            "date": "Дата"
         },
         "xur": {
             "Earth": "Земля",
@@ -236,7 +237,8 @@
             "wanters": "Reserve",
             "length": "Duration",
             "total_goers": "Total participants",
-            "total_wanters": "Total reserve"
+            "total_wanters": "Total reserve",
+            "date": "Date (dd-mm-yyy)"
         },
         "xur": {
             "Earth": "Earth",
