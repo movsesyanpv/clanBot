@@ -107,7 +107,9 @@ class Group(commands.Cog):
                 role_obj = ctx.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
             except ValueError:
                 pass
-            role = '{} {}'.format(role, role_obj.name)
+            role = '{} {};'.format(role, role_obj.name)
+        if len(role) > 0:
+            role = role[:-1]
 
         at = ['default', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
         args = ctx.bot.raid.parse_args('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, a_type, mode, role).splitlines(), ctx.message, True)
@@ -137,7 +139,8 @@ class Group(commands.Cog):
             return False
 
         group_id = await self.guild_lfg(ctx, lang, 'lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.
-                                        format(name, description, time, size, length, at[args['is_embed']], mode, role_raw))
+                                        format(name, description, time, size, length, at[args['is_embed']], mode,
+                                               role_raw))
         ctx.bot.raid.set_owner(ctx.author.id, group_id)
 
         return group_id
