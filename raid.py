@@ -363,6 +363,7 @@ class LFG:
             "name": translations['lfge']['date'],
             "value": time.strftime('%d-%m-%Y')
         })
+        embed_length = embed_length + len(translations['lfge']['date']) + len(time.strftime('%d-%m-%Y'))
 
         if length > 0:
             embed['fields'].append({"inline": True,
