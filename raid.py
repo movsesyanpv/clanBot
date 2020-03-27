@@ -368,6 +368,8 @@ class LFG:
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
         name = self.get_cell('group_id', message.id, 'name')
         tz = self.get_cell('group_id', message.id, 'timezone')
+        if tz is None:
+            tz = 'UTC+03:00'
         tz_elements = tz.strip('UTC+').split(':')
         ts = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
         time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time')).replace(tzinfo=ts)
