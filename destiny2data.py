@@ -557,7 +557,6 @@ class D2data:
                 'color': 0x38479F,
                 'type': "rich",
                 'title': self.translations[lang]['msg']['bd'],
-                'footer': {'text': self.translations[lang]['msg']['resp_time']}
             }
 
             n_items = 0
