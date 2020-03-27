@@ -35,7 +35,7 @@ class Group(commands.Cog):
                     while len(msg) < 1900:
                         msg = '{} {},'.format(msg, parts[0])
                         parts.pop(0)
-        if is_embed:
+        if is_embed and ctx.guild.me.permissions_in(ctx.message.channel).embed_links:
             embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[lang])
             out = await message.channel.send(content=msg)
             await out.edit(content=None, embed=embed)

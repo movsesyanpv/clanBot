@@ -502,7 +502,7 @@ class LFG:
     async def update_group_msg(self, message, translations):
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
 
-        if is_embed:
+        if is_embed and message.guild.me.permissions_in(message.channel).embed_links:
             embed = self.make_embed(message, translations)
             await message.edit(content=None, embed=embed)
             return

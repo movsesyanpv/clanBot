@@ -649,11 +649,17 @@ class ClanBot(commands.Bot):
                     if type(embed) == list:
                         hist = []
                         for e in embed:
-                            message = await channel.send(embed=e, delete_after=time_to_delete)
+                            if server.me.permissions_in(channel).embed_links:
+                                message = await channel.send(embed=e, delete_after=time_to_delete)
+                            else:
+                                message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                             hist.append(message.id)
                         hist = str(hist)
                     else:
-                        message = await channel.send(embed=embed, delete_after=time_to_delete)
+                        if server.me.permissions_in(channel).embed_links:
+                            message = await channel.send(embed=embed, delete_after=time_to_delete)
+                        else:
+                            message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                         hist = message.id
             self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type), (str(hist), server.id))
             self.guild_db.commit()
