@@ -362,7 +362,8 @@ class LFG:
     def make_embed(self, message, translations):
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
         name = self.get_cell('group_id', message.id, 'name')
-        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
+        ts = datetime.now(timezone(timedelta(0))).astimezone()
+        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time')).replace(tzinfo=ts.tzinfo)
         description = self.get_cell('group_id', message.id, 'description')
         dm_id = self.get_cell('group_id', message.id, 'dm_message')
         size = self.get_cell('group_id', message.id, 'size')
@@ -409,7 +410,7 @@ class LFG:
         embed['fields'].append({
             "inline": True,
             "name": translations['lfge']['date'],
-            "value": time.strftime('%d-%m-%Y')
+            "value": time.strftime('%d-%m-%Y %H:%M UTC%z')
         })
         embed_length = embed_length + len(translations['lfge']['date']) + len(time.strftime('%d-%m-%Y'))
 
@@ -492,8 +493,7 @@ class LFG:
             embed['fields'] = embed['fields'][:-1]
 
         embed = discord.Embed.from_dict(embed)
-        ts = datetime.now(timezone(timedelta(0))).astimezone()
-        embed.timestamp = time.replace(tzinfo=ts.tzinfo)
+        embed.timestamp = time
 
         print(embed_length)
 
