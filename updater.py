@@ -16,3 +16,9 @@ def migrate_db():
         lfg_db.commit()
     except sqlite3.OperationalError:
         pass
+
+    try:
+        lfg_cursor.execute('''ALTER TABLE raid ADD COLUMN timezone text''')
+        lfg_db.commit()
+    except sqlite3.OperationalError:
+        pass

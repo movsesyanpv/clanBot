@@ -178,8 +178,9 @@ class Group(commands.Cog):
     @commands.guild_only()
     async def edit_lfg(self, ctx, arg_id=None, *args):
         if arg_id is None:
-            await ctx.channel.send('Not supported yet')
+            await ctx.channel.send('DM-based edits are not supported yet')
             #TODO: notify participants about edits.
+            #TODO: dm based edits
             return
         message = ctx.message
         lang = ctx.bot.guild_lang(ctx.message.guild.id)

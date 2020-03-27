@@ -51,7 +51,7 @@ class LFG:
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
                      wanters text, going text, the_role text, group_mode text, dm_message integer, 
                      lfg_channel integer, channel_name text, server_name text, want_dm text, is_embed integer, 
-                     length integer, server_id integer, group_role integer, group_channel integer, maybe_goers text)''')
+                     length integer, server_id integer, group_role integer, group_channel integer, maybe_goers text, timezone text)''')
         except sqlite3.OperationalError:
             try:
                 self.c.execute('''ALTER TABLE raid ADD COLUMN is_embed integer''')
@@ -69,12 +69,15 @@ class LFG:
                             try:
                                 self.c.execute('''ALTER TABLE raid ADD COLUMN maybe_goers text''')
                             except sqlite3.OperationalError:
-                                pass
+                                try:
+                                    self.c.execute('''ALTER TABLE raid ADD COLUMN timezone text''')
+                                except sqlite3.OperationalError:
+                                    pass
 
         newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
-                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id, 0, 0, '[]')]
-        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
+                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id, 0, 0, '[]', args['timezone'])]
+        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
     def parse_args(self, content, message, is_init):
@@ -95,6 +98,7 @@ class LFG:
                 'name': '',
                 'size': 1,
                 'time': datetime.timestamp(time),
+                'timezone': 'UTC+03:00',
                 'description': '',
                 'the_role': '',
                 'is_embed': 0,
@@ -120,6 +124,7 @@ class LFG:
                         raise ValueError
                     time_str = '{}:{}'.format(str_arg[1], str_arg[2])
                     args['time'] = datetime.strptime(time_str.lstrip(), "%d-%m-%Y %H:%M %z")
+                    args['timezone'] = str(args['time'].tzinfo)
                 except ValueError:
                     try:
                         if len(str_arg) < 3:
@@ -362,8 +367,10 @@ class LFG:
     def make_embed(self, message, translations):
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
         name = self.get_cell('group_id', message.id, 'name')
-        ts = datetime.now(timezone(timedelta(0))).astimezone()
-        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time')).replace(tzinfo=ts.tzinfo)
+        tz = self.get_cell('group_id', message.id, 'timezone')
+        tz_elements = tz.strip('UTC+').split(':')
+        ts = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
+        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time')).replace(tzinfo=ts)
         description = self.get_cell('group_id', message.id, 'description')
         dm_id = self.get_cell('group_id', message.id, 'dm_message')
         size = self.get_cell('group_id', message.id, 'size')
@@ -410,9 +417,9 @@ class LFG:
         embed['fields'].append({
             "inline": True,
             "name": translations['lfge']['date'],
-            "value": time.strftime('%d-%m-%Y %H:%M UTC%z')
+            "value": '{} {}'.format(time.strftime('%d-%m-%Y %H:%M'), tz)
         })
-        embed_length = embed_length + len(translations['lfge']['date']) + len(time.strftime('%d-%m-%Y'))
+        embed_length = embed_length + len(embed['fields'][-1]['name']) + len(embed['fields'][-1]['value'])
 
         if length > 0:
             embed['fields'].append({"inline": True,
