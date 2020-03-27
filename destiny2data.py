@@ -665,7 +665,7 @@ class D2data:
                     'value': ''
                 }
                 try:
-                    loc_field['value'] = self.translations[lang]['xur'][self.get_xur_loc()]
+                    loc_field['value'] = self.translations[lang]['xur'][await self.get_xur_loc()]
                     self.data[lang]['xur']['fields'].append(loc_field)
                 except:
                     pass
