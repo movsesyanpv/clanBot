@@ -98,6 +98,7 @@ class Group(commands.Cog):
         await dm.send(content=translations['role'])
         msg = await self.bot.wait_for('message', check=check)
         role = msg.content
+        role_raw = msg.content
 
         role_str = ctx.bot.raid.find_roles(True, ctx.guild, [r.strip() for r in role.split(';')])
         role = ''
@@ -136,7 +137,7 @@ class Group(commands.Cog):
             return False
 
         group_id = await self.guild_lfg(ctx, lang, 'lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.
-                                        format(name, description, time, size, length, at[args['is_embed']], mode, role))
+                                        format(name, description, time, size, length, at[args['is_embed']], mode, role_raw))
         ctx.bot.raid.set_owner(ctx.author.id, group_id)
 
         return group_id
