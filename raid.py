@@ -51,7 +51,7 @@ class LFG:
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
                      wanters text, going text, the_role text, group_mode text, dm_message integer, 
                      lfg_channel integer, channel_name text, server_name text, want_dm text, is_embed integer, 
-                     length integer, server_id integer, group_role integer, group_channel integer)''')
+                     length integer, server_id integer, group_role integer, group_channel integer, maybe_goers text)''')
         except sqlite3.OperationalError:
             try:
                 self.c.execute('''ALTER TABLE raid ADD COLUMN is_embed integer''')
@@ -66,12 +66,15 @@ class LFG:
                             self.c.execute('''ALTER TABLE raid ADD COLUMN group_role integer''')
                             self.c.execute('''ALTER TABLE raid ADD COLUMN group_channel integer''')
                         except sqlite3.OperationalError:
-                            pass
+                            try:
+                                self.c.execute('''ALTER TABLE raid ADD COLUMN maybe_goers text''')
+                            except sqlite3.OperationalError:
+                                pass
 
         newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
-                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id, 0, 0)]
-        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
+                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id, 0, 0, '[]')]
+        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
     def parse_args(self, content, message, is_init):
@@ -261,6 +264,39 @@ class LFG:
 
         return arr
 
+    def add_mb_goers(self, group_id, user):
+        mb_goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
+        mb_goers = mb_goers.fetchone()[0]
+
+        goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
+        goers = eval(goers.fetchone()[0])
+
+        wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
+        wanters = eval(wanters.fetchone()[0])
+
+        w_dm = self.c.execute('SELECT want_dm FROM raid WHERE group_id=?', (group_id,))
+        w_dm = eval(w_dm.fetchone()[0])
+
+        if mb_goers is None:
+            mb_goers = []
+        else:
+            mb_goers = eval(mb_goers)
+
+        if user.mention not in mb_goers:
+            mb_goers.append(user.mention)
+            if user.mention in goers:
+                goers.pop(goers.index(user.mention))
+            if user.mention in wanters:
+                i = wanters.index(user.mention)
+                wanters.pop(i)
+                w_dm.pop(i)
+
+        self.c.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
+        self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
+        self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
+        self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
+        self.conn.commit()
+
     def add_people(self, group_id, user):
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
         goers = eval(goers.fetchone()[0])
@@ -287,9 +323,12 @@ class LFG:
         self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
         self.conn.commit()
 
-    def rm_people(self, group_id, user):
+    def rm_people(self, group_id, user, emoji=''):
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
         goers = eval(goers.fetchone()[0])
+
+        mb_goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
+        mb_goers = eval(mb_goers.fetchone()[0])
 
         wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
         wanters = eval(wanters.fetchone()[0])
@@ -299,22 +338,25 @@ class LFG:
 
         size = self.get_cell('group_id', group_id, 'size')
 
-        if user.mention in goers:
+        if user.mention in goers and emoji == '👌':
             goers.pop(goers.index(user.mention))
             if len(wanters) > 0:
                 goers.append(wanters[0])
                 wanters.pop(0)
                 if len(w_dm) > 0:
                     w_dm.pop(0)
-        if user.mention in wanters:
+        if user.mention in wanters and emoji == '👌':
             i = wanters.index(user.mention)
             wanters.pop(i)
             if len(w_dm) > 0:
                 w_dm.pop(i)
+        if user.mention in mb_goers and emoji == '❓':
+            mb_goers.pop(mb_goers.index(user.mention))
 
         self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
         self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
         self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
+        self.c.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
         self.conn.commit()
 
     def make_embed(self, message, translations):
@@ -328,7 +370,10 @@ class LFG:
         goers = eval(goers.fetchone()[0])
         wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
         wanters = eval(wanters.fetchone()[0])
+        mb_goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (message.id,))
+        mb_goers = eval(mb_goers.fetchone()[0])
         length = self.get_cell('group_id', message.id, 'length')
+        group_mode = self.get_cell('group_id', message.id, 'group_mode')
 
         if is_embed == 1:
             self.lfg_categories[self.lfg_i[is_embed]] = {
@@ -405,7 +450,7 @@ class LFG:
             embed['fields'][-1]['value'] = '{}'.format(embed['fields'][-1]['value'][:-1])
             embed_length = embed_length + len(embed['fields'][-1]['value'])
 
-        if dm_id == 0:
+        if group_mode == 'basic':
             if len(wanters) > 0 and embed_length < 5550 and len(embed['fields']) < 25:
                 if embed_length + len(translations['lfge']['wanters']) < 5550:
                     embed['fields'].append({"inline": False, "name": translations['lfge']['wanters'], "value": ""})
@@ -413,10 +458,29 @@ class LFG:
                     for wanter in wanters:
                         if len('{} {},'.format(embed['fields'][-1]['value'], wanter)) > 1024 and len(
                                 embed['fields']) < 25:
-                            if len(translations['lfge']['goers']) + embed_length > 5550:
+                            if len(translations['lfge']['wanters']) + embed_length > 5550:
                                 break
                             embed_length = embed_length + len(embed['fields'][-1]['value'])
                             embed['fields'].append({"inline": False, "name": translations['lfge']['wanters'], "value": ""})
+                            embed_length = embed_length + len(translations['lfge']['wanters'])
+                        if embed_length + len('{} {},'.format(embed['fields'][-1]['value'], wanter)) < 6000:
+                            embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], wanter)
+                    embed['fields'][-1]['value'] = '{}'.format(embed['fields'][-1]['value'][:-1])
+                    embed_length = embed_length + len(embed['fields'][-1]['value'])
+
+        if len(mb_goers) > 0:
+            if len(mb_goers) > 0 and embed_length < 5550 and len(embed['fields']) < 25:
+                if embed_length + len(translations['lfge']['mb_goers']) < 5550:
+                    embed['fields'].append({"inline": False, "name": translations['lfge']['mb_goers'], "value": ""})
+                    embed_length = embed_length + len(translations['lfge']['wanters'])
+                    for wanter in mb_goers:
+                        if len('{} {},'.format(embed['fields'][-1]['value'], wanter)) > 1024 and len(
+                                embed['fields']) < 25:
+                            if len(translations['lfge']['mb_goers']) + embed_length > 5550:
+                                break
+                            embed_length = embed_length + len(embed['fields'][-1]['value'])
+                            embed['fields'].append(
+                                {"inline": False, "name": translations['lfge']['mb_goers'], "value": ""})
                             embed_length = embed_length + len(translations['lfge']['goers'])
                         if embed_length + len('{} {},'.format(embed['fields'][-1]['value'], wanter)) < 6000:
                             embed['fields'][-1]['value'] = '{} {},'.format(embed['fields'][-1]['value'], wanter)
@@ -499,8 +563,11 @@ class LFG:
         if owner.dm_channel is None:
             await owner.create_dm()
         if dm_id != 0:
-            dm_message = await owner.dm_channel.fetch_message(dm_id)
-            await dm_message.delete()
+            try:
+                dm_message = await owner.dm_channel.fetch_message(dm_id)
+                await dm_message.delete()
+            except discord.NotFound:
+                pass
             dm_id = 0
 
         if len(wanters) > 0:
@@ -596,6 +663,12 @@ class LFG:
 
     def is_goer(self, message, user):
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
+        goers = eval(goers.fetchone()[0])
+
+        return user.mention in goers
+
+    def is_mb_goer(self, message, user):
+        goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (message.id,))
         goers = eval(goers.fetchone()[0])
 
         return user.mention in goers

@@ -217,10 +217,11 @@ class ClanBot(commands.Bot):
                 user = guild.get_member(payload.user_id)
 
         if self.raid.is_raid(message.id):
-            if str(payload.emoji) != '👌':
+            if str(payload.emoji) not in ['👌', '❓']:
                 return
             was_goer = self.raid.is_goer(message, user)
-            self.raid.rm_people(message.id, user)
+            is_mb_goer = self.raid.is_mb_goer(message, user)
+            self.raid.rm_people(message.id, user, str(payload.emoji))
             if message.guild.me.guild_permissions.manage_roles:
                 role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
                 if role is not None and was_goer:
@@ -234,7 +235,7 @@ class ClanBot(commands.Bot):
                 await user.create_dm()
             lang = self.guild_lang(payload.guild_id)
             await self.raid.update_group_msg(message, self.translations[lang])
-            if self.raid.get_cell('group_id', message.id, 'group_mode') == 'manual':
+            if self.raid.get_cell('group_id', message.id, 'group_mode') == 'manual' and str(payload.emoji) == '👌':
                 await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'])
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
@@ -276,7 +277,7 @@ class ClanBot(commands.Bot):
                     self.raid.del_entry(message.id)
                     await message.delete()
                     return
-                if str(payload.emoji) != '👌':
+                if str(payload.emoji) not in ['👌', '❓']:
                     for reaction in message.reactions:
                         if str(reaction.emoji) == str(payload.emoji):
                             try:
@@ -284,9 +285,26 @@ class ClanBot(commands.Bot):
                             except discord.errors.Forbidden:
                                 pass
                             return
+                if str(payload.emoji) == '👌':
+                    for reaction in message.reactions:
+                        if str(reaction.emoji) == '❓':
+                            try:
+                                await reaction.remove(user)
+                            except discord.errors.Forbidden:
+                                pass
+                if str(payload.emoji) == '❓':
+                    for reaction in message.reactions:
+                        if str(reaction.emoji) == '👌':
+                            try:
+                                await reaction.remove(user)
+                            except discord.errors.Forbidden:
+                                pass
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
-                self.raid.add_people(message.id, user)
+                if str(payload.emoji) == '👌':
+                    self.raid.add_people(message.id, user)
+                elif str(payload.emoji) == '❓':
+                    self.raid.add_mb_goers(message.id, user)
                 if message.guild.me.guild_permissions.manage_roles:
                     role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
                     if role is not None and self.raid.is_goer(message, user):
@@ -295,9 +313,10 @@ class ClanBot(commands.Bot):
                 if user.dm_channel is None:
                     await user.create_dm()
                 if mode == 'manual':
-                    await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'], delete_after=30)
+                    if str(payload.emoji) == '👌':
+                        await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'], delete_after=30)
                     await self.raid.upd_dm(owner, message.id, self.translations[lang])
-                if mode == 'basic':
+                if mode == 'basic' or str(payload.emoji) == '❓':
                     await self.raid.update_group_msg(message, self.translations[lang])
                 return
 

@@ -42,6 +42,7 @@ class Group(commands.Cog):
         else:
             out = await message.channel.send(msg)
         await out.add_reaction('👌')
+        await out.add_reaction('❓')
         await out.add_reaction('❌')
         ctx.bot.raid.set_id(out.id, message.id)
         await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang])
