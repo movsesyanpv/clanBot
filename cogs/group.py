@@ -15,8 +15,9 @@ class Group(commands.Cog):
         await ctx.bot.raid.dm_lfgs(ctx.author)
         return
 
-    async def guild_lfg(self, ctx, message, lang):
-        ctx.bot.raid.add(message)
+    async def guild_lfg(self, ctx, lang, lfg_str=None):
+        message = ctx.message
+        ctx.bot.raid.add(message, lfg_str)
         role = ctx.bot.raid.get_cell('group_id', message.id, 'the_role')
         name = ctx.bot.raid.get_cell('group_id', message.id, 'name')
         time = datetime.fromtimestamp(ctx.bot.raid.get_cell('group_id', message.id, 'time'))
@@ -24,18 +25,26 @@ class Group(commands.Cog):
         description = ctx.bot.raid.get_cell('group_id', message.id, 'description')
         msg = "{}, {} {}\n{} {}\n{}".format(role, ctx.bot.translations[lang]['lfg']['go'], name,
                                             ctx.bot.translations[lang]['lfg']['at'], time, description)
+        if len(msg) > 2000:
+            msg = "{}, {} {}".format(role, ctx.bot.translations[lang]['lfg']['go'], name)
+            if len(msg) > 2000:
+                msg = role
+                if len(msg) > 2000:
+                    parts = msg.split(', ')
+                    msg = ''
+                    while len(msg) < 1900:
+                        msg = '{} {},'.format(msg, parts[0])
+                        parts.pop(0)
         if is_embed:
             embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[lang])
             out = await message.channel.send(content=msg)
             await out.edit(content=None, embed=embed)
         else:
             out = await message.channel.send(msg)
-        end_time = time + timedelta(seconds=ctx.bot.raid.get_cell('group_id', message.id, 'length'))
         await out.add_reaction('👌')
         await out.add_reaction('❌')
         ctx.bot.raid.set_id(out.id, message.id)
         await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang])
-        # self.sched.add_job(out.delete, 'date', run_date=end_time, id='{}_del'.format(out.id))
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
             await message.delete()
         return out.id
@@ -101,9 +110,23 @@ class Group(commands.Cog):
         at = ['default', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
         args = ctx.bot.raid.parse_args('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, a_type, mode, role).splitlines(), ctx.message, True)
         ts = datetime.fromtimestamp(args['time']).replace(tzinfo=ts.tzinfo)
-        await dm.send(translations['check']
-                      .format(args['name'], args['description'], ts, args['size'],
-                              args['length']/3600, at[args['is_embed']], args['group_mode'], role))
+        check_msg = translations['check'].format(args['name'], args['description'], ts, args['size'],
+                                                 args['length']/3600, at[args['is_embed']], args['group_mode'], role)
+        if len(check_msg) <= 2000:
+            await dm.send(check_msg)
+        else:
+            check_lines = check_msg.splitlines()
+            for line in check_lines:
+                if len(line) <= 2000:
+                    await dm.send(line)
+                else:
+                    line_parts = line.split(':')
+                    lines = ['{}:'.format(line_parts[0]), line_parts[1]]
+                    if len(line_parts) > 2:
+                        for arg_part in line_parts[2:]:
+                            lines[1] = '{}: {}'.format(lines[1], arg_part)
+                    await dm.send(lines[0])
+                    await dm.send(lines[1])
         msg = await self.bot.wait_for('message', check=check)
         if msg.content.lower() == translations['no']:
             await dm.send(translations['again'])
@@ -111,11 +134,9 @@ class Group(commands.Cog):
                 await ctx.message.delete()
             return False
 
-        tmp = await ctx.send('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, at[args['is_embed']], mode, role))
-        group_id = await self.guild_lfg(ctx, tmp, lang)
+        group_id = await self.guild_lfg(ctx, lang, 'lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.
+                                        format(name, description, time, size, length, at[args['is_embed']], mode, role))
         ctx.bot.raid.set_owner(ctx.author.id, group_id)
-        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
-            await ctx.message.delete()
 
         return group_id
 
@@ -124,7 +145,7 @@ class Group(commands.Cog):
     async def lfg(self, ctx):
         lang = ctx.bot.guild_lang(ctx.message.guild.id)
         if len(ctx.message.content.splitlines()) > 1:
-            group_id = await self.guild_lfg(ctx, ctx.message, lang)
+            group_id = await self.guild_lfg(ctx, lang)
         else:
             group_id = await self.dm_lfg(ctx, lang)
         if not group_id:

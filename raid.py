@@ -36,8 +36,11 @@ class LFG:
         self.conn = sqlite3.connect('lfg.db')
         self.c = self.conn.cursor()
 
-    def add(self, message: discord.Message):
-        content = message.content.splitlines()
+    def add(self, message: discord.Message, lfg_string=None):
+        if lfg_string is None:
+            content = message.content.splitlines()
+        else:
+            content = lfg_string.splitlines()
 
         args = self.parse_args(content, message, is_init=True)
         group_id = message.id
@@ -450,6 +453,12 @@ class LFG:
             msg = "{}, {} {}".format(role, translations['lfg']['go'], name)
             if len(msg) > 2000:
                 msg = role
+                if len(msg) > 2000:
+                    parts = msg.split(', ')
+                    msg = ''
+                    while len(msg) < 1900:
+                        msg = '{} {},'.format(msg, parts[0])
+                        parts.pop(0)
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
         goers = eval(goers.fetchone()[0])
         wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
