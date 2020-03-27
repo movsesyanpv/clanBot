@@ -621,7 +621,8 @@ class D2data:
     async def get_xur_loc(self):
         url = 'https://wherethefuckisxur.com/'
         r = await self.session.get(url)
-        soup = BeautifulSoup(r.text, features="html.parser")
+        r_text = await r.text()
+        soup = BeautifulSoup(r_text, features="html.parser")
         modifier_list = soup.find('div', {'class': 'xur-location'})
         loc = modifier_list.find('h1', {'class': 'page-title'})
         location = loc.text.split(' >')
