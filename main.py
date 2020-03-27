@@ -266,11 +266,12 @@ class ClanBot(commands.Bot):
                         if dm_id != 0:
                             dm_message = await owner.dm_channel.fetch_message(dm_id)
                             await dm_message.delete()
-                    if message.guild.me.guild_permissions.manage_channels and message.guild.me.guild_permissions.manage_roles:
+                    if message.guild.me.guild_permissions.manage_roles:
                         role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
-                        group_ch = message.guild.get_channel(self.raid.get_cell('group_id', message.id, 'group_channel'))
                         if role is not None:
                             await role.delete(reason='LFG deletion')
+                    if message.guild.me.guild_permissions.manage_channels:
+                        group_ch = message.guild.get_channel(self.raid.get_cell('group_id', message.id, 'group_channel'))
                         if group_ch is not None:
                             if group_ch.permissions_for(message.guild.me).manage_channels:
                                 await group_ch.delete(reason='LFG deletion')

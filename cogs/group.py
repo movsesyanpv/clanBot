@@ -155,22 +155,32 @@ class Group(commands.Cog):
             group_id = await self.dm_lfg(ctx, lang)
         if not group_id:
             return
-        if ctx.guild.me.guild_permissions.manage_channels and ctx.guild.me.guild_permissions.manage_roles:
-            name = ctx.bot.raid.get_cell('group_id', group_id, 'name')
-            hashids = Hashids()
-            group = hashids.encode(group_id)
-            group_role = await ctx.guild.create_role(name='{} | {}'.format(name, group), mentionable=True, reason='LFG creation')
-            overwrites = {
-                ctx.guild.default_role: discord.PermissionOverwrite(connect=False, view_channel=False),
-                group_role: discord.PermissionOverwrite(connect=True, view_channel=True),
-                ctx.guild.me: discord.PermissionOverwrite(connect=True, manage_channels=True, view_channel=True)
-            }
-            group_ch = await ctx.guild.create_voice_channel(name='{} | {}'.format(name, group), reason='LFG creation', category=ctx.channel.category, overwrites=overwrites)
-            ctx.bot.raid.set_group_space(group_id, group_role.id, group_ch.id)
+        name = ctx.bot.raid.get_cell('group_id', group_id, 'name')
+        hashids = Hashids()
+        group = hashids.encode(group_id)
+        if ctx.guild.me.guild_permissions.manage_roles:
+            group_role = await ctx.guild.create_role(name='{} | {}'.format(name, group), mentionable=True,
+                                                     reason='LFG creation')
+            group_ch_id = 0
+            if ctx.guild.me.guild_permissions.manage_channels:
+                overwrites = {
+                    ctx.guild.default_role: discord.PermissionOverwrite(connect=False, view_channel=False),
+                    group_role: discord.PermissionOverwrite(connect=True, view_channel=True),
+                    ctx.guild.me: discord.PermissionOverwrite(connect=True, manage_channels=True, view_channel=True)
+                }
+                group_ch = await ctx.guild.create_voice_channel(name='{} | {}'.format(name, group),
+                                                                reason='LFG creation', category=ctx.channel.category,
+                                                                overwrites=overwrites)
+                group_ch_id = group_ch.id
+            ctx.bot.raid.set_group_space(group_id, group_role.id, group_ch_id)
 
     @commands.command(aliases=['editlfg', 'editLfg', 'editLFG'])
     @commands.guild_only()
-    async def edit_lfg(self, ctx, arg_id, *args):
+    async def edit_lfg(self, ctx, arg_id=None, *args):
+        if arg_id is None:
+            await ctx.channel.send('Not supported yet')
+            #TODO: notify participants about edits.
+            return
         message = ctx.message
         lang = ctx.bot.guild_lang(ctx.message.guild.id)
         text = message.content.split()
