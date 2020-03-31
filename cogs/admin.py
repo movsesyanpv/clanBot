@@ -137,33 +137,42 @@ class Admin(commands.Cog):
             pass
         elif command.name == 'top':
             translations = help_translations['commands'][command.name]
+            metric_tables = ['seasonsmetrics', 'accountmetrics', 'cruciblemetrics', 'destinationmetrics',
+                             'gambitmetrics', 'raidsmetrics', 'strikesmetrics', 'trialsofosirismetrics']
             help_msg = '{}'.format(translations['info'])
             await channel.send(help_msg)
-            pass
-            metric_list = []
+
             try:
                 internal_db = sqlite3.connect('internal.db')
                 internal_cursor = internal_db.cursor()
-                internal_cursor.execute('''SELECT name, hash FROM metrics''')
-                metrics = internal_cursor.fetchall()
-                if len(metrics) > 0:
-                    for metric in metrics:
-                        metric_list.append(['`{}'.format(metric[0]), '`https://data.destinysets.com/i/Metric:{}'.format(metric[1])])
+                help_msg = ''
+                for table in metric_tables:
+                    metric_list = []
+                    internal_cursor.execute('''SELECT name, hash FROM {}'''.format(table))
+                    metrics = internal_cursor.fetchall()
+                    if len(metrics) > 0:
+                        for metric in metrics:
+                            if str(metric[0]) != 'None':
+                                metric_list.append(['`{}'.format(metric[0]), '`https://data.destinysets.com/i/Metric:{}'.format(metric[1])])
+                        if len(metric_list) > 0:
+                            help_msg = '{}**{}**'.format(help_msg, translations[table])
+                            help_msg = '{}\n{}\n'.format(help_msg, tabulate(metric_list, tablefmt='plain', colalign=('left', 'left')))
+                if len(help_msg) > 1:
+                    help_msg = help_msg[:-1]
             except sqlite3.OperationalError:
                 pass
-            help_msg = '{}'.format(tabulate(metric_list, tablefmt='plain', colalign=('left', 'left')))
             if len(help_msg) > 2000:
                 help_lines = help_msg.splitlines()
-                help_msg = ''
+                help_msg = help_lines[0]
                 while len(help_lines) > 1:
-                    if len(help_msg) + 1 + len(help_lines[0]) <= 2000:
-                        help_msg = '{}\n{}'.format(help_msg, help_lines[0])
+                    if len(help_msg) + 1 + len(help_lines[1]) <= 2000:
+                        help_msg = '{}\n{}'.format(help_msg, help_lines[1])
+                        if len(help_lines) > 1 and help_lines[1] in help_msg:
+                            help_lines.pop(1)
                     else:
                         await channel.send(help_msg)
                         help_msg = ''
-                    if len(help_lines) > 1:
-                        help_lines.pop(0)
-                    else:
+                    if len(help_lines) == 0:
                         break
             await channel.send(help_msg)
             pass

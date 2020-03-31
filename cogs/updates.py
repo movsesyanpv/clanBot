@@ -101,8 +101,28 @@ class Updates(commands.Cog):
                 try:
                     internal_db = sqlite3.connect('internal.db')
                     internal_cursor = internal_db.cursor()
-                    internal_cursor.execute('''SELECT hash FROM metrics WHERE name=?''', (metric.lower(), ))
+                    internal_cursor.execute('''SELECT hash FROM seasonsmetrics WHERE name=?
+                    UNION ALL
+                    SELECT hash FROM accountmetrics WHERE name=?
+                    UNION ALL
+                    SELECT hash FROM cruciblemetrics WHERE name=?
+                    UNION ALL
+                    SELECT hash FROM destinationmetrics WHERE name=?
+                    UNION ALL
+                    SELECT hash FROM gambitmetrics WHERE name=?
+                    UNION ALL
+                    SELECT hash FROM raidsmetrics WHERE name=?
+                    UNION ALL 
+                    SELECT hash FROM strikesmetrics WHERE name=?
+                    UNION ALL
+                    SELECT hash FROM trialsofosirismetrics WHERE name=? ''', (metric.lower(), metric.lower(), metric.lower(),
+                                                                     metric.lower(), metric.lower(), metric.lower(),
+                                                                     metric.lower(), metric.lower()))
                     metric_id = internal_cursor.fetchone()
+                    if 'speed' in metric.lower():
+                        is_time = True
+                    else:
+                        is_time = False
                     if metric_id is not None:
                         if len(metric_id) > 0:
                             metric = metric_id[0]
@@ -116,7 +136,7 @@ class Updates(commands.Cog):
                         await ctx.message.delete()
                     return
             await ctx.channel.send('Getting the leaderboard, could take a long time.', delete_after=30)
-            top_list = await ctx.bot.data.get_clan_leaderboard(clan_id, metric, number)
+            top_list = await ctx.bot.data.get_clan_leaderboard(clan_id, metric, number, is_time)
             lang = ctx.bot.guild_lang(ctx.message.guild.id)
             top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
             max_len = min(number, len(top_list))

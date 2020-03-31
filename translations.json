@@ -136,7 +136,15 @@
                     "info": "Привязать клан к серверу. Возможна привязка по названию либо по числовому идентификатору клана. При успешном поиске клана бот выведет имя клана и его идентификатор."
                 },
                 "top": {
-                    "info": "Вывести топ (до `number`) игроков клана по одной из метрик. Если `number` не указан, то выводится топ 10. Информация о метрике доступна по ссылке. Возможно использование хешей метрик для получения статистики."
+                    "info": "Вывести топ (до `number`) игроков клана по одной из метрик. Если `number` не указан, то выводится топ 10. Информация о метрике доступна по ссылке. Возможно использование хешей метрик для получения статистики.",
+                    "seasonsmetrics": "Сезонные",
+                    "accountmetrics": "Аккаунт",
+                    "cruciblemetrics": "Горнило",
+                    "destinationmetrics": "Пункты назначения",
+                    "gambitmetrics": "Гамбит",
+                    "raidsmetrics": "Рейды",
+                    "strikesmetrics": "Налеты",
+                    "trialsofosirismetrics": "Испытания Осириса"
                 },
                 "setlang": {
                     "info": "Доступны языки `en`, `ru`. Доступно для администраторов сервера."
@@ -313,7 +321,15 @@
                     "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
                 },
                 "top": {
-                    "info": "Print top players for one of the available metrics. Metric's description is available through the link. You can also pass the metric's hash to the command."
+                    "info": "Print top players for one of the available metrics. Metric's description is available through the link. You can also pass the metric's hash to the command.",
+                    "seasonsmetrics": "Seasons",
+                    "accountmetrics": "Account",
+                    "cruciblemetrics": "Crucible",
+                    "destinationmetrics": "Destinations",
+                    "gambitmetrics": "Gambit",
+                    "raidsmetrics": "Raids",
+                    "strikesmetrics": "Strikes",
+                    "trialsofosirismetrics": "Trials of Osiris"
                 },
                 "setlang": {
                     "info": "Available languages are `en`, `ru`. Available only to the server's admins."
