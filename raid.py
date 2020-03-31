@@ -315,6 +315,12 @@ class LFG:
         size = self.get_cell('group_id', group_id, 'size')
         group_mode = self.get_cell('group_id', group_id, 'group_mode')
 
+        if user.id == self.get_cell('group_id', group_id, 'owner'):
+            goers = [user.mention, *goers]
+            if len(goers) > size:
+                wanters = [goers[-1], *wanters]
+                goers.pop(-1)
+
         if len(goers) < size and group_mode == 'basic':
             if user.mention not in goers:
                 goers.append(user.mention)

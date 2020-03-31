@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.11.4'
+    version = '2.11.5'
     cog_list = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
@@ -317,7 +317,7 @@ class ClanBot(commands.Bot):
                     if str(payload.emoji) == '👌':
                         await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'], delete_after=30)
                     await self.raid.upd_dm(owner, message.id, self.translations[lang])
-                if mode == 'basic' or str(payload.emoji) == '❓':
+                if mode == 'basic' or str(payload.emoji) == '❓' or user == owner:
                     await self.raid.update_group_msg(message, self.translations[lang])
                 return
 
