@@ -81,7 +81,7 @@ class Admin(commands.Cog):
         usage='cog',
         aliases=['man', 'hlep', 'чотут', 'ман', 'инструкция', 'ruhelp', 'helpru']
     )
-    async def help_command(self, ctx, cog='all', lang=None):
+    async def help_command(self, ctx, command_name='all', lang=None):
         channel = ctx.message.channel
         if ctx.message.guild is not None and lang is None:
             lang = ctx.bot.guild_lang(ctx.message.guild.id)
@@ -94,19 +94,28 @@ class Admin(commands.Cog):
         else:
             name = ctx.bot.user.name
         help_translations = ctx.bot.translations[lang]['help']
-        cog = cog.lower()
+        command_name = command_name.lower()
         command_list = []
         help_msg = '`{} v{}`'.format(name, ctx.bot.version)
         await channel.send(help_msg)
         aliases = ''
-        if cog != 'all':
-            command = ctx.bot.all_commands[cog]
+        if command_name != 'all':
+            command = ctx.bot.all_commands[command_name]
             aliases = command.name
             for alias in command.aliases:
                 aliases = '{}, {}'.format(aliases, alias)
             if len(command.aliases) > 0:
                 await channel.send(help_translations['aliases'].format(aliases))
-        if cog == 'all' or 'help' in aliases:
+            command_string = command.name
+            for arg in command.clean_params:
+                if command.name == 'setclan' and arg == 'args':
+                    continue
+                if 'empty' not in str(command.clean_params[arg].default):
+                    command_string = '{} [{}]'.format(command_string, arg)
+                else:
+                    command_string = '{} {{{}}}'.format(command_string, arg)
+            await channel.send(help_translations['parameters'].format(command_string))
+        if command_name == 'all' or 'help' in aliases:
             help_msg = '{}\n'.format(help_translations['list'])
             for command in ctx.bot.commands:
                 if command.name in help_translations.keys():
@@ -191,15 +200,6 @@ class Admin(commands.Cog):
             await channel.send(help_msg)
             pass
         else:
-            command_string = command.name
-            for arg in command.clean_params:
-                if command.name == 'setclan' and arg == 'args':
-                    continue
-                if 'empty' not in str(command.clean_params[arg].default):
-                    command_string = '{} [{}]'.format(command_string, arg)
-                else:
-                    command_string = '{} {{{}}}'.format(command_string, arg)
-            await channel.send(help_translations['parameters'].format(command_string))
             if command.name in help_translations['commands'].keys():
                 translations = help_translations['commands'][command.name]
                 command_desc = translations['info']
