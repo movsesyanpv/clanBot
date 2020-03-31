@@ -990,10 +990,23 @@ class D2data:
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 if str(r_json['hash']) in self.translations[lang]['levi_order'] and \
                         not r_json['matchmaking']['requiresGuardianOath']:
+                    challenges = await self.get_modifiers(lang, item_hash)
+                    if challenges:
+                        challenge = set(challenges[0]['name'].lower().replace('"', '').split(' '))
+                        order_strings = self.translations[lang]['levi_order'][str(r_json['hash'])].splitlines()
+                        levi_str = ''
+                        for string in order_strings:
+                            if challenge.intersection(set(string.lower().split(' '))):
+                                levi_str = '{}**{}**\n'.format(levi_str, string)
+                            else:
+                                levi_str = '{}{}\n'.format(levi_str, string)
+                        levi_str = levi_str[:-1]
+                    else:
+                        levi_str = self.translations[lang]['levi_order'][str(r_json['hash'])]
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
-                        'value': self.translations[lang]['levi_order'][str(r_json['hash'])]
+                        'value': levi_str
                     }
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]["EoW"] in r_json['displayProperties']['name'] and \
