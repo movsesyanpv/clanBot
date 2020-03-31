@@ -87,12 +87,12 @@
         "swords": "Мечи",
         "r_desc": "Отправляйтесь в место, которое Скиталец называет \"Добычей\", и предстаньте перед судом высших сил.",
         "levi_order": {
-            "1685065161": "1. Турнир\n2. Сады удовольствий\n3. Королевские бассейны",
-            "757116822": "1. Турнир\n2. Королевские бассейны\n3. Сады удовольствий",
-            "417231112": "1. Сады удовольствий\n2. Турнир\n3. Королевские бассейны",
-            "3446541099": "1. Сады удовольствий\n2. Королевские бассейны\n3. Турнир",
-            "2449714930": "1. Королевские бассейны\n2. Турнир\n3. Сады удовольствий",
-            "3879860661": "1. Королевские бассейны\n2. Сады удовольствий\n3. Турнир"
+            "1685065161": "1. Турнир\n2. Сады удовольствий\n3. Королевские бассейны\n4. Трон",
+            "757116822": "1. Турнир\n2. Королевские бассейны\n3. Сады удовольствий\n4. Трон",
+            "417231112": "1. Сады удовольствий\n2. Турнир\n3. Королевские бассейны\n4. Трон",
+            "3446541099": "1. Сады удовольствий\n2. Королевские бассейны\n3. Турнир\n4. Трон",
+            "2449714930": "1. Королевские бассейны\n2. Турнир\n3. Сады удовольствий\n4. Трон",
+            "3879860661": "1. Королевские бассейны\n2. Сады удовольствий\n3. Турнир\n4. Трон"
         },
         "lairs": "Пожиратель Миров и Звездный Шпиль",
         "EoW": "пожиратель миров: Престиж",
@@ -276,12 +276,12 @@
         "swords": "The Swords",
         "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers.",
         "levi_order": {
-            "1685065161": "1. Gauntlet\n2. Pleasure Gardens\n3. Royal Pools",
-            "757116822": "1. Gauntlet\n2. Royal Pools\n3. Pleasure Gardens",
-            "417231112": "1. Pleasure Gardens\n2. Gauntlet\n3. Royal Pools",
-            "3446541099": "1. Pleasure Gardens\n2. Royal Pools\n3. Gauntlet",
-            "2449714930": "1. Royal Pools\n2. Gauntlet\n3. Pleasure Gardens",
-            "3879860661": "1. Royal Pools\n2. Pleasure Gardens\n3. Gauntlet"
+            "1685065161": "1. The Gauntlet\n2. Pleasure Gardens\n3. Royal Pools\n4. Throne",
+            "757116822": "1. The Gauntlet\n2. Royal Pools\n3. Pleasure Gardens\n4. Throne",
+            "417231112": "1. Pleasure Gardens\n2. The Gauntlet\n3. Royal Pools\n4. Throne",
+            "3446541099": "1. Pleasure Gardens\n2. Royal Pools\n3. The Gauntlet\n4. Throne",
+            "2449714930": "1. Royal Pools\n2. The Gauntlet\n3. Pleasure Gardens\n4. Throne",
+            "3879860661": "1. Royal Pools\n2. Pleasure Gardens\n3. The Gauntlet\n4. Throne"
         },
         "lairs": "Eater of Worlds and Spire of Stars",
         "EoW": "Eater of Worlds: Prestige",
