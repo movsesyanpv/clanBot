@@ -1240,7 +1240,7 @@ class D2data:
         member_type = member['destinyUserInfo']['membershipType']
         return [member['destinyUserInfo']['LastSeenDisplayName'], await self.get_player_metric(member_type, member_id, metric)]
 
-    async def get_clan_leaderboard(self, clan_id, metric, number, is_time=False):
+    async def get_clan_leaderboard(self, clan_id, metric, number, is_time=False, is_kda=False):
         url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
         clan_resp = await self.get_bungie_json('clan members', url, change_msg=False)
         if clan_resp:
@@ -1281,6 +1281,10 @@ class D2data:
                     for place in indexed_list:
                         index = indexed_list.index(place)
                         indexed_list[index][2] = str(timedelta(minutes=(indexed_list[index][2]/60000))).split('.')[0]
+                if is_kda:
+                    for place in indexed_list:
+                        index = indexed_list.index(place)
+                        indexed_list[index][2] = indexed_list[index][2]/100
 
                 return indexed_list[:old_i]
             except KeyError:

@@ -119,6 +119,10 @@ class Updates(commands.Cog):
                                                                      metric.lower(), metric.lower(), metric.lower(),
                                                                      metric.lower(), metric.lower()))
                     metric_id = internal_cursor.fetchone()
+                    if 'kda' in metric.lower():
+                        is_kda = True
+                    else:
+                        is_kda = False
                     if 'speed' in metric.lower():
                         is_time = True
                     else:
@@ -136,7 +140,7 @@ class Updates(commands.Cog):
                         await ctx.message.delete()
                     return
             await ctx.channel.send('Getting the leaderboard, could take a long time.', delete_after=30)
-            top_list = await ctx.bot.data.get_clan_leaderboard(clan_id, metric, number, is_time)
+            top_list = await ctx.bot.data.get_clan_leaderboard(clan_id, metric, number, is_time, is_kda)
             lang = ctx.bot.guild_lang(ctx.message.guild.id)
             top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
             max_len = min(number, len(top_list))
