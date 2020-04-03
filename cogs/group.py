@@ -132,10 +132,10 @@ class Group(commands.Cog):
                     await dm.send(lines[0])
                     await dm.send(lines[1])
         msg = await self.bot.wait_for('message', check=check)
+        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+            await ctx.message.delete()
         if msg.content.lower() == translations['no']:
             await dm.send(translations['again'])
-            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
-                await ctx.message.delete()
             return False
 
         group_id = await self.guild_lfg(ctx, lang, 'lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.
