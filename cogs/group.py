@@ -41,9 +41,6 @@ class Group(commands.Cog):
             await out.edit(content=None, embed=embed)
         else:
             out = await message.channel.send(msg)
-        await out.add_reaction('👌')
-        await out.add_reaction('❓')
-        await out.add_reaction('❌')
         ctx.bot.raid.set_id(out.id, message.id)
         await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang])
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
@@ -173,6 +170,10 @@ class Group(commands.Cog):
                                                                 overwrites=overwrites)
                 group_ch_id = group_ch.id
             ctx.bot.raid.set_group_space(group_id, group_role.id, group_ch_id)
+        out = await ctx.channel.fetch_message(group_id)
+        await out.add_reaction('👌')
+        await out.add_reaction('❓')
+        await out.add_reaction('❌')
 
     @commands.command(aliases=['editlfg', 'editLfg', 'editLFG'])
     @commands.guild_only()
