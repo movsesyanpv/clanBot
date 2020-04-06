@@ -378,7 +378,7 @@ class LFG:
             tz = 'UTC+03:00'
         tz_elements = tz.strip('UTC+').split(':')
         ts = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
-        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time')).replace(tzinfo=ts)
+        time = datetime.fromtimestamp(int(self.get_cell('group_id', message.id, 'time'))).replace(tzinfo=ts)
         description = self.get_cell('group_id', message.id, 'description')
         dm_id = self.get_cell('group_id', message.id, 'dm_message')
         size = self.get_cell('group_id', message.id, 'size')
