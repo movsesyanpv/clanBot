@@ -61,7 +61,8 @@
             "length": "Длительность",
             "total_goers": "Всего участников",
             "total_wanters": "Размер резерва",
-            "date": "Дата и время начала"
+            "date": "Дата и время начала",
+            "footer": "ID: {} | Автор: {}"
         },
         "xur": {
             "Earth": "Земля",
@@ -250,7 +251,8 @@
             "length": "Duration",
             "total_goers": "Total participants",
             "total_wanters": "Total reserve",
-            "date": "Time of start (day-month-year hour:minute timezone)"
+            "date": "Time of start (day-month-year hour:minute timezone)",
+            "footer": "ID: {} | Owner: {}"
         },
         "xur": {
             "Earth": "Earth",

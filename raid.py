@@ -390,6 +390,8 @@ class LFG:
         mb_goers = eval(mb_goers.fetchone()[0])
         length = self.get_cell('group_id', message.id, 'length')
         group_mode = self.get_cell('group_id', message.id, 'group_mode')
+        owner = self.get_cell('group_id', message.id, 'owner')
+        owner = message.guild.get_member(owner)
 
         if is_embed == 1:
             self.lfg_categories[self.lfg_i[is_embed]] = {
@@ -406,7 +408,7 @@ class LFG:
             'type': 'rich',
             'title': name,
             'footer': {
-                'text': 'ID: {}'.format(self.hashids.encode(message.id))
+                'text': translations['lfge']['footer'].format(self.hashids.encode(message.id), owner.nick)
             }
         }
 
@@ -524,7 +526,7 @@ class LFG:
 
         role = self.get_cell('group_id', message.id, 'the_role')
         name = self.get_cell('group_id', message.id, 'name')
-        time = datetime.fromtimestamp(int(self.get_cell('group_id', message.id, 'time')))
+        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
         description = self.get_cell('group_id', message.id, 'description')
         msg = "{}, {} {}\n{} {}\n{}". \
             format(role, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
