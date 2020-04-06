@@ -44,7 +44,10 @@ class Group(commands.Cog):
         ctx.bot.raid.set_id(out.id, message.id)
         await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang])
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
-            await message.delete()
+            try:
+                await message.delete()
+            except discord.NotFound:
+                pass
         return out.id
 
     async def dm_lfg(self, ctx, lang):
@@ -130,7 +133,10 @@ class Group(commands.Cog):
                     await dm.send(lines[1])
         msg = await self.bot.wait_for('message', check=check)
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
-            await ctx.message.delete()
+            try:
+                await ctx.message.delete()
+            except discord.NotFound:
+                pass
         if msg.content.lower() == translations['no']:
             await dm.send(translations['again'])
             return False
