@@ -147,6 +147,7 @@ class ClanBot(commands.Bot):
             await self.close()
 
     async def on_ready(self):
+        await self.dm_owner('on_ready fired')
         await self.data.token_update()
         await self.update_history()
         await self.update_langs()
