@@ -83,6 +83,11 @@ class Updates(commands.Cog):
                 ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
                                              (clan_json['Response']['detail']['name'], clan_json['Response']['detail']['groupId'], ctx.guild.id))
                 ctx.bot.guild_db.commit()
+                if ctx.guild.me.guild_permissions.change_nickname:
+                    try:
+                        await ctx.guild.me.edit(nick='{}bot'.format(clan_json['Response']['detail']['clanInfo']['clanCallsign']), reason='clan setup')
+                    except KeyError:
+                        pass
         else:
             await ctx.channel.send('{}: {}'.format(clan_id, clan_json['Message']), delete_after=10)
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
