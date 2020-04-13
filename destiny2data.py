@@ -978,10 +978,15 @@ class D2data:
             first_reset_time = 1580230800
             seconds_since_first = time.time() - first_reset_time
             weeks_since_first = seconds_since_first // 604800
-            last_wish_challenges = [1250327262, 3871581136, 1568895666, 4007940282, 2836954349]
-            sotp_challenges = [1348944144, 3415614992, 1381881897]
-            cos_challenges = [2459033425, 2459033426, 2459033427]
             eow_loadout = int(weeks_since_first % 6)
+
+            hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
+                format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
+            hawthorne_resp = await self.get_bungie_json('spider', hawthorne_url, self.vendor_params)
+            if not hawthorne_resp:
+                return
+            hawthorne_json = await hawthorne_resp.json()
+            resp_time = datetime.utcnow().isoformat()
 
             activities_json = await activities_resp.json()
             for key in activities_json['Response']['activities']['data']['availableActivities']:
@@ -1033,7 +1038,7 @@ class D2data:
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    curr_challenge = last_wish_challenges[int(weeks_since_first % 5)]
+                    curr_challenge = hawthorne_json['Response']['sales']['data']['276']['itemHash']
                     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
                                                                     language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
@@ -1045,7 +1050,7 @@ class D2data:
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    curr_challenge = sotp_challenges[int(weeks_since_first % 3)]
+                    curr_challenge = hawthorne_json['Response']['sales']['data']['281']['itemHash']
                     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
                                                                     language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
@@ -1057,7 +1062,7 @@ class D2data:
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    curr_challenge = cos_challenges[int(weeks_since_first % 3)]
+                    curr_challenge = hawthorne_json['Response']['sales']['data']['285']['itemHash']
                     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
                                                                     language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
