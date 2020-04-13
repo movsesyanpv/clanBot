@@ -993,10 +993,12 @@ class D2data:
                     challenges = await self.get_modifiers(lang, item_hash)
                     if challenges:
                         challenge = set(challenges[0]['name'].lower().replace('"', '').split(' '))
+                        challenge.discard('the')
                         order_strings = self.translations[lang]['levi_order'][str(r_json['hash'])].splitlines()
                         levi_str = ''
                         for string in order_strings:
-                            if challenge.intersection(set(string.lower().split(' '))):
+                            intersection = challenge.intersection(set(string.lower().split(' ')))
+                            if intersection:
                                 levi_str = '{}**{}**\n'.format(levi_str, string)
                             else:
                                 levi_str = '{}{}\n'.format(levi_str, string)
