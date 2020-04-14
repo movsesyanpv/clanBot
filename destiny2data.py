@@ -979,6 +979,12 @@ class D2data:
             seconds_since_first = time.time() - first_reset_time
             weeks_since_first = seconds_since_first // 604800
             eow_loadout = int(weeks_since_first % 6)
+            last_wish_challenges = [1250327262, 3871581136, 1568895666, 4007940282, 2836954349]
+            sotp_challenges = [1348944144, 3415614992, 1381881897]
+            cos_challenges = [2459033425, 2459033426, 2459033427]
+            lw_ch = 0
+            sotp_ch = 0
+            cos_ch = 0
 
             hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
@@ -987,6 +993,13 @@ class D2data:
                 return
             hawthorne_json = await hawthorne_resp.json()
             resp_time = datetime.utcnow().isoformat()
+            for cat in hawthorne_json['Response']['sales']['data']:
+                if hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in last_wish_challenges:
+                    lw_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+                elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in sotp_challenges:
+                    sotp_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+                elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in cos_challenges:
+                    cos_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
 
             activities_json = await activities_resp.json()
             for key in activities_json['Response']['activities']['data']['availableActivities']:
@@ -1032,37 +1045,37 @@ class D2data:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath']:
+                        not r_json['matchmaking']['requiresGuardianOath'] and lw_ch != 0:
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    curr_challenge = hawthorne_json['Response']['sales']['data']['276']['itemHash']
+                    curr_challenge = lw_ch
                     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
                                                                     language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath']:
+                        not r_json['matchmaking']['requiresGuardianOath'] and sotp_ch != 0:
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    curr_challenge = hawthorne_json['Response']['sales']['data']['281']['itemHash']
+                    curr_challenge = sotp_ch
                     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
                                                                     language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['CoS'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath']:
+                        not r_json['matchmaking']['requiresGuardianOath'] and cos_ch != 0:
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    curr_challenge = hawthorne_json['Response']['sales']['data']['285']['itemHash']
+                    curr_challenge = cos_ch
                     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
                                                                     language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
