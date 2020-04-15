@@ -1,6 +1,7 @@
 from discord.ext import commands
 import importlib
 import discord
+import json
 from tabulate import tabulate
 from datetime import datetime, timedelta, timezone
 import updater
@@ -74,6 +75,30 @@ class Admin(commands.Cog):
         n = await ctx.bot.lfg_cleanup(days)
 
         await ctx.message.channel.send(msg.format(n))
+
+    @commands.command(
+        description='Get Bungie JSON for the API path'
+    )
+    @commands.is_owner()
+    async def bungierequest(self, ctx, path):
+        resp = await ctx.bot.data.get_bungie_json(path, 'https://www.bungie.net/Platform/{}'.format(path), change_msg=False)
+        resp_json = await resp.json()
+        msg = '```{}```'.format(json.dumps(resp_json, indent=4, ensure_ascii=False))
+        if len(msg) <= 2000:
+            await ctx.channel.send(msg)
+        else:
+            msg_lines = json.dumps(resp_json, indent=4, ensure_ascii=False).splitlines()
+            msg = '```'
+            for line in msg_lines:
+                if len(msg) + len(line) <= 1990:
+                    msg = '{}{}\n'.format(msg, line)
+                else:
+                    msg = '{}```'.format(msg)
+                    await ctx.channel.send(msg)
+                    msg = '```{}\n'.format(line)
+            if len(msg) > 0:
+                msg = '{}```'.format(msg)
+                await ctx.channel.send(msg)
 
     @commands.command(
         name='help',
