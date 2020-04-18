@@ -237,7 +237,7 @@ class ClanBot(commands.Bot):
             lang = self.guild_lang(payload.guild_id)
             await self.raid.update_group_msg(message, self.translations[lang])
             if self.raid.get_cell('group_id', message.id, 'group_mode') == 'manual' and str(payload.emoji) == '👌':
-                await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'])
+                await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'].format(user.mention))
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
                 await self.raid.upd_dm(owner, message.id, self.translations[lang])
@@ -316,7 +316,7 @@ class ClanBot(commands.Bot):
                     await user.create_dm()
                 if mode == 'manual':
                     if str(payload.emoji) == '👌':
-                        await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'], delete_after=30)
+                        await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'].format(user.mention), delete_after=30)
                     await self.raid.upd_dm(owner, message.id, self.translations[lang])
                 if mode == 'basic' or str(payload.emoji) == '❓' or user == owner:
                     await self.raid.update_group_msg(message, self.translations[lang])
@@ -333,7 +333,7 @@ class ClanBot(commands.Bot):
                     message = await self.fetch_channel(channel)
                     message = await message.fetch_message(lfg_message)
                     await self.raid.add_going(lfg_message, number)
-                    lang = self.guild_lang(payload.guild_id)
+                    lang = self.guild_lang(message.guild.id)
                     await self.raid.update_group_msg(message, self.translations[lang])
                     owner = self.raid.get_cell('group_id', message.id, 'owner')
                     owner = self.get_user(owner)
