@@ -154,6 +154,8 @@ class ClanBot(commands.Bot):
 
     async def on_ready(self):
         await self.dm_owner('on_ready fired')
+        game = discord.Game('v{}'.format(self.version))
+        await self.change_presence(status=discord.Status.dnd, activity=game)
         await self.data.token_update()
         await self.update_history()
         await self.update_langs()
@@ -501,9 +503,6 @@ class ClanBot(commands.Bot):
         self.guild_db.commit()
 
     async def update_langs(self):
-        game = discord.Game('updating langs')
-        await self.change_presence(activity=game)
-
         for server in self.guilds:
             try:
                 self.guild_cursor.execute('''CREATE TABLE language (server_id integer, lang text, server_name text)''')
@@ -528,12 +527,7 @@ class ClanBot(commands.Bot):
 
         self.update_clans()
 
-        game = discord.Game('v{}'.format(self.version))
-        await self.change_presence(activity=game)
-
     async def update_history(self):
-        game = discord.Game('updating history')
-        await self.change_presence(activity=game)
         for server in self.guilds:
             try:
                 self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer)''')
@@ -547,13 +541,9 @@ class ClanBot(commands.Bot):
                     self.guild_cursor.execute("INSERT or IGNORE INTO history VALUES (?,?)", init_values)
                 except sqlite3.OperationalError:
                     pass
-        game = discord.Game('v{}'.format(self.version))
-        await self.change_presence(activity=game)
 
     async def universal_update(self, getter, name, time_to_delete=None, channels=None, post=True, get=True):
         await self.wait_until_ready()
-        game = discord.Game('updating {}'.format(name))
-        await self.change_presence(activity=game, status=discord.Status.dnd)
 
         lang = self.langs
 
@@ -561,8 +551,6 @@ class ClanBot(commands.Bot):
             channels = self.notifiers
 
         if len(channels) == 0 and not get:
-            game = discord.Game('v{}'.format(self.version))
-            await self.change_presence(activity=game)
             return
 
         if get:
@@ -574,20 +562,13 @@ class ClanBot(commands.Bot):
                 if owner.dm_channel is None:
                     await owner.create_dm()
                 await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-                game = discord.Game('v{}'.format(self.version))
-                await self.change_presence(activity=game)
                 return
 
             for locale in self.args.lang:
                 if not self.data.data[locale][name]:
-                    game = discord.Game('v{}'.format(self.version))
-                    await self.change_presence(activity=game)
                     return
         if post:
             await self.post_embed(name, self.data.data, time_to_delete, channels)
-
-        game = discord.Game('v{}'.format(self.version))
-        await self.change_presence(activity=game, status=discord.Status.online)
 
     async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
         for server in self.guilds:
