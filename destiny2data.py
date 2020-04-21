@@ -362,6 +362,27 @@ class D2data:
                     self.data[lang]['silver']['fields'].append(tmp_fields[i])
             self.data[lang]['silver']['timestamp'] = resp_time
 
+    async def get_global_alerts(self, langs):
+        alert_url = 'https://www.bungie.net/Platform/GlobalAlerts/'
+        alert_resp = await self.get_bungie_json('alerts', alert_url, {}, '')
+        alert_json = await alert_resp.json()
+
+        for lang in langs:
+            self.data[lang]['alerts'].clear()
+            for alert in alert_json['Response']:
+                alert_embed = {
+                    'color': 0xff0000,
+                    'type': "rich",
+                    'description': alert['AlertHtml'],
+                    'timestamp': '{}+00:00'.format(alert['AlertTimestamp'][:-1]),
+                    'author': {
+                        'name': 'Bungie Help',
+                        'url': alert['AlertLink'],
+                        'icon_url': 'https://pbs.twimg.com/profile_images/887332604143312896/ydVDSfjE_400x400.jpg'
+                    }
+                }
+                self.data[lang]['alerts'].append(alert_embed)
+
     async def get_seasonal_eververse(self, langs):
         start = await self.get_season_start()
         await self.get_seasonal_bd(langs, start)

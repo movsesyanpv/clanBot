@@ -22,7 +22,7 @@ class ClanBot(commands.Bot):
     version = '2.11.7'
     cog_list = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
-    all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal']
+    all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts']
 
     sched = AsyncIOScheduler(timezone='UTC')
     guild_db = ''
@@ -73,6 +73,7 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
 
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
+        self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 604800])
         self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
 
         logging.basicConfig(filename='scheduler.log')
@@ -141,6 +142,11 @@ class ClanBot(commands.Bot):
                 channels = self.seasonal_ch
             if (post and list(set(channels).intersection(self.seasonal_ch))) or get:
                 await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=channels, post=post, get=get)
+        if 'alerts' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_global_alerts, 'alerts', 604800, channels=channels, post=post, get=get)
         if self.args.forceupdate:
             await self.data.destiny.close()
             await self.logout()
