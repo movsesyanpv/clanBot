@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.12'
+    version = '2.12.1'
     cog_list = ['cogs.admin', 'cogs.updates', 'cogs.group']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts']
@@ -358,8 +358,12 @@ class ClanBot(commands.Bot):
                                       body='# Traceback\n\n```{}```'.
                                       format(traceback.format_exc()))
 
-    async def lfg_cleanup(self, days):
+    async def lfg_cleanup(self, days, guild=None):
         lfg_list = self.raid.get_all()
+        if guild is None:
+            guild_id = 0
+        else:
+            guild_id = guild.id
 
         i = 0
         for lfg in lfg_list:
@@ -367,7 +371,7 @@ class ClanBot(commands.Bot):
                 channel = await self.fetch_channel(lfg[1])
                 lfg_msg = await channel.fetch_message(lfg[0])
                 start = datetime.fromtimestamp(lfg[2])
-                if (datetime.now() - start) > timedelta(days=days):
+                if (datetime.now() - start) > timedelta(days=days) and (guild_id == 0 or guild_id == lfg[3]):
                     await lfg_msg.delete()
                     self.raid.del_entry(lfg[0])
                     i = i + 1
