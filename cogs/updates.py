@@ -2,6 +2,7 @@ from discord.ext import commands
 import discord
 from tabulate import tabulate
 import sqlite3
+import pydest
 
 
 class Updates(commands.Cog):
@@ -81,7 +82,7 @@ class Updates(commands.Cog):
             code = clan_json['ErrorCode']
         except KeyError:
             code = 0
-        if code != 0:
+        if code == 1:
             await ctx.channel.send('{}\nid: {}'.format(clan_json['Response']['detail']['name'], clan_json['Response']['detail']['groupId']), delete_after=10)
             if await ctx.bot.check_ownership(ctx.message, is_silent=True, admin_check=True):
                 ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
@@ -102,6 +103,11 @@ class Updates(commands.Cog):
     async def top(self, ctx, metric, number=10):
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
+        if clan_id is None:
+            clan_id = [0]
+        if clan_id[0] == 0:
+            await ctx.channel.send('There is no clan to get information from. Please use the `setclan` command to set up a valid Destiny 2 clan.', delete_after=60)
+            return
         if len(clan_id) > 0:
             clan_id = clan_id[0]
             try:
@@ -144,14 +150,20 @@ class Updates(commands.Cog):
                     else:
                         raise sqlite3.OperationalError
                 except sqlite3.OperationalError:
-                    await ctx.channel.send('Unknown metric.', delete_after=10)
+                    await ctx.channel.send('Unknown metric `{}`. Use `help top` to get the list of available metrics.'.format(metric), delete_after=10)
                     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                         await ctx.message.delete()
                     return
+            lang = ctx.bot.guild_lang(ctx.message.guild.id)
+            try:
+                top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
+            except pydest.pydest.PydestException:
+                await ctx.channel.send('Unknown metric `{}`. Use `help top` to get the list of available metrics.'.format(metric), delete_after=10)
+                if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                    await ctx.message.delete()
+                return
             await ctx.channel.send('Getting the leaderboard, could take a long time.', delete_after=30)
             top_list = await ctx.bot.data.get_clan_leaderboard(clan_id, metric, number, is_time, is_kda)
-            lang = ctx.bot.guild_lang(ctx.message.guild.id)
-            top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
             max_len = min(number, len(top_list))
             await ctx.channel.send('{}```{}```'.format(top_name['displayProperties']['description'], tabulate(top_list, tablefmt='plain', colalign=('left', 'left'))))
         else:

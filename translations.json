@@ -132,6 +132,7 @@
             "additional_info": "Отправьте `{}help команда язык` для подробной информации о `команде` на `языке`. Доступны языки `en`, `ru`.\nОтправьте `{}ruhelp команда` для подробной информации о `команде` по-русски.",
             "aliases": "Может вызываться с одним из следующих имен:```{}```",
             "parameters": "Использование:```{}```",
+            "no_command": "Команда `{}` не найдена",
             "commands": {
                 "setclan": {
                     "info": "Привязать клан к серверу. Возможна привязка по названию либо по числовому идентификатору клана. При успешном поиске клана бот выведет имя клана и его идентификатор."
@@ -318,6 +319,7 @@
             "additional_info": "Type `{}help command language` for more info on a `command` in `language`. Available languages are `en`, `ru`.\nType `{}ruhelp command` for more info on a `command` in russian.",
             "aliases": "Can be called with the following names:```{}```",
             "parameters": "Usage:```{}```",
+            "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
             "commands": {
                 "setclan": {
                     "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."

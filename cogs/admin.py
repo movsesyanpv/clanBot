@@ -129,7 +129,11 @@ class Admin(commands.Cog):
         await channel.send(help_msg)
         aliases = ''
         if command_name != 'all':
-            command = ctx.bot.all_commands[command_name]
+            try:
+                command = ctx.bot.all_commands[command_name]
+            except KeyError:
+                await ctx.channel.send(help_translations['no_command'].format(command_name))
+                return
             aliases = command.name
             for alias in command.aliases:
                 aliases = '{}, {}'.format(aliases, alias)

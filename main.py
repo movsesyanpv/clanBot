@@ -441,20 +441,25 @@ class ClanBot(commands.Bot):
             pass
         except Exception as e:
             if 'stop' not in message.content.lower() or (self.user not in message.mentions and str(message.channel.type) != 'private'):
+                bot_info = await self.application_info()
+                owner = bot_info.owner
                 if not self.args.production:
-                    bot_info = await self.application_info()
-                    owner = bot_info.owner
                     if owner.dm_channel is None:
                         await owner.create_dm()
                     await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
                     await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
                     if message.author.dm_channel is None:
                         await message.author.create_dm()
-                    await message.author.dm_channel.send(self.translations['en']['error'])
+                    if message.author != owner:
+                        await message.author.dm_channel.send(self.translations['en']['error'])
                 else:
                     self.git.create_issue(title='Exception on message',
                                           body='# Message\n\n{}\n\n# Traceback\n\n```{}```'.
                                           format(message.content, traceback.format_exc()))
+                    if message.author.dm_channel is None:
+                        await message.author.create_dm()
+                    if message.author != owner:
+                        await message.author.dm_channel.send(self.translations['en']['error'])
 
     def get_channel_type(self, ch_type):
         channel_list = []
