@@ -68,6 +68,7 @@ class Admin(commands.Cog):
     @commands.command(
         description='Delete groups that are unavailable or inactive'
     )
+    @commands.is_owner()
     async def lfgcleanup(self, ctx, days=0):
         msg = 'Done, removed {} entries.'
         if ctx.guild is None:
