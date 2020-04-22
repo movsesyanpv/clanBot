@@ -51,12 +51,16 @@ class Updates(commands.Cog):
     @commands.guild_only()
     async def setlang(self, ctx, lang):
         message = ctx.message
+        if lang.lower() not in ctx.bot.langs:
+            msg = 'The language you\'ve entered (`{}`) is not available. Available languages are `en`, `ru`.'.format(lang)
+            await message.channel.send(msg)
+            return
         if await ctx.bot.check_ownership(message, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''', (lang, ctx.message.guild.id))
+            ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''', (lang.lower(), ctx.message.guild.id))
             ctx.bot.guild_db.commit()
         msg = 'Got it, {}'.format(message.author.mention)
         if ctx.guild.me.guild_permissions.change_nickname:
-            await ctx.guild.me.edit(nick=ctx.bot.translations[lang]['nick'], reason='language change')
+            await ctx.guild.me.edit(nick=ctx.bot.translations[lang.lower()]['nick'], reason='language change')
         await message.channel.send(msg, delete_after=10)
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
             await message.delete()
