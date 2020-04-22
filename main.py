@@ -30,6 +30,7 @@ class ClanBot(commands.Bot):
 
     api_data_file = open('api.json', 'r')
     api_data = json.loads(api_data_file.read())
+    logger = logging.getLogger('ClanBot')
 
     lfgs = []
 
@@ -76,8 +77,8 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 604800])
         self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
 
-        logging.basicConfig(filename='scheduler.log')
-        logging.getLogger('apscheduler').setLevel(logging.DEBUG)
+        logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+        logging.getLogger('apscheduler')
 
         if self.args.production:
             git_file = open('git.dat', 'r')
@@ -460,6 +461,9 @@ class ClanBot(commands.Bot):
                         await message.author.create_dm()
                     if message.author != owner:
                         await message.author.dm_channel.send(self.translations['en']['error'])
+
+    async def on_command_completion(self, ctx):
+        self.logger.info(ctx.message.content)
 
     def get_channel_type(self, ch_type):
         channel_list = []
