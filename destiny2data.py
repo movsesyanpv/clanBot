@@ -7,12 +7,15 @@ from bungied2auth import BungieOAuth
 from datetime import datetime, timezone, timedelta
 from dateutil.parser import *
 import aiohttp
+import sqlite3
 
 
 class D2data:
     api_data_file = open('api.json', 'r')
     api_data = json.loads(api_data_file.read())
     destiny = ''
+
+    cache_db = ''
 
     icon_prefix = "https://www.bungie.net"
 
@@ -78,6 +81,7 @@ class D2data:
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
+        self.cache_db = sqlite3.connect('cache.db')
 
     async def get_chars(self):
         platform = 0
@@ -1270,9 +1274,9 @@ class D2data:
 
     async def get_player_metric(self, membership_type, membership_id, metric):
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
-        metric_resp = await self.get_bungie_json('metric {} for {}'.format(metric, membership_id), url, params=self.metric_params, change_msg=False)
+        metric_resp = await self.get_cached_json(membership_id, 'metric {} for {}'.format(metric, membership_id), url, params=self.metric_params, change_msg=False)
         if metric_resp:
-            metric_json = await metric_resp.json()
+            metric_json = metric_resp
             try:
                 return metric_json['Response']['metrics']['data']['metrics'][str(metric)]['objectiveProgress']['progress']
             except KeyError:
@@ -1285,11 +1289,53 @@ class D2data:
         member_type = member['destinyUserInfo']['membershipType']
         return [member['destinyUserInfo']['LastSeenDisplayName'], await self.get_player_metric(member_type, member_id, metric)]
 
+    async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True):
+        cache_cursor = self.cache_db.cursor()
+
+        try:
+            cache_cursor.execute('''SELECT json, expires from cache WHERE id=?''', (cache_id,))
+            cached_entry = cache_cursor.fetchone()
+            if cached_entry is not None:
+                expired = datetime.now().timestamp() > cached_entry[1]
+            else:
+                expired = True
+        except sqlite3.OperationalError:
+            expired = True
+
+        if expired:
+            response = await self.get_bungie_json(name, url, params, lang, string, change_msg)
+            if response:
+                response_json = await response.json()
+                try:
+                    cache_cursor.execute('''CREATE TABLE cache (id integer, expires integer, json text);''')
+                    cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id)''')
+                    cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?)''',
+                                         (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json)))
+                except sqlite3.OperationalError:
+                    pass
+                try:
+                    cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?)''',
+                                         (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json)))
+                except sqlite3.OperationalError:
+                    pass
+                try:
+                    cache_cursor.execute('''UPDATE cache SET expires=?, json=? WHERE id=?''',
+                                         (int(datetime.now().timestamp() + 1800), json.dumps(response_json), cache_id))
+                except sqlite3.OperationalError:
+                    pass
+            else:
+                response_json = False
+        else:
+            response_json = json.loads(cached_entry[0])
+        self.cache_db.commit()
+        return response_json
+
     async def get_clan_leaderboard(self, clan_id, metric, number, is_time=False, is_kda=False):
         url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
-        clan_resp = await self.get_bungie_json('clan members', url, change_msg=False)
+
+        clan_resp = await self.get_cached_json(clan_id, 'clan members', url, change_msg=False)
         if clan_resp:
-            clan_json = await clan_resp.json()
+            clan_json = clan_resp
             try:
                 metric_list = []
                 for member in clan_json['Response']['results']:
