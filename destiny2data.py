@@ -105,7 +105,8 @@ class D2data:
                     platform) + '/' + quote(
                     name) + '/'
                 search_resp = await self.session.get(search_url, headers=self.headers)
-                search = search_resp.json()['Response']
+                search_json = await search_resp.json()
+                search = search_json['Response']
                 if len(search) > 0:
                     valid_input = True
                     membership_id = search[0]['membershipId']
@@ -116,7 +117,8 @@ class D2data:
                 'components': '200'
             }
             char_search_resp = await self.session.get(char_search_url, params=char_search_params, headers=self.headers)
-            chars = char_search_resp.json()['Response']['characters']['data']
+            char_search_json = await char_search_resp.json()
+            chars = char_search_json['Response']['characters']['data']
             char_ids = []
             for key in sorted(chars.keys()):
                 char_ids.append(chars[key]['characterId'])
@@ -140,11 +142,13 @@ class D2data:
             print("re_token get error", json.dumps(r.json(), indent=4, sort_keys=True) + "\n")
             r = await self.session.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
             if not r:
-                if not r.json()['error_description'] == 'DestinyThrottledByGameServer':
+                r_json = await r.json()
+                if not r_json['error_description'] == 'DestinyThrottledByGameServer':
                     break
             time.sleep(5)
         if not r:
-            print("re_token get error", json.dumps(r.json(), indent=4, sort_keys=True) + "\n")
+            r_json = await r.json()
+            print("re_token get error", json.dumps(r_json, indent=4, sort_keys=True) + "\n")
             return
         resp = await r.json()
 
