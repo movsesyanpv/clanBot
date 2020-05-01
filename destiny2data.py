@@ -678,7 +678,7 @@ class D2data:
         xur_resp = await self.get_bungie_json('xur', xur_url, self.vendor_params)
         if not xur_resp:
             return
-        if xur_resp['ErrorCode'] != 1627:
+        if xur_resp['ErrorCode'] == 1627:
             return
         resp_time = datetime.utcnow().isoformat()
         for lang in langs:
