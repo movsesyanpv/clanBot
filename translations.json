@@ -146,7 +146,8 @@
                     "gambitmetrics": "Гамбит",
                     "raidsmetrics": "Рейды",
                     "strikesmetrics": "Налеты",
-                    "trialsofosirismetrics": "Испытания Осириса"
+                    "trialsofosirismetrics": "Испытания Осириса",
+                    "cat_list": "Доступные категории. Для получения список метрик категории отправьте `{}help top категория`. Категории перечислены в таблице ниже (левый столбец), правый столбец - описание категории. Совпадают с игровыми."
                 },
                 "setlang": {
                     "info": "Доступны языки `en`, `ru`. Доступно для администраторов сервера."
@@ -333,7 +334,8 @@
                     "gambitmetrics": "Gambit",
                     "raidsmetrics": "Raids",
                     "strikesmetrics": "Strikes",
-                    "trialsofosirismetrics": "Trials of Osiris"
+                    "trialsofosirismetrics": "Trials of Osiris",
+                    "cat_list": "Available categories. To get the category's metric list send `{}help top category`. The categories are listed in the table below (left column), right column contains the descriptions of the aforementioned categories. The categories match in-game ones."
                 },
                 "setlang": {
                     "info": "Available languages are `en`, `ru`. Available only to the server's admins."

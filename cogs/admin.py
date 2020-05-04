@@ -110,8 +110,11 @@ class Admin(commands.Cog):
         usage='cog',
         aliases=['man', 'hlep', 'чотут', 'ман', 'инструкция', 'ruhelp', 'helpru']
     )
-    async def help_command(self, ctx, command_name='all', lang=None):
+    async def help_command(self, ctx, command_name='all', lang=None, additional_arg=None):
         channel = ctx.message.channel
+        if lang is not None and lang not in ctx.bot.langs:
+            additional_arg = lang
+            lang = None
         if ctx.message.guild is not None and lang is None:
             lang = ctx.bot.guild_lang(ctx.message.guild.id)
         if lang not in ctx.bot.langs:
@@ -128,6 +131,10 @@ class Admin(commands.Cog):
         help_msg = '`{} v{}`'.format(name, ctx.bot.version)
         await channel.send(help_msg)
         aliases = ''
+        if str(ctx.bot.user.id) in ctx.prefix:
+            prefix = '@{} '.format(name)
+        else:
+            prefix = ctx.prefix
         if command_name != 'all':
             try:
                 command = ctx.bot.all_commands[command_name]
@@ -161,10 +168,6 @@ class Admin(commands.Cog):
             help_msg = '{}```\t{}```'.format(help_msg,
                                              tabulate(command_list, tablefmt='plain', colalign=('left', 'left'))
                                              .replace('\n', '\n\t'))
-            if str(ctx.bot.user.id) in ctx.prefix:
-                prefix = '@{} '.format(name)
-            else:
-                prefix = ctx.prefix
             help_msg = '{}{}'.format(help_msg, help_translations['additional_info'].format(prefix, prefix))
             await ctx.message.channel.send(help_msg)
             pass
@@ -176,20 +179,30 @@ class Admin(commands.Cog):
             await channel.send(help_msg)
 
             try:
+                if additional_arg in metric_tables and additional_arg is not None:
+                    metric_tables = [additional_arg]
                 internal_db = sqlite3.connect('internal.db')
                 internal_cursor = internal_db.cursor()
                 help_msg = ''
-                for table in metric_tables:
-                    metric_list = []
-                    internal_cursor.execute('''SELECT name, hash FROM {}'''.format(table))
-                    metrics = internal_cursor.fetchall()
-                    if len(metrics) > 0:
-                        for metric in metrics:
-                            if str(metric[0]) != 'None':
-                                metric_list.append(['`{}'.format(metric[0]), '`https://data.destinysets.com/i/Metric:{}'.format(metric[1])])
-                        if len(metric_list) > 0:
-                            help_msg = '{}**{}**'.format(help_msg, translations[table])
-                            help_msg = '{}\n{}\n'.format(help_msg, tabulate(metric_list, tablefmt='plain', colalign=('left', 'left')))
+                if len(metric_tables) == 1:
+                    for table in metric_tables:
+                        metric_list = []
+                        internal_cursor.execute('''SELECT name, hash FROM {}'''.format(table))
+                        metrics = internal_cursor.fetchall()
+                        if len(metrics) > 0:
+                            for metric in metrics:
+                                if str(metric[0]) != 'None':
+                                    metric_list.append(['`{}'.format(metric[0]), '`https://data.destinysets.com/i/Metric:{}'.format(metric[1])])
+                            if len(metric_list) > 0:
+                                help_msg = '{}**{}**'.format(help_msg, translations[table])
+                                help_msg = '{}\n{}\n'.format(help_msg, tabulate(metric_list, tablefmt='plain',
+                                                                                colalign=('left', 'left')))
+                else:
+                    cat_list = []
+                    for table in metric_tables:
+                        cat_list.append([table, translations[table]])
+                    help_msg = '{}\n```{}``` '.format(translations['cat_list'].format(prefix), tabulate(cat_list, tablefmt='plain',
+                                                                                           colalign=('left', 'left')))
                 if len(help_msg) > 1:
                     help_msg = help_msg[:-1]
             except sqlite3.OperationalError:
