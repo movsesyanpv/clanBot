@@ -66,21 +66,6 @@ class Admin(commands.Cog):
         await self.stop(ctx)
 
     @commands.command(
-        description='Delete groups that are unavailable or inactive'
-    )
-    @commands.is_owner()
-    async def lfgcleanup(self, ctx, days=0):
-        msg = 'Done, removed {} entries.'
-        if ctx.guild is None:
-            if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=False):
-                n = await ctx.bot.lfg_cleanup(days, ctx.guild)
-        else:
-            if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=True):
-                n = await ctx.bot.lfg_cleanup(days, ctx.guild)
-
-        await ctx.message.channel.send(msg.format(n))
-
-    @commands.command(
         description='Get Bungie JSON for the API path'
     )
     @commands.is_owner()
@@ -162,7 +147,10 @@ class Admin(commands.Cog):
                     command_desc = help_translations[command.name]
                 else:
                     command_desc = command.description
-                if not (command.cog_name == 'Admin' and command.name != 'help') or await ctx.bot.is_owner(ctx.author):
+                if (not (command.cog_name == 'Admin' and command.name != 'help') or await ctx.bot.is_owner(
+                        ctx.author)) and (not (
+                        command.cog_name == 'ServerAdmin' and command.name != 'help') or await ctx.bot.check_ownership(
+                        ctx.message, is_silent=True, admin_check=True)):
                     command_list.append([command.name, command_desc])
 
             help_msg = '{}```\t{}```'.format(help_msg,
