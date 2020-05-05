@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 import updater
 import os
 import sqlite3
+import pydest
 
 import main
 
@@ -136,9 +137,9 @@ class Admin(commands.Cog):
                 if command.name == 'setclan' and arg == 'args':
                     continue
                 if 'empty' not in str(command.clean_params[arg].default):
-                    command_string = '{} [{}]'.format(command_string, arg)
+                    command_string = '{} {}'.format(command_string, arg)
                 else:
-                    command_string = '{} {{{}}}'.format(command_string, arg)
+                    command_string = '{} {}'.format(command_string, arg)
             await channel.send(help_translations['parameters'].format(command_string))
         if command_name == 'all' or 'help' in aliases:
             help_msg = '{}\n'.format(help_translations['list'])
@@ -180,7 +181,9 @@ class Admin(commands.Cog):
                         if len(metrics) > 0:
                             for metric in metrics:
                                 if str(metric[0]) != 'None':
-                                    metric_list.append(['`{}'.format(metric[0]), '`https://data.destinysets.com/i/Metric:{}'.format(metric[1])])
+                                    top_name = await ctx.bot.data.destiny.decode_hash(metric[1], 'DestinyMetricDefinition',
+                                                                                      language=lang)
+                                    metric_list.append(['`{}'.format(metric[0]), '{}`'.format(top_name['displayProperties']['name'])])
                             if len(metric_list) > 0:
                                 help_msg = '{}**{}**'.format(help_msg, translations[table])
                                 help_msg = '{}\n{}\n'.format(help_msg, tabulate(metric_list, tablefmt='plain',
