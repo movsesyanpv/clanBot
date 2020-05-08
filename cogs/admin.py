@@ -113,6 +113,8 @@ class Admin(commands.Cog):
             name = ctx.bot.user.name
         help_translations = ctx.bot.translations[lang]['help']
         command_name = command_name.lower()
+        metric_tables = ['seasonsmetrics', 'accountmetrics', 'cruciblemetrics', 'destinationmetrics',
+                         'gambitmetrics', 'raidsmetrics', 'strikesmetrics', 'trialsofosirismetrics']
         command_list = []
         help_msg = '`{} v{}`'.format(name, ctx.bot.version)
         await channel.send(help_msg)
@@ -125,8 +127,12 @@ class Admin(commands.Cog):
             try:
                 command = ctx.bot.all_commands[command_name]
             except KeyError:
-                await ctx.channel.send(help_translations['no_command'].format(command_name))
-                return
+                if command_name in metric_tables:
+                    command = ctx.bot.all_commands['top']
+                    additional_arg = command_name
+                else:
+                    await ctx.channel.send(help_translations['no_command'].format(command_name))
+                    return
             aliases = command.name
             for alias in command.aliases:
                 aliases = '{}, {}'.format(aliases, alias)
@@ -162,8 +168,6 @@ class Admin(commands.Cog):
             pass
         elif command.name == 'top':
             translations = help_translations['commands'][command.name]
-            metric_tables = ['seasonsmetrics', 'accountmetrics', 'cruciblemetrics', 'destinationmetrics',
-                             'gambitmetrics', 'raidsmetrics', 'strikesmetrics', 'trialsofosirismetrics']
             help_msg = '{}'.format(translations['info'])
             await channel.send(help_msg)
 
