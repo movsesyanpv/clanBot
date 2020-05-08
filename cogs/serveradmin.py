@@ -140,7 +140,7 @@ class ServerAdmin(commands.Cog):
         else:
             if not await ctx.bot.check_ownership(ctx.message):
                 return
-        await ctx.bot.force_update(args, get=get, channels=channels)
+        await ctx.bot.force_update(args, get=get, channels=channels, forceget=get)
         return
 
 

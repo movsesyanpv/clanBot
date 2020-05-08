@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.13.4'
+    version = '2.13.5'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts']
@@ -100,54 +100,54 @@ class ClanBot(commands.Bot):
         parser.add_argument('-c', '--cert', help='SSL certificate', type=str, default='')
         self.args = parser.parse_args()
 
-    async def force_update(self, upd_type, post=True, get=True, channels=None):
+    async def force_update(self, upd_type, post=True, get=True, channels=None, forceget=False):
         if 'daily' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_heroic_story, 'heroicstory', 86400, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_forge, 'forge', 86400, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_reckoning_modifiers, 'reckoning', 86400, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_heroic_story, 'heroicstory', 86400, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_forge, 'forge', 86400, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_reckoning_modifiers, 'reckoning', 86400, post=post, get=get, channels=channels, forceget=forceget)
         if 'weekly' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_nightfall820, 'nightfalls820', 604800, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_ordeal, 'ordeal', 604800, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_nightmares, 'nightmares', 604800, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_raids, 'raids', 604800, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=get, channels=channels)
-                await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=False, get=get, channels=channels)
+                await self.universal_update(self.data.get_nightfall820, 'nightfalls820', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_ordeal, 'ordeal', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_nightmares, 'nightmares', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_raids, 'raids', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=False, get=get, channels=channels, forceget=forceget)
         if 'spider' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_spider, 'spider', 86400, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_spider, 'spider', 86400, post=post, get=get, channels=channels, forceget=forceget)
         if 'xur' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_xur, 'xur', 345600, post=post, get=get, channels=channels)
+                await self.universal_update(self.data.get_xur, 'xur', 345600, post=post, get=get, channels=channels, forceget=forceget)
         if 'tess' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=post, get=False, channels=channels)
-                await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=False, channels=channels)
-                await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=False, channels=channels)
+                await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=post, get=False, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=False, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=False, channels=channels, forceget=forceget)
         if 'seasonal' in upd_type:
             if channels is None:
                 channels = self.seasonal_ch
             if (post and list(set(channels).intersection(self.seasonal_ch))) or get:
-                await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=channels, post=post, get=get)
+                await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=channels, post=post, get=get, forceget=forceget)
         if 'alerts' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_global_alerts, 'alerts', 604800, channels=channels, post=post, get=get)
+                await self.universal_update(self.data.get_global_alerts, 'alerts', 604800, channels=channels, post=post, get=get, forceget=forceget)
         if self.args.forceupdate:
             await self.data.destiny.close()
             await self.logout()
@@ -555,7 +555,7 @@ class ClanBot(commands.Bot):
                 except sqlite3.OperationalError:
                     pass
 
-    async def universal_update(self, getter, name, time_to_delete=None, channels=None, post=True, get=True):
+    async def universal_update(self, getter, name, time_to_delete=None, channels=None, post=True, get=True, forceget=False):
         await self.wait_until_ready()
 
         lang = self.langs
@@ -568,7 +568,7 @@ class ClanBot(commands.Bot):
 
         if get:
             try:
-                await getter(lang)
+                await getter(lang, forceget)
             except Exception as e:
                 bot_info = await self.application_info()
                 owner = bot_info.owner

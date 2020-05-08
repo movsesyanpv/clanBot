@@ -282,13 +282,13 @@ class D2data:
                 embed_sales.append(item_data)
         return embed_sales
 
-    async def get_featured_bd(self, langs):
+    async def get_featured_bd(self, langs, forceget=False):
         resp_time = datetime.utcnow().isoformat()
         tess_resp = []
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = await self.get_bungie_json('featured_bd', tess_url, self.vendor_params, string='featured bright dust for {}'.format(char))
+            resp = await self.get_cached_json('eververse', 'featured_bd', tess_url, self.vendor_params, string='featured bright dust for {}'.format(char), force=forceget)
             if not resp:
                 return
             tess_resp.append(resp)
@@ -321,13 +321,13 @@ class D2data:
                     self.data[lang]['featured_bd']['fields'].append(tmp_fields[i])
             self.data[lang]['featured_bd']['timestamp'] = resp_time
 
-    async def get_bd(self, langs):
+    async def get_bd(self, langs, forceget=False):
         resp_time = datetime.utcnow().isoformat()
         tess_resp = []
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                         format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = await self.get_bungie_json('bd', tess_url, self.vendor_params, string='bright dust for {}'.format(char))
+            resp = await self.get_cached_json('eververse', 'bd', tess_url, self.vendor_params, string='bright dust for {}'.format(char), force=forceget)
             if not resp:
                 return
             tess_resp.append(resp)
@@ -360,13 +360,13 @@ class D2data:
                     self.data[lang]['bd']['fields'].append(tmp_fields[i])
             self.data[lang]['bd']['timestamp'] = resp_time
 
-    async def get_featured_silver(self, langs):
+    async def get_featured_silver(self, langs, forceget=False):
         resp_time = datetime.utcnow().isoformat()
         tess_resp = []
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = await self.get_bungie_json('silver', tess_url, self.vendor_params, string='silver for {}'.format(char))
+            resp = await self.get_cached_json('eververse', 'silver', tess_url, self.vendor_params, string='silver for {}'.format(char), force=forceget)
             if not resp:
                 return
             tess_resp.append(resp)
@@ -397,7 +397,7 @@ class D2data:
                     self.data[lang]['silver']['fields'].append(tmp_fields[i])
             self.data[lang]['silver']['timestamp'] = resp_time
 
-    async def get_global_alerts(self, langs):
+    async def get_global_alerts(self, langs, forceget=False):
         alert_url = 'https://www.bungie.net/Platform/GlobalAlerts/'
         alert_json = await self.get_bungie_json('alerts', alert_url, {}, '')
         if not alert_json:
@@ -419,7 +419,7 @@ class D2data:
                 }
                 self.data[lang]['alerts'].append(alert_embed)
 
-    async def get_seasonal_eververse(self, langs):
+    async def get_seasonal_eververse(self, langs, forceget=False):
         start = await self.get_season_start()
         await self.get_seasonal_bd(langs, start)
         await self.get_seasonal_consumables(langs, start)
@@ -643,12 +643,12 @@ class D2data:
                     if item_def['classType'] < 3 or any(class_name in item_def['itemTypeDisplayName'].lower() for class_name in self.translations[lang]['classnames']):
                         class_items = class_items + 1
 
-    async def get_spider(self, lang):
+    async def get_spider(self, lang, forceget=False):
         char_info = self.char_info
 
         spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
-        spider_resp = await self.get_bungie_json('spider', spider_url, self.vendor_params)
+        spider_resp = await self.get_cached_json('spider', 'spider', spider_url, self.vendor_params, force=forceget)
         if not spider_resp:
             return
         spider_json = spider_resp
@@ -683,12 +683,12 @@ class D2data:
         location = loc.text.split(' >')
         return location[0]
 
-    async def get_xur(self, langs):
+    async def get_xur(self, langs, forceget=False):
         char_info = self.char_info
 
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
-        xur_resp = await self.get_bungie_json('xur', xur_url, self.vendor_params)
+        xur_resp = await self.get_cached_json('xur', 'xur', xur_url, self.vendor_params, force=forceget)
         if not xur_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -769,8 +769,8 @@ class D2data:
                 }
                 self.data[lang]['xur']['fields'].append(loc_field)
 
-    async def get_heroic_story(self, langs):
-        activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions')
+    async def get_heroic_story(self, langs, forceget=False):
+        activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions', force=forceget)
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -804,8 +804,8 @@ class D2data:
                     }
                     self.data[lang]['heroicstory']['fields'].append(info)
 
-    async def get_forge(self, langs):
-        activities_resp = await self.get_activities_response('forge')
+    async def get_forge(self, langs, forceget=False):
+        activities_resp = await self.get_activities_response('forge', force=forceget)
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -841,8 +841,8 @@ class D2data:
                     }
                     self.data[lang]['forge']['fields'].append(info)
 
-    async def get_strike_modifiers(self, langs):
-        activities_resp = await self.get_activities_response('vanguardstrikes', string='strike modifiers')
+    async def get_strike_modifiers(self, langs, forceget=False):
+        activities_resp = await self.get_activities_response('vanguardstrikes', string='strike modifiers', force=forceget)
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -910,8 +910,8 @@ class D2data:
 
         return data
 
-    async def get_reckoning_modifiers(self, langs):
-        activities_resp = await self.get_activities_response('reckoning', string='reckoning modifiers')
+    async def get_reckoning_modifiers(self, langs, forceget=False):
+        activities_resp = await self.get_activities_response('reckoning', string='reckoning modifiers', force=forceget)
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -943,8 +943,8 @@ class D2data:
                     mods = await self.decode_modifiers(key, lang)
                     self.data[lang]['reckoning']['fields'] = [*self.data[lang]['reckoning']['fields'], *mods]
 
-    async def get_nightfall820(self, langs):
-        activities_resp = await self.get_activities_response('nightfalls820', string='820 nightfalls')
+    async def get_nightfall820(self, langs, forceget=False):
+        activities_resp = await self.get_activities_response('nightfalls820', string='820 nightfalls', force=forceget)
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -1010,8 +1010,8 @@ class D2data:
         else:
             return False
 
-    async def get_raids(self, langs):
-        activities_resp = await self.get_activities_response('raids')
+    async def get_raids(self, langs, forceget=False):
+        activities_resp = await self.get_activities_response('raids', force=forceget)
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -1043,7 +1043,7 @@ class D2data:
 
             hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
-            hawthorne_resp = await self.get_bungie_json('hawthorne', hawthorne_url, self.vendor_params)
+            hawthorne_resp = await self.get_cached_json('hawthorne', 'hawthorne', hawthorne_url, self.vendor_params, force=forceget)
             if not hawthorne_resp:
                 return
             hawthorne_json = hawthorne_resp
@@ -1151,8 +1151,8 @@ class D2data:
                     self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
 
-    async def get_ordeal(self, langs):
-        activities_resp = await self.get_activities_response('ordeal')
+    async def get_ordeal(self, langs, forceget=False):
+        activities_resp = await self.get_activities_response('ordeal', force=forceget)
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -1197,8 +1197,8 @@ class D2data:
                         self.data[lang]['ordeal']['fields'][0]['value'] = strike['description']
                         break
 
-    async def get_nightmares(self, langs):
-        activities_resp = await self.get_activities_response('nightmares')
+    async def get_nightmares(self, langs, forceget=False):
+        activities_resp = await self.get_activities_response('nightmares', force=forceget)
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -1232,8 +1232,8 @@ class D2data:
                     }
                     self.data[lang]['nightmares']['fields'].append(info)
 
-    async def get_crucible_rotators(self, langs):
-        activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators')
+    async def get_crucible_rotators(self, langs, forceget=False):
+        activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators', force=forceget)
         if not activities_resp:
             return
         resp_time = datetime.utcnow().isoformat()
@@ -1290,17 +1290,17 @@ class D2data:
             data.append(mod)
         return data
 
-    async def get_activities_response(self, name, lang=None, string=None):
+    async def get_activities_response(self, name, lang=None, string=None, force=False):
         char_info = self.char_info
 
         activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
-        activities_resp = await self.get_bungie_json(name, activities_url, self.activities_params, lang, string)
+        activities_resp = await self.get_cached_json('activities_{}'.format(char_info['charid'][0]), name, activities_url, self.activities_params, lang, string, force=force)
         return activities_resp
 
     async def get_player_metric(self, membership_type, membership_id, metric):
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
-        metric_resp = await self.get_cached_json(membership_id, 'metric {} for {}'.format(metric, membership_id), url, params=self.metric_params, change_msg=False)
+        metric_resp = await self.get_cached_json('playermetrics_{}'.format(membership_id), 'metric {} for {}'.format(metric, membership_id), url, params=self.metric_params, change_msg=False)
         if metric_resp:
             metric_json = metric_resp
             try:
@@ -1315,7 +1315,7 @@ class D2data:
         member_type = member['destinyUserInfo']['membershipType']
         return [member['destinyUserInfo']['LastSeenDisplayName'], await self.get_player_metric(member_type, member_id, metric)]
 
-    async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True):
+    async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True, force=False):
         cache_cursor = self.cache_db.cursor()
 
         try:
@@ -1328,12 +1328,12 @@ class D2data:
         except sqlite3.OperationalError:
             expired = True
 
-        if expired:
+        if expired or force:
             response = await self.get_bungie_json(name, url, params, lang, string, change_msg)
             if response:
                 response_json = response
                 try:
-                    cache_cursor.execute('''CREATE TABLE cache (id integer, expires integer, json text);''')
+                    cache_cursor.execute('''CREATE TABLE cache (id text, expires integer, json text);''')
                     cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id)''')
                     cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?)''',
                                          (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json)))
@@ -1359,7 +1359,7 @@ class D2data:
     async def get_clan_leaderboard(self, clan_id, metric, number, is_time=False, is_kda=False):
         url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
 
-        clan_resp = await self.get_cached_json(clan_id, 'clan members', url, change_msg=False)
+        clan_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url, change_msg=False)
         if clan_resp:
             clan_json = clan_resp
             try:
