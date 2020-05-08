@@ -72,7 +72,7 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def bungierequest(self, ctx, path):
         resp = await ctx.bot.data.get_bungie_json(path, 'https://www.bungie.net/Platform/{}'.format(path), change_msg=False)
-        resp_json = await resp.json()
+        resp_json = resp
         msg = '```{}```'.format(json.dumps(resp_json, indent=4, ensure_ascii=False))
         if len(msg) <= 2000:
             await ctx.channel.send(msg)
