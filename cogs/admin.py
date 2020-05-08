@@ -91,6 +91,16 @@ class Admin(commands.Cog):
                 await ctx.channel.send(msg)
 
     @commands.command(
+        description='Drop cache database'
+    )
+    @commands.is_owner()
+    async def dropcache(self, ctx):
+        cursor = self.bot.data.cache_db.cursor()
+        cursor.execute('''DROP TABLE cache''')
+        self.bot.data.cache_db.commit()
+        await ctx.channel.send('Done, {}'.format(ctx.author.mention))
+
+    @commands.command(
         name='help',
         description='The help command!',
         usage='cog',
