@@ -17,17 +17,18 @@ class ServerAdmin(commands.Cog):
     @commands.command(
         description='Delete groups that are unavailable or inactive'
     )
-    @commands.is_owner()
     async def lfgcleanup(self, ctx, days=0):
         msg = 'Done, removed {} entries.'
         if ctx.guild is None:
             if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=False):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
+                await ctx.message.channel.send(msg.format(n))
         else:
             if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=True):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
-
-        await ctx.message.channel.send(msg.format(n))
+                await ctx.message.channel.send(msg.format(n), delete_after=30)
+            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                await ctx.message.delete()
 
     @commands.command()
     @commands.guild_only()
