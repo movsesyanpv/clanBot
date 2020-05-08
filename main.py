@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.13.3'
+    version = '2.13.4'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts']

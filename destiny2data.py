@@ -197,13 +197,18 @@ class D2data:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
             return False
+        except aiohttp.ContentTypeError:
+            return False
         print('getting {} {}'.format(string, lang_str))
         curr_try = 2
         while resp_code in self.wait_codes and curr_try <= self.max_retries:
             print('{}, attempt {}'.format(resp_code, curr_try))
             resp = await self.session.get(url, params=params, headers=self.headers)
-            resp_code = await resp.json()
-            resp_code = resp_code['ErrorCode']
+            try:
+                resp_code = await resp.json()
+                resp_code = resp_code['ErrorCode']
+            except aiohttp.ContentTypeError:
+                resp_code = 1672
             if resp_code == 5:
                 if change_msg:
                     for locale in lang:
@@ -212,7 +217,10 @@ class D2data:
             curr_try += 1
             time.sleep(5)
         if not resp:
-            resp_code = await resp.json()
+            try:
+                resp_code = await resp.json()
+            except aiohttp.ContentTypeError:
+                return False
             resp_code = resp_code['ErrorCode']
             if resp_code == 5:
                 if change_msg:
@@ -225,7 +233,10 @@ class D2data:
                     self.data[locale][name] = self.data[locale]['api_is_down']
             return False
         else:
-            resp_code = await resp.json()
+            try:
+                resp_code = await resp.json()
+            except aiohttp.ContentTypeError:
+                return False
             if 'ErrorCode' in resp_code.keys():
                 resp_code = resp_code['ErrorCode']
                 if resp_code == 5:
@@ -389,6 +400,8 @@ class D2data:
     async def get_global_alerts(self, langs):
         alert_url = 'https://www.bungie.net/Platform/GlobalAlerts/'
         alert_json = await self.get_bungie_json('alerts', alert_url, {}, '')
+        if not alert_json:
+            return
 
         for lang in langs:
             self.data[lang]['alerts'].clear()
