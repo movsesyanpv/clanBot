@@ -678,8 +678,6 @@ class D2data:
         xur_resp = await self.get_bungie_json('xur', xur_url, self.vendor_params)
         if not xur_resp:
             return
-        if xur_resp['ErrorCode'] == 1627:
-            return
         resp_time = datetime.utcnow().isoformat()
         for lang in langs:
 
@@ -1032,7 +1030,7 @@ class D2data:
 
             hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
-            hawthorne_resp = await self.get_bungie_json('spider', hawthorne_url, self.vendor_params)
+            hawthorne_resp = await self.get_bungie_json('hawthorne', hawthorne_url, self.vendor_params)
             if not hawthorne_resp:
                 return
             hawthorne_json = hawthorne_resp
