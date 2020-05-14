@@ -29,7 +29,8 @@
             "week": ", часть",
             "bd_consumables": "Потребляемые предметы за яркую пыль",
             "resp_time": "Данные обновлены",
-            "no_embed_links": "Нет разрешения 'Встраивать ссылки', необходимого для постов."
+            "no_embed_links": "Нет разрешения 'Встраивать ссылки', необходимого для постов.",
+            "complete": "Выполнено"
         },
         "lfg": {
             "go": "Предлагаю сходить в",
@@ -221,7 +222,8 @@
             "week": ", part",
             "bd_consumables": "Bright Dust consumables",
             "resp_time": "Data updated at",
-            "no_embed_links": "No permission to 'Embed links', required for the posts."
+            "no_embed_links": "No permission to 'Embed links', required for the posts.",
+            "complete": "Complete"
         },
         "lfg": {
             "go": "Go",

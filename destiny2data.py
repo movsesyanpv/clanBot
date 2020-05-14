@@ -1277,6 +1277,41 @@ class D2data:
                             }
                             self.data[lang]['cruciblerotators']['fields'].append(info)
 
+    async def get_the_lie_progress(self, langs, forceget=True):
+        url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
+        progression_json = await self.get_cached_json('objectives_{}'.format(self.char_info['charid'][0]), 'progressions', url, {'components': 301}, force=forceget)
+        resp_time = datetime.utcnow().isoformat()
+        progress = []
+
+        if '1797229574' in progression_json['Response']['uninstancedItemComponents']['objectives']['data']:
+            for lang in langs:
+                quest_def = await self.destiny.decode_hash(1797229574, 'DestinyInventoryItemDefinition', language=lang)
+                self.data[lang]['thelie'] = {
+                    'thumbnail': {
+                        'url': self.icon_prefix + quest_def['displayProperties']['icon']
+                    },
+                    'fields': [],
+                    'color': 0x226197,
+                    'type': 'rich',
+                    'title': quest_def['displayProperties']['name'],
+                    'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                    'timestamp': resp_time
+                }
+                for place in progression_json['Response']['uninstancedItemComponents']['objectives']['data']['1797229574']['objectives']:
+                    objective_def = await self.destiny.decode_hash(place['objectiveHash'], 'DestinyObjectiveDefinition', language=lang)
+                    if place['complete']:
+                        self.data[lang]['thelie']['fields'].append({
+                            'inline': True,
+                            'name': objective_def['progressDescription'],
+                            'value': self.translations[lang]['msg']['complete']
+                        })
+                    else:
+                        self.data[lang]['thelie']['fields'].append({
+                            'inline': True,
+                            'name': objective_def['progressDescription'],
+                            'value': '{} ({:.2f}%)'.format(place['progress'], place['progress']/place['completionValue']*100)
+                        })
+
     async def decode_modifiers(self, key, lang):
         data = []
         for mod_key in key['modifierHashes']:

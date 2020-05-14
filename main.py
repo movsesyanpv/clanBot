@@ -19,10 +19,10 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.13.5'
+    version = '2.13.6'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'ru']
-    all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts']
+    all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts', 'events']
 
     sched = AsyncIOScheduler(timezone='UTC')
     guild_db = ''
@@ -74,7 +74,8 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
 
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
-        self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 604800])
+        self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 3600])
+        self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_the_lie_progress, 'thelie', 3600])
         self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
 
         logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
@@ -148,6 +149,11 @@ class ClanBot(commands.Bot):
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 await self.universal_update(self.data.get_global_alerts, 'alerts', 604800, channels=channels, post=post, get=get, forceget=forceget)
+        if 'events' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_the_lie_progress, 'thelie', 3600, channels=channels, post=post, get=get, forceget=forceget)
         if self.args.forceupdate:
             await self.data.destiny.close()
             await self.logout()
