@@ -8,6 +8,8 @@ from datetime import datetime, timezone, timedelta
 from dateutil.parser import *
 import aiohttp
 import sqlite3
+import matplotlib.pyplot as plt
+import csv
 
 
 class D2data:
@@ -58,26 +60,27 @@ class D2data:
             self.data[locale] = json.loads(open('d2data.json', 'r').read())
             self.data[locale]['api_is_down'] = {
                 'fields': [{
-                        'inline': True,
-                        'name': translations[locale]['msg']['noapi'],
-                        'value': translations[locale]['msg']['later']
-                        }],
+                    'inline': True,
+                    'name': translations[locale]['msg']['noapi'],
+                    'value': translations[locale]['msg']['later']
+                }],
                 'color': 0xff0000,
                 'type': "rich",
                 'title': translations[locale]['msg']['error'],
             }
             self.data[locale]['api_maintenance'] = {
                 'fields': [{
-                        'inline': True,
-                        'name': translations[locale]['msg']['maintenance'],
-                        'value': translations[locale]['msg']['later']
-                        }],
+                    'inline': True,
+                    'name': translations[locale]['msg']['maintenance'],
+                    'value': translations[locale]['msg']['later']
+                }],
                 'color': 0xff0000,
                 'type': "rich",
                 'title': translations[locale]['msg']['error'],
             }
         if prod:
-            self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], context=context, host='0.0.0.0', port='4200')
+            self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], context=context, host='0.0.0.0',
+                                     port='4200')
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
@@ -144,7 +147,8 @@ class D2data:
         r = await self.session.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
         while not r:
             print("re_token get error", json.dumps(r.json(), indent=4, sort_keys=True) + "\n")
-            r = await self.session.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
+            r = await self.session.post('https://www.bungie.net/platform/app/oauth/token/', data=params,
+                                        headers=headers)
             if not r:
                 r_json = await r.json()
                 if not r_json['error_description'] == 'DestinyThrottledByGameServer':
@@ -283,16 +287,16 @@ class D2data:
         return embed_sales
 
     async def get_featured_bd(self, langs, forceget=False):
-        resp_time = datetime.utcnow().isoformat()
         tess_resp = []
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = await self.get_cached_json('eververse', 'featured_bd', tess_url, self.vendor_params, string='featured bright dust for {}'.format(char), force=forceget)
+            resp = await self.get_cached_json('eververse', 'featured_bd', tess_url, self.vendor_params,
+                                              string='featured bright dust for {}'.format(char), force=forceget)
             if not resp:
                 return
             tess_resp.append(resp)
-            resp_time = datetime.utcnow().isoformat()
+            resp_time = resp['timestamp']
 
         for lang in langs:
             tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
@@ -317,21 +321,21 @@ class D2data:
                                                                        2638689062])
 
             for i in range(0, len(tmp_fields)):
-                if tmp_fields[i] not in tmp_fields[i+1:]:
+                if tmp_fields[i] not in tmp_fields[i + 1:]:
                     self.data[lang]['featured_bd']['fields'].append(tmp_fields[i])
             self.data[lang]['featured_bd']['timestamp'] = resp_time
 
     async def get_bd(self, langs, forceget=False):
-        resp_time = datetime.utcnow().isoformat()
         tess_resp = []
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
-                        format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = await self.get_cached_json('eververse', 'bd', tess_url, self.vendor_params, string='bright dust for {}'.format(char), force=forceget)
+                format(self.char_info['platform'], self.char_info['membershipid'], char)
+            resp = await self.get_cached_json('eververse', 'bd', tess_url, self.vendor_params,
+                                              string='bright dust for {}'.format(char), force=forceget)
             if not resp:
                 return
             tess_resp.append(resp)
-            resp_time = datetime.utcnow().isoformat()
+            resp_time = resp['timestamp']
 
         for lang in langs:
             tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
@@ -356,21 +360,21 @@ class D2data:
                                                                        2638689062])
 
             for i in range(0, len(tmp_fields)):
-                if tmp_fields[i] not in tmp_fields[i+1:]:
+                if tmp_fields[i] not in tmp_fields[i + 1:]:
                     self.data[lang]['bd']['fields'].append(tmp_fields[i])
             self.data[lang]['bd']['timestamp'] = resp_time
 
     async def get_featured_silver(self, langs, forceget=False):
-        resp_time = datetime.utcnow().isoformat()
         tess_resp = []
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = await self.get_cached_json('eververse', 'silver', tess_url, self.vendor_params, string='silver for {}'.format(char), force=forceget)
+            resp = await self.get_cached_json('eververse', 'silver', tess_url, self.vendor_params,
+                                              string='silver for {}'.format(char), force=forceget)
             if not resp:
                 return
             tess_resp.append(resp)
-            resp_time = datetime.utcnow().isoformat()
+            resp_time = resp['timestamp']
 
         for lang in langs:
             tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
@@ -393,7 +397,7 @@ class D2data:
                 tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get, [827183327])
 
             for i in range(0, len(tmp_fields)):
-                if tmp_fields[i] not in tmp_fields[i+1:]:
+                if tmp_fields[i] not in tmp_fields[i + 1:]:
                     self.data[lang]['silver']['fields'].append(tmp_fields[i])
             self.data[lang]['silver']['timestamp'] = resp_time
 
@@ -441,7 +445,8 @@ class D2data:
     async def get_season_start(self):
         manifest_url = 'https://www.bungie.net/Platform/Destiny2/Manifest/'
         manifest_json = await self.get_bungie_json('default', manifest_url, {}, '')
-        season_url = 'https://www.bungie.net{}'.format(manifest_json['Response']['jsonWorldComponentContentPaths']['en']['DestinySeasonDefinition'])
+        season_url = 'https://www.bungie.net{}'.format(
+            manifest_json['Response']['jsonWorldComponentContentPaths']['en']['DestinySeasonDefinition'])
         season_json = await self.get_bungie_json('default', season_url, {}, '')
 
         for season in season_json:
@@ -486,7 +491,8 @@ class D2data:
                 if item['displayCategoryIndex'] == 3 and item['itemHash'] != 827183327:
                     definition = 'DestinyInventoryItemDefinition'
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                   language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
                     currency_item = currency_resp['displayProperties']['name']
                     item_data = {
@@ -531,10 +537,12 @@ class D2data:
                     n_items = 0
                     curr_week['fields'] = []
                     class_items = 0
-                if item['displayCategoryIndex'] == 4 and item['itemHash'] not in [353932628, 3260482534, 3536420626, 3187955025, 2638689062]:
+                if item['displayCategoryIndex'] == 4 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                                  3187955025, 2638689062]:
                     definition = 'DestinyInventoryItemDefinition'
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                   language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
                     currency_item = currency_resp['displayProperties']['name']
                     item_data = {
@@ -579,10 +587,12 @@ class D2data:
                     n_items = 0
                     curr_week['fields'] = []
                     class_items = 0
-                if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626, 3187955025, 2638689062]:
+                if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                                   3187955025, 2638689062]:
                     definition = 'DestinyInventoryItemDefinition'
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                   language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
                     currency_item = currency_resp['displayProperties']['name']
                     item_data = {
@@ -620,16 +630,19 @@ class D2data:
             class_items = 0
             for i, item in enumerate(tess_def['itemList']):
                 if n_items == 25:
-                    curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['bd'], self.translations[lang]['msg']['week'], i_week)
+                    curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['bd'],
+                                                          self.translations[lang]['msg']['week'], i_week)
                     i_week = i_week + 1
                     self.data[lang]['seasonal_bd'].append(dict.copy(curr_week))
                     n_items = 0
                     curr_week['fields'] = []
                     class_items = 0
-                if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626, 3187955025, 2638689062]:
+                if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                                  3187955025, 2638689062]:
                     definition = 'DestinyInventoryItemDefinition'
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition, language=lang)
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                   language=lang)
                     currency_cost = str(item['currencies'][0]['quantity'])
                     currency_item = currency_resp['displayProperties']['name']
                     item_data = {
@@ -640,7 +653,9 @@ class D2data:
                     }
                     curr_week['fields'].append(item_data)
                     n_items = n_items + 1
-                    if item_def['classType'] < 3 or any(class_name in item_def['itemTypeDisplayName'].lower() for class_name in self.translations[lang]['classnames']):
+                    if item_def['classType'] < 3 or any(
+                            class_name in item_def['itemTypeDisplayName'].lower() for class_name in
+                            self.translations[lang]['classnames']):
                         class_items = class_items + 1
 
     async def get_spider(self, lang, forceget=False):
@@ -653,7 +668,7 @@ class D2data:
             return
         spider_json = spider_resp
         spider_cats = spider_json['Response']['categories']['data']['categories']
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = spider_json['timestamp']
         for locale in lang:
             spider_def = await self.destiny.decode_hash(863940356, 'DestinyVendorDefinition', language=locale)
 
@@ -671,7 +686,8 @@ class D2data:
 
             items_to_get = spider_cats[0]['itemIndexes']
 
-            self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + await self.get_vendor_sales(locale, spider_resp, items_to_get, [1812969468])
+            self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + await self.get_vendor_sales(
+                locale, spider_resp, items_to_get, [1812969468])
 
     async def get_xur_loc(self):
         url = 'https://wherethefuckisxur.com/'
@@ -691,7 +707,7 @@ class D2data:
         xur_resp = await self.get_cached_json('xur', 'xur', xur_url, self.vendor_params, force=forceget)
         if not xur_resp:
             return
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = xur_resp['timestamp']
         for lang in langs:
 
             xur_def = await self.destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
@@ -770,17 +786,18 @@ class D2data:
                 self.data[lang]['xur']['fields'].append(loc_field)
 
     async def get_heroic_story(self, langs, forceget=False):
-        activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions', force=forceget)
+        activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions',
+                                                             force=forceget)
         if not activities_resp:
             return
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = activities_resp['timestamp']
         for lang in langs:
             local_types = self.translations[lang]
 
             self.data[lang]['heroicstory'] = {
                 'thumbnail': {
                     'url': "https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_"
-                    "5f8a923a0d0ac1e4289ae3be03f94aa2.png"
+                           "5f8a923a0d0ac1e4289ae3be03f94aa2.png"
                 },
                 'fields': [],
                 'color': 10070709,
@@ -808,7 +825,7 @@ class D2data:
         activities_resp = await self.get_activities_response('forge', force=forceget)
         if not activities_resp:
             return
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = activities_resp['timestamp']
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -833,7 +850,8 @@ class D2data:
                 if local_types['forge'] in r_json['displayProperties']['name']:
                     forge_def = 'DestinyDestinationDefinition'
                     place = await self.destiny.decode_hash(r_json['destinationHash'], forge_def, language=lang)
-                    self.data[lang]['forge']['thumbnail']['url'] = self.icon_prefix + r_json['displayProperties']['icon']
+                    self.data[lang]['forge']['thumbnail']['url'] = self.icon_prefix + r_json['displayProperties'][
+                        'icon']
                     info = {
                         "inline": True,
                         "name": r_json['displayProperties']['name'],
@@ -842,10 +860,11 @@ class D2data:
                     self.data[lang]['forge']['fields'].append(info)
 
     async def get_strike_modifiers(self, langs, forceget=False):
-        activities_resp = await self.get_activities_response('vanguardstrikes', string='strike modifiers', force=forceget)
+        activities_resp = await self.get_activities_response('vanguardstrikes', string='strike modifiers',
+                                                             force=forceget)
         if not activities_resp:
             return
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = activities_resp['timestamp']
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -870,8 +889,8 @@ class D2data:
                 if local_types['heroicstory'] in r_json['displayProperties']['name']:
                     self.data[lang]['vanguardstrikes']['fields'] = await self.decode_modifiers(key, lang)
                 if self.translations[lang]['strikes'] in r_json['displayProperties']['name']:
-                    self.data[lang]['vanguardstrikes']['thumbnail']['url'] = self.icon_prefix +\
-                                                                       r_json['displayProperties']['icon']
+                    self.data[lang]['vanguardstrikes']['thumbnail']['url'] = self.icon_prefix + \
+                                                                             r_json['displayProperties']['icon']
 
     async def get_reckoning_boss(self, lang):
         first_reset_time = 1539709200
@@ -914,7 +933,7 @@ class D2data:
         activities_resp = await self.get_activities_response('reckoning', string='reckoning modifiers', force=forceget)
         if not activities_resp:
             return
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = activities_resp['timestamp']
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -947,7 +966,7 @@ class D2data:
         activities_resp = await self.get_activities_response('nightfalls820', string='820 nightfalls', force=forceget)
         if not activities_resp:
             return
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = activities_resp['timestamp']
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -971,8 +990,8 @@ class D2data:
                 try:
                     recommended_light = key['recommendedLight']
                     if recommended_light == 820:
-                        self.data[lang]['nightfalls820']['thumbnail']['url'] = self.icon_prefix +\
-                                                                         r_json['displayProperties']['icon']
+                        self.data[lang]['nightfalls820']['thumbnail']['url'] = self.icon_prefix + \
+                                                                               r_json['displayProperties']['icon']
                         if r_json['matchmaking']['requiresGuardianOath']:
                             info = {
                                 'inline': True,
@@ -1014,7 +1033,7 @@ class D2data:
         activities_resp = await self.get_activities_response('raids', force=forceget)
         if not activities_resp:
             return
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = activities_resp['timestamp']
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -1043,11 +1062,12 @@ class D2data:
 
             hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
-            hawthorne_resp = await self.get_cached_json('hawthorne', 'hawthorne', hawthorne_url, self.vendor_params, force=forceget)
+            hawthorne_resp = await self.get_cached_json('hawthorne', 'hawthorne', hawthorne_url, self.vendor_params,
+                                                        force=forceget)
             if not hawthorne_resp:
                 return
             hawthorne_json = hawthorne_resp
-            resp_time = datetime.utcnow().isoformat()
+            resp_time = hawthorne_json['timestamp']
             for cat in hawthorne_json['Response']['sales']['data']:
                 if hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in last_wish_challenges:
                     lw_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
@@ -1094,7 +1114,8 @@ class D2data:
                     mods = await self.get_modifiers(lang, r_json['hash'])
                     resp_time = datetime.utcnow().isoformat()
                     if mods:
-                        info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'], mods[1]['name'],
+                        info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'],
+                                                                   mods[1]['name'],
                                                                    self.translations[lang]['armsmaster'][eow_loadout])
                     else:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
@@ -1155,7 +1176,7 @@ class D2data:
         activities_resp = await self.get_activities_response('ordeal', force=forceget)
         if not activities_resp:
             return
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = activities_resp['timestamp']
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -1201,7 +1222,7 @@ class D2data:
         activities_resp = await self.get_activities_response('nightmares', force=forceget)
         if not activities_resp:
             return
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = activities_resp['timestamp']
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -1233,10 +1254,11 @@ class D2data:
                     self.data[lang]['nightmares']['fields'].append(info)
 
     async def get_crucible_rotators(self, langs, forceget=False):
-        activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators', force=forceget)
+        activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators',
+                                                             force=forceget)
         if not activities_resp:
             return
-        resp_time = datetime.utcnow().isoformat()
+        resp_time = activities_resp['timestamp']
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -1260,16 +1282,19 @@ class D2data:
                 if r_json['destinationHash'] == 2777041980:
                     if len(r_json['challenges']) > 0:
                         obj_def = 'DestinyObjectiveDefinition'
-                        objective = await self.destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def, lang)
+                        objective = await self.destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def,
+                                                                   lang)
                         if self.translations[lang]['rotator'] in objective['displayProperties']['name']:
                             if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
                                 if 'icon' in r_json['displayProperties']:
                                     self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
-                                                                                   r_json['displayProperties']['icon']
+                                                                                              r_json[
+                                                                                                  'displayProperties'][
+                                                                                                  'icon']
                                 else:
                                     self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
-                                                                                    '/common/destiny2_content/icons/' \
-                                                                                    'cc8e6eea2300a1e27832d52e9453a227.png'
+                                                                                              '/common/destiny2_content/icons/' \
+                                                                                              'cc8e6eea2300a1e27832d52e9453a227.png'
                             info = {
                                 'inline': True,
                                 "name": r_json['displayProperties']['name'],
@@ -1278,9 +1303,13 @@ class D2data:
                             self.data[lang]['cruciblerotators']['fields'].append(info)
 
     async def get_the_lie_progress(self, langs, forceget=True):
-        url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
-        progression_json = await self.get_cached_json('objectives_{}'.format(self.char_info['charid'][0]), 'progressions', url, {'components': 301}, force=forceget)
-        resp_time = datetime.utcnow().isoformat()
+        url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'],
+                                                                                            self.char_info[
+                                                                                                'membershipid'],
+                                                                                            self.char_info['charid'][0])
+        progression_json = await self.get_cached_json('objectives_{}'.format(self.char_info['charid'][0]),
+                                                      'progressions', url, {'components': 301}, force=forceget)
+        resp_time = progression_json['timestamp']
         progress = []
 
         if '1797229574' in progression_json['Response']['uninstancedItemComponents']['objectives']['data']:
@@ -1297,20 +1326,89 @@ class D2data:
                     'footer': {'text': self.translations[lang]['msg']['resp_time']},
                     'timestamp': resp_time
                 }
-                for place in progression_json['Response']['uninstancedItemComponents']['objectives']['data']['1797229574']['objectives']:
-                    objective_def = await self.destiny.decode_hash(place['objectiveHash'], 'DestinyObjectiveDefinition', language=lang)
+                newrow = [resp_time, 0, 0, 0]
+                names = ['', '', '']
+                for place in \
+                progression_json['Response']['uninstancedItemComponents']['objectives']['data']['1797229574'][
+                    'objectives']:
+                    objective_def = await self.destiny.decode_hash(place['objectiveHash'], 'DestinyObjectiveDefinition',
+                                                                   language=lang)
                     if place['complete']:
                         self.data[lang]['thelie']['fields'].append({
                             'inline': True,
                             'name': objective_def['progressDescription'],
                             'value': self.translations[lang]['msg']['complete']
                         })
+                        if place['objectiveHash'] == 1851115127:
+                            newrow[1] = 100
+                            names[0] = objective_def['progressDescription']
+                        elif place['objectiveHash'] == 1851115126:
+                            newrow[2] = 100
+                            names[1] = objective_def['progressDescription']
+                        elif place['objectiveHash'] == 1851115125:
+                            newrow[3] = 100
+                            names[2] = objective_def['progressDescription']
                     else:
                         self.data[lang]['thelie']['fields'].append({
                             'inline': True,
                             'name': objective_def['progressDescription'],
-                            'value': '{} ({:.2f}%)'.format(place['progress'], place['progress']/place['completionValue']*100)
+                            'value': '{} ({:.2f}%)'.format(place['progress'],
+                                                           place['progress'] / place['completionValue'] * 100)
                         })
+                        if place['objectiveHash'] == 1851115127:
+                            newrow[1] = place['progress'] / place['completionValue'] * 100
+                            names[0] = objective_def['progressDescription']
+                        elif place['objectiveHash'] == 1851115126:
+                            newrow[2] = place['progress'] / place['completionValue'] * 100
+                            names[1] = objective_def['progressDescription']
+                        elif place['objectiveHash'] == 1851115125:
+                            newrow[3] = place['progress'] / place['completionValue'] * 100
+                            names[2] = objective_def['progressDescription']
+                date = []
+                edz = []
+                moon = []
+                io = []
+                with open('thelie.csv', 'r') as csvfile:
+                    plots = csv.reader(csvfile, delimiter=',')
+                    for row in plots:
+                        if len(row) < 4:
+                            continue
+                        diff = datetime.fromisoformat(row[0]) - datetime.fromisoformat('2020-05-12T17:00:00')
+                        date.append(diff.seconds/3600)
+                        edz.append(float(row[1]))
+                        moon.append(float(row[2]))
+                        io.append(float(row[3]))
+                    csvfile.close()
+                diff = datetime.fromisoformat(newrow[0]) - datetime.fromisoformat('2020-05-12T17:00:00')
+                date.append(diff.seconds / 3600)
+                edz.append(float(newrow[1]))
+                moon.append(float(newrow[2]))
+                io.append(float(newrow[3]))
+                with open('thelie.csv', 'a') as csvfile:
+                    writer = csv.writer(csvfile, delimiter=',')
+                    writer.writerow(newrow)
+                    csvfile.close()
+                fig = plt.figure()
+                ax = plt.axes()
+                for spine in ax.spines.values():
+                    spine.set_visible(False)
+                plt.plot(date, edz, label=names[0])
+                plt.plot(date, moon, label=names[1])
+                plt.plot(date, io, label=names[2])
+                ax.set_xlabel(self.translations[lang]['graph']['datefromstart'], color='#226197')
+                ax.set_ylabel(self.translations[lang]['graph']['percentage'], color='#226197')
+                ax.tick_params(colors='#bdbdff', direction='out')
+                for tick in ax.get_xticklabels():
+                    tick.set_color('#226197')
+                for tick in ax.get_yticklabels():
+                    tick.set_color('#226197')
+                plt.grid(color='#bdbdff', linestyle='solid', axis='y')
+                plt.legend()
+                plt.savefig('thelie-{}.png'.format(lang), format='png', transparent=True)
+                plt.close(fig)
+                self.data[lang]['thelie']['image'] = {
+                    'url': 'attachment://thelie-{}.png'.format(lang)
+                }
 
     async def decode_modifiers(self, key, lang):
         data = []
@@ -1330,16 +1428,20 @@ class D2data:
 
         activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
-        activities_resp = await self.get_cached_json('activities_{}'.format(char_info['charid'][0]), name, activities_url, self.activities_params, lang, string, force=force)
+        activities_resp = await self.get_cached_json('activities_{}'.format(char_info['charid'][0]), name,
+                                                     activities_url, self.activities_params, lang, string, force=force)
         return activities_resp
 
     async def get_player_metric(self, membership_type, membership_id, metric):
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
-        metric_resp = await self.get_cached_json('playermetrics_{}'.format(membership_id), 'metric {} for {}'.format(metric, membership_id), url, params=self.metric_params, change_msg=False)
+        metric_resp = await self.get_cached_json('playermetrics_{}'.format(membership_id),
+                                                 'metric {} for {}'.format(metric, membership_id), url,
+                                                 params=self.metric_params, change_msg=False)
         if metric_resp:
             metric_json = metric_resp
             try:
-                return metric_json['Response']['metrics']['data']['metrics'][str(metric)]['objectiveProgress']['progress']
+                return metric_json['Response']['metrics']['data']['metrics'][str(metric)]['objectiveProgress'][
+                    'progress']
             except KeyError:
                 return -1
         else:
@@ -1348,13 +1450,15 @@ class D2data:
     async def get_member_metric_wrapper(self, member, metric):
         member_id = member['destinyUserInfo']['membershipId']
         member_type = member['destinyUserInfo']['membershipType']
-        return [member['destinyUserInfo']['LastSeenDisplayName'], await self.get_player_metric(member_type, member_id, metric)]
+        return [member['destinyUserInfo']['LastSeenDisplayName'],
+                await self.get_player_metric(member_type, member_id, metric)]
 
-    async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True, force=False):
+    async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True,
+                              force=False):
         cache_cursor = self.cache_db.cursor()
 
         try:
-            cache_cursor.execute('''SELECT json, expires from cache WHERE id=?''', (cache_id,))
+            cache_cursor.execute('''SELECT json, expires, timestamp from cache WHERE id=?''', (cache_id,))
             cached_entry = cache_cursor.fetchone()
             if cached_entry is not None:
                 expired = datetime.now().timestamp() > cached_entry[1]
@@ -1365,30 +1469,43 @@ class D2data:
 
         if expired or force:
             response = await self.get_bungie_json(name, url, params, lang, string, change_msg)
+            timestamp = datetime.utcnow().isoformat()
             if response:
                 response_json = response
                 try:
-                    cache_cursor.execute('''CREATE TABLE cache (id text, expires integer, json text);''')
+                    cache_cursor.execute(
+                        '''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
                     cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id)''')
-                    cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?)''',
-                                         (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json)))
+                    cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
+                                         (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json),
+                                          timestamp))
+                except sqlite3.OperationalError:
+                    try:
+                        cache_cursor.execute('''ALTER TABLE cache ADD COLUMN timestamp text''')
+                        cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
+                                             (cache_id, int(datetime.now().timestamp() + 1800),
+                                              json.dumps(response_json), timestamp))
+                    except sqlite3.OperationalError:
+                        pass
+                try:
+                    cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
+                                         (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json),
+                                          timestamp))
                 except sqlite3.OperationalError:
                     pass
                 try:
-                    cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?)''',
-                                         (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json)))
-                except sqlite3.OperationalError:
-                    pass
-                try:
-                    cache_cursor.execute('''UPDATE cache SET expires=?, json=? WHERE id=?''',
-                                         (int(datetime.now().timestamp() + 1800), json.dumps(response_json), cache_id))
+                    cache_cursor.execute('''UPDATE cache SET expires=?, json=?, timestamp=? WHERE id=?''',
+                                         (int(datetime.now().timestamp() + 1800), json.dumps(response_json), timestamp,
+                                          cache_id))
                 except sqlite3.OperationalError:
                     pass
             else:
                 response_json = False
         else:
+            timestamp = cached_entry[2]
             response_json = json.loads(cached_entry[0])
         self.cache_db.commit()
+        response_json['timestamp'] = timestamp
         return response_json
 
     async def get_clan_leaderboard(self, clan_id, metric, number, is_time=False, is_kda=False):
@@ -1416,9 +1533,9 @@ class D2data:
                         index = metric_list.index(place)
                     except ValueError:
                         continue
-                    if metric_list[index][1] == metric_list[index-1][1]:
-                        metric_list[index][0] = '{}\n{}'.format(metric_list[index-1][0], metric_list[index][0])
-                        metric_list.pop(index-1)
+                    if metric_list[index][1] == metric_list[index - 1][1]:
+                        metric_list[index][0] = '{}\n{}'.format(metric_list[index - 1][0], metric_list[index][0])
+                        metric_list.pop(index - 1)
 
                 indexed_list = metric_list.copy()
                 i = 1
@@ -1432,11 +1549,11 @@ class D2data:
                 if is_time:
                     for place in indexed_list:
                         index = indexed_list.index(place)
-                        indexed_list[index][2] = str(timedelta(minutes=(indexed_list[index][2]/60000))).split('.')[0]
+                        indexed_list[index][2] = str(timedelta(minutes=(indexed_list[index][2] / 60000))).split('.')[0]
                 if is_kda:
                     for place in indexed_list:
                         index = indexed_list.index(place)
-                        indexed_list[index][2] = indexed_list[index][2]/100
+                        indexed_list[index][2] = indexed_list[index][2] / 100
 
                 return indexed_list[:old_i]
             except KeyError:

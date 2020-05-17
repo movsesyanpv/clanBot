@@ -23,6 +23,7 @@ class ClanBot(commands.Bot):
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'ru']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts', 'events']
+    embeds_with_img = ['thelie']
 
     sched = AsyncIOScheduler(timezone='UTC')
     guild_db = ''
@@ -598,6 +599,8 @@ class ClanBot(commands.Bot):
                     for field in src_dict[lang][upd_type]:
                         embed.append(discord.Embed.from_dict(field))
                 else:
+                    if upd_type in self.embeds_with_img:
+                        image = discord.File("{}-{}.png".format(upd_type, lang), filename='{}-{}.png'.format(upd_type, lang))
                     embed = discord.Embed.from_dict(src_dict[lang][upd_type])
 
             hist = 0
@@ -663,7 +666,10 @@ class ClanBot(commands.Bot):
                         hist = str(hist)
                     else:
                         if server.me.permissions_in(channel).embed_links:
-                            message = await channel.send(embed=embed, delete_after=time_to_delete)
+                            if upd_type in self.embeds_with_img:
+                                message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
+                            else:
+                                message = await channel.send(embed=embed, delete_after=time_to_delete)
                         else:
                             message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                         hist = message.id

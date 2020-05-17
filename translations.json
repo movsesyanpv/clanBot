@@ -190,6 +190,10 @@
                     "use_lfg": "__**Участие в сборе**__\nНажмите \uD83D\uDC4C для добавления себя в список желающих. Бот должен подтвердить реакцию сообщением в ЛС, только в этом случае вы можете быть уверены в успешном добавлении. Для удаления себя из списка желающих уберите \uD83D\uDC4C.\nНажмите ❓ для добавления себя в список готовых помочь при необходимости. Для удаления себя из этого списка уберите ❓.\nНажмите ❌ для удаления сбора (работает только для создателя сбора)."
                 }
             }
+        },
+        "graph": {
+            "percentage": "Процент выполнения",
+            "datefromstart": "Дней от начала"
         }
     },
     "en": {
@@ -380,6 +384,10 @@
                     "use_lfg": "__**Participating in the group**__\nUse \uD83D\uDC4C to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your \uD83D\uDC4C reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner)."
                 }
             }
+        },
+        "graph": {
+            "percentage": "Completion percentage",
+            "datefromstart": "Days from start"
         }
     },
     "spiderembeds": {
