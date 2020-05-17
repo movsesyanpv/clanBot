@@ -33,7 +33,7 @@ Notes: the files `token.json` and `char.json` can be transferred to another mach
 
 # Launch
 
-Python 3.6+ is required
+Python 3.7+ is required (3.6, if you don't need to use `datetime.fromisoformat`)
 
 ```
 usage: main.py [-h] [-nc] [-p] [-nm] [-l LANG] [-t TYPE] [-tp] [-f] [--oauth]
