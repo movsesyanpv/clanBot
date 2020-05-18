@@ -154,7 +154,8 @@ class ClanBot(commands.Bot):
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_the_lie_progress, 'thelie', 3600, channels=channels, post=post, get=get, forceget=forceget)
+                # await self.universal_update(self.data.get_the_lie_progress, 'thelie', 3600, channels=channels, post=post, get=get, forceget=forceget)
+                pass
         if self.args.forceupdate:
             await self.data.destiny.close()
             await self.logout()
