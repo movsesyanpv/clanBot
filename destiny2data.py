@@ -1374,13 +1374,13 @@ class D2data:
                         if len(row) < 4:
                             continue
                         diff = datetime.fromisoformat(row[0]) - datetime.fromisoformat('2020-05-12T17:00:00')
-                        date.append(diff.seconds/3600)
+                        date.append(diff.total_seconds() / 86400)
                         edz.append(float(row[1]))
                         moon.append(float(row[2]))
                         io.append(float(row[3]))
                     csvfile.close()
                 diff = datetime.fromisoformat(newrow[0]) - datetime.fromisoformat('2020-05-12T17:00:00')
-                date.append(diff.seconds / 3600)
+                date.append(diff.total_seconds() / 86400)
                 edz.append(float(newrow[1]))
                 moon.append(float(newrow[2]))
                 io.append(float(newrow[3]))
