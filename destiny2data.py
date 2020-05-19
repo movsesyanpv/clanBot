@@ -1500,7 +1500,7 @@ class D2data:
                 except sqlite3.OperationalError:
                     pass
             else:
-                response_json = False
+                return False
         else:
             timestamp = cached_entry[2]
             response_json = json.loads(cached_entry[0])
