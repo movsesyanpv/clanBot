@@ -58,11 +58,11 @@ class ClanBot(commands.Bot):
         self.guild_db = sqlite3.connect('guild.db')
         self.guild_cursor = self.guild_db.cursor()
 
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='50', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='30', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightfall820, 'nightfalls820', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
