@@ -629,23 +629,32 @@ class LFG:
         self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
         self.conn.commit()
 
-    async def dm_lfgs(self, user):
-        lfg_list = self.c.execute('SELECT group_id, name, time, channel_name, server_name FROM raid WHERE owner=?',
+    async def dm_lfgs(self, user, translations):
+        lfg_list = self.c.execute('SELECT group_id, name, time, channel_name, server_name, timezone FROM raid WHERE owner=?',
                                   (user.id,))
         lfg_list = lfg_list.fetchall()
 
-        msg = "Your LFGs:\n"
+        msg = translations['lfglist_head']
         i = 1
         for lfg in lfg_list:
-            msg = "{}{}. {} @ {} in #{} of {}, ID: `{}`\n".format(msg, i, lfg[1], datetime.fromtimestamp(lfg[2]),
+            msg = translations['lfglist'].format(msg, i, lfg[1], datetime.fromtimestamp(lfg[2]), lfg[5],
                                                                   lfg[3], lfg[4], self.hashids.encode(lfg[0]))
             i = i + 1
         if user.dm_channel is None:
             await user.create_dm()
-        await user.dm_channel.send(msg)
+        if len(lfg_list) > 0:
+            await user.dm_channel.send(msg)
+            return lfg_list
+        else:
+            await user.dm_channel.send(translations['lfglist_empty'])
+            return False
 
-    async def edit(self, message, old_lfg, translations):
-        args = self.parse_args(message.content.splitlines(), message, is_init=False)
+    async def edit(self, message, old_lfg, translations, param_str=None):
+        if param_str is not None:
+            text = param_str.splitlines()
+        else:
+            text = message.content.splitlines()
+        args = self.parse_args(text, message, is_init=False)
 
         role_changed = False
         for item in args:

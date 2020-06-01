@@ -50,8 +50,18 @@
             "role": "Имена пингуемых ролей, разделенные `;`. Отправьте `-` для автоматического выбора ролей. Пример: guardian; recruit",
             "check": "Верна ли информация? Да/Нет\nИмя: {}\nОписание: {}\nВремя начала: {}\nРазмер группы: {}\nДлительность в часах: {}\nТип активности: {}\nПодбор: {}\nРоли: {}",
             "no": "нет",
-            "again": "Создание сбора отменено. Повторите его создание.",
-            "too_long": "Слишком длинный ответ ({} символов). Длина ограничена {} символами. Необходимо повторить ввод.\n{}"
+            "creation": "Создание",
+            "edit": "Редактирование",
+            "again": "{} сбора отменено. Повторите его {}.",
+            "too_long": "Слишком длинный ответ ({} символов). Длина ограничена {} символами. Необходимо повторить ввод.\n{}",
+            "dm_noedit": "Отправьте '--', если вы не хотите менять ответ на вопрос.",
+            "lfg_choice": "Отправьте номер сбора из списка выше, который вы хотите изменить. Ответ должен содержать только число, например, для выбора первого сбора в списке отправьте '1'.",
+            "lfg_choice_fail": "Не удалось разобрать ответ ('{}'). Ответ должен содержать только число и быть меньше {}, например, для выбора первого сбора в списке отправьте '1'.\n{}",
+            "lfglist_head": "Ваши сборы:\n",
+            "lfglist": "{}{}. {}, начало в {} {} на канале #{} сервера {}, ID: `{}`\n",
+            "lfglist_empty": "Не найдено ни одного вашего сбора",
+            "lfglist_choice_check": "Правильный ли сбор выбран? Да/Нет\n",
+            "no_change": "Не меняется"
         },
         "lfge": {
             "roles": "Roles",
@@ -247,8 +257,18 @@
             "role": "Name the roles to mention, separated by `;`",
             "check": "Is the info correct?\nName: {}\nDescription: {}\nTime of start: {}\nGroup size: {}\nLength: {}\nActivity type: {}\nMode: {}\nRoles: {}",
             "no": "no",
+            "creation": "Creation",
+            "edit": "Edit",
             "again": "Check your input and repeat the process.",
-            "too_long": "The answer is too long ({} symbols). Maximum length is {} symbols. You will need to answer again.\n{}"
+            "too_long": "The answer is too long ({} symbols). Maximum length is {} symbols. You will need to answer again.\n{}",
+            "dm_noedit": "Send '--' if you don't want to change your previous answer.",
+            "lfg_choice": "Send the number of the group from the list above.",
+            "lfg_choice_fail": "Unable to process the answer ('{}'). The answer should contain only numbers, i.e. '1' for the first LFG in the list and should be less, than {}.\n{}",
+            "lfglist_head": "Your LFGs:\n",
+            "lfglist": "{}{}. {} @ {} {} in #{} of {}, ID: `{}`\n",
+            "lfglist_empty": "No LFGs were found",
+            "lfglist_choice_check": "Is the LFG choice correct? Yes/No\n",
+            "no_change": "Not changed"
         },
         "lfge": {
             "roles": "Roles",

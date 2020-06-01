@@ -11,9 +11,15 @@ class Group(commands.Cog):
 
     @commands.command()
     @commands.dm_only()
-    async def lfglist(self, ctx):
-        await ctx.bot.raid.dm_lfgs(ctx.author)
-        return
+    async def lfglist(self, ctx, lang=None):
+        if ctx.message.guild is not None and lang is None:
+            lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        if lang not in ctx.bot.langs:
+            lang = 'en'
+
+        translations = ctx.bot.translations[lang]['lfg']
+        status = await ctx.bot.raid.dm_lfgs(ctx.author, translations)
+        return status
 
     async def guild_lfg(self, ctx, lang, lfg_str=None):
         message = ctx.message
@@ -105,9 +111,9 @@ class Group(commands.Cog):
         for role_mention in role_str.split(', '):
             try:
                 role_obj = ctx.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
+                role = '{} {};'.format(role, role_obj.name)
             except ValueError:
                 pass
-            role = '{} {};'.format(role, role_obj.name)
         if len(role) > 0:
             role = role[:-1]
 
@@ -161,7 +167,7 @@ class Group(commands.Cog):
         name = ctx.bot.raid.get_cell('group_id', group_id, 'name')
         hashids = Hashids()
         group = hashids.encode(group_id)
-        if ctx.guild.me.guild_permissions.manage_roles:
+        if ctx.guild.me.guild_permissions.manage_roles and False:  # Temporarily disabled
             group_role = await ctx.guild.create_role(name='{} | {}'.format(name, group), mentionable=True,
                                                      reason='LFG creation')
             group_ch_id = 0
@@ -181,19 +187,202 @@ class Group(commands.Cog):
         await out.add_reaction('❓')
         await out.add_reaction('❌')
 
+    async def dm_edit_lfg(self, ctx, lang, hashids):
+
+        def check(ms):
+            return ms.channel == ctx.author.dm_channel and ms.author == ctx.message.author
+
+        async def get_proper_length_arg(arg_name, max_len):
+            dm_content = '{}\n{}'.format(translations[arg_name], translations['dm_noedit'])
+            await dm.send(content=dm_content)
+            q_msg = await self.bot.wait_for('message', check=check)
+            arg = q_msg.content
+            while len(arg) > max_len:
+                await dm.send(content=translations['too_long'].format(len(arg), max_len, dm_content))
+                q_msg = await self.bot.wait_for('message', check=check)
+                arg = q_msg.content
+            return arg
+
+        async def get_numerical_answer(arg_name, restraint):
+            await dm.send(content=translations[arg_name])
+            q_msg = await self.bot.wait_for('message', check=check)
+            arg = q_msg.content
+            is_number = False
+            number = -1
+            try:
+                number = int(arg) - 1
+                is_number = True
+            except ValueError:
+                pass
+            while not is_number or (0 > number or number + 1 >= restraint):
+                await dm.send(content=translations['lfg_choice_fail'].format(arg, restraint, translations[arg_name]))
+                q_msg = await self.bot.wait_for('message', check=check)
+                arg = q_msg.content
+                try:
+                    number = int(arg) - 1
+                    is_number = True
+                except ValueError:
+                    pass
+            return number
+
+        if ctx.author.dm_channel is None:
+            await ctx.author.create_dm()
+        dm = ctx.author.dm_channel
+
+        translations = ctx.bot.translations[lang]['lfg']
+
+        lfg_list = await self.lfglist(ctx, lang)
+        if not lfg_list:
+            return
+        number = await get_numerical_answer('lfg_choice', len(lfg_list)+1)
+
+        check_msg = translations['lfglist_choice_check']
+        lfg = lfg_list[number]
+        check_msg = translations['lfglist'].format(check_msg, number+1, lfg[1], datetime.fromtimestamp(lfg[2]), lfg[5],
+                                       lfg[3], lfg[4], hashids.encode(lfg[0]))
+        await dm.send(check_msg)
+        msg = await self.bot.wait_for('message', check=check)
+        if msg.content.lower() == translations['no']:
+            await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
+            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                try:
+                    await ctx.message.delete()
+                except discord.NotFound:
+                    pass
+            return False
+        text = '{}\n'.format(lfg[0])
+
+        name = await get_proper_length_arg('name', 256)
+        if name != '--':
+            text = '{}-n:{}\n'.format(text, name)
+
+        description = await get_proper_length_arg('description', 2048)
+        if description != '--':
+            text = '{}-d:{}\n'.format(text, description)
+
+        ts = datetime.now(timezone(timedelta(0))).astimezone()
+        await dm.send(content=translations['time'].format(datetime.now().strftime('%d-%m-%Y %H:%M'), datetime.now().replace(tzinfo=ts.tzinfo).strftime('%d-%m-%Y %H:%M%z')))
+        msg = await self.bot.wait_for('message', check=check)
+        time = msg.content
+        if time != '--':
+            text = '{}-t:{}\n'.format(text, time)
+
+        await dm.send(content=translations['size'])
+        msg = await self.bot.wait_for('message', check=check)
+        size = msg.content
+        if size != '--':
+            text = '{}-s:{}\n'.format(text, size)
+
+        await dm.send(content=translations['length'])
+        msg = await self.bot.wait_for('message', check=check)
+        length = msg.content
+        if length != '--':
+            text = '{}-l:{}\n'.format(text, length)
+
+        await dm.send(content=translations['type'])
+        msg = await self.bot.wait_for('message', check=check)
+        a_type = msg.content
+        if a_type != '--':
+            text = '{}-at:{}\n'.format(text, a_type)
+
+        await dm.send(content=translations['mode'])
+        msg = await self.bot.wait_for('message', check=check)
+        mode = msg.content
+        if mode != '--':
+            text = '{}-m:{}\n'.format(text, mode)
+
+        await dm.send(content=translations['role'])
+        msg = await self.bot.wait_for('message', check=check)
+        role = msg.content
+        role_raw = msg.content
+        if role != '--':
+            role_str = ctx.bot.raid.find_roles(True, ctx.guild, [r.strip() for r in role.split(';')])
+            role = ''
+            for role_mention in role_str.split(', '):
+                try:
+                    role_obj = ctx.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
+                    role = '{} {};'.format(role, role_obj.name)
+                except ValueError:
+                    pass
+            if len(role) > 0:
+                role = role[:-1]
+            text = '{}-r:{}\n'.format(text, role)
+
+        at = ['default', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
+        args = ctx.bot.raid.parse_args(text.splitlines(), ctx.message, False)
+        if len(args) > 0:
+            if 'length' in args.keys():
+                args['length'] /= 3600
+            if 'is_embed' in args.keys():
+                args['is_embed'] = at[args['is_embed']]
+            if 'name' not in args.keys():
+                args['name'] = translations['no_change']
+            if 'description' not in args.keys():
+                args['description'] =translations['no_change']
+            if 'description' not in args.keys():
+                args['description'] = translations['no_change']
+            if 'size' not in args.keys():
+                args['size'] = translations['no_change']
+            if 'length' not in args.keys():
+                args['length'] = translations['no_change']
+            if 'is_embed' not in args.keys():
+                args['is_embed'] = translations['no_change']
+            if 'group_mode' not in args.keys():
+                args['group_mode'] = translations['no_change']
+            if time != '--':
+                ts = datetime.fromtimestamp(args['time']).replace(tzinfo=ts.tzinfo)
+                args['time'] = ts
+            else:
+                args['time'] = translations['no_change']
+            if role == '--':
+                role = translations['no_change']
+            check_msg = translations['check'].format(args['name'], args['description'], args['time'], args['size'],
+                                                     args['length'], args['is_embed'], args['group_mode'], role)
+            if len(check_msg) <= 2000:
+                await dm.send(check_msg)
+            else:
+                check_lines = check_msg.splitlines()
+                for line in check_lines:
+                    if len(line) <= 2000:
+                        await dm.send(line)
+                    else:
+                        line_parts = line.split(':')
+                        lines = ['{}:'.format(line_parts[0]), line_parts[1]]
+                        if len(line_parts) > 2:
+                            for arg_part in line_parts[2:]:
+                                lines[1] = '{}: {}'.format(lines[1], arg_part)
+                        await dm.send(lines[0])
+                        await dm.send(lines[1])
+            msg = await self.bot.wait_for('message', check=check)
+            if msg.content.lower() == translations['no']:
+                await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
+                if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                    try:
+                        await ctx.message.delete()
+                    except discord.NotFound:
+                        pass
+                return False
+
+        return text
+
     @commands.command(aliases=['editlfg', 'editLfg', 'editLFG'])
     @commands.guild_only()
     async def edit_lfg(self, ctx, arg_id=None, *args):
-        if arg_id is None:
-            await ctx.channel.send('DM-based edits are not supported yet')
-            #TODO: notify participants about edits.
-            #TODO: dm based edits
-            return
-        message = ctx.message
-        lang = ctx.bot.guild_lang(ctx.message.guild.id)
-        text = message.content.split()
+        if ctx.message.guild is not None:
+            lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        else:
+            lang = 'en'
         hashids = Hashids()
-        group_id = hashids.decode(arg_id)
+        message = ctx.message
+        if arg_id is None:
+            text = await self.dm_edit_lfg(ctx, lang, hashids)
+            if not text:
+                return
+            group_id = [int(text.splitlines()[0])]
+            #TODO: notify participants about edits.
+        else:
+            text = message.content.split()
+            group_id = hashids.decode(arg_id)
         if len(group_id) > 0:
             old_lfg = ctx.bot.raid.get_cell('group_id', group_id[0], 'lfg_channel')
             old_lfg = ctx.bot.get_channel(old_lfg)
@@ -201,7 +390,7 @@ class Group(commands.Cog):
             if old_lfg is not None and owner is not None:
                 old_lfg = await old_lfg.fetch_message(group_id[0])
                 if owner == message.author.id:
-                    await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang])
+                    await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang], text)
                 else:
                     await ctx.bot.check_ownership(message)
                     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
