@@ -239,7 +239,7 @@ class Group(commands.Cog):
         check_msg = translations['lfglist_choice_check']
         lfg = lfg_list[number]
         check_msg = translations['lfglist'].format(check_msg, number+1, lfg[1], datetime.fromtimestamp(lfg[2]), lfg[5],
-                                       lfg[3], lfg[4], hashids.encode(lfg[0]))
+                                                   lfg[3], lfg[4], hashids.encode(lfg[0]))
         await dm.send(check_msg)
         msg = await self.bot.wait_for('message', check=check)
         if msg.content.lower() == translations['no']:
@@ -261,37 +261,43 @@ class Group(commands.Cog):
             text = '{}-d:{}\n'.format(text, description)
 
         ts = datetime.now(timezone(timedelta(0))).astimezone()
-        await dm.send(content=translations['time'].format(datetime.now().strftime('%d-%m-%Y %H:%M'), datetime.now().replace(tzinfo=ts.tzinfo).strftime('%d-%m-%Y %H:%M%z')))
+        q_line = '{}\n{}'.format(translations['time'].format(datetime.now().strftime('%d-%m-%Y %H:%M'), datetime.now().replace(tzinfo=ts.tzinfo).strftime('%d-%m-%Y %H:%M%z')), translations['dm_noedit'])
+        await dm.send(content=q_line)
         msg = await self.bot.wait_for('message', check=check)
         time = msg.content
         if time != '--':
             text = '{}-t:{}\n'.format(text, time)
 
-        await dm.send(content=translations['size'])
+        q_line = '{}\n{}'.format(translations['size'], translations['dm_noedit'])
+        await dm.send(content=q_line)
         msg = await self.bot.wait_for('message', check=check)
         size = msg.content
         if size != '--':
             text = '{}-s:{}\n'.format(text, size)
 
-        await dm.send(content=translations['length'])
+        q_line = '{}\n{}'.format(translations['length'], translations['dm_noedit'])
+        await dm.send(content=q_line)
         msg = await self.bot.wait_for('message', check=check)
         length = msg.content
         if length != '--':
             text = '{}-l:{}\n'.format(text, length)
 
-        await dm.send(content=translations['type'])
+        q_line = '{}\n{}'.format(translations['type'], translations['dm_noedit'])
+        await dm.send(content=q_line)
         msg = await self.bot.wait_for('message', check=check)
         a_type = msg.content
         if a_type != '--':
             text = '{}-at:{}\n'.format(text, a_type)
 
-        await dm.send(content=translations['mode'])
+        q_line = '{}\n{}'.format(translations['mode'], translations['dm_noedit'])
+        await dm.send(content=q_line)
         msg = await self.bot.wait_for('message', check=check)
         mode = msg.content
         if mode != '--':
             text = '{}-m:{}\n'.format(text, mode)
 
-        await dm.send(content=translations['role'])
+        q_line = '{}\n{}'.format(translations['role'], translations['dm_noedit'])
+        await dm.send(content=q_line)
         msg = await self.bot.wait_for('message', check=check)
         role = msg.content
         role_raw = msg.content
@@ -318,7 +324,7 @@ class Group(commands.Cog):
             if 'name' not in args.keys():
                 args['name'] = translations['no_change']
             if 'description' not in args.keys():
-                args['description'] =translations['no_change']
+                args['description'] = translations['no_change']
             if 'description' not in args.keys():
                 args['description'] = translations['no_change']
             if 'size' not in args.keys():
