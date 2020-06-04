@@ -139,7 +139,7 @@ class Group(commands.Cog):
                     await dm.send(lines[1])
         msg = await self.bot.wait_for('message', check=check)
         if msg.content.lower() == translations['no']:
-            await dm.send(translations['again'])
+            await dm.send(translations['again'].format(translations['creation'], translations['creation'].lower()))
             if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                 try:
                     await ctx.message.delete()
