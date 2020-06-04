@@ -396,6 +396,10 @@ class LFG:
         group_mode = self.get_cell('group_id', message.id, 'group_mode')
         owner = self.get_cell('group_id', message.id, 'owner')
         owner = message.guild.get_member(owner)
+        if owner.nick is None:
+            nick = owner.name
+        else:
+            nick = owner.nick
 
         if is_embed == 1:
             self.lfg_categories[self.lfg_i[is_embed]] = {
@@ -412,7 +416,7 @@ class LFG:
             'type': 'rich',
             'title': name,
             'footer': {
-                'text': translations['lfge']['footer'].format(self.hashids.encode(message.id), owner.nick)
+                'text': translations['lfge']['footer'].format(self.hashids.encode(message.id), nick)
             }
         }
 
