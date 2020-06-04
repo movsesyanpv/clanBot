@@ -42,13 +42,13 @@ class Group(commands.Cog):
                         msg = '{} {},'.format(msg, parts[0])
                         parts.pop(0)
         if is_embed and ctx.guild.me.permissions_in(ctx.message.channel).embed_links:
-            embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[lang])
+            embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[lang], lang)
             out = await message.channel.send(content=msg)
             await out.edit(content=None, embed=embed)
         else:
             out = await message.channel.send(msg)
         ctx.bot.raid.set_id(out.id, message.id)
-        await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang])
+        await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang], lang)
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
             try:
                 await message.delete()
@@ -387,7 +387,7 @@ class Group(commands.Cog):
             group_id = [int(text.splitlines()[0])]
             #TODO: notify participants about edits.
         else:
-            text = message.content.split()
+            text = message.content
             group_id = hashids.decode(arg_id)
         if len(group_id) > 0:
             old_lfg = ctx.bot.raid.get_cell('group_id', group_id[0], 'lfg_channel')
@@ -396,7 +396,7 @@ class Group(commands.Cog):
             if old_lfg is not None and owner is not None:
                 old_lfg = await old_lfg.fetch_message(group_id[0])
                 if owner == message.author.id:
-                    await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang], text)
+                    await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang], lang, text)
                 else:
                     await ctx.bot.check_ownership(message)
                     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:

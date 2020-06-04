@@ -3,6 +3,7 @@ import sqlite3
 import os
 from datetime import datetime, timezone, timedelta
 from hashids import Hashids
+from babel.dates import format_datetime, get_timezone_name, get_timezone, get_timezone_gmt
 
 
 class LFG:
@@ -370,15 +371,18 @@ class LFG:
         self.c.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
         self.conn.commit()
 
-    def make_embed(self, message, translations):
+    def make_embed(self, message, translations, lang):
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
         name = self.get_cell('group_id', message.id, 'name')
         tz = self.get_cell('group_id', message.id, 'timezone')
         if tz is None:
             tz = 'UTC+03:00'
-        tz_elements = tz.strip('UTC+').split(':')
+        if tz == 'UTC':
+            tz_elements = [0, 0]
+        else:
+            tz_elements = tz.strip('UTC+').split(':')
         ts = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
-        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time')).replace(tzinfo=ts)
+        time = datetime.utcfromtimestamp(self.get_cell('group_id', message.id, 'time'))#.replace(tzinfo=ts)
         description = self.get_cell('group_id', message.id, 'description')
         dm_id = self.get_cell('group_id', message.id, 'dm_message')
         size = self.get_cell('group_id', message.id, 'size')
@@ -427,7 +431,8 @@ class LFG:
         embed['fields'].append({
             "inline": True,
             "name": translations['lfge']['date'],
-            "value": '{} {}'.format(time.strftime('%d-%m-%Y %H:%M'), tz)
+            # "value": '{} {}'.format(time.strftime('%d-%m-%Y %H:%M'), tz)
+            "value": '{} {}'.format(format_datetime(time, 'medium', tzinfo=ts, locale=lang), tz)
         })
         embed_length = embed_length + len(embed['fields'][-1]['name']) + len(embed['fields'][-1]['value'])
 
@@ -516,11 +521,11 @@ class LFG:
 
         return embed
 
-    async def update_group_msg(self, message, translations):
+    async def update_group_msg(self, message, translations, lang):
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
 
         if is_embed and message.guild.me.permissions_in(message.channel).embed_links:
-            embed = self.make_embed(message, translations)
+            embed = self.make_embed(message, translations, lang)
             await message.edit(content=None, embed=embed)
             return
 
@@ -649,7 +654,7 @@ class LFG:
             await user.dm_channel.send(translations['lfglist_empty'])
             return False
 
-    async def edit(self, message, old_lfg, translations, param_str=None):
+    async def edit(self, message, old_lfg, translations, lang, param_str=None):
         if param_str is not None:
             text = param_str.splitlines()
         else:
@@ -674,7 +679,7 @@ class LFG:
         else:
             new_lfg = old_lfg
         await message.delete()
-        await self.update_group_msg(new_lfg, translations)
+        await self.update_group_msg(new_lfg, translations, lang)
         self.conn.commit()
 
     def purge_guild(self, guild_id):
