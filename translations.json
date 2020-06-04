@@ -279,7 +279,7 @@
             "length": "Duration",
             "total_goers": "Total participants",
             "total_wanters": "Total reserve",
-            "date": "Time of start (day-month-year hour:minute timezone)",
+            "date": "Time of start",
             "footer": "ID: {} | Owner: {}"
         },
         "xur": {
