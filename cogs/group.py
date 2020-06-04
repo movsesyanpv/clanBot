@@ -118,7 +118,9 @@ class Group(commands.Cog):
             role = role[:-1]
 
         at = ['default', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
-        args = ctx.bot.raid.parse_args('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.format(name, description, time, size, length, a_type, mode, role).splitlines(), ctx.message, True)
+        args = ctx.bot.raid.parse_args('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.
+                                       format(name, description, time, size, length, a_type, mode, role).splitlines(),
+                                       ctx.message, True)
         ts = datetime.fromtimestamp(args['time']).replace(tzinfo=ts.tzinfo)
         check_msg = translations['check'].format(args['name'], args['description'], ts, args['size'],
                                                  args['length']/3600, at[args['is_embed']], args['group_mode'], role)
@@ -261,7 +263,10 @@ class Group(commands.Cog):
             text = '{}-d:{}\n'.format(text, description)
 
         ts = datetime.now(timezone(timedelta(0))).astimezone()
-        q_line = '{}\n{}'.format(translations['time'].format(datetime.now().strftime('%d-%m-%Y %H:%M'), datetime.now().replace(tzinfo=ts.tzinfo).strftime('%d-%m-%Y %H:%M%z')), translations['dm_noedit'])
+        q_line = '{}\n{}'.format(translations['time'].format(datetime.now().strftime('%d-%m-%Y %H:%M'),
+                                                             datetime.now().replace(tzinfo=ts.tzinfo).
+                                                             strftime('%d-%m-%Y %H:%M%z')),
+                                 translations['dm_noedit'])
         await dm.send(content=q_line)
         msg = await self.bot.wait_for('message', check=check)
         time = msg.content
