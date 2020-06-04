@@ -316,7 +316,7 @@ class LFG:
         size = self.get_cell('group_id', group_id, 'size')
         group_mode = self.get_cell('group_id', group_id, 'group_mode')
 
-        if user.id == self.get_cell('group_id', group_id, 'owner'):
+        if user.id == self.get_cell('group_id', group_id, 'owner') and user.mention not in goers:
             goers = [user.mention, *goers]
             if len(goers) > size:
                 wanters = [goers[-1], *wanters]
