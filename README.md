@@ -52,3 +52,7 @@ optional arguments:
   -k KEY, --key KEY     SSL key
   -c CERT, --cert CERT  SSL certificate
 ```
+
+# Translations
+
+If you speak a language other than English that Destiny supports, a huge help with the development is to provide translations. To help with the translations, go to [POEditor](https://poeditor.com/join/project/r0GBXOfyqt) and join the project.
