@@ -1081,6 +1081,7 @@ class D2data:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
+                i = 1
                 if str(r_json['hash']) in self.translations[lang]['levi_order'] and \
                         not r_json['matchmaking']['requiresGuardianOath']:
                     challenges = await self.get_modifiers(lang, item_hash)
@@ -1114,9 +1115,11 @@ class D2data:
                     mods = await self.get_modifiers(lang, r_json['hash'])
                     resp_time = datetime.utcnow().isoformat()
                     if mods:
+                        loadout = '{}\n{}\n{}'.format(self.translations[lang]['armsmaster'][eow_loadout*3],
+                                                      self.translations[lang]['armsmaster'][eow_loadout*3+1],
+                                                      self.translations[lang]['armsmaster'][eow_loadout*3+2])
                         info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'],
-                                                                   mods[1]['name'],
-                                                                   self.translations[lang]['armsmaster'][eow_loadout])
+                                                                   mods[1]['name'], loadout)
                     else:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
                     self.data[lang]['raids']['fields'].append(info)
