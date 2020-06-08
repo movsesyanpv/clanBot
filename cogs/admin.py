@@ -173,7 +173,10 @@ class Admin(commands.Cog):
             help_msg = '{}```\t{}```'.format(help_msg,
                                              tabulate(command_list, tablefmt='plain', colalign=('left', 'left'))
                                              .replace('\n', '\n\t'))
-            help_msg = '{}{}'.format(help_msg, help_translations['additional_info'].format(prefix, prefix))
+            lang_list = ''
+            for lang in self.bot.langs:
+                lang_list = '{}`, `{}'.format(lang_list, lang)
+            help_msg = '{}{}'.format(help_msg, help_translations['additional_info'].format(prefix, lang_list[4:], prefix))
             await ctx.message.channel.send(help_msg)
             pass
         elif command.name == 'top':
