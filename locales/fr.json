@@ -1,0 +1,219 @@
+{
+    "nick": "Indeedstor",
+    "msg": {
+        "error": "Error",
+        "noapi": "Bungie API is unavailable",
+        "maintenance": "Bungie API is brought down for maintenance",
+        "later": "The information will be updated later",
+        "spider": "Spider sells this",
+        "xur": "Xur sells this",
+        "weapon": "Weapon",
+        "heroicstory": "Current heroic story missions are",
+        "forge": "Current forge is",
+        "strikesmods": "Current Vanguard strikes modifiers",
+        "reckoningmods": "The Reckoning",
+        "nightfalls820": "Current 820 nightfalls are",
+        "guidedgamenightfall": "Current guided game nightfall",
+        "ordeal": "Current ordeal",
+        "nightmares": "Current nightmare hunts are",
+        "reckoningboss": "The Reckoning boss is",
+        "cruciblerotators": "Crucible rotators are",
+        "xurloc": "Location",
+        "cost": "Cost",
+        "xurtitle": "Xur",
+        "raids": "Raids",
+        "silver": "Featured Silver items",
+        "featured_bd": "Featured Bright Dust items",
+        "bd": "Bright Dust items",
+        "week": ", part",
+        "bd_consumables": "Bright Dust consumables",
+        "resp_time": "Data updated at",
+        "no_embed_links": "No permission to 'Embed links', required for the posts.",
+        "complete": "Complete"
+    },
+    "lfg": {
+        "go": "Go",
+        "at": "@",
+        "participants": "Participants:",
+        "wanters": "Want to go:",
+        "newBlood": "There are new guys for:",
+        "gotcha": "Got your emote, {}.",
+        "server": "of",
+        "name": "Provide the name of the activity",
+        "description": "Describe, what are you going to do there",
+        "time": "When are you going to start? (format is `%d-%m-%Y %H:%M` for UTC+3 timezone and `%d-%m-%Y %H:%M %z`, for custom timezone)\nExamples of the current time: `{}` for UTC+3, `{}` for custom timezone.",
+        "size": "What is the group size?",
+        "length": "How long are you planning to do this? Example: 1h 30m for one and a half hour group.",
+        "type": "What is the type of the activity? (pve, pvp, gambit/reckoning, raid)",
+        "mode": "What is the mode for this group? (`manual` if you want to approve everyone, `basic` for automatic approvals)",
+        "role": "Name the roles to mention, separated by `;`. Send `-` for automatic role choice.",
+        "check": "Is the info correct?\nName: {}\nDescription: {}\nTime of start: {}\nGroup size: {}\nLength: {}\nActivity type: {}\nMode: {}\nRoles: {}",
+        "no": "no",
+        "creation": "Creation",
+        "edit": "Edit",
+        "again": "Check your input and repeat the process.",
+        "too_long": "The answer is too long ({} symbols). Maximum length is {} symbols. You will need to answer again.\n{}",
+        "dm_noedit": "Send '--' if you don't want to change your previous answer.",
+        "lfg_choice": "Send the number of the group from the list above.",
+        "lfg_choice_fail": "Unable to process the answer ('{}'). The answer should contain only numbers, i.e. '1' for the first LFG in the list and should be less, than {}.\n{}",
+        "lfglist_head": "Your LFGs:\n",
+        "lfglist": "{}{}. {} @ {} {} in #{} of {}, ID: `{}`\n",
+        "lfglist_empty": "No LFGs were found",
+        "lfglist_choice_check": "Is the LFG choice correct? Yes/No\n",
+        "no_change": "Not changed"
+    },
+    "lfge": {
+        "roles": "Roles",
+        "description": "Description",
+        "goers": "Participants",
+        "wanters": "Reserve",
+        "mb_goers": "Will join if needed",
+        "length": "Duration",
+        "total_goers": "Total participants",
+        "total_wanters": "Total reserve",
+        "date": "Time of start",
+        "footer": "ID: {} | Owner: {}"
+    },
+    "xur": {
+        "Earth": "Earth",
+        "Tower": "Tower",
+        "Titan": "Titan",
+        "Io": "Io",
+        "Nessus": "Nessus",
+        "NULL": "Unable to get the info",
+        "noxur": "Only the Nine know"
+    },
+    "forge": "Forge",
+    "heroicstory": "Daily Heroic Story Mission: ",
+    "ordeal": "Nightfall: The Ordeal",
+    "nightmare": "Nightmare Hunt:",
+    "adept": ": Master",
+    "Warlock": "Warlock",
+    "Titan": "Titan",
+    "Hunter": "Hunter",
+    "rotator": "Rotator",
+    "strikes": "Heroic Strikes Playlist",
+    "reckoning": "The Reckoning: Tier III",
+    "oryx": "Likeness of Oryx",
+    "swords": "The Swords",
+    "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers.",
+    "levi_order": {
+        "417231112": "1. Pleasure Gardens\n2. The Gauntlet\n3. Royal Pools\n4. Throne",
+        "757116822": "1. The Gauntlet\n2. Royal Pools\n3. Pleasure Gardens\n4. Throne",
+        "1685065161": "1. The Gauntlet\n2. Pleasure Gardens\n3. Royal Pools\n4. Throne",
+        "2449714930": "1. Royal Pools\n2. The Gauntlet\n3. Pleasure Gardens\n4. Throne",
+        "3446541099": "1. Pleasure Gardens\n2. Royal Pools\n3. The Gauntlet\n4. Throne",
+        "3879860661": "1. Royal Pools\n2. Pleasure Gardens\n3. The Gauntlet\n4. Throne"
+    },
+    "lairs": "Eater of Worlds and Spire of Stars",
+    "EoW": "Eater of Worlds: Prestige",
+    "LW": "Last Wish",
+    "SotP": "Scourge of the Past",
+    "CoS": "Crown of Sorrow",
+    "GoS": "Garden of Salvation",
+    "armsmaster": [
+        "Kinetic: Hand Cannon",
+        "Energy: Sniper Rifle",
+        "Power: Anything",
+        "Kinetic: Auto Rifle",
+        "Energy: Auto Rifle",
+        "Power: Anything",
+        "Kinetic: Sidearm",
+        "Energy: Scout Rifle",
+        "Power: Sword",
+        "Kinetic: SMG",
+        "Energy: Anything",
+        "Power: Grenade Launcher",
+        "Kinetic: Anything",
+        "Energy: Fusion Rifle",
+        "Power: Fusion Rifle",
+        "Kinetic: Shotgun",
+        "Energy: Auto Rifle",
+        "Power: Rocket Launcher"
+    ],
+    "error": "An unexpected error has occurred. The information was sent to the developer",
+    "classnames": [
+        "hunter",
+        "warlock",
+        "titan"
+    ],
+    "help": {
+        "list": "__**Here's the list of all available commands**__",
+        "help": "Print this message",
+        "lfglist": "Print your LFG list",
+        "stop": "Stop the bot",
+        "setlang": "Set server language",
+        "plan_maintenance": "Prevent updates at given time frame",
+        "lfg": "Create an LFG message",
+        "edit_lfg": "Edit LFG message",
+        "regnotifier": "Register notifier channel",
+        "rmnotifier": "Deregister notifier channel",
+        "update": "Get updates from Bungie for the given TYPE",
+        "setclan": "Set Destiny 2 clan for the server.",
+        "top": "Print top players for one of the available metrics.",
+        "additional_info": "Type `{}help command language` for more info on a `command` in `language`. Available languages are `en`, `ru`.\nType `{}ruhelp command` for more info on a `command` in russian.",
+        "aliases": "Can be called with the following names:```{}```",
+        "parameters": "Usage:```{}```",
+        "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
+        "commands": {
+            "setclan": {
+                "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
+            },
+            "top": {
+                "info": "Print top players for one of the available metrics. Metric's description is available through the link. You can also pass the metric's hash to the command.",
+                "seasonsmetrics": "Seasons",
+                "accountmetrics": "Account",
+                "cruciblemetrics": "Crucible",
+                "destinationmetrics": "Destinations",
+                "gambitmetrics": "Gambit",
+                "raidsmetrics": "Raids",
+                "strikesmetrics": "Strikes",
+                "trialsofosirismetrics": "Trials of Osiris",
+                "cat_list": "Available categories. To get the category's metric list send `{}help top category`. The categories are listed in the table below (left column), right column contains the descriptions of the aforementioned categories. The categories match in-game ones."
+            },
+            "setlang": {
+                "info": "Available languages are `en`, `ru`. Available only to the server's admins."
+            },
+            "update": {
+                "info": "Get updates from Bungie for the given `args`. The types should be separated with spaces. Available args:\n - `daily` for  heroic story missions, strike and reckoning modifiers, forge and spider\n - `weekly` for available nightfalls and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics,\n - `tess` for the current state of the Eververse\n - `seasonal` for the predictions of Tess' stock over the current season\nUpdates are posted in the channel, the command was invoked, if the channel was registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the server's admins."
+            },
+            "rmnotifier": {
+                "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.), 'seasonal' for seasonal Eververse info or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
+            },
+            "regnotifier": {
+                "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.), 'seasonal' for seasonal Eververse info or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
+            },
+            "plan_maintenance": {
+                "info": "Available only to the bot's owners."
+            },
+            "stop": {
+                "info": "Available only to the bot's owners."
+            },
+            "lfglist": {
+                "info": "The command is used to get the list of the groups you've created. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**."
+            },
+            "lfg": {
+                "info": "You can set up LFG either with arguments or in direct messages. For the latter, just don't pass any arguments for the command and answer the questions about the group.",
+                "creation": "__**Creating a group**__\nList of 'lfg' command arguments. The arguments must be on the separate lines.",
+                "creation_note": "Every parameter should be in **separate lines**\n`%Hh %Mm` - time format, in which one and a half hour activity will be written as `1h 30m` or `1.5h` or `90m`.\n`%d-%m-%Y %H:%M %z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00 +0300`.",
+                "name": "LFG name or planned activity",
+                "time": "Time of the activity start, format %d-%m-%Y %H:%M%z",
+                "description": "Description of the activity",
+                "size": "Size of the group",
+                "mode": "Type of lfg(basic or manual)",
+                "role": "Names of the roles to mention, separated by ';'. Defaults to 'Guardian, Recruit, Destiny'",
+                "length": "The duration of the activity, format '%Hh %Mm'",
+                "type": "Activity type: (pve, pvp, gambit/reckoning, raid)",
+                "example_title": "__Here's an example of LFG creation command:__",
+                "example_lfg": "lfg\n-at: pve\n-s: 3\n-n: Nightfall\n-t: 13-02-2020 19:00 +0300\n-d: Farm ascendant shards\n-m: basic\n-r: Guardian\n-l: 01h 30m",
+                "edit_title": "__**LFG editing**__\nEvery group has it's own ID. To get information about your LFGs message the bot in DM `lfglist`. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**.\nIn order to edit the group send `editlfg` command in the channel you want the updated group announcement be in. The syntax is the same as in `lfg`",
+                "manual": "__**Managing manual groups**__\nWhen someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate along with some information about the group (time, channel, server).\nTo choose a person press the corresponding emote. The list will update. **Don't** press multiple emotes, wait for the list update!!!",
+                "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner)."
+            }
+        }
+    },
+    "graph": {
+        "percentage": "Completion percentage",
+        "datefromstart": "Days from start"
+    }
+}
