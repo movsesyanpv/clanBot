@@ -302,7 +302,7 @@ class D2data:
             tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['featured_bd'] = {
                 'thumbnail': {
-                    'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
                 },
                 'fields': [],
                 'color': 0x38479F,
@@ -341,7 +341,7 @@ class D2data:
             tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['bd'] = {
                 'thumbnail': {
-                    'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
                 },
                 'fields': [],
                 'color': 0x38479F,
@@ -380,7 +380,7 @@ class D2data:
             tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['silver'] = {
                 'thumbnail': {
-                    'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
                 },
                 'fields': [],
                 'color': 0x38479F,
@@ -467,7 +467,7 @@ class D2data:
 
             data = {
                 'thumbnail': {
-                    'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
                 },
                 'fields': [],
                 'color': 0x38479F,
@@ -516,7 +516,7 @@ class D2data:
 
             data = {
                 'thumbnail': {
-                    'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
                 },
                 'fields': [],
                 'color': 0x38479F,
@@ -566,7 +566,7 @@ class D2data:
 
             data = {
                 'thumbnail': {
-                    'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
                 },
                 'fields': [],
                 'color': 0x38479F,
@@ -616,7 +616,7 @@ class D2data:
 
             data = {
                 'thumbnail': {
-                    'url': self.icon_prefix + tess_def['displayProperties']['smallTransparentIcon']
+                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
                 },
                 'fields': [],
                 'color': 0x38479F,
@@ -1264,7 +1264,7 @@ class D2data:
 
             self.data[lang]['cruciblerotators'] = {
                 'thumbnail': {
-                    'url': False
+                    'url': self.icon_prefix + '/common/destiny2_content/icons/cc8e6eea2300a1e27832d52e9453a227.png'
                 },
                 'fields': [],
                 'color': 6629649,
@@ -1284,7 +1284,7 @@ class D2data:
                         obj_def = 'DestinyObjectiveDefinition'
                         objective = await self.destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def,
                                                                    lang)
-                        if self.translations[lang]['rotator'] in objective['displayProperties']['name']:
+                        if self.translations[lang]['rotator'] in objective['displayProperties']['name'] or r_json['challenges'][0]['objectiveHash'] == 1607758693:
                             if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
                                 if 'icon' in r_json['displayProperties']:
                                     self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
