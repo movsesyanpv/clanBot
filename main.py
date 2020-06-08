@@ -50,9 +50,7 @@ class ClanBot(commands.Bot):
     def __init__(self, **options):
         super().__init__(**options)
         self.get_args()
-        translations_file = open('translations.json', 'r', encoding='utf-8')
-        self.translations = json.loads(translations_file.read())
-        translations_file.close()
+        self.load_translations()
         self.data = d2.D2data(self.translations, self.langs, self.args.oauth, self.args.production, (self.args.cert, self.args.key))
         self.raid = lfg.LFG()
         self.guild_db = sqlite3.connect('guild.db')
@@ -87,6 +85,13 @@ class ClanBot(commands.Bot):
             git_token = git_file.read()
             self.git = Github(git_token)
             self.git = self.git.get_repo('movsesyanpv/clanBot')
+
+    def load_translations(self):
+        self.translations = {}
+        for lang in self.langs:
+            translations_file = open('locales/{}.json'.format(lang), 'r', encoding='utf-8')
+            self.translations[lang] = json.loads(translations_file.read())
+            translations_file.close()
 
     def get_args(self):
         parser = argparse.ArgumentParser()
