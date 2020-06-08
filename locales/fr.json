@@ -1,7 +1,7 @@
 {
     "nick": "Indeedstor",
     "msg": {
-        "error": "Error",
+        "error": "Erreur",
         "noapi": "Bungie API is unavailable",
         "maintenance": "Bungie API is brought down for maintenance",
         "later": "The information will be updated later",
