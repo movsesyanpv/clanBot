@@ -354,7 +354,7 @@ class D2data:
             for resp in tess_resp:
                 resp_json = resp
                 tess_cats = resp_json['Response']['categories']['data']['categories']
-                items_to_get = tess_cats[4]['itemIndexes'] + tess_cats[10]['itemIndexes']
+                items_to_get = tess_cats[8]['itemIndexes'] + tess_cats[10]['itemIndexes']
                 tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get,
                                                                       [353932628, 3260482534, 3536420626, 3187955025,
                                                                        2638689062])
