@@ -1521,14 +1521,17 @@ class D2data:
                 metric_list = []
                 for member in clan_json['Response']['results']:
                     metric_list.append(await self.get_member_metric_wrapper(member, metric))
-                if is_time:
-                    metric_list.sort(reverse=False, key=lambda x: x[1])
-                    while metric_list[0][1] <= 0:
-                        metric_list.pop(0)
-                else:
-                    metric_list.sort(reverse=True, key=lambda x: x[1])
-                    while metric_list[-1][1] <= 0:
-                        metric_list.pop(-1)
+                try:
+                    if is_time:
+                        metric_list.sort(reverse=False, key=lambda x: x[1])
+                        while metric_list[0][1] <= 0:
+                            metric_list.pop(0)
+                    else:
+                        metric_list.sort(reverse=True, key=lambda x: x[1])
+                        while metric_list[-1][1] <= 0:
+                            metric_list.pop(-1)
+                except IndexError:
+                    return []
 
                 for place in metric_list[1:]:
                     delta = 0

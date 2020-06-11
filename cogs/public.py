@@ -15,6 +15,7 @@ class Public(commands.Cog):
     async def top(self, ctx, metric, number=10):
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
+        lang = ctx.bot.guild_lang(ctx.message.guild.id)
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
@@ -68,7 +69,6 @@ class Public(commands.Cog):
                     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                         await ctx.message.delete()
                     return
-            lang = ctx.bot.guild_lang(ctx.message.guild.id)
             try:
                 top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
             except pydest.pydest.PydestException:
@@ -79,7 +79,10 @@ class Public(commands.Cog):
             await ctx.channel.send('Getting the leaderboard, could take a long time.', delete_after=30)
             top_list = await ctx.bot.data.get_clan_leaderboard(clan_id, metric, number, is_time, is_kda)
             max_len = min(number, len(top_list))
-            await ctx.channel.send('{}```{}```'.format(top_name['displayProperties']['description'], tabulate(top_list, tablefmt='plain', colalign=('left', 'left'))))
+            if len(top_list) > 0:
+                await ctx.channel.send('{}```{}```'.format(top_name['displayProperties']['description'], tabulate(top_list, tablefmt='plain', colalign=('left', 'left'))))
+            else:
+                await ctx.channel.send('No data for the metric')
         else:
             await ctx.channel.send('Clan not found or not registered.', delete_after=10)
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
