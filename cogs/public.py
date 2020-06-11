@@ -16,10 +16,11 @@ class Public(commands.Cog):
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
         lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        translations = ctx.bot.translations[lang]['top']
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
-            await ctx.channel.send('There is no clan to get information from. Please use the `setclan` command to set up a valid Destiny 2 clan.', delete_after=60)
+            await ctx.channel.send(translations['no_clan'], delete_after=60)
             return
         if len(clan_id) > 0:
             clan_id = clan_id[0]
@@ -65,26 +66,26 @@ class Public(commands.Cog):
                     else:
                         raise sqlite3.OperationalError
                 except sqlite3.OperationalError:
-                    await ctx.channel.send('Unknown metric `{}`. Use `help top` to get the list of available metrics.'.format(metric), delete_after=10)
+                    await ctx.channel.send(translations['unknown_metric'].format(metric), delete_after=10)
                     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                         await ctx.message.delete()
                     return
             try:
                 top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
             except pydest.pydest.PydestException:
-                await ctx.channel.send('Unknown metric `{}`. Use `help top` to get the list of available metrics.'.format(metric), delete_after=10)
+                await ctx.channel.send(translations['unknown_metric'].format(metric), delete_after=10)
                 if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                     await ctx.message.delete()
                 return
-            await ctx.channel.send('Getting the leaderboard, could take a long time.', delete_after=30)
+            await ctx.channel.send(translations['in_progress'], delete_after=30)
             top_list = await ctx.bot.data.get_clan_leaderboard(clan_id, metric, number, is_time, is_kda)
             max_len = min(number, len(top_list))
             if len(top_list) > 0:
                 await ctx.channel.send('{}```{}```'.format(top_name['displayProperties']['description'], tabulate(top_list, tablefmt='plain', colalign=('left', 'left'))))
             else:
-                await ctx.channel.send('No data for the metric')
+                await ctx.channel.send(translations['no_data'])
         else:
-            await ctx.channel.send('Clan not found or not registered.', delete_after=10)
+            await ctx.channel.send(translations['no_clan'], delete_after=10)
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
             await ctx.message.delete()
 
