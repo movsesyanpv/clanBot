@@ -170,6 +170,8 @@ class ClanBot(commands.Bot):
         await self.dm_owner('on_ready fired')
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(status=discord.Status.dnd, activity=game)
+        self.all_commands['update'].enabled = False
+        self.all_commands['top'].enabled = False
         await self.data.token_update()
         await self.update_history()
         await self.update_langs()
@@ -185,6 +187,8 @@ class ClanBot(commands.Bot):
             self.sched.start()
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(status=discord.Status.online, activity=game)
+        self.all_commands['update'].enabled = True
+        self.all_commands['top'].enabled = True
         return
 
     async def on_guild_join(self, guild):
@@ -420,7 +424,8 @@ class ClanBot(commands.Bot):
                 await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a private message!")
 
             elif isinstance(exception, commands.PrivateMessageOnly):
-                await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a guild channel!", delete_after=60)
+                await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a guild channel!",
+                               delete_after=60)
                 await ctx.message.delete()
 
             elif isinstance(exception, commands.CommandNotFound):
@@ -428,7 +433,8 @@ class ClanBot(commands.Bot):
                 await ctx.message.delete()
 
             elif isinstance(exception, commands.DisabledCommand):
-                await ctx.send("\N{WARNING SIGN} Sorry, this command is disabled!", delete_after=60)
+                await ctx.send("\N{WARNING SIGN} Sorry, this command is temporarily disabled! Please, try again later.",
+                               delete_after=60)
                 await ctx.message.delete()
 
             elif isinstance(exception, commands.MissingPermissions):
@@ -436,7 +442,8 @@ class ClanBot(commands.Bot):
                 await ctx.message.delete()
 
             elif isinstance(exception, commands.CommandOnCooldown):
-                await ctx.send(f"{ctx.author.mention} slow down! Try that again in {exception.retry_after:.1f} seconds", delete_after=60)
+                await ctx.send(f"{ctx.author.mention} slow down! Try that again in {exception.retry_after:.1f} seconds",
+                               delete_after=60)
                 await ctx.message.delete()
 
             elif isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.BadArgument):
