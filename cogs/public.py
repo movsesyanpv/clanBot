@@ -24,6 +24,8 @@ class Public(commands.Cog):
             clan_id = clan_id[0]
             try:
                 int(metric)
+                is_time = False
+                is_kda = False
             except ValueError:
                 try:
                     internal_db = sqlite3.connect('internal.db')
