@@ -198,17 +198,24 @@ class Admin(commands.Cog):
                         if len(metrics) > 0:
                             for metric in metrics:
                                 if str(metric[0]) != 'None':
-                                    top_name = await ctx.bot.data.destiny.decode_hash(metric[1], 'DestinyMetricDefinition',
-                                                                                      language=lang)
-                                    if 'weekly' in metric[0] or 'season' in metric[0]:
-                                        if 2230116619 in top_name['traitHashes']:
-                                            trait = await ctx.bot.data.destiny.decode_hash(2230116619, 'DestinyTraitDefinition',
-                                                                                           language=lang)
-                                        elif 2356777566 in top_name['traitHashes']:
-                                            trait = await ctx.bot.data.destiny.decode_hash(2356777566, 'DestinyTraitDefinition',
-                                                                                           language=lang)
-                                        modifier = ' ({})'.format(trait['displayProperties']['name'])
-                                    else:
+                                    try:
+                                        top_name = await ctx.bot.data.destiny.decode_hash(metric[1],
+                                                                                          'DestinyMetricDefinition',
+                                                                                          language=lang)
+                                        if 'weekly' in metric[0] or 'season' in metric[0]:
+                                            if 2230116619 in top_name['traitHashes']:
+                                                trait = await ctx.bot.data.destiny.decode_hash(2230116619,
+                                                                                               'DestinyTraitDefinition',
+                                                                                               language=lang)
+                                            elif 2356777566 in top_name['traitHashes']:
+                                                trait = await ctx.bot.data.destiny.decode_hash(2356777566,
+                                                                                               'DestinyTraitDefinition',
+                                                                                               language=lang)
+                                            modifier = ' ({})'.format(trait['displayProperties']['name'])
+                                        else:
+                                            modifier = ''
+                                    except pydest.PydestException:
+                                        top_name = translations['unavailable']
                                         modifier = ''
                                     metric_list.append(['`{}'.format(metric[0]), '{}{}`'.format(top_name['displayProperties']['name'], modifier)])
                             if len(metric_list) > 0:
