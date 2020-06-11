@@ -220,5 +220,11 @@
     "graph": {
         "percentage": "Completion percentage",
         "datefromstart": "Days from start"
+    },
+    "top": {
+        "no_clan": "There is no clan to get information from. Please use the `setclan` command to set up a valid Destiny 2 clan.",
+        "unknown_metric": "Unknown metric `{}`. Use `help top` to get the list of available metrics.",
+        "in_progress": "Getting the leaderboard, could take a long time.",
+        "no_data": "No data for the metric."
     }
 }
