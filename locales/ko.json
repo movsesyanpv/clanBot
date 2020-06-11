@@ -169,7 +169,12 @@
                 "raidsmetrics": "Raids",
                 "strikesmetrics": "Strikes",
                 "trialsofosirismetrics": "Trials of Osiris",
-                "cat_list": "Available categories. To get the category's metric list send `{}help top category`. The categories are listed in the table below (left column), right column contains the descriptions of the aforementioned categories. The categories match in-game ones."
+                "cat_list": "Available categories. To get the category's metric list send `{}help top category`. The categories are listed in the table below (left column), right column contains the descriptions of the aforementioned categories. The categories match in-game ones.",
+                "unavailable": {
+                    "displayProperties": {
+                        "name": "Metric is unavailable"
+                    }
+                }
             },
             "setlang": {
                 "info": "Available languages are `en`, `ru`. Available only to the server's admins."
