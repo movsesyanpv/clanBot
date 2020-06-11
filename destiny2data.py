@@ -10,6 +10,7 @@ import aiohttp
 import sqlite3
 import matplotlib.pyplot as plt
 import csv
+import codecs
 
 
 class D2data:
@@ -422,6 +423,133 @@ class D2data:
                     }
                 }
                 self.data[lang]['alerts'].append(alert_embed)
+
+    async def get_seasonal_ev_page(self):
+        tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
+
+        page = codecs.open('static/s11.html', 'w', encoding='UTF8')
+        page.write('<!DOCTYPE html lang="ru">\n'
+                   '<html lang="ru">\n'
+                   '<title>Еверверс Сезона Прибытия</title>\n'
+                   '<meta name="theme-color" content="#222222">\n'
+                   '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+                   '<link rel="stylesheet" type="text/css" href="style.css">\n'
+                   '<meta charset="UTF8">\n'
+                   '<meta property="og:title" content="Еверверс Сезона Прибытия" />\n'
+                   '<meta property="og:type" content="website" />\n'
+                   '<meta property="og:url" content="https://happyv0dka.cloud/eververse/s11.html" />\n'
+                   '<meta property="og:image" content="https://bungie.net//common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png" />\n'
+                   '<link rel="icon" type="image/png" sizes="32x32" href="https://bungie.net//common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png">\n')
+
+        lang = 'ru'
+        page.write('<h2>{}</h2>\n'
+                   '<div class="wrapper">\n'.format(self.translations[lang]['msg']['silver']))
+        for i, item in enumerate(tess_def['itemList']):
+            if item['displayCategoryIndex'] == 3 and item['itemHash'] != 827183327:
+                definition = 'DestinyInventoryItemDefinition'
+                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                               language=lang)
+                page.write('    <div class="item">\n'
+                           '        <table>\n'
+                           '            <tr><td>\n'
+                           '                <img class="icon" src="https://bungie.net{}">\n'
+                           '            </td><td>\n'
+                           '                <b>{}</b>\n'
+                           '                <div class="cost">\n'
+                           '                    <img class="currency" src="https://bungie.net{}">\n'
+                           '                    <a>{}</a>\n'
+                           '                </div>\n'
+                           '            </td></tr>\n'
+                           '        </table>\n'
+                           '    </div>\n'.format(item_def['displayProperties']['icon'],
+                                                 item_def['displayProperties']['name'],
+                                                 currency_resp['displayProperties']['icon'],
+                                                 item['currencies'][0]['quantity']))
+        page.write('</div>\n')
+
+        page.write('<h2>{}</h2>\n'
+                   '<div class="wrapper">\n'.format(self.translations[lang]['msg']['featured_bd']))
+        for i, item in enumerate(tess_def['itemList']):
+            if item['displayCategoryIndex'] == 4 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                              3187955025, 2638689062]:
+                definition = 'DestinyInventoryItemDefinition'
+                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                               language=lang)
+                page.write('    <div class="item">\n'
+                           '        <table>\n'
+                           '            <tr><td>\n'
+                           '                <img class="icon" src="https://bungie.net{}">\n'
+                           '            </td><td>\n'
+                           '                <b>{}</b>\n'
+                           '                <div class="cost">\n'
+                           '                    <img class="currency" src="https://bungie.net{}">\n'
+                           '                    <a>{}</a>\n'
+                           '                </div>\n'
+                           '            </td></tr>\n'
+                           '        </table>\n'
+                           '    </div>\n'.format(item_def['displayProperties']['icon'],
+                                                 item_def['displayProperties']['name'],
+                                                 currency_resp['displayProperties']['icon'],
+                                                 item['currencies'][0]['quantity']))
+        page.write('</div>\n')
+
+        page.write('<h2>{}</h2>\n'
+                   '<div class="wrapper">\n'.format(self.translations[lang]['msg']['bd']))
+        for i, item in enumerate(tess_def['itemList']):
+            if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                              3187955025, 2638689062]:
+                definition = 'DestinyInventoryItemDefinition'
+                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                               language=lang)
+                page.write('    <div class="item">\n'
+                           '        <table>\n'
+                           '            <tr><td>\n'
+                           '                <img class="icon" src="https://bungie.net{}">\n'
+                           '            </td><td>\n'
+                           '                <b>{}</b>\n'
+                           '                <div class="cost">\n'
+                           '                    <img class="currency" src="https://bungie.net{}">\n'
+                           '                    <a>{}</a>\n'
+                           '                </div>\n'
+                           '            </td></tr>\n'
+                           '        </table>\n'
+                           '    </div>\n'.format(item_def['displayProperties']['icon'],
+                                                 item_def['displayProperties']['name'],
+                                                 currency_resp['displayProperties']['icon'],
+                                                 item['currencies'][0]['quantity']))
+        page.write('</div>\n')
+
+        page.write('<h2>{}</h2>\n'
+                   '<div class="wrapper">\n'.format(self.translations[lang]['msg']['bd_consumables']))
+        for i, item in enumerate(tess_def['itemList']):
+            if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                               3187955025, 2638689062]:
+                definition = 'DestinyInventoryItemDefinition'
+                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                               language=lang)
+                page.write('    <div class="item">\n'
+                           '        <table>\n'
+                           '            <tr><td>\n'
+                           '                <img class="icon" src="https://bungie.net{}">\n'
+                           '            </td><td>\n'
+                           '                <b>{}</b>\n'
+                           '                <div class="cost">\n'
+                           '                    <img class="currency" src="https://bungie.net{}">\n'
+                           '                    <a>{}</a>\n'
+                           '                </div>\n'
+                           '            </td></tr>\n'
+                           '        </table>\n'
+                           '    </div>\n'.format(item_def['displayProperties']['icon'],
+                                                 item_def['displayProperties']['name'],
+                                                 currency_resp['displayProperties']['icon'],
+                                                 item['currencies'][0]['quantity']))
+        page.write('</div>\n')
+
+        page.close()
 
     async def get_seasonal_eververse(self, langs, forceget=False):
         start = await self.get_season_start()

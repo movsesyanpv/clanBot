@@ -150,6 +150,7 @@ class ClanBot(commands.Bot):
                 channels = self.seasonal_ch
             if (post and list(set(channels).intersection(self.seasonal_ch))) or get:
                 await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=channels, post=post, get=get, forceget=forceget)
+            await self.data.get_seasonal_ev_page()
         if 'alerts' in upd_type:
             if channels is None:
                 channels = self.notifiers

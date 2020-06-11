@@ -46,9 +46,10 @@ class Public(commands.Cog):
                     UNION ALL 
                     SELECT hash FROM strikesmetrics WHERE name=?
                     UNION ALL
-                    SELECT hash FROM trialsofosirismetrics WHERE name=? ''', (metric.lower(), metric.lower(), metric.lower(),
-                                                                     metric.lower(), metric.lower(), metric.lower(),
-                                                                     metric.lower(), metric.lower()))
+                    SELECT hash FROM trialsofosirismetrics WHERE name=? ''', (metric.lower(), metric.lower(),
+                                                                              metric.lower(), metric.lower(),
+                                                                              metric.lower(), metric.lower(),
+                                                                              metric.lower(), metric.lower()))
                     metric_id = internal_cursor.fetchone()
                     if 'kda' in metric.lower():
                         is_kda = True
