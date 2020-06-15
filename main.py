@@ -522,6 +522,17 @@ class ClanBot(commands.Bot):
         except:
             return 'en'
 
+    def guild_prefix(self, guild_id):
+        try:
+            self.guild_cursor.execute('''SELECT prefix FROM prefixes WHERE server_id=?''', (guild_id, ))
+            prefix = self.guild_cursor.fetchone()
+            if len(prefix) > 0:
+                return [prefix[0]]
+            else:
+                return []
+        except:
+            return []
+
     def update_clans(self):
         for server in self.guilds:
             try:
@@ -711,7 +722,7 @@ class ClanBot(commands.Bot):
 def get_prefix(client, message):
     prefixes = ['?']
     if message.guild:
-        prefixes = []
+        prefixes = client.guild_prefix(message.guild.id)
 
     return commands.when_mentioned_or(*prefixes)(client, message)
 

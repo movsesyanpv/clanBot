@@ -22,3 +22,4 @@ def migrate_db():
         lfg_db.commit()
     except sqlite3.OperationalError:
         pass
+    
