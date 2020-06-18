@@ -164,7 +164,7 @@
                 "info": "Print available prefixes."
             },
             "setprefix": {
-                "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes."
+                "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes. Send `none` as the parameter to disable all prefixes, except bot mention."
             },
             "setclan": {
                 "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
