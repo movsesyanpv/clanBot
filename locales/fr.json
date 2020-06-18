@@ -29,7 +29,9 @@
         "bd_consumables": "Bright Dust consumables",
         "resp_time": "Data updated at",
         "no_embed_links": "No permission to 'Embed links', required for the posts.",
-        "complete": "Complete"
+        "complete": "Complete",
+        "prefixes": "Here are the available prefixes aside from `@{}`, i.e. you can send `{}prefix` to call this command.",
+        "no_prefixes": "The bot's commands can be invoked only with `@{}`"
     },
     "lfg": {
         "go": "Go",
