@@ -148,6 +148,8 @@
         "plan_maintenance": "Prevent updates at given time frame",
         "lfg": "Create an LFG message",
         "edit_lfg": "Edit LFG message",
+        "prefix": "Print available prefixes",
+        "setprefix": "Set available prefixes",
         "regnotifier": "Register notifier channel",
         "rmnotifier": "Deregister notifier channel",
         "update": "Get updates from Bungie for the given TYPE",
@@ -158,6 +160,12 @@
         "parameters": "Usage:```{}```",
         "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
         "commands": {
+            "prefix": {
+                "info": "Print available prefixes."
+            },
+            "setprefix": {
+                "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes."
+            },
             "setclan": {
                 "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
             },
