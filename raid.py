@@ -675,6 +675,7 @@ class LFG:
         if message.channel.id != old_lfg.channel.id or role_changed:
             new_lfg = await message.channel.send(self.get_cell('group_id', old_lfg.id, 'the_role'))
             await new_lfg.add_reaction('👌')
+            await new_lfg.add_reaction('❓')
             await new_lfg.add_reaction('❌')
 
             self.c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_lfg.id, old_lfg.id))
