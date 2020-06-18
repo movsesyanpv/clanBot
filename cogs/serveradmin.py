@@ -144,6 +144,20 @@ class ServerAdmin(commands.Cog):
         await ctx.bot.force_update(args, get=get, channels=channels, forceget=get)
         return
 
+    @commands.command()
+    @commands.guild_only()
+    async def setprefix(self, ctx, *prefix):
+        if await ctx.bot.check_ownership(ctx.message, is_silent=True, admin_check=True):
+            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                await ctx.message.delete()
+            if prefix[0].lower() == 'none':
+                prefix = []
+            ctx.bot.guild_cursor.execute('''UPDATE prefixes SET prefix=? WHERE server_id=?''',
+                                         (str(list(prefix)), ctx.message.guild.id))
+            ctx.bot.guild_db.commit()
+            msg = 'Got it, {}'.format(ctx.message.author.mention)
+            await ctx.message.channel.send(msg, delete_after=10)
+
 
 def setup(bot):
     bot.add_cog(ServerAdmin(bot))

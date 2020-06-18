@@ -90,6 +90,24 @@ class Public(commands.Cog):
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
             await ctx.message.delete()
 
+    @commands.command()
+    @commands.guild_only()
+    async def prefix(self, ctx):
+        lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        prefixes = ctx.bot.guild_prefix(ctx.guild.id)
+        if len(prefixes) > 0:
+            msg = '{}\n'.format(ctx.bot.translations[lang]['msg']['prefixes'].format(ctx.message.guild.me.display_name, prefixes[0]))
+            prefix_list = ''
+            for prefix in prefixes:
+                prefix_list = '{} {},'.format(prefix_list, prefix)
+            prefix_list = prefix_list[1:-1]
+            msg = '{}```{}```'.format(msg, prefix_list)
+        else:
+            msg = '{}\n'.format(ctx.bot.translations[lang]['msg']['no_prefixes'].format(ctx.message.guild.me.display_name))
+        await ctx.message.channel.send(msg)
+        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+            await ctx.message.delete()
+
 
 def setup(bot):
     bot.add_cog(Public(bot))

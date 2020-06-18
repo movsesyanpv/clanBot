@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.14.3'
+    version = '2.14.4'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts', 'events']
@@ -176,6 +176,7 @@ class ClanBot(commands.Bot):
         await self.data.token_update()
         await self.update_history()
         await self.update_langs()
+        await self.update_prefixes()
         self.get_channels()
         await self.data.get_chars()
         if self.args.forceupdate:
@@ -527,7 +528,7 @@ class ClanBot(commands.Bot):
             self.guild_cursor.execute('''SELECT prefix FROM prefixes WHERE server_id=?''', (guild_id, ))
             prefix = self.guild_cursor.fetchone()
             if len(prefix) > 0:
-                return [prefix[0]]
+                return eval(prefix[0])
             else:
                 return []
         except:
@@ -564,6 +565,28 @@ class ClanBot(commands.Bot):
                         pass
             try:
                 self.guild_cursor.execute('''UPDATE language SET server_name=? WHERE server_id=?''',
+                                          (server.name, server.id))
+            except:
+                pass
+
+        self.guild_db.commit()
+
+        self.update_clans()
+
+    async def update_prefixes(self):
+        for server in self.guilds:
+            try:
+                self.guild_cursor.execute('''CREATE TABLE prefixes (server_id integer, prefix text, server_name text)''')
+                self.guild_cursor.execute('''CREATE UNIQUE INDEX prefix ON prefixes(server_id)''')
+                self.guild_cursor.execute('''INSERT or IGNORE INTO prefixes VALUES (?,?,?)''', [server.id, '[\'?\']', server.name])
+            except sqlite3.OperationalError:
+                try:
+                    self.guild_cursor.execute('''INSERT or IGNORE INTO prefixes VALUES (?,?,?)''',
+                                              [server.id, '[\'?\']', server.name])
+                except:
+                    pass
+            try:
+                self.guild_cursor.execute('''UPDATE prefixes SET server_name=? WHERE server_id=?''',
                                           (server.name, server.id))
             except:
                 pass
