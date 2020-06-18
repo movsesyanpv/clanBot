@@ -216,8 +216,16 @@
                 "edit_title": "__**LFG editing**__\nEvery group has it's own ID. To get information about your LFGs message the bot in DM `lfglist`. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**.\nIn order to edit the group send `editlfg` command in the channel you want the updated group announcement be in. The syntax is the same as in `lfg`",
                 "manual": "__**Managing manual groups**__\nWhen someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate along with some information about the group (time, channel, server).\nTo choose a person press the corresponding emote. The list will update. **Don't** press multiple emotes, wait for the list update!!!",
                 "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner)."
+            },
+            "prefix": {
+                "info": "Print available prefixes."
+            },
+            "setprefix": {
+                "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes."
             }
-        }
+        },
+        "prefix": "Print available prefixes",
+        "setprefix": "Set available prefixes"
     },
     "graph": {
         "percentage": "Completion percentage",
