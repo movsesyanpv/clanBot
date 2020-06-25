@@ -19,7 +19,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.14.4'
+    version = '2.14.5'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts', 'events']
@@ -76,6 +76,7 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 3600])
         # self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_the_lie_progress, 'thelie', 3600])
         self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
+        self.sched.add_job(self.update_metrics, 'cron', hour='5', minute='0', second='0', misfire_grace_time=86300)
 
         logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
         logging.getLogger('apscheduler')
@@ -731,6 +732,14 @@ class ClanBot(commands.Bot):
                 for channel in server.channels:
                     if channel.id in self.update_ch:
                         await channel.send(msg)
+
+    async def update_metrics(self):
+        clan_ids_c = self.guild_cursor.execute('''SELECT clan_id FROM clans''')
+        clan_ids_c = clan_ids_c.fetchall()
+        clan_ids = []
+        for clan_id in clan_ids_c:
+            clan_ids.append(clan_id[0])
+        await self.data.get_clan_leaderboard(clan_ids, 1572939289, 10)
 
     def start_up(self):
         self.get_args()

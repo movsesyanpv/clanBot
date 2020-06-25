@@ -1563,11 +1563,11 @@ class D2data:
                                                      activities_url, self.activities_params, lang, string, force=force)
         return activities_resp
 
-    async def get_player_metric(self, membership_type, membership_id, metric):
+    async def get_player_metric(self, membership_type, membership_id, metric, is_global=False):
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
         metric_resp = await self.get_cached_json('playermetrics_{}'.format(membership_id),
                                                  'metric {} for {}'.format(metric, membership_id), url,
-                                                 params=self.metric_params, change_msg=False)
+                                                 params=self.metric_params, change_msg=False, cache_only=is_global)
         if metric_resp:
             metric_json = metric_resp
             try:
@@ -1578,14 +1578,14 @@ class D2data:
         else:
             return -1
 
-    async def get_member_metric_wrapper(self, member, metric):
+    async def get_member_metric_wrapper(self, member, metric, is_global=False):
         member_id = member['destinyUserInfo']['membershipId']
         member_type = member['destinyUserInfo']['membershipType']
         return [member['destinyUserInfo']['LastSeenDisplayName'],
-                await self.get_player_metric(member_type, member_id, metric)]
+                await self.get_player_metric(member_type, member_id, metric, is_global)]
 
     async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True,
-                              force=False):
+                              force=False, cache_only=False):
         cache_cursor = self.cache_db.cursor()
 
         try:
@@ -1597,8 +1597,10 @@ class D2data:
                 expired = True
         except sqlite3.OperationalError:
             expired = True
+            if cache_only:
+                return False
 
-        if expired or force:
+        if (expired or force) and not cache_only:
             response = await self.get_bungie_json(name, url, params, lang, string, change_msg)
             timestamp = datetime.utcnow().isoformat()
             if response:
@@ -1639,59 +1641,80 @@ class D2data:
         response_json['timestamp'] = timestamp
         return response_json
 
-    async def get_clan_leaderboard(self, clan_id, metric, number, is_time=False, is_kda=False):
-        url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
+    async def get_clan_leaderboard(self, clan_ids, metric, number, is_time=False, is_kda=False, is_global=False):
+        metric_list = []
+        for clan_id in clan_ids:
+            url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
 
-        clan_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url, change_msg=False)
-        if clan_resp:
+            clan_members_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url, change_msg=False,
+                                                           cache_only=is_global)
+
+            url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
+            clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), 'clan info', url)
             clan_json = clan_resp
             try:
-                metric_list = []
-                for member in clan_json['Response']['results']:
-                    metric_list.append(await self.get_member_metric_wrapper(member, metric))
-                try:
-                    if is_time:
-                        metric_list.sort(reverse=False, key=lambda x: x[1])
-                        while metric_list[0][1] <= 0:
-                            metric_list.pop(0)
-                    else:
-                        metric_list.sort(reverse=True, key=lambda x: x[1])
-                        while metric_list[-1][1] <= 0:
-                            metric_list.pop(-1)
-                except IndexError:
-                    return []
-
-                for place in metric_list[1:]:
-                    delta = 0
-                    try:
-                        index = metric_list.index(place)
-                    except ValueError:
-                        continue
-                    if metric_list[index][1] == metric_list[index - 1][1]:
-                        metric_list[index][0] = '{}\n{}'.format(metric_list[index - 1][0], metric_list[index][0])
-                        metric_list.pop(index - 1)
-
-                indexed_list = metric_list.copy()
-                i = 1
-                for place in indexed_list:
-                    old_i = i
-                    index = indexed_list.index(place)
-                    indexed_list[index] = [i, *indexed_list[index]]
-                    i = i + len(indexed_list[index][1].splitlines())
-                while indexed_list[-1][0] > number:
-                    indexed_list.pop(-1)
-                if is_time:
-                    for place in indexed_list:
-                        index = indexed_list.index(place)
-                        indexed_list[index][2] = str(timedelta(minutes=(indexed_list[index][2] / 60000))).split('.')[0]
-                if is_kda:
-                    for place in indexed_list:
-                        index = indexed_list.index(place)
-                        indexed_list[index][2] = indexed_list[index][2] / 100
-
-                return indexed_list[:old_i]
+                code = clan_json['ErrorCode']
             except KeyError:
+                code = 0
+            if code == 1:
+                tag = clan_json['Response']['detail']['clanInfo']['clanCallsign']
+            else:
+                tag = ''
+
+            if clan_members_resp:
+                clan_json = clan_members_resp
+                try:
+                    for member in clan_json['Response']['results']:
+                        metric_list.append(await self.get_member_metric_wrapper(member, metric, is_global))
+                        if is_global:
+                            metric_list[-1][0] = '{} [{}]'.format(metric_list[-1][0], tag)
+                except KeyError:
+                    pass
+
+        if len(metric_list) > 0:
+            try:
+                if is_time:
+                    metric_list.sort(reverse=False, key=lambda x: x[1])
+                    while metric_list[0][1] <= 0:
+                        metric_list.pop(0)
+                else:
+                    metric_list.sort(reverse=True, key=lambda x: x[1])
+                    while metric_list[-1][1] <= 0:
+                        metric_list.pop(-1)
+            except IndexError:
                 return []
+
+            for place in metric_list[1:]:
+                delta = 0
+                try:
+                    index = metric_list.index(place)
+                except ValueError:
+                    continue
+                if metric_list[index][1] == metric_list[index - 1][1]:
+                    metric_list[index][0] = '{}\n{}'.format(metric_list[index - 1][0], metric_list[index][0])
+                    metric_list.pop(index - 1)
+
+            indexed_list = metric_list.copy()
+            i = 1
+            for place in indexed_list:
+                old_i = i
+                index = indexed_list.index(place)
+                indexed_list[index] = [i, *indexed_list[index]]
+                i = i + len(indexed_list[index][1].splitlines())
+            while indexed_list[-1][0] > number:
+                indexed_list.pop(-1)
+            if is_time:
+                for place in indexed_list:
+                    index = indexed_list.index(place)
+                    indexed_list[index][2] = str(timedelta(minutes=(indexed_list[index][2] / 60000))).split('.')[0]
+            if is_kda:
+                for place in indexed_list:
+                    index = indexed_list.index(place)
+                    indexed_list[index][2] = indexed_list[index][2] / 100
+
+            return indexed_list[:old_i]
+        else:
+            return metric_list
 
     async def token_update(self):
         # check to see if token.json exists, if not we have to start with oauth

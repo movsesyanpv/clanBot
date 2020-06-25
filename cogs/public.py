@@ -10,20 +10,26 @@ class Public(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(
+        aliases=['gtop', 'globaltop']
+    )
     @commands.guild_only()
     async def top(self, ctx, metric, number=10):
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
         lang = ctx.bot.guild_lang(ctx.message.guild.id)
         translations = ctx.bot.translations[lang]['top']
+        if ctx.invoked_with in ['gtop', 'globaltop']:
+            is_global = True
+        else:
+            is_global = False
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
             await ctx.channel.send(translations['no_clan'], delete_after=60)
             return
         if len(clan_id) > 0:
-            clan_id = clan_id[0]
+            clan_ids = clan_id[0]
             try:
                 int(metric)
                 is_time = False
@@ -79,10 +85,31 @@ class Public(commands.Cog):
                     await ctx.message.delete()
                 return
             await ctx.channel.send(translations['in_progress'], delete_after=30)
-            top_list = await ctx.bot.data.get_clan_leaderboard(clan_id, metric, number, is_time, is_kda)
+            if is_global:
+                clan_ids_c = ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans''')
+                clan_ids_c = clan_ids_c.fetchall()
+                clan_ids = []
+                for clan_id in clan_ids_c:
+                    clan_ids.append(clan_id[0])
+            top_list = await ctx.bot.data.get_clan_leaderboard(clan_ids, metric, number, is_time, is_kda, is_global)
             max_len = min(number, len(top_list))
             if len(top_list) > 0:
-                await ctx.channel.send('{}```{}```'.format(top_name['displayProperties']['description'], tabulate(top_list, tablefmt='plain', colalign=('left', 'left'))))
+                msg = '{}```{}```'.format(top_name['displayProperties']['description'], tabulate(top_list, tablefmt='plain', colalign=('left', 'left')))
+                if len(msg) > 2000:
+                    msg_strs = msg.splitlines()
+                    msg = ''
+                    for line in msg_strs:
+                        if len(msg) + len(line) <= 1990:
+                            msg = '{}{}\n'.format(msg, line)
+                        else:
+                            msg = '{}```'.format(msg)
+                            await ctx.channel.send(msg)
+                            msg = '```{}\n'.format(line)
+                    if len(msg) > 0:
+                        msg = '{}'.format(msg)
+                        await ctx.channel.send(msg)
+                else:
+                    await ctx.channel.send(msg)
             else:
                 await ctx.channel.send(translations['no_data'])
         else:
