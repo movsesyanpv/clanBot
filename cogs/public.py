@@ -29,7 +29,7 @@ class Public(commands.Cog):
             await ctx.channel.send(translations['no_clan'], delete_after=60)
             return
         if len(clan_id) > 0:
-            clan_ids = clan_id[0]
+            clan_ids = [clan_id[0]]
             try:
                 int(metric)
                 is_time = False
