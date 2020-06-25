@@ -292,7 +292,7 @@ class D2data:
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = await self.get_cached_json('eververse', 'featured_bd', tess_url, self.vendor_params,
+            resp = await self.get_cached_json('eververse_{}'.format(char), 'featured_bd', tess_url, self.vendor_params,
                                               string='featured bright dust for {}'.format(char), force=forceget)
             if not resp:
                 return
@@ -331,7 +331,7 @@ class D2data:
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = await self.get_cached_json('eververse', 'bd', tess_url, self.vendor_params,
+            resp = await self.get_cached_json('eververse_{}'.format(char), 'bd', tess_url, self.vendor_params,
                                               string='bright dust for {}'.format(char), force=forceget)
             if not resp:
                 return
@@ -370,7 +370,7 @@ class D2data:
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
                 format(self.char_info['platform'], self.char_info['membershipid'], char)
-            resp = await self.get_cached_json('eververse', 'silver', tess_url, self.vendor_params,
+            resp = await self.get_cached_json('eververse_{}'.format(char), 'silver', tess_url, self.vendor_params,
                                               string='silver for {}'.format(char), force=forceget)
             if not resp:
                 return
