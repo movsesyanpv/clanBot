@@ -126,14 +126,64 @@ class ServerAdmin(commands.Cog):
 
     @commands.command()
     async def update(self, ctx, *args):
+        if ctx.message.guild is not None:
+            lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        else:
+            lang = 'en'
         get = True
         channels = None
+        if not list(set(ctx.bot.all_types).intersection(args)):
+            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                await ctx.message.delete()
+            await ctx.channel.send(ctx.bot.translations[lang]['msg']['invalid_type'])
+            return
         if ctx.message.guild is not None:
-            if await ctx.bot.check_ownership(ctx.message, is_silent=True, admin_check=True):
+            if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=True):
                 if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                     await ctx.message.delete()
                 get = False
                 channels = [ctx.message.channel.id]
+                reg_ch_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?
+                                                        UNION ALL
+                                                        SELECT channel_id FROM seasonal WHERE server_id=?''',
+                                                        (ctx.guild.id, ctx.guild.id))
+                reg_ch_c = reg_ch_c.fetchall()
+                reg_ch = []
+                for ch in reg_ch_c:
+                    reg_ch.append(ch[0])
+                if len(reg_ch) == 0:
+                    await ctx.channel.send(ctx.bot.translations[lang]['msg']['no_notifiers'])
+                else:
+                    notifiers_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?''',
+                                                               (ctx.guild.id,))
+                    notifiers_c = notifiers_c.fetchall()
+                    notifiers = []
+                    for ch in notifiers_c:
+                        notifiers.append(ch[0])
+
+                    seasonal_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM seasonal WHERE server_id=?''',
+                                                              (ctx.guild.id,))
+                    seasonal_c = seasonal_c.fetchall()
+                    seasonal = []
+                    for ch in seasonal_c:
+                        seasonal.append(ch[0])
+                    correct_ch = False
+                    if not list(set(seasonal).intersection(channels)):
+                        if 'seasonal' in args:
+                            await ctx.channel.send(ctx.bot.translations[lang]['msg']['no_seasonal_reg'])
+                    else:
+                        if 'seasonal' in args:
+                            correct_ch = True
+                    regular_types = ctx.bot.all_types.copy()
+                    regular_types.pop(regular_types.index('seasonal'))
+                    if not list(set(notifiers).intersection(channels)):
+                        if list(set(regular_types).intersection(args)):
+                            await ctx.channel.send(ctx.bot.translations[lang]['msg']['no_regular_reg'])
+                    else:
+                        if list(set(regular_types).intersection(args)):
+                            correct_ch = True
+                    if correct_ch:
+                        await ctx.channel.send(ctx.bot.translations[lang]['msg']['in_progress'])
             else:
                 if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                     await ctx.message.delete()
