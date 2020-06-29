@@ -73,8 +73,8 @@ class ServerAdmin(commands.Cog):
     async def setlang(self, ctx, lang):
         message = ctx.message
         if lang.lower() not in ctx.bot.langs:
-            msg = 'The language you\'ve entered (`{}`) is not available. Available languages are `en`, `ru`.'.format(
-                lang)
+            msg = 'The language you\'ve entered (`{}`) is not available. Available languages are `{}`.'.format(
+                lang, str(ctx.bot.langs).replace('[', '').replace(']', '').replace('\'', ''))
             await message.channel.send(msg)
             return
         if await ctx.bot.check_ownership(message, is_silent=True, admin_check=True):
@@ -133,8 +133,9 @@ class ServerAdmin(commands.Cog):
         get = True
         channels = None
         if not list(set(ctx.bot.all_types).intersection(args)):
-            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
-                await ctx.message.delete()
+            if ctx.guild is not None:
+                if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                    await ctx.message.delete()
             await ctx.channel.send(ctx.bot.translations[lang]['msg']['invalid_type'])
             return
         if ctx.message.guild is not None:
@@ -196,7 +197,8 @@ class ServerAdmin(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def setprefix(self, ctx, *prefix):
+    async def setprefix(self, ctx, prefix, *prefixes):
+        prefix = [prefix, *prefixes]
         if await ctx.bot.check_ownership(ctx.message, is_silent=True, admin_check=True):
             if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                 await ctx.message.delete()
