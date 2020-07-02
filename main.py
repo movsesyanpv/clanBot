@@ -286,6 +286,8 @@ class ClanBot(commands.Bot):
                 if self.raid.is_raid(payload.message_id):
                     self.raid.del_entry(payload.message_id)
                 return
+            except discord.errors.Forbidden:
+                return
 
             if self.raid.is_raid(message.id):
                 mode = self.raid.get_cell('group_id', message.id, 'group_mode')
