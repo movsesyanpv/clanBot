@@ -36,7 +36,8 @@
         "in_progress": "Getting updates. If the types match with the registered channels, they will be posted. Keep in mind, that this command does not force me to get updates from Bungie.",
         "invalid_type": "Invalid update type. Please see `help update` for the available update types.",
         "no_seasonal_reg": "This channel is not registered as a seasonal notifier.",
-        "no_regular_reg": "This channel is not registered as a non-seasonal notifier."
+        "no_regular_reg": "This channel is not registered as a non-seasonal notifier.",
+        "no_send_messages": "{}, I'm not allowed to respond in that channel."
     },
     "lfg": {
         "go": "Go",
