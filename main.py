@@ -424,26 +424,12 @@ class ClanBot(commands.Bot):
                 await dm_message.delete()
             self.raid.del_entry(payload.message_id)
 
-    async def on_message(self, message):
-        if message.guild is None:
-            await self.process_commands(message)
-        else:
-            if message.guild.me.permissions_in(message.channel).send_messages:
-                await self.process_commands(message)
-            else:
-                prefixes = get_prefix(self, message)
-                if message.guild is None:
-                    lang = 'en'
-                else:
-                    lang = self.guild_lang(message.guild.id)
-                for prefix in prefixes:
-                    if message.content.startswith(prefix):
-                        if message.author.dm_channel is None:
-                            await message.author.create_dm()
-                        await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
-
     async def on_command_error(self, ctx, exception):
         message = ctx.message
+        if message.guild is None:
+            lang = 'en'
+        else:
+            lang = self.guild_lang(message.guild.id)
         try:
             if isinstance(exception, commands.NoPrivateMessage):
                 await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a private message!")
@@ -482,6 +468,9 @@ class ClanBot(commands.Bot):
                 await ctx.author.dm_channel.send(msg, embed=e)
 
             elif isinstance(exception, commands.CommandInvokeError):
+                if isinstance(exception.original, discord.errors.Forbidden):
+                    await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
+                    return
                 raise exception
         except discord.errors.Forbidden:
             pass
