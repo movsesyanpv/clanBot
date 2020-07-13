@@ -628,10 +628,11 @@ class LFG:
         group_mode = self.get_cell('group_id', group_id, 'group_mode')
 
         if size > len(goers):
-            if not wanters[number] in goers:
-                goers.append(wanters[number])
-                wanters.pop(number)
-                w_dm.pop(number)
+            if len(wanters) > number:
+                if not wanters[number] in goers:
+                    goers.append(wanters[number])
+                    wanters.pop(number)
+                    w_dm.pop(number)
 
         self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
         self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
