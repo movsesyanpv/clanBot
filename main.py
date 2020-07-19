@@ -470,7 +470,11 @@ class ClanBot(commands.Bot):
 
             elif isinstance(exception, commands.CommandInvokeError):
                 if isinstance(exception.original, discord.errors.Forbidden):
-                    await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
+                    if owner.dm_channel is None:
+                        await owner.create_dm()
+                    await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+                    await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
+                    #await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
                     return
                 raise exception
         except discord.errors.Forbidden:
