@@ -470,6 +470,8 @@ class ClanBot(commands.Bot):
 
             elif isinstance(exception, commands.CommandInvokeError):
                 if isinstance(exception.original, discord.errors.Forbidden):
+                    bot_info = await self.application_info()
+                    owner = bot_info.owner
                     if owner.dm_channel is None:
                         await owner.create_dm()
                     await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
