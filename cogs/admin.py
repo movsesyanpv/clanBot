@@ -67,14 +67,6 @@ class Admin(commands.Cog):
         await self.stop(ctx)
 
     @commands.command(
-        description='Update metrics and push to git'
-    )
-    @commands.dm_only()
-    @commands.is_owner()
-    async def getmetrics(self):
-        return
-
-    @commands.command(
         description='Get Bungie JSON for the API path'
     )
     @commands.is_owner()
