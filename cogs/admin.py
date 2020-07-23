@@ -67,6 +67,14 @@ class Admin(commands.Cog):
         await self.stop(ctx)
 
     @commands.command(
+        description='Update metrics and push to git'
+    )
+    @commands.dm_only()
+    @commands.is_owner()
+    async def getmetrics(self):
+        return
+
+    @commands.command(
         description='Get Bungie JSON for the API path'
     )
     @commands.is_owner()
@@ -193,7 +201,7 @@ class Admin(commands.Cog):
                 if len(metric_tables) == 1:
                     for table in metric_tables:
                         metric_list = []
-                        internal_cursor.execute('''SELECT name, hash FROM {}'''.format(table))
+                        internal_cursor.execute('''SELECT name, hash, is_working FROM {}'''.format(table))
                         metrics = internal_cursor.fetchall()
                         if len(metrics) > 0:
                             for metric in metrics:
@@ -217,7 +225,12 @@ class Admin(commands.Cog):
                                     except pydest.PydestException:
                                         top_name = translations['unavailable']
                                         modifier = ''
-                                    metric_list.append(['`{}'.format(metric[0]), '{}{}`'.format(top_name['displayProperties']['name'], modifier)])
+                                    if metric[2]:
+                                        if metric[0] == '':
+                                            name = str(metric[1])
+                                        else:
+                                            name = metric[0]
+                                        metric_list.append(['`{}'.format(name), '{}{}`'.format(top_name['displayProperties']['name'], modifier)])
                             if len(metric_list) > 0:
                                 help_msg = '{}**{}**'.format(help_msg, translations[table])
                                 help_msg = '{}\n{}\n'.format(help_msg, tabulate(metric_list, tablefmt='plain',
