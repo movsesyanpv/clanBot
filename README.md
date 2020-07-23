@@ -1,3 +1,9 @@
+It would be awesome if you just add the bot to your server, and not actually self-host it. Anyways, the instructions for self-hosting are below.
+
+# Translations
+
+If you speak a language other than English that Destiny supports, a huge help with the development is to provide translations. To help with the translations, go to [POEditor](https://poeditor.com/join/project/r0GBXOfyqt) and join the project.
+
 # Prerequisites
 
 * Flask and Requests installed
@@ -52,7 +58,3 @@ optional arguments:
   -k KEY, --key KEY     SSL key
   -c CERT, --cert CERT  SSL certificate
 ```
-
-# Translations
-
-If you speak a language other than English that Destiny supports, a huge help with the development is to provide translations. To help with the translations, go to [POEditor](https://poeditor.com/join/project/r0GBXOfyqt) and join the project.
