@@ -4,6 +4,7 @@ import argparse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta, timezone
 import asyncio
+import pydest
 
 from discord.ext.commands.bot import Bot
 import sqlite3
@@ -178,6 +179,8 @@ class ClanBot(commands.Bot):
         await self.update_history()
         await self.update_langs()
         await self.update_prefixes()
+        if not self.args.production:
+            await self.update_metric_list()
         self.get_channels()
         await self.data.get_chars()
         if self.args.forceupdate:
@@ -757,6 +760,38 @@ class ClanBot(commands.Bot):
         for clan_id in clan_ids_c:
             clan_ids.append(clan_id[0])
         await self.data.get_clan_leaderboard(clan_ids, 1572939289, 10)
+
+    async def update_metric_list(self):
+        internal_db = sqlite3.connect('internal.db')
+        internal_cursor = internal_db.cursor()
+
+        metrics_manifest = await self.data.destiny.decode_hash(1074663644, 'DestinyPresentationNodeDefinition')
+
+        for node in metrics_manifest['children']['presentationNodes']:
+            internal_cursor.execute('''SELECT name FROM metrictables WHERE id=?''', (node['presentationNodeHash'],))
+            metric_node = internal_cursor.fetchone()
+            node_manifest = await self.data.destiny.decode_hash(node['presentationNodeHash'], 'DestinyPresentationNodeDefinition')
+            if metric_node is not None:
+                internal_cursor.execute('''SELECT hash, name, is_working FROM {}'''.format(metric_node[0]))
+                metrics = internal_cursor.fetchall()
+                for metric in metrics:
+                    tmp = list(metrics[metrics.index(metric)])
+                    tmp.append(metric[0])
+                    try:
+                        await self.data.destiny.decode_hash(metric[0], 'DestinyMetricDefinition')
+                        tmp[2] = 1
+                    except pydest.PydestException:
+                        tmp[2] = 0
+                    metrics[metrics.index(metric)] = tuple(tmp)
+                internal_cursor.executemany('''UPDATE {} SET hash=?, name=?, is_working=? WHERE hash=?'''.format(metric_node[0]), metrics)
+                metrics = []
+                for metric in node_manifest['children']['metrics']:
+                    metrics.append(tuple(['', metric['metricHash'], 1]))
+                internal_cursor.executemany('''INSERT or IGNORE INTO {} VALUES (?,?,?)'''.format(metric_node[0]), metrics)
+                pass
+
+        internal_db.commit()
+        internal_db.close()
 
     def start_up(self):
         self.get_args()
