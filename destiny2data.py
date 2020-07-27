@@ -94,33 +94,17 @@ class D2data:
             char_file = open('char.json', 'r')
             self.char_info = json.loads(char_file.read())
         except FileNotFoundError:
-            valid_input = False
-            while not valid_input:
-                print("What platform are you playing on?")
-                print("1. Xbox")
-                print("2. Playstation")
-                print("3. Steam")
-                platform = int(input())
-                if 3 >= platform >= 1:
-                    valid_input = True
-            platform = str(platform)
+            membership_url = 'https://www.bungie.net/platform/User/GetMembershipsForCurrentUser/'
+            search_resp = await self.session.get(url=membership_url, headers=self.headers)
+            search_json = await search_resp.json()
+            self.char_info['membershipid'] = search_json['Response']['primaryMembershipId']
+            membership_id = search_json['Response']['primaryMembershipId']
+            for membership in search_json['Response']['destinyMemberships']:
+                if membership['membershipId'] == self.char_info['membershipid']:
+                    platform = membership['membershipType']
             self.char_info['platform'] = platform
 
-            valid_input = False
-            while not valid_input:
-                name = input("What's the name of your account on there? (include # numbers): ")
-                search_url = 'https://www.bungie.net/platform/Destiny2/SearchDestinyPlayer/' + str(
-                    platform) + '/' + quote(
-                    name) + '/'
-                search_resp = await self.session.get(search_url, headers=self.headers)
-                search_json = await search_resp.json()
-                search = search_json['Response']
-                if len(search) > 0:
-                    valid_input = True
-                    membership_id = search[0]['membershipId']
-                    self.char_info['membershipid'] = membership_id
-
-            char_search_url = 'https://www.bungie.net/platform/Destiny2/' + platform + '/Profile/' + membership_id + '/'
+            char_search_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/'.format(platform, membership_id)
             char_search_params = {
                 'components': '200'
             }
