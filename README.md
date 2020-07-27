@@ -33,8 +33,6 @@ Create the file `api.json` in the folder with the script and fill it out with al
 On first run, the script will launch a flask server and tell you to navigate to `localhost:4200`.  When you navigate to there, you must open the developer console and open to the network tab.  Click the link, scroll to the bottom of bungie's page, and click the authorize button.  When you do so, nothing will happen, but you'll see a redirect network event that is cancelled.  You need to copy the link that was attempted to direct to, and go there directly.  If all is well, the script will proceed to the next stage.
 When using https, just navigate to `https://YOURDOMAIN:4200` and the rest is pretty straightforward.
 
-Now that you've got oauth taken care of, when you run the script no flask server will kick up, instead it will simply ask what platform you play on (answer with 1, 2, or 3) and for your platform's username.
-
 Notes: the files `token.json` and `char.json` can be transferred to another machine along with the script to let the script run without any input at all.
 
 # Launch
