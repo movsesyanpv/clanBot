@@ -1414,6 +1414,7 @@ class D2data:
     async def get_activities_response(self, name, lang=None, string=None, force=False):
         char_info = self.char_info
         activities = []
+        hashes = set()
 
         for char in char_info['charid']:
             activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
@@ -1422,16 +1423,20 @@ class D2data:
                                                          self.activities_params, lang, string, force=force)
             if activities_resp:
                 activities.append(activities_resp)
+        activities_json = await self.get_cached_json('activities_{}'.format(char_info['charid'][-1]), name,
+                                                     activities_url, self.activities_params, lang, string, force=force)
+        if activities_json:
+            activities_json['Response']['activities']['data']['availableActivities'].clear()
 
         if len(activities) == 0:
             return False
         else:
-            activities_json = activities[0].copy()
-            if len(activities) > 1:
-                for char_activities in activities[1:]:
+            if len(activities) > 0:
+                for char_activities in activities:
                     for activity in char_activities['Response']['activities']['data']['availableActivities']:
-                        if activity not in activities_json['Response']['activities']['data']['availableActivities']:
+                        if activity['activityHash'] not in hashes:
                             activities_json['Response']['activities']['data']['availableActivities'].append(activity)
+                            hashes.add(activity['activityHash'])
             return activities_json
 
     async def get_player_metric(self, membership_type, membership_id, metric, is_global=False):
