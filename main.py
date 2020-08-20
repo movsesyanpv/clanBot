@@ -128,9 +128,9 @@ class ClanBot(commands.Bot):
                 await self.universal_update(self.data.get_nightmares, 'nightmares', 604800, post=post, get=get, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800, post=post, get=get, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_raids, 'raids', 604800, post=post, get=get, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=get, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=get, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=False, get=get, channels=channels, forceget=forceget)
+                # await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                # await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                # await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=False, get=get, channels=channels, forceget=forceget)
         if 'spider' in upd_type:
             if channels is None:
                 channels = self.notifiers
