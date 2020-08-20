@@ -198,6 +198,7 @@ class ClanBot(commands.Bot):
         return
 
     async def on_guild_join(self, guild):
+        self.logger.info('added to {}'.format(guild.name))
         if guild.owner.dm_channel is None:
             await guild.owner.create_dm()
         start = await guild.owner.dm_channel.send('Thank you for inviting me to your guild!\n')
@@ -214,12 +215,16 @@ class ClanBot(commands.Bot):
                                           'Feel free to ask for help at my Discord Server: https://discord.gg/JEbzECp'.
                                           format(prefix, self.user.name, str(self.langs).replace('[', '').replace(']', '').replace('\'', '')))
         await self.update_history()
+        self.update_clans()
+        await self.update_prefixes()
+        await self.update_langs()
 
     async def on_guild_remove(self, guild):
         self.guild_cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM language WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM seasonal WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
+        self.guild_cursor.execute('''DELETE FROM prefixes WHERE server_id=?''', (guild.id,))
         self.guild_db.commit()
         self.raid.purge_guild(guild.id)
 
@@ -625,7 +630,7 @@ class ClanBot(commands.Bot):
         for server in self.guilds:
             try:
                 init_values = [server.name, server.id]
-                self.guild_cursor.execute("INSERT or IGNORE INTO history VALUES (?,?)", init_values)
+                self.guild_cursor.execute("INSERT or IGNORE INTO history (server_name, server_id) VALUES (?,?)", init_values)
                 self.guild_db.commit()
             except sqlite3.OperationalError:
                 pass
