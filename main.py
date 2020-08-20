@@ -198,7 +198,6 @@ class ClanBot(commands.Bot):
         return
 
     async def on_guild_join(self, guild):
-        await self.update_history()
         if guild.owner.dm_channel is None:
             await guild.owner.create_dm()
         start = await guild.owner.dm_channel.send('Thank you for inviting me to your guild!\n')
@@ -214,6 +213,7 @@ class ClanBot(commands.Bot):
                                           'To use `top` command you\'ll have to set up a D2 clan with the `setclan` command.\n'
                                           'Feel free to ask for help at my Discord Server: https://discord.gg/JEbzECp'.
                                           format(prefix, self.user.name, str(self.langs).replace('[', '').replace(']', '').replace('\'', '')))
+        await self.update_history()
 
     async def on_guild_remove(self, guild):
         self.guild_cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
@@ -617,19 +617,18 @@ class ClanBot(commands.Bot):
         self.update_clans()
 
     async def update_history(self):
+        try:
+            self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer)''')
+            self.guild_cursor.execute('''CREATE UNIQUE INDEX hist ON history(server_id)''')
+        except sqlite3.OperationalError:
+            pass
         for server in self.guilds:
             try:
-                self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer)''')
-                self.guild_cursor.execute('''CREATE UNIQUE INDEX hist ON history(server_id)''')
                 init_values = [server.name, server.id]
                 self.guild_cursor.execute("INSERT or IGNORE INTO history VALUES (?,?)", init_values)
                 self.guild_db.commit()
             except sqlite3.OperationalError:
-                try:
-                    init_values = [server.name, server.id]
-                    self.guild_cursor.execute("INSERT or IGNORE INTO history VALUES (?,?)", init_values)
-                except sqlite3.OperationalError:
-                    pass
+                pass
 
     async def universal_update(self, getter, name, time_to_delete=None, channels=None, post=True, get=True, forceget=False):
         await self.wait_until_ready()
