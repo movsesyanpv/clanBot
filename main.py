@@ -475,17 +475,17 @@ class ClanBot(commands.Bot):
                     await ctx.author.create_dm()
                 await ctx.author.dm_channel.send(msg, embed=e)
 
-            elif isinstance(exception, commands.CommandInvokeError):
-                if isinstance(exception.original, discord.errors.Forbidden):
-                    bot_info = await self.application_info()
-                    owner = bot_info.owner
-                    if owner.dm_channel is None:
-                        await owner.create_dm()
-                    await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-                    await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
-                    #await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
-                    return
-                raise exception
+            # elif isinstance(exception, commands.CommandInvokeError):
+            #     if isinstance(exception.original, discord.errors.Forbidden):
+            #         bot_info = await self.application_info()
+            #         owner = bot_info.owner
+            #         if owner.dm_channel is None:
+            #             await owner.create_dm()
+            #         await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+            #         await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
+            #         #await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
+            #         return
+            #     raise exception
         except discord.errors.Forbidden:
             pass
         except Exception as e:
