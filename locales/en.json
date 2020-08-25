@@ -47,6 +47,7 @@
         "newBlood": "There are new guys for:",
         "gotcha": "Got your emote, {}.",
         "server": "of",
+        "dm_start": "{}, check your DMs",
         "name": "Provide the name of the activity",
         "description": "Describe, what are you going to do there",
         "time": "When are you going to start? (format is `%d-%m-%Y %H:%M` for UTC+3 timezone and `%d-%m-%Y %H:%M %z`, for custom timezone)\nExamples of the current time: `{}` for UTC+3, `{}` for custom timezone.",

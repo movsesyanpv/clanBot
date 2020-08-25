@@ -68,7 +68,8 @@
         "lfglist": "{}{}. {} @ {} {} in #{} of {}, ID: `{}`\n",
         "lfglist_empty": "No LFGs were found",
         "lfglist_choice_check": "Is the LFG choice correct? Yes/No\n",
-        "no_change": "Not changed"
+        "no_change": "Not changed",
+        "dm_start": "{}, check your DMs"
     },
     "lfge": {
         "roles": "Roles",

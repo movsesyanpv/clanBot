@@ -20,7 +20,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.14.7'
+    version = '2.14.8'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts', 'events']
@@ -198,7 +198,7 @@ class ClanBot(commands.Bot):
         return
 
     async def on_guild_join(self, guild):
-        await self.update_history()
+        self.logger.info('added to {}'.format(guild.name))
         if guild.owner.dm_channel is None:
             await guild.owner.create_dm()
         start = await guild.owner.dm_channel.send('Thank you for inviting me to your guild!\n')
@@ -214,12 +214,17 @@ class ClanBot(commands.Bot):
                                           'To use `top` command you\'ll have to set up a D2 clan with the `setclan` command.\n'
                                           'Feel free to ask for help at my Discord Server: https://discord.gg/JEbzECp'.
                                           format(prefix, self.user.name, str(self.langs).replace('[', '').replace(']', '').replace('\'', '')))
+        await self.update_history()
+        self.update_clans()
+        await self.update_prefixes()
+        await self.update_langs()
 
     async def on_guild_remove(self, guild):
         self.guild_cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM language WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM seasonal WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
+        self.guild_cursor.execute('''DELETE FROM prefixes WHERE server_id=?''', (guild.id,))
         self.guild_db.commit()
         self.raid.purge_guild(guild.id)
 
@@ -470,17 +475,17 @@ class ClanBot(commands.Bot):
                     await ctx.author.create_dm()
                 await ctx.author.dm_channel.send(msg, embed=e)
 
-            elif isinstance(exception, commands.CommandInvokeError):
-                if isinstance(exception.original, discord.errors.Forbidden):
-                    bot_info = await self.application_info()
-                    owner = bot_info.owner
-                    if owner.dm_channel is None:
-                        await owner.create_dm()
-                    await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-                    await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
-                    #await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
-                    return
-                raise exception
+            # elif isinstance(exception, commands.CommandInvokeError):
+            #     if isinstance(exception.original, discord.errors.Forbidden):
+            #         bot_info = await self.application_info()
+            #         owner = bot_info.owner
+            #         if owner.dm_channel is None:
+            #             await owner.create_dm()
+            #         await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+            #         await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
+            #         #await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
+            #         return
+            #     raise exception
         except discord.errors.Forbidden:
             pass
         except Exception as e:
@@ -617,19 +622,18 @@ class ClanBot(commands.Bot):
         self.update_clans()
 
     async def update_history(self):
+        try:
+            self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer)''')
+            self.guild_cursor.execute('''CREATE UNIQUE INDEX hist ON history(server_id)''')
+        except sqlite3.OperationalError:
+            pass
         for server in self.guilds:
             try:
-                self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer)''')
-                self.guild_cursor.execute('''CREATE UNIQUE INDEX hist ON history(server_id)''')
                 init_values = [server.name, server.id]
-                self.guild_cursor.execute("INSERT or IGNORE INTO history VALUES (?,?)", init_values)
+                self.guild_cursor.execute("INSERT or IGNORE INTO history (server_name, server_id) VALUES (?,?)", init_values)
                 self.guild_db.commit()
             except sqlite3.OperationalError:
-                try:
-                    init_values = [server.name, server.id]
-                    self.guild_cursor.execute("INSERT or IGNORE INTO history VALUES (?,?)", init_values)
-                except sqlite3.OperationalError:
-                    pass
+                pass
 
     async def universal_update(self, getter, name, time_to_delete=None, channels=None, post=True, get=True, forceget=False):
         await self.wait_until_ready()

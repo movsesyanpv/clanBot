@@ -76,7 +76,11 @@ class Group(commands.Cog):
 
         translations = ctx.bot.translations[lang]['lfg']
 
+        response = await ctx.message.channel.send(translations['dm_start'].format(ctx.author.mention))
+
         name = await get_proper_length_arg('name', 256)
+
+        await response.delete()
 
         description = await get_proper_length_arg('description', 2048)
 
@@ -233,10 +237,14 @@ class Group(commands.Cog):
 
         translations = ctx.bot.translations[lang]['lfg']
 
+        response = await ctx.message.channel.send(translations['dm_start'].format(ctx.author.mention))
+
         lfg_list = await self.lfglist(ctx, lang)
         if not lfg_list:
             return
         number = await get_numerical_answer('lfg_choice', len(lfg_list)+1)
+
+        await response.delete()
 
         check_msg = translations['lfglist_choice_check']
         lfg = lfg_list[number]
