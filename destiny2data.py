@@ -681,6 +681,12 @@ class D2data:
         except mariadb.Error:
             pass
 
+        try:
+            data_cursor.execute('''UPDATE {} SET timestamp_int=?, json=?, timestamp=? WHERE id=?'''.format(lang),
+                                (datetime.utcnow().timestamp(), json.dumps({'data': response}), datetime.utcnow().isoformat(), id))
+        except mariadb.Error:
+            pass
+
     async def get_spider(self, lang, forceget=False):
         char_info = self.char_info
 
@@ -846,7 +852,7 @@ class D2data:
                     }
                     db_data.append({
                         "name": r_json['selectionScreenDisplayProperties']['name'],
-                        "value": r_json['selectionScreenDisplayProperties']['description']
+                        "description": r_json['selectionScreenDisplayProperties']['description']
                     })
                     self.data[lang]['heroicstory']['fields'].append(info)
             self.write_to_db(lang, 'heroic_story_missions', db_data)
@@ -870,7 +876,7 @@ class D2data:
                 'footer': {'text': self.translations[lang]['msg']['resp_time']},
                 'timestamp': resp_time
             }
-
+            db_data = []
             activities_json = activities_resp
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
@@ -887,7 +893,13 @@ class D2data:
                         "name": r_json['displayProperties']['name'],
                         "value": place['displayProperties']['name']
                     }
+                    db_data.append({
+                        "name": r_json['displayProperties']['name'],
+                        "location": place['displayProperties']['name'],
+                        "icon": r_json['displayProperties']['icon']
+                    })
                     self.data[lang]['forge']['fields'].append(info)
+            self.write_to_db(lang, 'forge', db_data)
 
     async def get_strike_modifiers(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('vanguardstrikes', string='strike modifiers',
