@@ -11,6 +11,7 @@ import sqlite3
 import matplotlib.pyplot as plt
 import csv
 import codecs
+import mariadb
 
 
 class D2data:
@@ -19,6 +20,8 @@ class D2data:
     destiny = ''
 
     cache_db = ''
+
+    data_db = ''
 
     icon_prefix = "https://www.bungie.net"
 
@@ -85,7 +88,12 @@ class D2data:
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
-        self.cache_db = sqlite3.connect('cache.db')
+        self.cache_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
+                                        password=self.api_data['pass'], port=self.api_data['db_port'],
+                                        database=self.api_data['cache_name'])
+        self.data_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
+                                       password=self.api_data['pass'], port=self.api_data['db_port'],
+                                       database=self.api_data['data_db'])
 
     async def get_chars(self):
         platform = 0
@@ -241,6 +249,7 @@ class D2data:
 
     async def get_vendor_sales(self, lang, vendor_resp, cats, exceptions=[]):
         embed_sales = []
+        data_sales = []
 
         vendor_json = vendor_resp
         tess_sales = vendor_json['Response']['sales']['data']
@@ -258,9 +267,11 @@ class D2data:
 
                     currency_cost = str(currency['quantity'])
                     currency_item = currency_resp['displayProperties']['name']
+                    currency_icon = currency_resp['displayProperties']['icon']
                 else:
                     currency_cost = 'N/A'
                     currency_item = ''
+                    currency_icon = ''
 
                 item_data = {
                     'inline': True,
@@ -268,8 +279,15 @@ class D2data:
                     'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
                                                 currency_item.capitalize())
                 }
+                data_sales.append({
+                    'name': item_name.capitalize(),
+                    'icon': item_resp['displayProperties']['icon'],
+                    'cost': currency_cost,
+                    'currency_name': currency_item.capitalize(),
+                    'currency_icon': currency_icon
+                })
                 embed_sales.append(item_data)
-        return embed_sales
+        return [embed_sales, data_sales]
 
     async def get_featured_bd(self, langs, forceget=False):
         tess_resp = []
@@ -303,7 +321,7 @@ class D2data:
                 items_to_get = tess_cats[3]['itemIndexes']
                 tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get,
                                                                       [353932628, 3260482534, 3536420626, 3187955025,
-                                                                       2638689062])
+                                                                       2638689062])[0]
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i + 1:]:
@@ -342,7 +360,7 @@ class D2data:
                 items_to_get = tess_cats[8]['itemIndexes'] + tess_cats[10]['itemIndexes']
                 tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get,
                                                                       [353932628, 3260482534, 3536420626, 3187955025,
-                                                                       2638689062])
+                                                                       2638689062])[0]
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i + 1:]:
@@ -379,7 +397,7 @@ class D2data:
                 resp_json = resp
                 tess_cats = resp_json['Response']['categories']['data']['categories']
                 items_to_get = tess_cats[2]['itemIndexes']
-                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get, [827183327])
+                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get, [827183327])[0]
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i + 1:]:
@@ -643,6 +661,20 @@ class D2data:
                             self.translations[lang]['classnames']):
                         class_items = class_items + 1
 
+    def write_to_db(self, lang, id, response):
+        data_cursor = self.data_db.cursor()
+
+        try:
+            data_cursor.execute('''CREATE TABLE {} (id text, timestamp_int integer, json json, timestamp text)'''.format(lang))
+            data_cursor.execute('''CREATE UNIQUE INDEX data_id_{} ON {}(id(256))'''.format(lang, lang))
+        except mariadb.Error:
+            pass
+
+        try:
+            data_cursor.execute('''INSERT IGNORE INTO {} VALUES (?,?,?,?)'''.format(lang), (id, datetime.utcnow().timestamp(), json.dumps({'data': response}), datetime.utcnow().isoformat()))
+        except mariadb.Error:
+            pass
+
     async def get_spider(self, lang, forceget=False):
         char_info = self.char_info
 
@@ -671,8 +703,10 @@ class D2data:
 
             items_to_get = spider_cats[0]['itemIndexes']
 
-            self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + await self.get_vendor_sales(
-                locale, spider_resp, items_to_get, [1812969468])
+            spider_sales = await self.get_vendor_sales(locale, spider_resp, items_to_get, [1812969468])
+            self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + spider_sales[0]
+            data = spider_sales[1]
+            self.write_to_db(locale, 'spider_mats', data)
 
     async def get_xur_loc(self):
         url = 'https://wherethefuckisxur.com/'
@@ -1471,7 +1505,7 @@ class D2data:
                 expired = datetime.now().timestamp() > cached_entry[1]
             else:
                 expired = True
-        except sqlite3.OperationalError:
+        except mariadb.Error:
             expired = True
             if cache_only:
                 return False
@@ -1484,36 +1518,36 @@ class D2data:
                 try:
                     cache_cursor.execute(
                         '''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
-                    cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id)''')
-                    cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
+                    cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id(256))''')
+                    cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
                                          (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json),
                                           timestamp))
-                except sqlite3.OperationalError:
+                except mariadb.Error:
                     try:
                         cache_cursor.execute('''ALTER TABLE cache ADD COLUMN timestamp text''')
-                        cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
+                        cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
                                              (cache_id, int(datetime.now().timestamp() + 1800),
                                               json.dumps(response_json), timestamp))
-                    except sqlite3.OperationalError:
+                    except mariadb.Error:
                         pass
                 try:
-                    cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
+                    cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
                                          (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json),
                                           timestamp))
-                except sqlite3.OperationalError:
+                except mariadb.Error:
                     pass
                 try:
                     cache_cursor.execute('''UPDATE cache SET expires=?, json=?, timestamp=? WHERE id=?''',
                                          (int(datetime.now().timestamp() + 1800), json.dumps(response_json), timestamp,
                                           cache_id))
-                except sqlite3.OperationalError:
+                except mariadb.Error:
                     pass
             else:
                 return False
         else:
             timestamp = cached_entry[2]
             response_json = json.loads(cached_entry[0])
-        self.cache_db.commit()
+        # self.cache_db.commit()
         response_json['timestamp'] = timestamp
         return response_json
 
