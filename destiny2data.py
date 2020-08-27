@@ -195,6 +195,9 @@ class D2data:
                     self.data[locale][name] = self.data[locale]['api_is_down']
             return False
         except aiohttp.ContentTypeError:
+            if change_msg:
+                for locale in lang:
+                    self.data[locale][name] = self.data[locale]['api_is_down']
             return False
         print('getting {} {}'.format(string, lang_str))
         curr_try = 2
@@ -217,6 +220,9 @@ class D2data:
             try:
                 resp_code = await resp.json()
             except aiohttp.ContentTypeError:
+                if change_msg:
+                    for locale in lang:
+                        self.data[locale][name] = self.data[locale]['api_is_down']
                 return False
             resp_code = resp_code['ErrorCode']
             if resp_code == 5:
@@ -233,6 +239,9 @@ class D2data:
             try:
                 resp_code = await resp.json()
             except aiohttp.ContentTypeError:
+                if change_msg:
+                    for locale in lang:
+                        self.data[locale][name] = self.data[locale]['api_is_down']
                 return False
             if 'ErrorCode' in resp_code.keys():
                 resp_code = resp_code['ErrorCode']
@@ -694,6 +703,12 @@ class D2data:
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         spider_resp = await self.get_cached_json('spider', 'spider', spider_url, self.vendor_params, force=forceget)
         if not spider_resp:
+            for locale in lang:
+                db_data = {
+                    'name': self.data[locale]['spider']['fields'][0]['name'],
+                    'description': self.data[locale]['spider']['fields'][0]['value']
+                }
+                self.write_to_db(locale, 'spider_mats', db_data)
             return
         spider_json = spider_resp
         spider_cats = spider_json['Response']['categories']['data']['categories']
@@ -820,6 +835,12 @@ class D2data:
         activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions',
                                                              force=forceget)
         if not activities_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.data[lang]['heroicstory']['fields'][0]['name'],
+                    'description': self.data[lang]['heroicstory']['fields'][0]['value']
+                }
+                self.write_to_db(lang, 'heroic_story_missions', db_data)
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -860,6 +881,12 @@ class D2data:
     async def get_forge(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('forge', force=forceget)
         if not activities_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.data[lang]['forge']['fields'][0]['name'],
+                    'description': self.data[lang]['forge']['fields'][0]['value']
+                }
+                self.write_to_db(lang, 'forge', db_data)
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -905,6 +932,12 @@ class D2data:
         activities_resp = await self.get_activities_response('vanguardstrikes', string='strike modifiers',
                                                              force=forceget)
         if not activities_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.data[lang]['vanguardstrikes']['fields'][0]['name'],
+                    'description': self.data[lang]['vanguardstrikes']['fields'][0]['value']
+                }
+                self.write_to_db(lang, 'strike_modifiers', db_data)
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -983,6 +1016,12 @@ class D2data:
     async def get_reckoning_modifiers(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('reckoning', string='reckoning modifiers', force=forceget)
         if not activities_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.data[lang]['reckoning']['fields'][0]['name'],
+                    'description': self.data[lang]['reckoning']['fields'][0]['value']
+                }
+                self.write_to_db(lang, 'reckoning', db_data)
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1019,6 +1058,12 @@ class D2data:
     async def get_nightfall820(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('nightfalls820', string='820 nightfalls', force=forceget)
         if not activities_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.data[lang]['nightfalls820']['fields'][0]['name'],
+                    'description': self.data[lang]['nightfalls820']['fields'][0]['value']
+                }
+                self.write_to_db(lang, '820_nightfalls', db_data)
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1096,6 +1141,12 @@ class D2data:
     async def get_raids(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('raids', force=forceget)
         if not activities_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.data[lang]['raids']['fields'][0]['name'],
+                    'description': self.data[lang]['raids']['fields'][0]['value']
+                }
+                self.write_to_db(lang, 'raid_challenges', db_data)
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1268,6 +1319,12 @@ class D2data:
     async def get_ordeal(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('ordeal', force=forceget)
         if not activities_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.data[lang]['ordeal']['fields'][0]['name'],
+                    'description': self.data[lang]['ordeal']['fields'][0]['value']
+                }
+                self.write_to_db(lang, 'ordeal', db_data)
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1321,6 +1378,12 @@ class D2data:
     async def get_nightmares(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('nightmares', force=forceget)
         if not activities_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.data[lang]['nightmares']['fields'][0]['name'],
+                    'description': self.data[lang]['nightmares']['fields'][0]['value']
+                }
+                self.write_to_db(lang, 'nigtmare_hunts', db_data)
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1363,6 +1426,12 @@ class D2data:
         activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators',
                                                              force=forceget)
         if not activities_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.data[lang]['cruciblerotators']['fields'][0]['name'],
+                    'description': self.data[lang]['cruciblerotators']['fields'][0]['value']
+                }
+                self.write_to_db(lang, 'crucible_rotators', db_data)
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
