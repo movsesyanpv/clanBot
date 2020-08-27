@@ -922,6 +922,7 @@ class D2data:
                 'timestamp': resp_time
             }
 
+            db_data = []
             activities_json = activities_resp
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
@@ -929,10 +930,13 @@ class D2data:
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
 
                 if local_types['heroicstory'] in r_json['displayProperties']['name']:
-                    self.data[lang]['vanguardstrikes']['fields'] = await self.decode_modifiers(key, lang)
+                    mods = await self.decode_modifiers(key, lang)
+                    self.data[lang]['vanguardstrikes']['fields'] = mods[0]
+                    db_data = mods[1]
                 if self.translations[lang]['strikes'] in r_json['displayProperties']['name']:
                     self.data[lang]['vanguardstrikes']['thumbnail']['url'] = self.icon_prefix + \
                                                                              r_json['displayProperties']['icon']
+            self.write_to_db(lang, 'strike_modifiers', db_data)
 
     async def get_reckoning_boss(self, lang):
         first_reset_time = 1539709200
@@ -968,8 +972,13 @@ class D2data:
             'name': self.translations[lang]['msg']['reckoningboss'],
             'value': self.translations[lang][reckoning_bosses[int(weeks_since_first % 2)]],
         }]
+        db_data = [{
+            'name': self.translations[lang]['msg']['reckoningboss'],
+            'value': self.translations[lang][reckoning_bosses[int(weeks_since_first % 2)]],
+            'icon': "/common/destiny2_content/icons/DestinyActivityModeDefinition_e74b3385c5269da226372df8ae7f500d.png"
+        }]
 
-        return data
+        return [data, db_data]
 
     async def get_reckoning_modifiers(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('reckoning', string='reckoning modifiers', force=forceget)
@@ -992,8 +1001,9 @@ class D2data:
                 'timestamp': resp_time
             }
 
-            self.data[lang]['reckoning']['fields'] = self.add_reckoning_boss(lang)
+            self.data[lang]['reckoning']['fields'] = self.add_reckoning_boss(lang)[0]
 
+            db_data = self.add_reckoning_boss(lang)[1]
             activities_json = activities_resp
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
@@ -1002,7 +1012,9 @@ class D2data:
 
                 if self.translations[lang]['reckoning'] in r_json['displayProperties']['name']:
                     mods = await self.decode_modifiers(key, lang)
-                    self.data[lang]['reckoning']['fields'] = [*self.data[lang]['reckoning']['fields'], *mods]
+                    db_data = [*db_data, *mods[1]]
+                    self.data[lang]['reckoning']['fields'] = [*self.data[lang]['reckoning']['fields'], *mods[0]]
+            self.write_to_db(lang, 'reckoning', db_data)
 
     async def get_nightfall820(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('nightfalls820', string='820 nightfalls', force=forceget)
@@ -1024,6 +1036,7 @@ class D2data:
                 'timestamp': resp_time
             }
 
+            db_data = []
             activities_json = activities_resp
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
@@ -1040,15 +1053,24 @@ class D2data:
                                 'name': self.translations[lang]['msg']['guidedgamenightfall'],
                                 'value': r_json['selectionScreenDisplayProperties']['name']
                             }
+                            db_data.append({
+                                'name': self.translations[lang]['msg']['guidedgamenightfall'],
+                                'description': r_json['selectionScreenDisplayProperties']['name']
+                            })
                         else:
                             info = {
                                 'inline': True,
                                 'name': r_json['selectionScreenDisplayProperties']['name'],
                                 'value': r_json['selectionScreenDisplayProperties']['description']
                             }
+                            db_data.append({
+                                'name': r_json['selectionScreenDisplayProperties']['name'],
+                                'description': r_json['selectionScreenDisplayProperties']['description']
+                            })
                         self.data[lang]['nightfalls820']['fields'].append(info)
                 except KeyError:
                     pass
+            self.write_to_db(lang, '820_nightfalls', db_data)
 
     async def get_modifiers(self, lang, act_hash):
         url = 'https://www.bungie.net/{}/Explore/Detail/DestinyActivityDefinition/{}'.format(lang, act_hash)
@@ -1118,6 +1140,7 @@ class D2data:
                 elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in cos_challenges:
                     cos_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
 
+            db_data = []
             activities_json = activities_resp
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
@@ -1146,6 +1169,10 @@ class D2data:
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': levi_str
                     }
+                    db_data.append({
+                        'name': info['name'],
+                        'value': info['value']
+                    })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]["EoW"] in r_json['displayProperties']['name'] and \
                         not r_json['matchmaking']['requiresGuardianOath']:
@@ -1164,6 +1191,10 @@ class D2data:
                                                                    mods[1]['name'], loadout)
                     else:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                    db_data.append({
+                        'name': info['name'],
+                        'value': info['value']
+                    })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
                         not r_json['matchmaking']['requiresGuardianOath'] and lw_ch != 0:
@@ -1176,6 +1207,10 @@ class D2data:
                     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
                                                                     language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
+                    db_data.append({
+                        'name': info['name'],
+                        'value': info['value']
+                    })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
                         not r_json['matchmaking']['requiresGuardianOath'] and sotp_ch != 0:
@@ -1188,6 +1223,10 @@ class D2data:
                     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
                                                                     language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
+                    db_data.append({
+                        'name': info['name'],
+                        'value': info['value']
+                    })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['CoS'] in r_json['displayProperties']['name'] and \
                         not r_json['matchmaking']['requiresGuardianOath'] and cos_ch != 0:
@@ -1200,6 +1239,10 @@ class D2data:
                     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
                                                                     language=lang)
                     info['value'] = curr_challenge['displayProperties']['name']
+                    db_data.append({
+                        'name': info['name'],
+                        'value': info['value']
+                    })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
                         not r_json['matchmaking']['requiresGuardianOath']:
@@ -1214,8 +1257,13 @@ class D2data:
                         info['value'] = mods[0]['name']
                     else:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                    db_data.append({
+                        'name': info['name'],
+                        'value': info['value']
+                    })
                     self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
+            self.write_to_db(lang, 'raid_challenges', db_data)
 
     async def get_ordeal(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('ordeal', force=forceget)
@@ -1240,6 +1288,7 @@ class D2data:
 
             strikes = []
 
+            db_data = []
             activities_json = activities_resp
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
@@ -1256,12 +1305,18 @@ class D2data:
                         'value': u"\u2063"
                     }
                     self.data[lang]['ordeal']['fields'].append(info)
+                    db_data.append({
+                        'name': info['name'],
+                        'value': info['value']
+                    })
 
             if len(self.data[lang]['ordeal']['fields']) > 0:
                 for strike in strikes:
                     if strike['name'] in self.data[lang]['ordeal']['fields'][0]['name']:
                         self.data[lang]['ordeal']['fields'][0]['value'] = strike['description']
+                        db_data[0]['value'] = strike['description']
                         break
+            self.write_to_db(lang, 'ordeal', db_data)
 
     async def get_nightmares(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('nightmares', force=forceget)
@@ -1284,6 +1339,7 @@ class D2data:
                 'timestamp': resp_time
             }
 
+            db_data = []
             activities_json = activities_resp
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
@@ -1296,7 +1352,12 @@ class D2data:
                         'name': r_json['displayProperties']['name'].replace(local_types['adept'], ""),
                         'value': r_json['displayProperties']['description']
                     }
+                    db_data.append({
+                        'name': info['name'],
+                        'description': info['value']
+                    })
                     self.data[lang]['nightmares']['fields'].append(info)
+            self.write_to_db(lang, 'nigtmare_hunts', db_data)
 
     async def get_crucible_rotators(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators',
@@ -1319,6 +1380,7 @@ class D2data:
                 'timestamp': resp_time
             }
 
+            db_data = []
             activities_json = activities_resp
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
@@ -1340,12 +1402,22 @@ class D2data:
                                     self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
                                                                                               '/common/destiny2_content/icons/' \
                                                                                               'cc8e6eea2300a1e27832d52e9453a227.png'
+                            if 'icon' in r_json['displayProperties']:
+                                icon = r_json['displayProperties']['icon']
+                            else:
+                                icon = '/common/destiny2_content/icons/cc8e6eea2300a1e27832d52e9453a227.png'
                             info = {
                                 'inline': True,
                                 "name": r_json['displayProperties']['name'],
                                 "value": r_json['displayProperties']['description']
                             }
+                            db_data.append({
+                                'name': info['name'],
+                                'description': info['value'],
+                                'icon': icon
+                            })
                             self.data[lang]['cruciblerotators']['fields'].append(info)
+            self.write_to_db(lang, 'crucible_rotators', db_data)
 
     async def get_the_lie_progress(self, langs, forceget=True):
         url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'],
@@ -1457,6 +1529,7 @@ class D2data:
 
     async def decode_modifiers(self, key, lang):
         data = []
+        db_data = []
         for mod_key in key['modifierHashes']:
             mod_def = 'DestinyActivityModifierDefinition'
             mod_json = await self.destiny.decode_hash(mod_key, mod_def, lang)
@@ -1466,7 +1539,13 @@ class D2data:
                 "value": mod_json['displayProperties']['description']
             }
             data.append(mod)
-        return data
+            db_data.append({
+                "name": mod_json['displayProperties']['name'],
+                "description": mod_json['displayProperties']['description'],
+                "icon": mod_json['displayProperties']['icon']
+            })
+
+        return [data, db_data]
 
     async def get_activities_response(self, name, lang=None, string=None, force=False):
         char_info = self.char_info
