@@ -319,9 +319,11 @@ class D2data:
                 resp_json = resp
                 tess_cats = resp_json['Response']['categories']['data']['categories']
                 items_to_get = tess_cats[3]['itemIndexes']
-                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get,
-                                                                      [353932628, 3260482534, 3536420626, 3187955025,
-                                                                       2638689062])[0]
+                sales = await self.get_vendor_sales(lang, resp, items_to_get,
+                                                    [353932628, 3260482534, 3536420626, 3187955025,
+                                                    2638689062])
+                tmp_fields = tmp_fields + sales[0]
+                self.write_to_db(lang, 'featured_bright_dust_items', sales[1])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i + 1:]:
@@ -358,9 +360,11 @@ class D2data:
                 resp_json = resp
                 tess_cats = resp_json['Response']['categories']['data']['categories']
                 items_to_get = tess_cats[8]['itemIndexes'] + tess_cats[10]['itemIndexes']
-                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get,
-                                                                      [353932628, 3260482534, 3536420626, 3187955025,
-                                                                       2638689062])[0]
+                sales = await self.get_vendor_sales(lang, resp, items_to_get,
+                                                    [353932628, 3260482534, 3536420626, 3187955025,
+                                                    2638689062])
+                tmp_fields = tmp_fields + sales[0]
+                self.write_to_db(lang, 'bright_dust_items', sales[1])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i + 1:]:
@@ -397,7 +401,9 @@ class D2data:
                 resp_json = resp
                 tess_cats = resp_json['Response']['categories']['data']['categories']
                 items_to_get = tess_cats[2]['itemIndexes']
-                tmp_fields = tmp_fields + await self.get_vendor_sales(lang, resp, items_to_get, [827183327])[0]
+                sales = await self.get_vendor_sales(lang, resp, items_to_get, [827183327])
+                tmp_fields = tmp_fields + sales[0]
+                self.write_to_db(lang, 'featured_silver', sales[1])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i + 1:]:
@@ -825,7 +831,7 @@ class D2data:
                 'footer': {'text': self.translations[lang]['msg']['resp_time']},
                 'timestamp': resp_time
             }
-
+            db_data = []
             activities_json = activities_resp
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
@@ -838,7 +844,12 @@ class D2data:
                         "name": r_json['selectionScreenDisplayProperties']['name'],
                         "value": r_json['selectionScreenDisplayProperties']['description']
                     }
+                    db_data.append({
+                        "name": r_json['selectionScreenDisplayProperties']['name'],
+                        "value": r_json['selectionScreenDisplayProperties']['description']
+                    })
                     self.data[lang]['heroicstory']['fields'].append(info)
+            self.write_to_db(lang, 'heroic_story_missions', db_data)
 
     async def get_forge(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('forge', force=forceget)
