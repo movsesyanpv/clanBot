@@ -23,7 +23,7 @@ class ClanBot(commands.Bot):
     version = '2.14.8'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
-    all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'seasonal', 'alerts', 'events']
+    all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'alerts', 'events']
     embeds_with_img = ['thelie']
 
     sched = AsyncIOScheduler(timezone='UTC')
@@ -70,8 +70,9 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_featured_bd, 'featured_bd', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_bd, 'bd', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_featured_bd, 'featured_bd', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_bd, 'bd', 604800])
+        self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
 
@@ -129,6 +130,7 @@ class ClanBot(commands.Bot):
                 await self.universal_update(self.data.get_nightmares, 'nightmares', 604800, post=post, get=get, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800, post=post, get=get, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_raids, 'raids', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                await self.data.get_weekly_eververse(self.langs)
                 # await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=get, channels=channels, forceget=forceget)
                 # await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=get, channels=channels, forceget=forceget)
                 # await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=False, get=get, channels=channels, forceget=forceget)
@@ -149,11 +151,6 @@ class ClanBot(commands.Bot):
                 await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=post, get=False, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=False, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=False, channels=channels, forceget=forceget)
-        if 'seasonal' in upd_type:
-            if channels is None:
-                channels = self.seasonal_ch
-            if (post and list(set(channels).intersection(self.seasonal_ch))) or get:
-                await self.universal_update(self.data.get_seasonal_eververse, 'seasonal_eververse', channels=channels, post=post, get=get, forceget=forceget)
         if 'alerts' in upd_type:
             if channels is None:
                 channels = self.notifiers

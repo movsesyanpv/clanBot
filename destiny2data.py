@@ -291,6 +291,8 @@ class D2data:
                 data_sales.append({
                     'name': item_name.capitalize(),
                     'icon': item_resp['displayProperties']['icon'],
+                    'description': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
+                                                      currency_item.capitalize()),
                     'cost': currency_cost,
                     'currency_name': currency_item.capitalize(),
                     'currency_icon': currency_icon
@@ -441,25 +443,6 @@ class D2data:
                 }
                 self.data[lang]['alerts'].append(alert_embed)
 
-    async def get_seasonal_eververse(self, langs, forceget=False):
-        start = await self.get_season_start()
-        await self.get_seasonal_bd(langs, start)
-        await self.get_seasonal_consumables(langs, start)
-        await self.get_seasonal_featured_bd(langs, start)
-        await self.get_seasonal_featured_silver(langs, start)
-
-        for lang in langs:
-            self.data[lang]['seasonal_eververse'].clear()
-            for part in self.data[lang]['seasonal_silver']:
-                self.data[lang]['seasonal_eververse'].append(part)
-            for part in self.data[lang]['seasonal_consumables']:
-                self.data[lang]['seasonal_eververse'].append(part)
-            for part in self.data[lang]['seasonal_featured_bd']:
-                self.data[lang]['seasonal_eververse'].append(part)
-            for part in self.data[lang]['seasonal_bd']:
-                self.data[lang]['seasonal_eververse'].append(part)
-        return
-
     async def get_season_start(self):
         manifest_url = 'https://www.bungie.net/Platform/Destiny2/Manifest/'
         manifest_json = await self.get_bungie_json('default', manifest_url, {}, '')
@@ -477,83 +460,24 @@ class D2data:
             except KeyError:
                 pass
 
-    async def get_seasonal_featured_silver(self, langs, start):
-        tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
-
-        for lang in langs:
-            self.data[lang]['seasonal_silver'].clear()
-
-            data = {
-                'thumbnail': {
-                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
-                },
-                'fields': [],
-                'color': 0x38479F,
-                'type': "rich",
-                'title': self.translations[lang]['msg']['silver'],
-            }
-
-            n_items = 0
-            curr_week = dict.copy(data)
-            i_week = 1
-            class_items = 0
-            for i, item in enumerate(tess_def['itemList']):
-                if n_items == 25:
-                    curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['silver'],
-                                                          self.translations[lang]['msg']['week'], i_week)
-                    i_week = i_week + 1
-                    self.data[lang]['seasonal_silver'].append(dict.copy(curr_week))
-                    n_items = 0
-                    curr_week['fields'] = []
-                    class_items = 0
-                if item['displayCategoryIndex'] == 3 and item['itemHash'] != 827183327:
-                    definition = 'DestinyInventoryItemDefinition'
-                    item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
-                                                                   language=lang)
-                    currency_cost = str(item['currencies'][0]['quantity'])
-                    currency_item = currency_resp['displayProperties']['name']
-                    item_data = {
-                        'inline': True,
-                        'name': item_def['displayProperties']['name'],
-                        'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
-                                                    currency_item.capitalize())
-                    }
-                    curr_week['fields'].append(item_data)
-                    n_items = n_items + 1
-                    if item_def['classType'] < 3 or any(
-                            class_name in item_def['itemTypeDisplayName'].lower() for class_name in
-                            ['hunter', 'warlock', 'titan']):
-                        class_items = class_items + 1
-
     async def get_seasonal_featured_bd(self, langs, start):
         tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
+        bd = []
+
         for lang in langs:
-            self.data[lang]['seasonal_featured_bd'].clear()
-
-            data = {
-                'thumbnail': {
-                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
-                },
-                'fields': [],
-                'color': 0x38479F,
-                'type': "rich",
-                'title': self.translations[lang]['msg']['featured_bd']
-            }
-
+            classnames = self.translations[lang]['classnames']
             n_items = 0
-            curr_week = dict.copy(data)
+            curr_week = []
             i_week = 1
             class_items = 0
+            n_order = 0
             for i, item in enumerate(tess_def['itemList']):
-                if n_items == 25:
-                    curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['featured_bd'],
-                                                          self.translations[lang]['msg']['week'], i_week)
+                if n_items >= 4 and n_items - class_items / 3 * 2 >= 4:
                     i_week = i_week + 1
-                    self.data[lang]['seasonal_featured_bd'].append(dict.copy(curr_week))
+                    bd.append(list.copy(curr_week))
                     n_items = 0
-                    curr_week['fields'] = []
+                    curr_week = []
                     class_items = 0
                 if item['displayCategoryIndex'] == 4 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
                                                                                   3187955025, 2638689062]:
@@ -561,99 +485,49 @@ class D2data:
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
                                                                    language=lang)
-                    currency_cost = str(item['currencies'][0]['quantity'])
-                    currency_item = currency_resp['displayProperties']['name']
-                    item_data = {
-                        'inline': True,
+                    cat_number = 4
+                    if 'screenshot' in item_def.keys():
+                        screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
+                                     'loading="lazy">'.format(item_def['screenshot'])
+                    else:
+                        screenshot = ''
+                    curr_week.append({
+                        'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
+                        'icon': item_def['displayProperties']['icon'],
+                        'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
+                        'hash': item['itemHash'],
                         'name': item_def['displayProperties']['name'],
-                        'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
-                                                    currency_item.capitalize())
-                    }
-                    curr_week['fields'].append(item_data)
+                        'screenshot': screenshot,
+                        'currency_icon': currency_resp['displayProperties']['icon'],
+                        'cost': item['currencies'][0]['quantity'],
+                        'currency': currency_resp['displayProperties']['name']
+                    })
+                    n_order += 1
                     n_items = n_items + 1
                     if item_def['classType'] < 3 or any(
-                            class_name in item_def['itemTypeDisplayName'].lower() for class_name in
-                            ['hunter', 'warlock', 'titan']):
+                            class_name in item_def['itemTypeDisplayName'].lower() for class_name in classnames):
                         class_items = class_items + 1
-
-    async def get_seasonal_consumables(self, langs, start):
-        tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
-
-        for lang in langs:
-            self.data[lang]['seasonal_consumables'].clear()
-
-            data = {
-                'thumbnail': {
-                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
-                },
-                'fields': [],
-                'color': 0x38479F,
-                'type': "rich",
-                'title': self.translations[lang]['msg']['bd_consumables'],
-            }
-
-            n_items = 0
-            curr_week = dict.copy(data)
-            i_week = 1
-            class_items = 0
-            for i, item in enumerate(tess_def['itemList']):
-                if n_items == 25:
-                    curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['bd_consumables'],
-                                                          self.translations[lang]['msg']['week'], i_week)
-                    i_week = i_week + 1
-                    self.data[lang]['seasonal_consumables'].append(dict.copy(curr_week))
-                    n_items = 0
-                    curr_week['fields'] = []
-                    class_items = 0
-                if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                                   3187955025, 2638689062]:
-                    definition = 'DestinyInventoryItemDefinition'
-                    item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
-                                                                   language=lang)
-                    currency_cost = str(item['currencies'][0]['quantity'])
-                    currency_item = currency_resp['displayProperties']['name']
-                    item_data = {
-                        'inline': True,
-                        'name': item_def['displayProperties']['name'],
-                        'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
-                                                    currency_item.capitalize())
-                    }
-                    curr_week['fields'].append(item_data)
-                    n_items = n_items + 1
-                    if item_def['classType'] < 3 or any(
-                            class_name in item_def['itemTypeDisplayName'].lower() for class_name in
-                            ['hunter', 'warlock', 'titan']):
-                        class_items = class_items + 1
+        return bd
 
     async def get_seasonal_bd(self, langs, start):
         tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
-        for lang in langs:
-            self.data[lang]['seasonal_bd'].clear()
+        bd = []
 
-            data = {
-                'thumbnail': {
-                    'url': self.icon_prefix + '/common/destiny2_content/icons/30c6cc828d7753bcca72748ba2aa83d6.png'
-                },
-                'fields': [],
-                'color': 0x38479F,
-                'type': "rich",
-                'title': self.translations[lang]['msg']['bd'],
-            }
+        for lang in langs:
+            classnames = self.translations[lang]['classnames']
 
             n_items = 0
-            curr_week = dict.copy(data)
+            curr_week = []
             i_week = 1
             class_items = 0
+            n_order = 0
             for i, item in enumerate(tess_def['itemList']):
-                if n_items == 25:
-                    curr_week['title'] = '{}{} {}'.format(self.translations[lang]['msg']['bd'],
-                                                          self.translations[lang]['msg']['week'], i_week)
+                if n_items >= 7 and n_items - class_items/3*2 >= 7:
                     i_week = i_week + 1
-                    self.data[lang]['seasonal_bd'].append(dict.copy(curr_week))
+                    bd.append(list.copy(curr_week))
                     n_items = 0
-                    curr_week['fields'] = []
+                    curr_week = []
                     class_items = 0
                 if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
                                                                                   3187955025, 2638689062]:
@@ -661,38 +535,70 @@ class D2data:
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
                                                                    language=lang)
-                    currency_cost = str(item['currencies'][0]['quantity'])
-                    currency_item = currency_resp['displayProperties']['name']
-                    item_data = {
-                        'inline': True,
-                        'name': item_def['displayProperties']['name'],
-                        'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
-                                                    currency_item.capitalize())
-                    }
-                    curr_week['fields'].append(item_data)
+                    cat_number = 9
+                    if 'screenshot' in item_def.keys():
+                        screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}" ' \
+                                     'loading="lazy">'.format(item_def['screenshot'])
+                    else:
+                        screenshot = ''
+                    curr_week.append({
+                            'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
+                            'icon': item_def['displayProperties']['icon'],
+                            'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
+                            'hash': item['itemHash'],
+                            'name': item_def['displayProperties']['name'],
+                            'screenshot': screenshot,
+                            'currency_icon': currency_resp['displayProperties']['icon'],
+                            'cost': item['currencies'][0]['quantity'],
+                            'currency': currency_resp['displayProperties']['name']
+                        })
+                    n_order += 1
                     n_items = n_items + 1
                     if item_def['classType'] < 3 or any(
-                            class_name in item_def['itemTypeDisplayName'].lower() for class_name in
-                            self.translations[lang]['classnames']):
+                            class_name in item_def['itemTypeDisplayName'].lower() for class_name in classnames):
                         class_items = class_items + 1
+        return bd
 
-    def write_to_db(self, lang, id, response):
+    async def get_weekly_eververse(self, langs):
+        data = []
+        start = await self.get_season_start()
+        week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
+        week_n = int(week_n.days / 7)
+        for lang in langs:
+            bd = await self.get_seasonal_bd([lang], start)
+            featured_bd = await self.get_seasonal_featured_bd([lang], start)
+            # await self.get_seasonal_consumables(langs, start)
+            # await self.get_seasonal_featured_silver(langs, start)
+            if len(bd) == len(featured_bd):
+                for i in range(0, len(bd)):
+                    data.append({
+                        'items': [*bd[i], *featured_bd[i]]
+                    })
+
+                self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'], name=self.translations[lang]['msg']['bd'],
+                                 template='hover_items.html', order=2)
+
+    def write_to_db(self, lang, id, response, size='', name='', template='table_items.html', order=0):
         data_cursor = self.data_db.cursor()
 
         try:
-            data_cursor.execute('''CREATE TABLE {} (id text, timestamp_int integer, json json, timestamp text)'''.format(lang))
+            data_cursor.execute('''CREATE TABLE {} (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer)'''.format(lang))
             data_cursor.execute('''CREATE UNIQUE INDEX data_id_{} ON {}(id(256))'''.format(lang, lang))
         except mariadb.Error:
             pass
 
         try:
-            data_cursor.execute('''INSERT IGNORE INTO {} VALUES (?,?,?,?)'''.format(lang), (id, datetime.utcnow().timestamp(), json.dumps({'data': response}), datetime.utcnow().isoformat()))
+            data_cursor.execute('''INSERT IGNORE INTO {} VALUES (?,?,?,?,?,?,?,?)'''.format(lang),
+                                (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
+                                 datetime.utcnow().isoformat(), size, name, template, order))
         except mariadb.Error:
             pass
 
         try:
-            data_cursor.execute('''UPDATE {} SET timestamp_int=?, json=?, timestamp=? WHERE id=?'''.format(lang),
-                                (datetime.utcnow().timestamp(), json.dumps({'data': response}), datetime.utcnow().isoformat(), id))
+            data_cursor.execute('''UPDATE {} SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=? WHERE id=?'''.format(lang),
+                                (datetime.utcnow().timestamp(), json.dumps({'data': response}),
+                                 datetime.utcnow().isoformat(), name, size, template, order, id))
+            self.data_db.commit()
         except mariadb.Error:
             pass
 
@@ -708,7 +614,7 @@ class D2data:
                     'name': self.data[locale]['spider']['fields'][0]['name'],
                     'description': self.data[locale]['spider']['fields'][0]['value']
                 }
-                self.write_to_db(locale, 'spider_mats', db_data)
+                self.write_to_db(locale, 'spider_mats', db_data, name=self.translations[locale]['msg']['spider'])
             return
         spider_json = spider_resp
         spider_cats = spider_json['Response']['categories']['data']['categories']
@@ -733,7 +639,8 @@ class D2data:
             spider_sales = await self.get_vendor_sales(locale, spider_resp, items_to_get, [1812969468])
             self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + spider_sales[0]
             data = spider_sales[1]
-            self.write_to_db(locale, 'spider_mats', data)
+            self.write_to_db(locale, 'spider_mats', data, name=self.translations[locale]['msg']['spider'], order=0,
+                             size='tall')
 
     async def get_xur_loc(self):
         url = 'https://wherethefuckisxur.com/'
@@ -840,7 +747,7 @@ class D2data:
                     'name': self.data[lang]['heroicstory']['fields'][0]['name'],
                     'description': self.data[lang]['heroicstory']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'heroic_story_missions', db_data)
+                self.write_to_db(lang, 'heroic_story_missions', db_data, name=self.translations[lang]['msg']['heroicstory'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -876,17 +783,20 @@ class D2data:
                         "description": r_json['selectionScreenDisplayProperties']['description']
                     })
                     self.data[lang]['heroicstory']['fields'].append(info)
-            self.write_to_db(lang, 'heroic_story_missions', db_data)
+            self.write_to_db(lang, 'heroic_story_missions', db_data, name=self.translations[lang]['msg']['heroicstory'],
+                             size='tall', order=3)
 
     async def get_forge(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('forge', force=forceget)
         if not activities_resp:
             for lang in langs:
+                local_types = self.translations[lang]
                 db_data = {
                     'name': self.data[lang]['forge']['fields'][0]['name'],
                     'description': self.data[lang]['forge']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'forge', db_data)
+                self.write_to_db(lang, 'forge', db_data, name=self.translations[lang]['msg']['forge'],
+                                 template='table_items.html')
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -922,11 +832,12 @@ class D2data:
                     }
                     db_data.append({
                         "name": r_json['displayProperties']['name'],
-                        "location": place['displayProperties']['name'],
+                        "description": place['displayProperties']['name'],
                         "icon": r_json['displayProperties']['icon']
                     })
                     self.data[lang]['forge']['fields'].append(info)
-            self.write_to_db(lang, 'forge', db_data)
+            self.write_to_db(lang, 'forge', db_data, name=self.translations[lang]['msg']['forge'],
+                             template='table_items.html', order=4)
 
     async def get_strike_modifiers(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('vanguardstrikes', string='strike modifiers',
@@ -937,7 +848,7 @@ class D2data:
                     'name': self.data[lang]['vanguardstrikes']['fields'][0]['name'],
                     'description': self.data[lang]['vanguardstrikes']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'strike_modifiers', db_data)
+                self.write_to_db(lang, 'strike_modifiers', db_data, name=self.translations[lang]['msg']['strikesmods'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -969,7 +880,8 @@ class D2data:
                 if self.translations[lang]['strikes'] in r_json['displayProperties']['name']:
                     self.data[lang]['vanguardstrikes']['thumbnail']['url'] = self.icon_prefix + \
                                                                              r_json['displayProperties']['icon']
-            self.write_to_db(lang, 'strike_modifiers', db_data)
+            self.write_to_db(lang, 'strike_modifiers', db_data, size='wide',
+                             name=self.translations[lang]['msg']['strikesmods'], order=1)
 
     async def get_reckoning_boss(self, lang):
         first_reset_time = 1539709200
@@ -1007,7 +919,7 @@ class D2data:
         }]
         db_data = [{
             'name': self.translations[lang]['msg']['reckoningboss'],
-            'value': self.translations[lang][reckoning_bosses[int(weeks_since_first % 2)]],
+            'description': self.translations[lang][reckoning_bosses[int(weeks_since_first % 2)]],
             'icon': "/common/destiny2_content/icons/DestinyActivityModeDefinition_e74b3385c5269da226372df8ae7f500d.png"
         }]
 
@@ -1021,7 +933,7 @@ class D2data:
                     'name': self.data[lang]['reckoning']['fields'][0]['name'],
                     'description': self.data[lang]['reckoning']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'reckoning', db_data)
+                self.write_to_db(lang, 'reckoning', db_data, name=self.translations[lang]['msg']['reckoningmods'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1053,7 +965,7 @@ class D2data:
                     mods = await self.decode_modifiers(key, lang)
                     db_data = [*db_data, *mods[1]]
                     self.data[lang]['reckoning']['fields'] = [*self.data[lang]['reckoning']['fields'], *mods[0]]
-            self.write_to_db(lang, 'reckoning', db_data)
+            self.write_to_db(lang, 'reckoning', db_data, 'wide', self.translations[lang]['msg']['reckoningmods'], order=2)
 
     async def get_nightfall820(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('nightfalls820', string='820 nightfalls', force=forceget)
@@ -1063,7 +975,7 @@ class D2data:
                     'name': self.data[lang]['nightfalls820']['fields'][0]['name'],
                     'description': self.data[lang]['nightfalls820']['fields'][0]['value']
                 }
-                self.write_to_db(lang, '820_nightfalls', db_data)
+                self.write_to_db(lang, '820_nightfalls', db_data, name=self.translations[lang]['msg']['nightfalls820'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1115,7 +1027,8 @@ class D2data:
                         self.data[lang]['nightfalls820']['fields'].append(info)
                 except KeyError:
                     pass
-            self.write_to_db(lang, '820_nightfalls', db_data)
+            self.write_to_db(lang, '820_nightfalls', db_data, name=self.translations[lang]['msg']['nightfalls820'],
+                             order=0)
 
     async def get_modifiers(self, lang, act_hash):
         url = 'https://www.bungie.net/{}/Explore/Detail/DestinyActivityDefinition/{}'.format(lang, act_hash)
@@ -1146,7 +1059,7 @@ class D2data:
                     'name': self.data[lang]['raids']['fields'][0]['name'],
                     'description': self.data[lang]['raids']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'raid_challenges', db_data)
+                self.write_to_db(lang, 'raid_challenges', db_data, self.translations[lang]['msg']['raids'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1209,7 +1122,7 @@ class D2data:
                         for string in order_strings:
                             intersection = challenge.intersection(set(string.lower().split(' ')))
                             if intersection:
-                                levi_str = '{}**{}**\n'.format(levi_str, string)
+                                levi_str = '{}<b>{}</b>\n'.format(levi_str, string)
                             else:
                                 levi_str = '{}{}\n'.format(levi_str, string)
                         levi_str = levi_str[:-1]
@@ -1218,11 +1131,11 @@ class D2data:
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
-                        'value': levi_str
+                        'value': levi_str.replace('<b>', '**').replace('</b>', '**')
                     }
                     db_data.append({
                         'name': info['name'],
-                        'value': info['value']
+                        'description': levi_str.replace('\n', '<br>')
                     })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]["EoW"] in r_json['displayProperties']['name'] and \
@@ -1244,7 +1157,7 @@ class D2data:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
                     db_data.append({
                         'name': info['name'],
-                        'value': info['value']
+                        'description': info['value'].replace('\n\n', '<br>').replace('\n', '<br>')
                     })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
@@ -1260,7 +1173,7 @@ class D2data:
                     info['value'] = curr_challenge['displayProperties']['name']
                     db_data.append({
                         'name': info['name'],
-                        'value': info['value']
+                        'description': info['value'].replace('\n', '<br>')
                     })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
@@ -1276,7 +1189,7 @@ class D2data:
                     info['value'] = curr_challenge['displayProperties']['name']
                     db_data.append({
                         'name': info['name'],
-                        'value': info['value']
+                        'description': info['value'].replace('\n', '<br>')
                     })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['CoS'] in r_json['displayProperties']['name'] and \
@@ -1292,7 +1205,7 @@ class D2data:
                     info['value'] = curr_challenge['displayProperties']['name']
                     db_data.append({
                         'name': info['name'],
-                        'value': info['value']
+                        'description': info['value'].replace('\n', '<br>')
                     })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
@@ -1310,11 +1223,12 @@ class D2data:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
                     db_data.append({
                         'name': info['name'],
-                        'value': info['value']
+                        'description': info['value'].replace('\n', '<br>')
                     })
                     self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
-            self.write_to_db(lang, 'raid_challenges', db_data)
+            self.write_to_db(lang, 'raid_challenges', db_data, 'wide tall', self.translations[lang]['msg']['raids'],
+                             order=1)
 
     async def get_ordeal(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('ordeal', force=forceget)
@@ -1324,7 +1238,7 @@ class D2data:
                     'name': self.data[lang]['ordeal']['fields'][0]['name'],
                     'description': self.data[lang]['ordeal']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'ordeal', db_data)
+                self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1364,16 +1278,16 @@ class D2data:
                     self.data[lang]['ordeal']['fields'].append(info)
                     db_data.append({
                         'name': info['name'],
-                        'value': info['value']
+                        'description': info['value']
                     })
 
             if len(self.data[lang]['ordeal']['fields']) > 0:
                 for strike in strikes:
                     if strike['name'] in self.data[lang]['ordeal']['fields'][0]['name']:
                         self.data[lang]['ordeal']['fields'][0]['value'] = strike['description']
-                        db_data[0]['value'] = strike['description']
+                        db_data[0]['description'] = strike['description']
                         break
-            self.write_to_db(lang, 'ordeal', db_data)
+            self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'], order=5)
 
     async def get_nightmares(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('nightmares', force=forceget)
@@ -1383,7 +1297,7 @@ class D2data:
                     'name': self.data[lang]['nightmares']['fields'][0]['name'],
                     'description': self.data[lang]['nightmares']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'nigtmare_hunts', db_data)
+                self.write_to_db(lang, 'nigtmare_hunts', db_data, name=self.translations[lang]['msg']['nightmares'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1416,22 +1330,25 @@ class D2data:
                         'value': r_json['displayProperties']['description']
                     }
                     db_data.append({
-                        'name': info['name'],
+                        'name': info['name'].replace(local_types['nightmare'], '').replace('\"', ''),
                         'description': info['value']
                     })
                     self.data[lang]['nightmares']['fields'].append(info)
-            self.write_to_db(lang, 'nigtmare_hunts', db_data)
+            self.write_to_db(lang, 'nightmare_hunts', db_data, name=self.translations[lang]['msg']['nightmares'],
+                             order=3)
 
     async def get_crucible_rotators(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators',
                                                              force=forceget)
         if not activities_resp:
             for lang in langs:
+                local_types = self.translations[lang]
                 db_data = {
                     'name': self.data[lang]['cruciblerotators']['fields'][0]['name'],
                     'description': self.data[lang]['cruciblerotators']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'crucible_rotators', db_data)
+                self.write_to_db(lang, 'crucible_rotators', db_data,
+                                 name=self.translations[lang]['msg']['cruciblerotators'], template='table_items.html')
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1482,11 +1399,12 @@ class D2data:
                             }
                             db_data.append({
                                 'name': info['name'],
-                                'description': info['value'],
+                                'description': info['value'].replace('\n\n', '<br>'),
                                 'icon': icon
                             })
                             self.data[lang]['cruciblerotators']['fields'].append(info)
-            self.write_to_db(lang, 'crucible_rotators', db_data)
+            self.write_to_db(lang, 'crucible_rotators', db_data, name=self.translations[lang]['msg']['cruciblerotators'],
+                             size='wide', order=4)
 
     async def get_the_lie_progress(self, langs, forceget=True):
         url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'],
