@@ -39,6 +39,15 @@
         "no_regular_reg": "This channel is not registered as a non-seasonal notifier.",
         "no_send_messages": "{}, I'm not allowed to respond in that channel."
     },
+    "site": {
+        "spider": "Spider",
+        "forge": "Forge",
+        "heroicstory": "Heroic story missions",
+        "reckoningboss": "The Reckoning boss",
+        "nightfalls820": "Nightfalls",
+        "nightmares": "Nightmare hunts",
+        "bd": "Eververse"
+    },
     "lfg": {
         "go": "Go",
         "at": "@",
