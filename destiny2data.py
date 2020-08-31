@@ -575,7 +575,7 @@ class D2data:
                         'items': [*bd[i], *featured_bd[i]]
                     })
 
-                self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'], name=self.translations[lang]['msg']['bd'],
+                self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'], name=self.translations[lang]['site']['bd'],
                                  template='hover_items.html', order=2)
 
     def write_to_db(self, lang, id, response, size='', name='', template='table_items.html', order=0):
@@ -614,7 +614,7 @@ class D2data:
                     'name': self.data[locale]['spider']['fields'][0]['name'],
                     'description': self.data[locale]['spider']['fields'][0]['value']
                 }
-                self.write_to_db(locale, 'spider_mats', db_data, name=self.translations[locale]['msg']['spider'])
+                self.write_to_db(locale, 'spider_mats', db_data, name=self.translations[locale]['site']['spider'])
             return
         spider_json = spider_resp
         spider_cats = spider_json['Response']['categories']['data']['categories']
@@ -639,7 +639,7 @@ class D2data:
             spider_sales = await self.get_vendor_sales(locale, spider_resp, items_to_get, [1812969468])
             self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + spider_sales[0]
             data = spider_sales[1]
-            self.write_to_db(locale, 'spider_mats', data, name=self.translations[locale]['msg']['spider'], order=0,
+            self.write_to_db(locale, 'spider_mats', data, name=self.translations[locale]['site']['spider'], order=0,
                              size='tall')
 
     async def get_xur_loc(self):
@@ -747,7 +747,7 @@ class D2data:
                     'name': self.data[lang]['heroicstory']['fields'][0]['name'],
                     'description': self.data[lang]['heroicstory']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'heroic_story_missions', db_data, name=self.translations[lang]['msg']['heroicstory'])
+                self.write_to_db(lang, 'heroic_story_missions', db_data, name=self.translations[lang]['site']['heroicstory'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -783,7 +783,7 @@ class D2data:
                         "description": r_json['selectionScreenDisplayProperties']['description']
                     })
                     self.data[lang]['heroicstory']['fields'].append(info)
-            self.write_to_db(lang, 'heroic_story_missions', db_data, name=self.translations[lang]['msg']['heroicstory'],
+            self.write_to_db(lang, 'heroic_story_missions', db_data, name=self.translations[lang]['site']['heroicstory'],
                              size='tall', order=3)
 
     async def get_forge(self, langs, forceget=False):
@@ -795,7 +795,7 @@ class D2data:
                     'name': self.data[lang]['forge']['fields'][0]['name'],
                     'description': self.data[lang]['forge']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'forge', db_data, name=self.translations[lang]['msg']['forge'],
+                self.write_to_db(lang, 'forge', db_data, name=self.translations[lang]['site']['forge'],
                                  template='table_items.html')
             return
         resp_time = activities_resp['timestamp']
@@ -836,7 +836,7 @@ class D2data:
                         "icon": r_json['displayProperties']['icon']
                     })
                     self.data[lang]['forge']['fields'].append(info)
-            self.write_to_db(lang, 'forge', db_data, name=self.translations[lang]['msg']['forge'],
+            self.write_to_db(lang, 'forge', db_data, name=self.translations[lang]['site']['forge'],
                              template='table_items.html', order=4)
 
     async def get_strike_modifiers(self, langs, forceget=False):
@@ -918,7 +918,7 @@ class D2data:
             'value': self.translations[lang][reckoning_bosses[int(weeks_since_first % 2)]],
         }]
         db_data = [{
-            'name': self.translations[lang]['msg']['reckoningboss'],
+            'name': self.translations[lang]['site']['reckoningboss'],
             'description': self.translations[lang][reckoning_bosses[int(weeks_since_first % 2)]],
             'icon': "/common/destiny2_content/icons/DestinyActivityModeDefinition_e74b3385c5269da226372df8ae7f500d.png"
         }]
@@ -975,7 +975,7 @@ class D2data:
                     'name': self.data[lang]['nightfalls820']['fields'][0]['name'],
                     'description': self.data[lang]['nightfalls820']['fields'][0]['value']
                 }
-                self.write_to_db(lang, '820_nightfalls', db_data, name=self.translations[lang]['msg']['nightfalls820'])
+                self.write_to_db(lang, '820_nightfalls', db_data, name=self.translations[lang]['site']['nightfalls820'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1027,7 +1027,7 @@ class D2data:
                         self.data[lang]['nightfalls820']['fields'].append(info)
                 except KeyError:
                     pass
-            self.write_to_db(lang, '820_nightfalls', db_data, name=self.translations[lang]['msg']['nightfalls820'],
+            self.write_to_db(lang, '820_nightfalls', db_data, name=self.translations[lang]['site']['nightfalls820'],
                              order=0)
 
     async def get_modifiers(self, lang, act_hash):
@@ -1297,7 +1297,7 @@ class D2data:
                     'name': self.data[lang]['nightmares']['fields'][0]['name'],
                     'description': self.data[lang]['nightmares']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'nigtmare_hunts', db_data, name=self.translations[lang]['msg']['nightmares'])
+                self.write_to_db(lang, 'nigtmare_hunts', db_data, name=self.translations[lang]['site']['nightmares'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1334,7 +1334,7 @@ class D2data:
                         'description': info['value']
                     })
                     self.data[lang]['nightmares']['fields'].append(info)
-            self.write_to_db(lang, 'nightmare_hunts', db_data, name=self.translations[lang]['msg']['nightmares'],
+            self.write_to_db(lang, 'nightmare_hunts', db_data, name=self.translations[lang]['site']['nightmares'],
                              order=3)
 
     async def get_crucible_rotators(self, langs, forceget=False):
