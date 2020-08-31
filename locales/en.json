@@ -197,13 +197,13 @@
                 "info": "Available languages are `en`, `ru`. Available only to the server's admins."
             },
             "update": {
-                "info": "Get updates from Bungie for the given `args`. The types should be separated with spaces. Available args:\n - `daily` for  heroic story missions, strike and reckoning modifiers, forge and spider\n - `weekly` for available nightfalls and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics,\n - `tess` for the current state of the Eververse\n - `seasonal` for the predictions of Tess' stock over the current season\nUpdates are posted in the channel, the command was invoked, if the channel was registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the server's admins."
+                "info": "Get updates from Bungie for the given `args`. The types should be separated with spaces. Available args:\n - `daily` for  heroic story missions, strike and reckoning modifiers, forge and spider\n - `weekly` for available nightfalls and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics,\n - `tess` for the current state of the Eververse\nUpdates are posted in the channel, the command was invoked, if the channel was registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the server's admins."
             },
             "rmnotifier": {
-                "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.), 'seasonal' for seasonal Eververse info or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
+                "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
             },
             "regnotifier": {
-                "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.), 'seasonal' for seasonal Eververse info or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
+                "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
             },
             "plan_maintenance": {
                 "info": "Available only to the bot's owners."
