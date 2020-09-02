@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
 from tabulate import tabulate
-import sqlite3
+import mariadb
 import pydest
 
 
@@ -36,7 +36,9 @@ class Public(commands.Cog):
                 is_kda = False
             except ValueError:
                 try:
-                    internal_db = sqlite3.connect('internal.db')
+                    internal_db = mariadb.connect(host=ctx.bot.api_data['db_host'], user=ctx.bot.api_data['cache_login'],
+                                                  password=ctx.bot.api_data['pass'], port=ctx.bot.api_data['db_port'],
+                                                  database='metrics')
                     internal_cursor = internal_db.cursor()
                     internal_cursor.execute('''SELECT hash FROM seasonsmetrics WHERE name=?
                     UNION ALL
@@ -69,10 +71,10 @@ class Public(commands.Cog):
                         if len(metric_id) > 0:
                             metric = metric_id[0]
                         else:
-                            raise sqlite3.OperationalError
+                            raise mariadb.Error
                     else:
-                        raise sqlite3.OperationalError
-                except sqlite3.OperationalError:
+                        raise mariadb.Error
+                except mariadb.Error:
                     await ctx.channel.send(translations['unknown_metric'].format(metric), delete_after=10)
                     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                         await ctx.message.delete()

@@ -5,6 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta, timezone
 import asyncio
 import pydest
+import mariadb
 
 from discord.ext.commands.bot import Bot
 import sqlite3
@@ -764,7 +765,9 @@ class ClanBot(commands.Bot):
         await self.data.get_clan_leaderboard(clan_ids, 1572939289, 10)
 
     async def update_metric_list(self):
-        internal_db = sqlite3.connect('internal.db')
+        internal_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
+                                      password=self.api_data['pass'], port=self.api_data['db_port'],
+                                      database='metrics')
         internal_cursor = internal_db.cursor()
 
         metrics_manifest = await self.data.destiny.decode_hash(1074663644, 'DestinyPresentationNodeDefinition')
@@ -789,7 +792,7 @@ class ClanBot(commands.Bot):
                 metrics = []
                 for metric in node_manifest['children']['metrics']:
                     metrics.append(tuple(['', metric['metricHash'], 1]))
-                internal_cursor.executemany('''INSERT or IGNORE INTO {} VALUES (?,?,?)'''.format(metric_node[0]), metrics)
+                internal_cursor.executemany('''INSERT IGNORE INTO {} VALUES (?,?,?)'''.format(metric_node[0]), metrics)
                 pass
 
         internal_db.commit()

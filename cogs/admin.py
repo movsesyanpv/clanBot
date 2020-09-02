@@ -8,6 +8,7 @@ import updater
 import os
 import sqlite3
 import pydest
+import mariadb
 
 import main
 
@@ -187,7 +188,9 @@ class Admin(commands.Cog):
             try:
                 if additional_arg in metric_tables and additional_arg is not None:
                     metric_tables = [additional_arg]
-                internal_db = sqlite3.connect('internal.db')
+                internal_db = mariadb.connect(host=ctx.bot.api_data['db_host'], user=ctx.bot.api_data['cache_login'],
+                                              password=ctx.bot.api_data['pass'], port=ctx.bot.api_data['db_port'],
+                                              database='metrics')
                 internal_cursor = internal_db.cursor()
                 help_msg = ''
                 if len(metric_tables) == 1:
@@ -235,7 +238,8 @@ class Admin(commands.Cog):
                                                                                            colalign=('left', 'left')))
                 if len(help_msg) > 1:
                     help_msg = help_msg[:-1]
-            except sqlite3.OperationalError:
+                internal_db.close()
+            except mariadb.Error:
                 pass
             if len(help_msg) > 2000:
                 help_lines = help_msg.splitlines()
