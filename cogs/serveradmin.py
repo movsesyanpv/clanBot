@@ -162,21 +162,8 @@ class ServerAdmin(commands.Cog):
                     for ch in notifiers_c:
                         notifiers.append(ch[0])
 
-                    seasonal_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM seasonal WHERE server_id=?''',
-                                                              (ctx.guild.id,))
-                    seasonal_c = seasonal_c.fetchall()
-                    seasonal = []
-                    for ch in seasonal_c:
-                        seasonal.append(ch[0])
                     correct_ch = False
-                    if not list(set(seasonal).intersection(channels)):
-                        if 'seasonal' in args:
-                            await ctx.channel.send(ctx.bot.translations[lang]['msg']['no_seasonal_reg'])
-                    else:
-                        if 'seasonal' in args:
-                            correct_ch = True
                     regular_types = ctx.bot.all_types.copy()
-                    regular_types.pop(regular_types.index('seasonal'))
                     if not list(set(notifiers).intersection(channels)):
                         if list(set(regular_types).intersection(args)):
                             await ctx.channel.send(ctx.bot.translations[lang]['msg']['no_regular_reg'])
