@@ -724,9 +724,10 @@ class ClanBot(commands.Bot):
                                 bot_info = await self.application_info()
                                 await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
                         except discord.NotFound:
-                            bot_info = await self.application_info()
-                            await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.
-                                                      format(upd_type, channel.name, server.name))
+                            pass
+                            # bot_info = await self.application_info()
+                            # await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.
+                            #                           format(upd_type, channel.name, server.name))
                     if type(embed) == list:
                         hist = []
                         for e in embed:
