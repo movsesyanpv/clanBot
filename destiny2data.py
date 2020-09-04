@@ -588,20 +588,21 @@ class D2data:
         except mariadb.Error:
             pass
 
-        try:
-            data_cursor.execute('''INSERT IGNORE INTO {} VALUES (?,?,?,?,?,?,?,?,?)'''.format(lang),
-                                (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
-                                 datetime.utcnow().isoformat(), size, name, template, order, type))
-        except mariadb.Error:
-            pass
+        # try:
+        data_cursor.execute('''INSERT IGNORE INTO {} VALUES (?,?,?,?,?,?,?,?,?)'''.format(lang),
+                            (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
+                             datetime.utcnow().isoformat(), size, name, template, order, type))
+        self.data_db.commit()
+        # except mariadb.Error:
+        #     pass
 
-        try:
-            data_cursor.execute('''UPDATE {} SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=? WHERE id=?'''.format(lang),
-                                (datetime.utcnow().timestamp(), json.dumps({'data': response}),
-                                 datetime.utcnow().isoformat(), name, size, template, order, type, id))
-            self.data_db.commit()
-        except mariadb.Error:
-            pass
+        # try:
+        data_cursor.execute('''UPDATE {} SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=? WHERE id=?'''.format(lang),
+                            (datetime.utcnow().timestamp(), json.dumps({'data': response}),
+                             datetime.utcnow().isoformat(), name, size, template, order, type, id))
+        self.data_db.commit()
+        # except mariadb.Error:
+        #     pass
 
     async def get_spider(self, lang, forceget=False):
         char_info = self.char_info
