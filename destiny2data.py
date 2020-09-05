@@ -1597,6 +1597,7 @@ class D2data:
         week_n = int(week_n.days / 7)
 
         for lang in langs:
+            db_data = []
             self.data[lang]['osiris'] = {
                 'thumbnail': {
                     'url': self.icon_prefix + '/common/destiny2_content/icons/DestinyActivityModeDefinition_'
@@ -1668,7 +1669,12 @@ class D2data:
                         'value': info[4]
                     }
                 ]
-        pass
+            for field in self.data[lang]['osiris']['fields']:
+                db_data.append({
+                    'name': field['name'],
+                    'description': field['value']
+                })
+            self.write_to_db(lang, 'trials_of_osiris', db_data, order=5, name=self.translations[lang]['site']['osiris'])
 
     async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True,
                               force=False, cache_only=False):
