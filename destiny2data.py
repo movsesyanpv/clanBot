@@ -91,9 +91,11 @@ class D2data:
         self.cache_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                         password=self.api_data['pass'], port=self.api_data['db_port'],
                                         database=self.api_data['cache_name'])
+        self.cache_db.auto_reconnect = True
         self.data_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                        password=self.api_data['pass'], port=self.api_data['db_port'],
                                        database=self.api_data['data_db'])
+        self.data_db.auto_reconnect = True
 
     async def get_chars(self):
         platform = 0
