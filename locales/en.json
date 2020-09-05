@@ -21,6 +21,7 @@
         "xurloc": "Location",
         "cost": "Cost",
         "xurtitle": "Xur",
+        "osiris": "Trials of Osiris",
         "raids": "Raids",
         "silver": "Featured Silver items",
         "featured_bd": "Featured Bright Dust items",
@@ -100,6 +101,19 @@
         "Nessus": "Nessus",
         "NULL": "Unable to get the info",
         "noxur": "Only the Nine know"
+    },
+    "osiris": {
+        "map": "Map",
+        "?": "?",
+        "3win": "3 wins",
+        "5win": "5 wins",
+        "7win": "7 wins",
+        "flawless": "Flawless",
+        "helmet": "Helmet",
+        "gloves": "Gloves",
+        "chest": "Chesh",
+        "boots": "Boots",
+        "class": "Class Item"
     },
     "forge": "Forge",
     "heroicstory": "Daily Heroic Story Mission: ",
