@@ -37,7 +37,8 @@
         "invalid_type": "Invalid update type. Please see `help update` for the available update types.",
         "no_seasonal_reg": "This channel is not registered as a seasonal notifier.",
         "no_regular_reg": "This channel is not registered as a non-seasonal notifier.",
-        "no_send_messages": "{}, I'm not allowed to respond in that channel."
+        "no_send_messages": "{}, I'm not allowed to respond in that channel.",
+        "osiris": "Trials of Osiris"
     },
     "lfg": {
         "go": "Go",
@@ -252,5 +253,18 @@
         "nightfalls820": "Nightfalls",
         "nightmares": "Nightmare hunts",
         "bd": "Eververse"
+    },
+    "osiris": {
+        "map": "Map",
+        "?": "?",
+        "3win": "3 wins",
+        "5win": "5 wins",
+        "7win": "7 wins",
+        "flawless": "Flawless",
+        "helmet": "Helmet",
+        "gloves": "Gloves",
+        "chest": "Chesh",
+        "boots": "Boots",
+        "class": "Class Item"
     }
 }
