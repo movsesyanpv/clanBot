@@ -586,7 +586,7 @@ class D2data:
 
         try:
             data_cursor.execute('''CREATE TABLE `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text)'''.format(lang))
-            data_cursor.execute('''CREATE UNIQUE INDEX data_id_{} ON {}(id(256))'''.format(lang, lang))
+            data_cursor.execute('''CREATE UNIQUE INDEX `data_id_{}` ON `{}`(id(256))'''.format(lang, lang))
         except mariadb.Error:
             pass
 
