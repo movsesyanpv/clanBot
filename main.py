@@ -24,7 +24,7 @@ class ClanBot(commands.Bot):
     version = '2.14.9'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
-    all_types = ['weekly', 'daily', 'spider', 'xur', 'tess', 'alerts', 'events']
+    all_types = ['weekly', 'daily', 'spider', 'xur', 'osiris', 'tess', 'alerts', 'events']
     embeds_with_img = ['thelie']
 
     sched = AsyncIOScheduler(timezone='UTC')
@@ -76,6 +76,7 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
 
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
         self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 3600])
@@ -145,6 +146,11 @@ class ClanBot(commands.Bot):
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 await self.universal_update(self.data.get_xur, 'xur', 345600, post=post, get=get, channels=channels, forceget=forceget)
+        if 'osiris' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_osiris_predictions, 'osiris', 345600, post=post, get=get, channels=channels, forceget=forceget)
         if 'tess' in upd_type:
             if channels is None:
                 channels = self.notifiers

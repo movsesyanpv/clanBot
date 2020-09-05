@@ -585,13 +585,13 @@ class D2data:
         data_cursor = self.data_db.cursor()
 
         try:
-            data_cursor.execute('''CREATE TABLE {} (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text)'''.format(lang))
+            data_cursor.execute('''CREATE TABLE `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text)'''.format(lang))
             data_cursor.execute('''CREATE UNIQUE INDEX data_id_{} ON {}(id(256))'''.format(lang, lang))
         except mariadb.Error:
             pass
 
         # try:
-        data_cursor.execute('''INSERT IGNORE INTO {} VALUES (?,?,?,?,?,?,?,?,?)'''.format(lang),
+        data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (?,?,?,?,?,?,?,?,?)'''.format(lang),
                             (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
                              datetime.utcnow().isoformat(), size, name, template, order, type))
         self.data_db.commit()
@@ -599,7 +599,7 @@ class D2data:
         #     pass
 
         # try:
-        data_cursor.execute('''UPDATE {} SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=? WHERE id=?'''.format(lang),
+        data_cursor.execute('''UPDATE `{}` SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=? WHERE id=?'''.format(lang),
                             (datetime.utcnow().timestamp(), json.dumps({'data': response}),
                              datetime.utcnow().isoformat(), name, size, template, order, type, id))
         self.data_db.commit()
@@ -1586,6 +1586,89 @@ class D2data:
         member_type = member['destinyUserInfo']['membershipType']
         return [member['destinyUserInfo']['LastSeenDisplayName'],
                 await self.get_player_metric(member_type, member_id, metric, is_global)]
+
+    async def get_osiris_predictions(self, langs, forceget=False, force_info = None):
+        win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
+        win5_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
+        win7_rotation = ['?', 'gloves', '?', 'chest', '?', 'boots', '?', 'helmet', '?', 'class']
+        flawless_rotation = ['gloves', 'chest', 'class', 'helmet', 'boots']
+
+        week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
+        week_n = int(week_n.days / 7)
+
+        for lang in langs:
+            self.data[lang]['osiris'] = {
+                'thumbnail': {
+                    'url': self.icon_prefix + '/common/destiny2_content/icons/DestinyActivityModeDefinition_'
+                                              'e35792b49b249ca5dcdb1e7657ca42b6.png'
+                },
+                'fields': [],
+                'color': 0xb69460,
+                'type': "rich",
+                'title': self.translations[lang]['msg']['osiris'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            locale = self.translations[lang]['osiris']
+            if force_info is None:
+                self.data[lang]['osiris']['fields'] = [
+                    {
+                        'name': locale['map'],
+                        'value': locale['?']
+                    },
+                    {
+                        'name': locale['3win'],
+                        'value': '{}?'.format(locale[win3_rotation[int((week_n - 1 if week_n > 0 else week_n) % len(win3_rotation))]])
+                    },
+                    {
+                        'name': locale['5win'],
+                        'value': '{}?'.format(locale[win5_rotation[int(week_n % len(win5_rotation))]])
+                    },
+                    {
+                        'name': locale['7win'],
+                        'value': '{}?'.format(locale[win7_rotation[int(week_n % len(win7_rotation))]])
+                    },
+                    {
+                        'name': locale['flawless'],
+                        'value': '{}?'.format(locale[flawless_rotation[int(week_n % len(flawless_rotation))]])
+                    }
+                ]
+            else:
+                info = []
+                for parameter in force_info:
+                    if isinstance(parameter, int):
+                        try:
+                            definition = await self.destiny.decode_hash(parameter, 'DestinyActivityDefinition', lang)
+                        except pydest.PydestException:
+                            definition = await self.destiny.decode_hash(parameter, 'DestinyCollectibleDefinition', lang)
+                        info.append(definition['displayProperties']['name'])
+                    elif parameter in locale.keys():
+                        info.append(locale[parameter])
+                    else:
+                        info.append(parameter)
+                self.data[lang]['osiris']['fields'] = [
+                    {
+                        'name': locale['map'],
+                        'value': info[0]
+                    },
+                    {
+                        'name': locale['3win'],
+                        'value': info[1]
+                    },
+                    {
+                        'name': locale['5win'],
+                        'value': info[2]
+                    },
+                    {
+                        'name': locale['7win'],
+                        'value': info[3]
+                    },
+                    {
+                        'name': locale['flawless'],
+                        'value': info[4]
+                    }
+                ]
+        pass
 
     async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True,
                               force=False, cache_only=False):

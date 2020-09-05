@@ -101,6 +101,40 @@ class Admin(commands.Cog):
         self.bot.data.cache_db.commit()
         await ctx.channel.send('Done, {}'.format(ctx.author.mention))
 
+    @commands.is_owner()
+    @commands.command(
+        description='Set Trials of Osiris info'
+    )
+    async def osiris(self, ctx, curr_map, win3, win5, win7, flawless):
+        url = 'https://bungie.net/Platform/Destiny2/Armory/Search/{}/{}'
+        map_resp = await self.bot.data.get_bungie_json('too map', url.format('DestinyActivityDefinition', curr_map),
+                                                       change_msg=False)
+        if len(map_resp['Response']['results']['results']) > 0:
+            curr_map = map_resp['Response']['results']['results'][0]['hash']
+        if win3 not in self.bot.translations['en']['osiris'].keys():
+            win3_resp = await self.bot.data.get_bungie_json('win 3', url.format('DestinyCollectibleDefinition', win3),
+                                                            change_msg=False)
+            if len(win3_resp['Response']['results']['results']) > 0:
+                win3 = win3_resp['Response']['results']['results'][0]['hash']
+        if win5 not in self.bot.translations['en']['osiris'].keys():
+            win5_resp = await self.bot.data.get_bungie_json('win 5', url.format('DestinyCollectibleDefinition', win5),
+                                                            change_msg=False)
+            if len(win5_resp['Response']['results']['results']) > 0:
+                win5 = win5_resp['Response']['results']['results'][0]['hash']
+        if win7 not in self.bot.translations['en']['osiris'].keys():
+            win7_resp = await self.bot.data.get_bungie_json('win 7', url.format('DestinyCollectibleDefinition', win7),
+                                                            change_msg=False)
+            if len(win7_resp['Response']['results']['results']) > 0:
+                win7 = win7_resp['Response']['results']['results'][0]['hash']
+        if flawless not in self.bot.translations['en']['osiris'].keys():
+            flawless_resp = await self.bot.data.get_bungie_json('flawless', url.format('DestinyCollectibleDefinition', flawless),
+                                                            change_msg=False)
+            if len(flawless_resp['Response']['results']['results']) > 0:
+                flawless = flawless_resp['Response']['results']['results'][0]['hash']
+        await self.bot.data.get_osiris_predictions(self.bot.langs, force_info=[curr_map, win3, win5, win7, flawless])
+        await ctx.bot.force_update('osiris', get=False, channels=None, forceget=False)
+        await ctx.channel.send('done')
+
     @commands.command(
         name='help',
         description='The help command!',
