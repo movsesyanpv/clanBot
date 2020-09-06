@@ -1676,6 +1676,13 @@ class D2data:
                 })
             self.write_to_db(lang, 'trials_of_osiris', db_data, order=5, name=self.translations[lang]['site']['osiris'])
 
+    async def drop_osiris(self, langs):
+        data_cursor = self.data_db.cursor()
+
+        for lang in langs:
+            data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
+        self.data_db.commit()
+
     async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True,
                               force=False, cache_only=False):
         cache_cursor = self.cache_db.cursor()

@@ -66,6 +66,7 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='50', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
 
+        self.sched.add_job(self.data.drop_osiris, 'cron', day_of_week='tue', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.langs])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightfall820, 'nightfalls820', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
@@ -191,7 +192,8 @@ class ClanBot(commands.Bot):
         if self.args.forceupdate:
             await self.force_update(self.args.type)
         if not self.sched.running:
-            await self.force_update(self.all_types, post=False)
+            await self.force_update(self.all_types.pop(self.all_types.index('osiris')), post=False)
+            await self.data.drop_osiris(self.langs)
             for lang in self.langs:
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
                                    second='10', misfire_grace_time=86300, args=[lang])
