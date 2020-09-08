@@ -192,7 +192,9 @@ class ClanBot(commands.Bot):
         if self.args.forceupdate:
             await self.force_update(self.args.type)
         if not self.sched.running:
-            await self.force_update(self.all_types.pop(self.all_types.index('osiris')), post=False)
+            types = self.all_types.copy()
+            types.pop(types.index('osiris'))
+            await self.force_update(types, post=False)
             for lang in self.langs:
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
                                    second='10', misfire_grace_time=86300, args=[lang])
