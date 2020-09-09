@@ -618,7 +618,7 @@ class D2data:
                     'name': self.data[locale]['spider']['fields'][0]['name'],
                     'description': self.data[locale]['spider']['fields'][0]['value']
                 }
-                self.write_to_db(locale, 'spider_mats', db_data, name=self.translations[locale]['site']['spider'])
+                self.write_to_db(locale, 'spider_mats', [db_data], name=self.translations[locale]['site']['spider'])
             return
         spider_json = spider_resp
         spider_cats = spider_json['Response']['categories']['data']['categories']
