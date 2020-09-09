@@ -751,7 +751,7 @@ class D2data:
                     'name': self.data[lang]['heroicstory']['fields'][0]['name'],
                     'description': self.data[lang]['heroicstory']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'heroic_story_missions', db_data, name=self.translations[lang]['site']['heroicstory'])
+                self.write_to_db(lang, 'heroic_story_missions', [db_data], name=self.translations[lang]['site']['heroicstory'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -799,7 +799,7 @@ class D2data:
                     'name': self.data[lang]['forge']['fields'][0]['name'],
                     'description': self.data[lang]['forge']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'forge', db_data, name=self.translations[lang]['site']['forge'],
+                self.write_to_db(lang, 'forge', [db_data], name=self.translations[lang]['site']['forge'],
                                  template='table_items.html')
             return
         resp_time = activities_resp['timestamp']
@@ -852,7 +852,7 @@ class D2data:
                     'name': self.data[lang]['vanguardstrikes']['fields'][0]['name'],
                     'description': self.data[lang]['vanguardstrikes']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'strike_modifiers', db_data, name=self.translations[lang]['msg']['strikesmods'])
+                self.write_to_db(lang, 'strike_modifiers', [db_data], name=self.translations[lang]['msg']['strikesmods'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -937,7 +937,7 @@ class D2data:
                     'name': self.data[lang]['reckoning']['fields'][0]['name'],
                     'description': self.data[lang]['reckoning']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'reckoning', db_data, name=self.translations[lang]['msg']['reckoningmods'])
+                self.write_to_db(lang, 'reckoning', [db_data], name=self.translations[lang]['msg']['reckoningmods'])
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -979,7 +979,7 @@ class D2data:
                     'name': self.data[lang]['nightfalls820']['fields'][0]['name'],
                     'description': self.data[lang]['nightfalls820']['fields'][0]['value']
                 }
-                self.write_to_db(lang, '820_nightfalls', db_data, name=self.translations[lang]['site']['nightfalls820'], type='weekly')
+                self.write_to_db(lang, '820_nightfalls', [db_data], name=self.translations[lang]['site']['nightfalls820'], type='weekly')
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1063,7 +1063,7 @@ class D2data:
                     'name': self.data[lang]['raids']['fields'][0]['name'],
                     'description': self.data[lang]['raids']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'raid_challenges', db_data, self.translations[lang]['msg']['raids'], type='weekly')
+                self.write_to_db(lang, 'raid_challenges', [db_data], self.translations[lang]['msg']['raids'], type='weekly')
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1242,7 +1242,7 @@ class D2data:
                     'name': self.data[lang]['ordeal']['fields'][0]['name'],
                     'description': self.data[lang]['ordeal']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'], type='weekly')
+                self.write_to_db(lang, 'ordeal', [db_data], name=self.translations[lang]['msg']['ordeal'], type='weekly')
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1301,7 +1301,7 @@ class D2data:
                     'name': self.data[lang]['nightmares']['fields'][0]['name'],
                     'description': self.data[lang]['nightmares']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'nigtmare_hunts', db_data, name=self.translations[lang]['site']['nightmares'], type='weekly')
+                self.write_to_db(lang, 'nigtmare_hunts', [db_data], name=self.translations[lang]['site']['nightmares'], type='weekly')
             return
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1351,7 +1351,7 @@ class D2data:
                     'name': self.data[lang]['cruciblerotators']['fields'][0]['name'],
                     'description': self.data[lang]['cruciblerotators']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'crucible_rotators', db_data,
+                self.write_to_db(lang, 'crucible_rotators', [db_data],
                                  name=self.translations[lang]['msg']['cruciblerotators'], template='table_items.html', type='weekly')
             return
         resp_time = activities_resp['timestamp']
