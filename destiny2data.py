@@ -1561,7 +1561,7 @@ class D2data:
             if len(activities) > 0:
                 for char_activities in activities:
                     for activity in char_activities['Response']['activities']['data']['availableActivities']:
-                        if activity['activityHash'] not in hashes:
+                        if activity['activityHash'] not in hashes and activities_json:
                             activities_json['Response']['activities']['data']['availableActivities'].append(activity)
                             hashes.add(activity['activityHash'])
             return activities_json
