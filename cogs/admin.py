@@ -135,6 +135,13 @@ class Admin(commands.Cog):
         await ctx.bot.force_update('osiris', get=False, channels=None, forceget=False)
         await ctx.channel.send('done')
 
+    @commands.is_owner()
+    @commands.command(
+        description='Check connection stats'
+    )
+    async def connstats(self, ctx):
+        await ctx.channel.send(f'Ping is {ctx.bot.latency*1000} ms')
+
     @commands.command(
         name='help',
         description='The help command!',
