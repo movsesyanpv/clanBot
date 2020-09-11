@@ -264,6 +264,7 @@ class D2data:
 
         vendor_json = vendor_resp
         tess_sales = vendor_json['Response']['sales']['data']
+        n_order = 0
         for key in cats:
             item = tess_sales[str(key)]
             item_hash = item['itemHash']
@@ -272,34 +273,48 @@ class D2data:
                 item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 item_name_list = item_resp['displayProperties']['name'].split()
                 item_name = ' '.join(item_name_list)
+                costs = []
                 if len(item['costs']) > 0:
-                    currency = item['costs'][0]
-                    currency_resp = await self.destiny.decode_hash(currency['itemHash'], definition, language=lang)
+                    cost_line = '{}: '.format(self.translations[lang]['msg']['cost'])
+                    for cost in item['costs']:
+                        currency = cost
+                        currency_resp = await self.destiny.decode_hash(currency['itemHash'], definition, language=lang)
 
-                    currency_cost = str(currency['quantity'])
-                    currency_item = currency_resp['displayProperties']['name']
-                    currency_icon = currency_resp['displayProperties']['icon']
+                        currency_cost = str(currency['quantity'])
+                        currency_item = currency_resp['displayProperties']['name']
+                        currency_icon = currency_resp['displayProperties']['icon']
+                        cost_line = '{}{} {}\n'.format(cost_line, currency_cost, currency_item.capitalize())
+                        costs.append({
+                            'currency_name': currency_item,
+                            'currency_icon': currency_icon,
+                            'cost': currency_cost
+                        })
                 else:
-                    currency_cost = 'N/A'
+                    currency_cost = 'N/A\n'
                     currency_item = ''
                     currency_icon = ''
-
+                    cost_line = currency_cost
+                    costs.append({
+                        'currency_name': currency_item,
+                        'currency_icon': currency_icon,
+                        'cost': currency_cost
+                    })
+                cost_line = cost_line[:-1]
                 item_data = {
                     'inline': True,
                     'name': item_name.capitalize(),
-                    'value': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
-                                                currency_item.capitalize())
+                    'value': cost_line
                 }
                 data_sales.append({
+                    'id': '{}_{}_{}'.format(item['itemHash'], key, n_order),
                     'name': item_name.capitalize(),
                     'icon': item_resp['displayProperties']['icon'],
-                    'description': "{}: {} {}".format(self.translations[lang]['msg']['cost'], currency_cost,
-                                                      currency_item.capitalize()),
-                    'cost': currency_cost,
-                    'currency_name': currency_item.capitalize(),
-                    'currency_icon': currency_icon
+                    'description': cost_line.replace('\n', '<br>'),
+                    'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], key, n_order),
+                    'costs': costs
                 })
                 embed_sales.append(item_data)
+                n_order += 1
         return [embed_sales, data_sales]
 
     async def get_featured_bd(self, langs, forceget=False):
@@ -500,9 +515,12 @@ class D2data:
                         'hash': item['itemHash'],
                         'name': item_def['displayProperties']['name'],
                         'screenshot': screenshot,
-                        'currency_icon': currency_resp['displayProperties']['icon'],
-                        'cost': item['currencies'][0]['quantity'],
-                        'currency': currency_resp['displayProperties']['name']
+                        'costs': [
+                            {
+                                'currency_icon': currency_resp['displayProperties']['icon'],
+                                'cost': item['currencies'][0]['quantity'],
+                                'currency_name': currency_resp['displayProperties']['name']
+                            }]
                     })
                     n_order += 1
                     n_items = n_items + 1
@@ -550,9 +568,12 @@ class D2data:
                             'hash': item['itemHash'],
                             'name': item_def['displayProperties']['name'],
                             'screenshot': screenshot,
-                            'currency_icon': currency_resp['displayProperties']['icon'],
-                            'cost': item['currencies'][0]['quantity'],
-                            'currency': currency_resp['displayProperties']['name']
+                            'costs': [
+                                {
+                                    'currency_icon': currency_resp['displayProperties']['icon'],
+                                    'cost': item['currencies'][0]['quantity'],
+                                    'currency_name': currency_resp['displayProperties']['name']
+                                }]
                         })
                     n_order += 1
                     n_items = n_items + 1
@@ -645,6 +666,48 @@ class D2data:
             data = spider_sales[1]
             self.write_to_db(locale, 'spider_mats', data, name=self.translations[locale]['site']['spider'], order=0,
                              size='tall')
+
+    async def get_banshee(self, lang, forceget=False):
+        char_info = self.char_info
+
+        banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
+            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
+        banshee_resp = await self.get_cached_json('banshee', 'banshee', banshee_url, self.vendor_params, force=forceget)
+        if not banshee_resp:
+            for locale in lang:
+                banshee_def = await self.destiny.decode_hash(672118013, 'DestinyVendorDefinition', language=locale)
+                db_data = {
+                    'name': self.data[locale]['spider']['fields'][0]['name'],
+                    'description': self.data[locale]['spider']['fields'][0]['value']
+                }
+                self.write_to_db(locale, 'spider_mats', [db_data], name=banshee_def['displayProperties']['name'])
+            return
+        banshee_json = banshee_resp
+        banshee_cats = banshee_json['Response']['categories']['data']['categories']
+        resp_time = banshee_json['timestamp']
+        for locale in lang:
+            banshee_def = await self.destiny.decode_hash(672118013, 'DestinyVendorDefinition', language=locale)
+
+            # self.data[locale]['spider'] = {
+            #     'thumbnail': {
+            #         'url': self.icon_prefix + banshee_def['displayProperties']['smallTransparentIcon']
+            #     },
+            #     'fields': [],
+            #     'color': 7102001,
+            #     'type': "rich",
+            #     'title': self.translations[locale]['msg']['spider'],
+            #     'footer': {'text': self.translations[locale]['msg']['resp_time']},
+            #     'timestamp': resp_time
+            # }
+
+            items_to_get = banshee_cats[2]['itemIndexes']
+
+            banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468])
+            # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
+            data = banshee_sales[1]
+            self.write_to_db(locale, 'banshee_mods', data, name=banshee_def['displayProperties']['name'], order=5,
+                             template='hover_items.html')
+                             # size='tall')
 
     async def get_xur_loc(self):
         url = 'https://wherethefuckisxur.com/'
