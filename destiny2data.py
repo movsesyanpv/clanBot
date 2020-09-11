@@ -1703,9 +1703,12 @@ class D2data:
                     if isinstance(parameter, int):
                         try:
                             definition = await self.destiny.decode_hash(parameter, 'DestinyActivityDefinition', lang)
+                            info.append(definition['displayProperties']['name'])
                         except pydest.PydestException:
                             definition = await self.destiny.decode_hash(parameter, 'DestinyCollectibleDefinition', lang)
-                        info.append(definition['displayProperties']['name'])
+                            for parent in definition['parentNodeHashes']:
+                                if parent in self.translations['lang']['weapon_types'].keys():
+                                    info.append('{} ({})'.format(definition['displayProperties']['name'], self.translations['lang']['weapon_types'][str(parent)]))
                     elif parameter in locale.keys():
                         info.append(locale[parameter])
                     else:
