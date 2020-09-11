@@ -772,7 +772,9 @@ class ClanBot(commands.Bot):
             if lang == self.guild_lang(server.id):
                 for channel in server.channels:
                     if channel.id in self.update_ch:
-                        await channel.send(msg)
+                        message = await channel.send(msg)
+                        if channel.type == discord.ChannelType.news:
+                            await message.publish()
 
     async def update_metrics(self):
         clan_ids_c = self.guild_cursor.execute('''SELECT clan_id FROM clans''')
