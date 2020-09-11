@@ -749,6 +749,8 @@ class ClanBot(commands.Bot):
                             else:
                                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                             hist.append(message.id)
+                            if channel.type == discord.ChannelType.news:
+                                await message.publish()
                         hist = str(hist)
                     else:
                         if server.me.permissions_in(channel).embed_links:
@@ -759,6 +761,8 @@ class ClanBot(commands.Bot):
                         else:
                             message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                         hist = message.id
+                        if channel.type == discord.ChannelType.news:
+                            await message.publish()
             self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type), (str(hist), server.id))
             self.guild_db.commit()
 
