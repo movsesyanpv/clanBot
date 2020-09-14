@@ -1470,8 +1470,12 @@ class D2data:
                                 'icon': icon
                             })
                             self.data[lang]['cruciblerotators']['fields'].append(info)
+            if len(db_data) >= 3:
+                style = 'wide tall'
+            else:
+                style = 'wide'
             self.write_to_db(lang, 'crucible_rotators', db_data, name=self.translations[lang]['msg']['cruciblerotators'],
-                             size='wide', order=4, type='weekly')
+                             size=style, order=4, type='weekly')
 
     async def get_the_lie_progress(self, langs, forceget=True):
         url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'],
