@@ -267,5 +267,23 @@
         "chest": "Chesh",
         "boots": "Boots",
         "class": "Class Item"
+    },
+    "weapon_types": {
+        "2766676737": "Auto Rifle",
+        "2174985928": "Scout Rifle",
+        "3263747939": "Pulse Rifle",
+        "1956740204": "Hand Cannon",
+        "2081696512": "Submachine Gun",
+        "3779085124": "Sidearm",
+        "2976016363": "Bow",
+        "1186584658": "Sniper Rifle",
+        "2122496537": "Fusion Rifle",
+        "4089315591": "Grenade Launcher",
+        "3058624876": "Shotgun",
+        "3935277741": "Machine Gun",
+        "690633563": "Linear Fusion Rifle",
+        "3106206619": "Rocket Launcher",
+        "1391900891": "Grenade Launcher",
+        "1604869479": "Sword"
     }
 }
