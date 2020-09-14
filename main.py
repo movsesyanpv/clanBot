@@ -21,7 +21,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.15.1'
+    version = '2.15.2'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'osiris', 'tess', 'alerts', 'events']
@@ -656,9 +656,11 @@ class ClanBot(commands.Bot):
         if len(channels) == 0 and not get:
             return
 
+        status = True
+
         if get:
             try:
-                await getter(lang, forceget)
+                status = await getter(lang, forceget)
             except Exception as e:
                 bot_info = await self.application_info()
                 owner = bot_info.owner
@@ -670,6 +672,11 @@ class ClanBot(commands.Bot):
             for locale in self.args.lang:
                 if not self.data.data[locale][name]:
                     return
+
+        if not status and status is not None:
+            self.sched.add_job(self.universal_update, 'date', run_date=(datetime.utcnow() + timedelta(minutes=5)),
+                               args=[getter, name, time_to_delete, channels, post, get, forceget])
+
         if post:
             await self.post_embed(name, self.data.data, time_to_delete, channels)
 
