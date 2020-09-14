@@ -674,7 +674,7 @@ class ClanBot(commands.Bot):
                     return
 
         if not status and status is not None:
-            self.sched.add_job(self.universal_update, 'date', run_date=(datetime.utcnow() + timedelta(minutes=5)),
+            self.sched.add_job(self.universal_update, 'date', run_date=(datetime.utcnow() + timedelta(minutes=30)),
                                args=[getter, name, time_to_delete, channels, post, get, forceget])
 
         if post:
