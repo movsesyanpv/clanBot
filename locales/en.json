@@ -204,6 +204,7 @@
         "update": "Get updates from Bungie for the given TYPE",
         "setclan": "Set Destiny 2 clan for the server.",
         "top": "Print top players for one of the available metrics.",
+        "support": "Get the link to the support server",
         "additional_info": "Type `{}help command language` for more info on a `command` in `language`. Available languages are `{}` (Some lines might be untranslated).\nType `{}ruhelp command` for more info on a `command` in russian.",
         "aliases": "Can be called with the following names:```{}```",
         "parameters": "Usage:```{}```",

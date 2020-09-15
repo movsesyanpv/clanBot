@@ -137,6 +137,10 @@ class Public(commands.Cog):
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
             await ctx.message.delete()
 
+    @commands.command()
+    async def support(self, ctx):
+        await ctx.channel.send('https://discord.gg/JEbzECp')
+
 
 def setup(bot):
     bot.add_cog(Public(bot))
