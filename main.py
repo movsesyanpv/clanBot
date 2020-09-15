@@ -414,7 +414,8 @@ class ClanBot(commands.Bot):
                 channel = await self.fetch_channel(lfg[1])
                 lfg_msg = await channel.fetch_message(lfg[0])
                 start = datetime.fromtimestamp(lfg[2])
-                if (datetime.now() - start) > timedelta(days=days) and (guild_id == 0 or guild_id == lfg[3]):
+                length = lfg[4] if lfg[4] > 0 else 0
+                if (datetime.now() - start - timedelta(seconds=length)) > timedelta(days=days) and (guild_id == 0 or guild_id == lfg[3]):
                     await lfg_msg.delete()
                     self.raid.del_entry(lfg[0])
                     i = i + 1
