@@ -233,7 +233,8 @@
             }
         },
         "prefix": "Print available prefixes",
-        "setprefix": "Set available prefixes"
+        "setprefix": "Set available prefixes",
+        "support": "Get the link to the support server"
     },
     "graph": {
         "percentage": "Completion percentage",
