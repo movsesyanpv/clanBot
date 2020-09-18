@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import csv
 import codecs
 import mariadb
+import asyncio
 
 
 class D2data:
@@ -148,7 +149,7 @@ class D2data:
                 r_json = await r.json()
                 if not r_json['error_description'] == 'DestinyThrottledByGameServer':
                     break
-            time.sleep(5)
+            await asyncio.sleep(5)
         if not r:
             r_json = await r.json()
             print("re_token get error", json.dumps(r_json, indent=4, sort_keys=True) + "\n")
@@ -217,7 +218,7 @@ class D2data:
                         self.data[locale][name] = self.data[locale]['api_maintenance']
                 curr_try -= 1
             curr_try += 1
-            time.sleep(5)
+            await asyncio.sleep(5)
         if not resp:
             try:
                 resp_code = await resp.json()
@@ -1884,6 +1885,54 @@ class D2data:
             return indexed_list[:old_i]
         else:
             return metric_list
+
+    async def iterate_clans(self, max_id):
+        clan_db = self.cache_db
+        clan_cursor = clan_db.cursor()
+        min_id = 1
+        try:
+            clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
+            # clan_db.commit()
+        except mariadb.Error:
+            clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
+            min_id_tuple = clan_cursor.fetchall()
+            if min_id_tuple is not None:
+                min_id = min_id_tuple[0][0] + 1
+            for clan_id_tuple in min_id_tuple:
+                clan_id = clan_id_tuple[0]
+                url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
+                clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), '{} clan check'.format(clan_id), url)
+                clan_json = clan_resp
+                try:
+                    code = clan_json['ErrorCode']
+                except KeyError:
+                    continue
+                if code in [622, 621]:
+                    try:
+                        clan_cursor.execute('''DELETE FROM clans WHERE id=?''', (clan_id,))
+                        # clan_db.commit()
+                    except mariadb.Error:
+                        pass
+        for clan_id in range(min_id, max_id+1):
+            url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
+            clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), '{} clan info'.format(clan_id), url)
+            clan_json = clan_resp
+            try:
+                code = clan_json['ErrorCode']
+                # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
+            except KeyError:
+                code = 0
+                continue
+            if code in [621, 622, 686]:
+                continue
+            if code != 1:
+                return code
+            # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
+            if clan_json['Response']['detail']['features']['capabilities'] & 16:
+                clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
+                # clan_db.commit()
+        clan_db.close()
+        return 'Finished'
 
     async def token_update(self):
         # check to see if token.json exists, if not we have to start with oauth

@@ -497,6 +497,30 @@ class ClanBot(commands.Bot):
             #         #await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
             #         return
             #     raise exception
+            elif isinstance(exception, discord.errors.Forbidden):
+                pass
+            else:
+                if 'stop' not in message.content.lower() or (
+                        self.user not in message.mentions and str(message.channel.type) != 'private'):
+                    bot_info = await self.application_info()
+                    owner = bot_info.owner
+                    if not self.args.production:
+                        if owner.dm_channel is None:
+                            await owner.create_dm()
+                        await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+                        await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
+                        if message.author.dm_channel is None:
+                            await message.author.create_dm()
+                        if message.author != owner:
+                            await message.author.dm_channel.send(self.translations['en']['error'])
+                    else:
+                        self.git.create_issue(title='Exception on message',
+                                              body='# Message\n\n{}\n\n# Traceback\n\n```{}```'.
+                                              format(message.content, traceback.format_exc()))
+                        if message.author.dm_channel is None:
+                            await message.author.create_dm()
+                        if message.author != owner:
+                            await message.author.dm_channel.send(self.translations['en']['error'])
         except discord.errors.Forbidden:
             pass
         except Exception as e:

@@ -142,6 +142,12 @@ class Admin(commands.Cog):
     async def connstats(self, ctx):
         await ctx.channel.send(f'Ping is {ctx.bot.latency*1000} ms')
 
+    @commands.is_owner()
+    @commands.command()
+    async def fetchclans(self, ctx, max_id=1):
+        reason = await ctx.bot.data.iterate_clans(max_id)
+        await ctx.channel.send('Exited ({})'.format(reason))
+
     @commands.command(
         name='help',
         description='The help command!',
