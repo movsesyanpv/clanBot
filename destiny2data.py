@@ -1922,7 +1922,7 @@ class D2data:
                 # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
             except KeyError:
                 code = 0
-                continue
+                return '```{}```'.format(json.dumps(clan_json))
             if code in [621, 622, 686]:
                 continue
             if code != 1:
