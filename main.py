@@ -81,7 +81,7 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
 
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
-        self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 3600])
+        self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 86400])
         # self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_the_lie_progress, 'thelie', 3600])
         self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
         self.sched.add_job(self.update_metrics, 'cron', hour='5', minute='0', second='0', misfire_grace_time=86300)
