@@ -750,8 +750,17 @@ class ClanBot(commands.Bot):
                         try:
                             if type(hist) == list:
                                 last = []
+                                dict_embeds = []
+                                for embed_p in embed:
+                                    dict_embeds.append(embed_p.to_dict())
                                 for msg in hist:
-                                    last.append(await channel.fetch_message(msg))
+                                    message = await channel.fetch_message(msg)
+                                    tmp_embed = message.embeds[0].to_dict()
+                                    tmp_embed['author'].pop('proxy_icon_url', None)
+                                    if tmp_embed not in dict_embeds:
+                                        last.append(message)
+                                if len(last) == 0:
+                                    return
                             else:
                                 last = await channel.fetch_message(hist)
                                 if last.embeds[0].to_dict() == embed.to_dict():
