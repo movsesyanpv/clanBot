@@ -1755,7 +1755,7 @@ class D2data:
         self.data_db.commit()
 
     async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True,
-                              force=False, cache_only=False):
+                              force=False, cache_only=False, expires_in=1800):
         cache_cursor = self.cache_db.cursor()
 
         try:
@@ -1780,25 +1780,25 @@ class D2data:
                         '''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
                     cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id(256))''')
                     cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
-                                         (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json),
+                                         (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                           timestamp))
                 except mariadb.Error:
                     try:
                         cache_cursor.execute('''ALTER TABLE cache ADD COLUMN timestamp text''')
                         cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
-                                             (cache_id, int(datetime.now().timestamp() + 1800),
+                                             (cache_id, int(datetime.now().timestamp() + expires_in),
                                               json.dumps(response_json), timestamp))
                     except mariadb.Error:
                         pass
                 try:
                     cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
-                                         (cache_id, int(datetime.now().timestamp() + 1800), json.dumps(response_json),
+                                         (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                           timestamp))
                 except mariadb.Error:
                     pass
                 try:
                     cache_cursor.execute('''UPDATE cache SET expires=?, json=?, timestamp=? WHERE id=?''',
-                                         (int(datetime.now().timestamp() + 1800), json.dumps(response_json), timestamp,
+                                         (int(datetime.now().timestamp() + expires_in), json.dumps(response_json), timestamp,
                                           cache_id))
                 except mariadb.Error:
                     pass
@@ -1901,7 +1901,8 @@ class D2data:
             for clan_id_tuple in min_id_tuple:
                 clan_id = clan_id_tuple[0]
                 url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
-                clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), '{} clan check'.format(clan_id), url)
+                clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), '{} clan check'.format(clan_id), url,
+                                                       expires_in=86400)
                 clan_json = clan_resp
                 try:
                     code = clan_json['ErrorCode']
@@ -1915,7 +1916,8 @@ class D2data:
                         pass
         for clan_id in range(min_id, max_id+1):
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
-            clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), '{} clan info'.format(clan_id), url)
+            clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), '{} clan info'.format(clan_id), url,
+                                                   expires_in=86400)
             clan_json = clan_resp
             try:
                 code = clan_json['ErrorCode']
