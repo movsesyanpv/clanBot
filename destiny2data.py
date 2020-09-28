@@ -1887,9 +1887,51 @@ class D2data:
             return metric_list
 
     async def iterate_clans(self, max_id):
-        clan_db = self.cache_db
+        clan_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
+                                  password=self.api_data['pass'], port=self.api_data['db_port'],
+                                  database=self.api_data['cache_name'])
         clan_cursor = clan_db.cursor()
+
         min_id = 1
+        try:
+            clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
+            # clan_db.commit()
+        except mariadb.Error:
+            # clan_cursor = clan_db.cursor()
+            clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
+            min_id_tuple = clan_cursor.fetchall()
+            if min_id_tuple is not None:
+                min_id = min_id_tuple[0][0] + 1
+        for clan_id in range(min_id, max_id+1):
+            url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
+            clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), '{} clan info'.format(clan_id), url,
+                                                   expires_in=86400)
+            clan_json = clan_resp
+            try:
+                code = clan_json['ErrorCode']
+                # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
+            except KeyError:
+                code = 0
+                clan_db.close()
+                return '```{}```'.format(json.dumps(clan_json))
+            if code in [621, 622, 686]:
+                continue
+            if code != 1:
+                clan_db.close()
+                return code
+            # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
+            if clan_json['Response']['detail']['features']['capabilities'] & 16:
+                clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
+                # clan_db.commit()
+        clan_db.close()
+        return 'Finished'
+
+    async def fetch_players(self):
+        clan_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
+                                  password=self.api_data['pass'], port=self.api_data['db_port'],
+                                  database=self.api_data['cache_name'])
+        clan_cursor = clan_db.cursor()
+
         try:
             clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
             # clan_db.commit()
@@ -1914,25 +1956,6 @@ class D2data:
                         # clan_db.commit()
                     except mariadb.Error:
                         pass
-        for clan_id in range(min_id, max_id+1):
-            url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
-            clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), '{} clan info'.format(clan_id), url,
-                                                   expires_in=86400)
-            clan_json = clan_resp
-            try:
-                code = clan_json['ErrorCode']
-                # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
-            except KeyError:
-                code = 0
-                return '```{}```'.format(json.dumps(clan_json))
-            if code in [621, 622, 686]:
-                continue
-            if code != 1:
-                return code
-            # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
-            if clan_json['Response']['detail']['features']['capabilities'] & 16:
-                clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
-                # clan_db.commit()
         clan_db.close()
         return 'Finished'
 

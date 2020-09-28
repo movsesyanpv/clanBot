@@ -148,6 +148,12 @@ class Admin(commands.Cog):
         reason = await ctx.bot.data.iterate_clans(max_id)
         await ctx.channel.send('Exited ({})'.format(reason))
 
+    @commands.is_owner()
+    @commands.command()
+    async def fetchplayers(self, ctx):
+        reason = await ctx.bot.data.fetch_players()
+        await ctx.channel.send('Exited ({})'.format(reason))
+
     @commands.command(
         name='help',
         description='The help command!',
