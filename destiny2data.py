@@ -1907,6 +1907,10 @@ class D2data:
             clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), '{} clan info'.format(clan_id), url,
                                                    expires_in=86400)
             clan_json = clan_resp
+
+            if not clan_json:
+                clan_db.close()
+                return 'unable to fetch clan {}'.format(clan_id)
             try:
                 code = clan_json['ErrorCode']
                 # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
