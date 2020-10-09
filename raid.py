@@ -124,7 +124,7 @@ class LFG:
                     if len(str_arg) < 3:
                         raise ValueError
                     time_str = '{}:{}'.format(str_arg[1], str_arg[2])
-                    args['time'] = datetime.strptime(time_str.lstrip(), "%d-%m-%Y %H:%M %z")
+                    args['time'] = datetime.strptime(time_str.lstrip(), "%d-%m-%Y %H:%M%z")
                     args['timezone'] = str(args['time'].tzinfo)
                 except ValueError:
                     try:
