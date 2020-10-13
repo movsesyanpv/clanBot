@@ -578,7 +578,10 @@ class ClanBot(commands.Bot):
             self.guild_cursor.execute('''SELECT lang FROM language WHERE server_id=?''', (guild_id, ))
             lang = self.guild_cursor.fetchone()
             if len(lang) > 0:
-                return lang[0]
+                if lang[0] in self.langs:
+                    return lang[0]
+                else:
+                    return 'en'
             else:
                 return 'en'
         except:
@@ -695,7 +698,7 @@ class ClanBot(commands.Bot):
                 return
 
             for locale in self.args.lang:
-                if not self.data.data[locale][name]:
+                if not self.data.data[locale][name] and type(self.data.data[locale][name]) == bool:
                     return
 
         if not status and status is not None:
