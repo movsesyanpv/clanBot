@@ -22,7 +22,7 @@ import unauthorized
 
 class ClanBot(commands.Bot):
     version = '2.15.3'
-    cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin', 'cogs.dbl']
+    cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'daily', 'spider', 'xur', 'osiris', 'tess', 'alerts', 'events']
     embeds_with_img = ['thelie']
@@ -60,6 +60,7 @@ class ClanBot(commands.Bot):
         self.guild_db = sqlite3.connect('guild.db')
         self.guild_cursor = self.guild_db.cursor()
 
+
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
@@ -94,6 +95,7 @@ class ClanBot(commands.Bot):
             git_token = git_file.read()
             self.git = Github(git_token)
             self.git = self.git.get_repo('movsesyanpv/clanBot')
+            self.load_extension('cogs.dbl')
 
     def load_translations(self):
         self.translations = {}
