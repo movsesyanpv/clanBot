@@ -500,7 +500,8 @@ class ClanBot(commands.Bot):
             #         return
             #     raise exception
             elif isinstance(exception, discord.errors.Forbidden):
-                pass
+                if isinstance(exception.original, discord.errors.Forbidden):
+                    pass
             else:
                 if 'stop' not in message.content.lower() or (
                         self.user not in message.mentions and str(message.channel.type) != 'private'):
