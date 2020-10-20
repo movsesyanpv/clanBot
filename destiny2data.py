@@ -228,7 +228,7 @@ class D2data:
                         self.data[locale][name] = self.data[locale]['api_is_down']
                 return False
             resp_code = resp_code['ErrorCode']
-            if resp_code == 5:
+            if resp_code in [5, 1618]:
                 if change_msg:
                     for locale in lang:
                         self.data[locale][name] = self.data[locale]['api_maintenance']
