@@ -257,6 +257,12 @@ class D2data:
                 for suspected_season in resp_code:
                     if 'seasonNumber' in resp_code[suspected_season].keys():
                         return resp_code
+            resp_code = await resp.json()
+            if 'Response' not in resp_code.keys():
+                if change_msg:
+                    for locale in lang:
+                        self.data[locale][name] = self.data[locale]['api_is_down']
+                return False
         return await resp.json()
 
     async def get_vendor_sales(self, lang, vendor_resp, cats, exceptions=[]):
