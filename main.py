@@ -886,5 +886,7 @@ def get_prefix(client, message):
 
 
 if __name__ == '__main__':
-    b = ClanBot(command_prefix=get_prefix)
+    intents = discord.Intents.default()
+    intents.members = True
+    b = ClanBot(command_prefix=get_prefix, intents=intents)
     b.start_up()
