@@ -11,7 +11,6 @@ from discord.ext.commands.bot import Bot
 import sqlite3
 import logging
 import traceback
-from github import Github
 
 from discord.ext import commands
 
@@ -46,8 +45,6 @@ class ClanBot(commands.Bot):
     args = ''
 
     translations = {}
-
-    git = ''
 
     def __init__(self, **options):
         super().__init__(**options)
@@ -91,10 +88,6 @@ class ClanBot(commands.Bot):
         logging.getLogger('apscheduler')
 
         if self.args.production:
-            git_file = open('git.dat', 'r')
-            git_token = git_file.read()
-            self.git = Github(git_token)
-            self.git = self.git.get_repo('movsesyanpv/clanBot')
             self.load_extension('cogs.dbl')
 
     def load_translations(self):
@@ -392,16 +385,11 @@ class ClanBot(commands.Bot):
                     owner = self.get_user(owner)
                     await self.raid.upd_dm(owner, lfg_message, self.translations[lang])
         except Exception as e:
-            if not self.args.production:
-                bot_info = await self.application_info()
-                owner = bot_info.owner
-                if owner.dm_channel is None:
-                    await owner.create_dm()
-                await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-            else:
-                self.git.create_issue(title='Exception on reaction add',
-                                      body='# Traceback\n\n```{}```'.
-                                      format(traceback.format_exc()))
+            bot_info = await self.application_info()
+            owner = bot_info.owner
+            if owner.dm_channel is None:
+                await owner.create_dm()
+            await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
 
     async def lfg_cleanup(self, days, guild=None):
         lfg_list = self.raid.get_all()
@@ -507,46 +495,28 @@ class ClanBot(commands.Bot):
                         self.user not in message.mentions and str(message.channel.type) != 'private'):
                     bot_info = await self.application_info()
                     owner = bot_info.owner
-                    if not self.args.production:
-                        if owner.dm_channel is None:
-                            await owner.create_dm()
-                        await owner.dm_channel.send('`{}`'.format(exception.original))
-                        await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
-                        if message.author.dm_channel is None:
-                            await message.author.create_dm()
-                        if message.author != owner:
-                            await message.author.dm_channel.send(self.translations['en']['error'])
-                    else:
-                        self.git.create_issue(title='Exception on message',
-                                              body='# Message\n\n{}\n\n# Exception\n\n```{}```'.
-                                              format(message.content, exception.original))
-                        if message.author.dm_channel is None:
-                            await message.author.create_dm()
-                        if message.author != owner:
-                            await message.author.dm_channel.send(self.translations['en']['error'])
+                    if owner.dm_channel is None:
+                        await owner.create_dm()
+                    await owner.dm_channel.send('`{}`'.format(exception.original))
+                    await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
+                    if message.author.dm_channel is None:
+                        await message.author.create_dm()
+                    if message.author != owner:
+                        await message.author.dm_channel.send(self.translations['en']['error'])
         except discord.errors.Forbidden:
             pass
         except Exception as e:
             if 'stop' not in message.content.lower() or (self.user not in message.mentions and str(message.channel.type) != 'private'):
                 bot_info = await self.application_info()
                 owner = bot_info.owner
-                if not self.args.production:
-                    if owner.dm_channel is None:
-                        await owner.create_dm()
-                    await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-                    await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
-                    if message.author.dm_channel is None:
-                        await message.author.create_dm()
-                    if message.author != owner:
-                        await message.author.dm_channel.send(self.translations['en']['error'])
-                else:
-                    self.git.create_issue(title='Exception on message',
-                                          body='# Message\n\n{}\n\n# Traceback\n\n```{}```'.
-                                          format(message.content, traceback.format_exc()))
-                    if message.author.dm_channel is None:
-                        await message.author.create_dm()
-                    if message.author != owner:
-                        await message.author.dm_channel.send(self.translations['en']['error'])
+                if owner.dm_channel is None:
+                    await owner.create_dm()
+                await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+                await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
+                if message.author.dm_channel is None:
+                    await message.author.create_dm()
+                if message.author != owner:
+                    await message.author.dm_channel.send(self.translations['en']['error'])
 
     async def on_command_completion(self, ctx):
         self.logger.info(ctx.message.content)
