@@ -497,7 +497,10 @@ class ClanBot(commands.Bot):
                     owner = bot_info.owner
                     if owner.dm_channel is None:
                         await owner.create_dm()
-                    await owner.dm_channel.send('`{}`'.format(exception.original))
+                    traceback_str = ''
+                    for line in traceback.format_exception(type(exception), exception, exception.__traceback__):
+                        traceback_str = '{}{}'.format(traceback_str, line)
+                    await owner.dm_channel.send('`{}`'.format(traceback_str))
                     await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
                     if message.author.dm_channel is None:
                         await message.author.create_dm()
