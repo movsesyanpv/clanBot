@@ -725,7 +725,7 @@ class ClanBot(commands.Bot):
 
             for channel in server.channels:
                 if channel.id in channels:
-                    if hist and not self.args.noclear:
+                    if hist and not self.args.noclear and channel.type != discord.ChannelType.news:
                         try:
                             if type(hist) == list:
                                 last = []
