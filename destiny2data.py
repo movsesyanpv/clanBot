@@ -94,7 +94,7 @@ class D2data:
                                                      host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                                      password=self.api_data['pass'], port=self.api_data['db_port'],
                                                      database=self.api_data['cache_name'])
-            self.cache_pool.pool_reset_connection = True
+            # self.cache_pool.pool_reset_connection = True
         except mariadb.ProgrammingError:
             pass
         # self.cache_db.auto_reconnect = True
@@ -103,7 +103,7 @@ class D2data:
                                                     host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                                     password=self.api_data['pass'], port=self.api_data['db_port'],
                                                     database=self.api_data['data_db'])
-            self.data_pool.pool_reset_connection = True
+            # self.data_pool.pool_reset_connection = True
         except mariadb.ProgrammingError:
             pass
         # self.data_db.auto_reconnect = True
@@ -624,6 +624,7 @@ class D2data:
         while True:
             try:
                 data_db = self.data_pool.get_connection()
+                data_db.auto_reconnect = True
                 break
             except mariadb.PoolError:
                 await asyncio.sleep(0.125)
@@ -1789,6 +1790,7 @@ class D2data:
         while True:
             try:
                 data_db = self.data_pool.get_connection()
+                data_db.auto_reconnect = True
                 break
             except mariadb.PoolError:
                 await asyncio.sleep(0.125)
@@ -1805,6 +1807,7 @@ class D2data:
         while True:
             try:
                 cache_connection = self.cache_pool.get_connection()
+                cache_connection.auto_reconnect = True
                 break
             except mariadb.PoolError:
                 await asyncio.sleep(0.125)
