@@ -9,6 +9,7 @@ import os
 import sqlite3
 import pydest
 import mariadb
+import asyncio
 
 import main
 
