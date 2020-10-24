@@ -96,7 +96,13 @@ class Admin(commands.Cog):
     )
     @commands.is_owner()
     async def dropcache(self, ctx):
-        cursor = self.bot.data.cache_db.cursor()
+        while True:
+            try:
+                cache_db = self.cache_pool.get_connection()
+                break
+            except mariadb.PoolError:
+                await asyncio.sleep(0.125)
+        cursor = cache_db.cursor()
         cursor.execute('''DROP TABLE cache''')
         self.bot.data.cache_db.commit()
         await ctx.channel.send('Done, {}'.format(ctx.author.mention))

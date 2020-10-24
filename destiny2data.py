@@ -89,14 +89,18 @@ class D2data:
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
-        self.cache_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
-                                        password=self.api_data['pass'], port=self.api_data['db_port'],
-                                        database=self.api_data['cache_name'])
-        self.cache_db.auto_reconnect = True
-        self.data_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
-                                       password=self.api_data['pass'], port=self.api_data['db_port'],
-                                       database=self.api_data['data_db'])
-        self.data_db.auto_reconnect = True
+        self.cache_pool = mariadb.ConnectionPool(pool_name='cache', pool_size=64, pool_reset_connection=False,
+                                                 host=self.api_data['db_host'], user=self.api_data['cache_login'],
+                                                 password=self.api_data['pass'], port=self.api_data['db_port'],
+                                                 database=self.api_data['cache_name'])
+        self.cache_pool.pool_reset_connection = True
+        # self.cache_db.auto_reconnect = True
+        self.data_pool = mariadb.ConnectionPool(pool_name='data', pool_size=64, pool_reset_connection=False,
+                                                host=self.api_data['db_host'], user=self.api_data['cache_login'],
+                                                password=self.api_data['pass'], port=self.api_data['db_port'],
+                                                database=self.api_data['data_db'])
+        self.data_pool.pool_reset_connection = True
+        # self.data_db.auto_reconnect = True
 
     async def get_chars(self):
         platform = 0
@@ -358,7 +362,7 @@ class D2data:
                                                     [353932628, 3260482534, 3536420626, 3187955025,
                                                     2638689062])
                 tmp_fields = tmp_fields + sales[0]
-                self.write_to_db(lang, 'featured_bright_dust_items', sales[1])
+                await self.write_to_db(lang, 'featured_bright_dust_items', sales[1])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i + 1:]:
@@ -399,7 +403,7 @@ class D2data:
                                                     [353932628, 3260482534, 3536420626, 3187955025,
                                                     2638689062])
                 tmp_fields = tmp_fields + sales[0]
-                self.write_to_db(lang, 'bright_dust_items', sales[1])
+                await self.write_to_db(lang, 'bright_dust_items', sales[1])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i + 1:]:
@@ -438,7 +442,7 @@ class D2data:
                 items_to_get = tess_cats[2]['itemIndexes']
                 sales = await self.get_vendor_sales(lang, resp, items_to_get, [827183327])
                 tmp_fields = tmp_fields + sales[0]
-                self.write_to_db(lang, 'featured_silver', sales[1])
+                await self.write_to_db(lang, 'featured_silver', sales[1])
 
             for i in range(0, len(tmp_fields)):
                 if tmp_fields[i] not in tmp_fields[i + 1:]:
@@ -606,11 +610,18 @@ class D2data:
                         'items': [*bd[i], *featured_bd[i]]
                     })
 
-                self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'], name=self.translations[lang]['site']['bd'],
-                                 template='hover_items.html', order=2, type='weekly')
+                await self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'],
+                                       name=self.translations[lang]['site']['bd'],
+                                       template='hover_items.html', order=2, type='weekly')
 
-    def write_to_db(self, lang, id, response, size='', name='', template='table_items.html', order=0, type='daily'):
-        data_cursor = self.data_db.cursor()
+    async def write_to_db(self, lang, id, response, size='', name='', template='table_items.html', order=0, type='daily'):
+        while True:
+            try:
+                data_db = self.data_pool.get_connection()
+                break
+            except mariadb.PoolError:
+                await asyncio.sleep(0.125)
+        data_cursor = data_db.cursor()
 
         try:
             data_cursor.execute('''CREATE TABLE `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text)'''.format(lang))
@@ -618,21 +629,23 @@ class D2data:
         except mariadb.Error:
             pass
 
-        # try:
-        data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (?,?,?,?,?,?,?,?,?)'''.format(lang),
-                            (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
-                             datetime.utcnow().isoformat(), size, name, template, order, type))
-        self.data_db.commit()
-        # except mariadb.Error:
-        #     pass
+        try:
+            data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (?,?,?,?,?,?,?,?,?)'''.format(lang),
+                                (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
+                                 datetime.utcnow().isoformat(), size, name, template, order, type))
+            data_db.commit()
+        except mariadb.Error:
+            pass
 
-        # try:
-        data_cursor.execute('''UPDATE `{}` SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=? WHERE id=?'''.format(lang),
-                            (datetime.utcnow().timestamp(), json.dumps({'data': response}),
-                             datetime.utcnow().isoformat(), name, size, template, order, type, id))
-        self.data_db.commit()
-        # except mariadb.Error:
-        #     pass
+        try:
+            data_cursor.execute('''UPDATE `{}` SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=? WHERE id=?'''.format(lang),
+                                (datetime.utcnow().timestamp(), json.dumps({'data': response}),
+                                 datetime.utcnow().isoformat(), name, size, template, order, type, id))
+            data_db.commit()
+        except mariadb.Error:
+            pass
+        data_cursor.close()
+        data_db.close()
 
     async def get_spider(self, lang, forceget=False):
         char_info = self.char_info
@@ -646,7 +659,8 @@ class D2data:
                     'name': self.data[locale]['spider']['fields'][0]['name'],
                     'description': self.data[locale]['spider']['fields'][0]['value']
                 }
-                self.write_to_db(locale, 'spider_mats', [db_data], name=self.translations[locale]['site']['spider'])
+                await self.write_to_db(locale, 'spider_mats', [db_data],
+                                       name=self.translations[locale]['site']['spider'])
             return False
         spider_json = spider_resp
         spider_cats = spider_json['Response']['categories']['data']['categories']
@@ -671,8 +685,8 @@ class D2data:
             spider_sales = await self.get_vendor_sales(locale, spider_resp, items_to_get, [1812969468])
             self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + spider_sales[0]
             data = spider_sales[1]
-            self.write_to_db(locale, 'spider_mats', data, name=self.translations[locale]['site']['spider'], order=0,
-                             size='tall')
+            await self.write_to_db(locale, 'spider_mats', data, name=self.translations[locale]['site']['spider'],
+                                   order=0, size='tall')
 
     async def get_banshee(self, lang, forceget=False):
         char_info = self.char_info
@@ -687,7 +701,7 @@ class D2data:
                     'name': self.data[locale]['spider']['fields'][0]['name'],
                     'description': self.data[locale]['spider']['fields'][0]['value']
                 }
-                self.write_to_db(locale, 'spider_mats', [db_data], name=banshee_def['displayProperties']['name'])
+                await self.write_to_db(locale, 'spider_mats', [db_data], name=banshee_def['displayProperties']['name'])
             return False
         banshee_json = banshee_resp
         banshee_cats = banshee_json['Response']['categories']['data']['categories']
@@ -712,8 +726,8 @@ class D2data:
             banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
             data = banshee_sales[1]
-            self.write_to_db(locale, 'banshee_mods', data, name=banshee_def['displayProperties']['name'], order=5,
-                             template='hover_items.html')
+            await self.write_to_db(locale, 'banshee_mods', data, name=banshee_def['displayProperties']['name'], order=5,
+                                   template='hover_items.html')
                              # size='tall')
 
     async def get_xur_loc(self):
@@ -821,7 +835,8 @@ class D2data:
                     'name': self.data[lang]['heroicstory']['fields'][0]['name'],
                     'description': self.data[lang]['heroicstory']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'heroic_story_missions', [db_data], name=self.translations[lang]['site']['heroicstory'])
+                await self.write_to_db(lang, 'heroic_story_missions', [db_data],
+                                       name=self.translations[lang]['site']['heroicstory'])
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -857,8 +872,8 @@ class D2data:
                         "description": r_json['selectionScreenDisplayProperties']['description']
                     })
                     self.data[lang]['heroicstory']['fields'].append(info)
-            self.write_to_db(lang, 'heroic_story_missions', db_data, name=self.translations[lang]['site']['heroicstory'],
-                             size='tall', order=3)
+            await self.write_to_db(lang, 'heroic_story_missions', db_data, name=self.translations[lang]['site']['heroicstory'],
+                                   size='tall', order=3)
 
     async def get_forge(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('forge', force=forceget)
@@ -869,8 +884,8 @@ class D2data:
                     'name': self.data[lang]['forge']['fields'][0]['name'],
                     'description': self.data[lang]['forge']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'forge', [db_data], name=self.translations[lang]['site']['forge'],
-                                 template='table_items.html')
+                await self.write_to_db(lang, 'forge', [db_data], name=self.translations[lang]['site']['forge'],
+                                       template='table_items.html')
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -910,8 +925,8 @@ class D2data:
                         "icon": r_json['displayProperties']['icon']
                     })
                     self.data[lang]['forge']['fields'].append(info)
-            self.write_to_db(lang, 'forge', db_data, name=self.translations[lang]['site']['forge'],
-                             template='table_items.html', order=4)
+            await self.write_to_db(lang, 'forge', db_data, name=self.translations[lang]['site']['forge'],
+                                   template='table_items.html', order=4)
 
     async def get_strike_modifiers(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('vanguardstrikes', string='strike modifiers',
@@ -922,7 +937,8 @@ class D2data:
                     'name': self.data[lang]['vanguardstrikes']['fields'][0]['name'],
                     'description': self.data[lang]['vanguardstrikes']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'strike_modifiers', [db_data], name=self.translations[lang]['msg']['strikesmods'])
+                await self.write_to_db(lang, 'strike_modifiers', [db_data],
+                                       name=self.translations[lang]['msg']['strikesmods'])
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -954,8 +970,8 @@ class D2data:
                 if self.translations[lang]['strikes'] in r_json['displayProperties']['name']:
                     self.data[lang]['vanguardstrikes']['thumbnail']['url'] = self.icon_prefix + \
                                                                              r_json['displayProperties']['icon']
-            self.write_to_db(lang, 'strike_modifiers', db_data, size='wide',
-                             name=self.translations[lang]['msg']['strikesmods'], order=1)
+            await self.write_to_db(lang, 'strike_modifiers', db_data, size='wide',
+                                   name=self.translations[lang]['msg']['strikesmods'], order=1)
 
     async def get_reckoning_boss(self, lang):
         first_reset_time = 1539709200
@@ -1007,7 +1023,8 @@ class D2data:
                     'name': self.data[lang]['reckoning']['fields'][0]['name'],
                     'description': self.data[lang]['reckoning']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'reckoning', [db_data], name=self.translations[lang]['msg']['reckoningmods'])
+                await self.write_to_db(lang, 'reckoning', [db_data],
+                                       name=self.translations[lang]['msg']['reckoningmods'])
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1039,7 +1056,8 @@ class D2data:
                     mods = await self.decode_modifiers(key, lang)
                     db_data = [*db_data, *mods[1]]
                     self.data[lang]['reckoning']['fields'] = [*self.data[lang]['reckoning']['fields'], *mods[0]]
-            self.write_to_db(lang, 'reckoning', db_data, 'wide', self.translations[lang]['msg']['reckoningmods'], order=2)
+            await self.write_to_db(lang, 'reckoning', db_data, 'wide', self.translations[lang]['msg']['reckoningmods'],
+                                   order=2)
 
     async def get_nightfall820(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('nightfalls820', string='820 nightfalls', force=forceget)
@@ -1049,7 +1067,8 @@ class D2data:
                     'name': self.data[lang]['nightfalls820']['fields'][0]['name'],
                     'description': self.data[lang]['nightfalls820']['fields'][0]['value']
                 }
-                self.write_to_db(lang, '820_nightfalls', [db_data], name=self.translations[lang]['site']['nightfalls820'], type='weekly')
+                await self.write_to_db(lang, '820_nightfalls', [db_data],
+                                       name=self.translations[lang]['site']['nightfalls820'], type='weekly')
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1101,8 +1120,8 @@ class D2data:
                         self.data[lang]['nightfalls820']['fields'].append(info)
                 except KeyError:
                     pass
-            self.write_to_db(lang, '820_nightfalls', db_data, name=self.translations[lang]['site']['nightfalls820'],
-                             order=0, type='weekly')
+            await self.write_to_db(lang, '820_nightfalls', db_data,
+                                   name=self.translations[lang]['site']['nightfalls820'], order=0, type='weekly')
 
     async def get_modifiers(self, lang, act_hash):
         url = 'https://www.bungie.net/{}/Explore/Detail/DestinyActivityDefinition/{}'.format(lang, act_hash)
@@ -1133,7 +1152,8 @@ class D2data:
                     'name': self.data[lang]['raids']['fields'][0]['name'],
                     'description': self.data[lang]['raids']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'raid_challenges', [db_data], self.translations[lang]['msg']['raids'], type='weekly')
+                await self.write_to_db(lang, 'raid_challenges', [db_data], self.translations[lang]['msg']['raids'],
+                                       type='weekly')
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1301,8 +1321,8 @@ class D2data:
                     })
                     self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
-            self.write_to_db(lang, 'raid_challenges', db_data, 'wide tall', self.translations[lang]['msg']['raids'],
-                             order=1, type='weekly')
+            await self.write_to_db(lang, 'raid_challenges', db_data, 'wide tall',
+                                   self.translations[lang]['msg']['raids'], order=1, type='weekly')
 
     async def get_ordeal(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('ordeal', force=forceget)
@@ -1312,7 +1332,8 @@ class D2data:
                     'name': self.data[lang]['ordeal']['fields'][0]['name'],
                     'description': self.data[lang]['ordeal']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'ordeal', [db_data], name=self.translations[lang]['msg']['ordeal'], type='weekly')
+                await self.write_to_db(lang, 'ordeal', [db_data], name=self.translations[lang]['msg']['ordeal'],
+                                       type='weekly')
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1361,7 +1382,8 @@ class D2data:
                         self.data[lang]['ordeal']['fields'][0]['value'] = strike['description']
                         db_data[0]['description'] = strike['description']
                         break
-            self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'], order=5, type='weekly')
+            await self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'], order=5,
+                                   type='weekly')
 
     async def get_nightmares(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('nightmares', force=forceget)
@@ -1371,7 +1393,8 @@ class D2data:
                     'name': self.data[lang]['nightmares']['fields'][0]['name'],
                     'description': self.data[lang]['nightmares']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'nigtmare_hunts', [db_data], name=self.translations[lang]['site']['nightmares'], type='weekly')
+                await self.write_to_db(lang, 'nigtmare_hunts', [db_data],
+                                       name=self.translations[lang]['site']['nightmares'], type='weekly')
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1408,8 +1431,8 @@ class D2data:
                         'description': info['value']
                     })
                     self.data[lang]['nightmares']['fields'].append(info)
-            self.write_to_db(lang, 'nightmare_hunts', db_data, name=self.translations[lang]['site']['nightmares'],
-                             order=3, type='weekly')
+            await self.write_to_db(lang, 'nightmare_hunts', db_data, name=self.translations[lang]['site']['nightmares'],
+                                   order=3, type='weekly')
 
     async def get_crucible_rotators(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators',
@@ -1421,8 +1444,9 @@ class D2data:
                     'name': self.data[lang]['cruciblerotators']['fields'][0]['name'],
                     'description': self.data[lang]['cruciblerotators']['fields'][0]['value']
                 }
-                self.write_to_db(lang, 'crucible_rotators', [db_data],
-                                 name=self.translations[lang]['msg']['cruciblerotators'], template='table_items.html', type='weekly')
+                await self.write_to_db(lang, 'crucible_rotators', [db_data],
+                                       name=self.translations[lang]['msg']['cruciblerotators'],
+                                       template='table_items.html', type='weekly')
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1481,8 +1505,9 @@ class D2data:
                 style = 'wide tall'
             else:
                 style = 'wide'
-            self.write_to_db(lang, 'crucible_rotators', db_data, name=self.translations[lang]['msg']['cruciblerotators'],
-                             size=style, order=4, type='weekly')
+            await self.write_to_db(lang, 'crucible_rotators', db_data,
+                                   name=self.translations[lang]['msg']['cruciblerotators'], size=style, order=4,
+                                   type='weekly')
 
     async def get_the_lie_progress(self, langs, forceget=True):
         url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'],
@@ -1751,18 +1776,33 @@ class D2data:
                     'name': field['name'],
                     'description': field['value']
                 })
-            self.write_to_db(lang, 'trials_of_osiris', db_data, order=5, name=self.translations[lang]['site']['osiris'])
+            await self.write_to_db(lang, 'trials_of_osiris', db_data, order=5,
+                                   name=self.translations[lang]['site']['osiris'])
 
     async def drop_osiris(self, langs):
-        data_cursor = self.data_db.cursor()
+        while True:
+            try:
+                data_db = self.data_pool.get_connection()
+                break
+            except mariadb.PoolError:
+                await asyncio.sleep(0.125)
+        data_cursor = data_db.cursor()
 
         for lang in langs:
             data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
-        self.data_db.commit()
+        data_db.commit()
+        data_cursor.close()
+        data_db.close()
 
     async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True,
                               force=False, cache_only=False, expires_in=1800):
-        cache_cursor = self.cache_db.cursor()
+        while True:
+            try:
+                cache_connection = self.cache_pool.get_connection()
+                break
+            except mariadb.PoolError:
+                await asyncio.sleep(0.125)
+        cache_cursor = cache_connection.cursor()
 
         try:
             cache_cursor.execute('''SELECT json, expires, timestamp from cache WHERE id=?''', (cache_id,))
@@ -1774,6 +1814,8 @@ class D2data:
         except mariadb.Error:
             expired = True
             if cache_only:
+                cache_cursor.close()
+                cache_connection.close()
                 return False
 
         if (expired or force) and not cache_only:
@@ -1796,24 +1838,28 @@ class D2data:
                                               json.dumps(response_json), timestamp))
                     except mariadb.Error:
                         pass
-                try:
-                    cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
-                                         (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
-                                          timestamp))
-                except mariadb.Error:
-                    pass
-                try:
-                    cache_cursor.execute('''UPDATE cache SET expires=?, json=?, timestamp=? WHERE id=?''',
-                                         (int(datetime.now().timestamp() + expires_in), json.dumps(response_json), timestamp,
-                                          cache_id))
-                except mariadb.Error:
-                    pass
+                # try:
+                cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                                     (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
+                                      timestamp))
+                # except mariadb.Error:
+                #     pass
+                # try:
+                cache_cursor.execute('''UPDATE cache SET expires=?, json=?, timestamp=? WHERE id=?''',
+                                     (int(datetime.now().timestamp() + expires_in), json.dumps(response_json), timestamp,
+                                      cache_id))
+                # except mariadb.Error:
+                #     pass
             else:
+                cache_cursor.close()
+                cache_connection.close()
                 return False
         else:
             timestamp = cached_entry[2]
             response_json = json.loads(cached_entry[0])
-        # self.cache_db.commit()
+        cache_cursor.close()
+        cache_connection.commit()
+        cache_connection.close()
         response_json['timestamp'] = timestamp
         return response_json
 
