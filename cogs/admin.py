@@ -98,7 +98,7 @@ class Admin(commands.Cog):
     async def dropcache(self, ctx):
         while True:
             try:
-                cache_db = self.cache_pool.get_connection()
+                cache_db = self.bot.data.cache_pool.get_connection()
                 break
             except mariadb.PoolError:
                 await asyncio.sleep(0.125)
