@@ -89,13 +89,13 @@ class D2data:
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
-        self.cache_pool = mariadb.ConnectionPool(pool_name='cache', pool_size=64, pool_reset_connection=False,
+        self.cache_pool = mariadb.ConnectionPool(pool_name='cache', pool_size=10, pool_reset_connection=False,
                                                  host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                                  password=self.api_data['pass'], port=self.api_data['db_port'],
                                                  database=self.api_data['cache_name'])
         self.cache_pool.pool_reset_connection = True
         # self.cache_db.auto_reconnect = True
-        self.data_pool = mariadb.ConnectionPool(pool_name='data', pool_size=64, pool_reset_connection=False,
+        self.data_pool = mariadb.ConnectionPool(pool_name='data', pool_size=10, pool_reset_connection=False,
                                                 host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                                 password=self.api_data['pass'], port=self.api_data['db_port'],
                                                 database=self.api_data['data_db'])
