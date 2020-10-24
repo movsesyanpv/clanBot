@@ -104,7 +104,8 @@ class Admin(commands.Cog):
                 await asyncio.sleep(0.125)
         cursor = cache_db.cursor()
         cursor.execute('''DROP TABLE cache''')
-        self.bot.data.cache_db.commit()
+        cache_db.commit()
+        cache_db.close()
         await ctx.channel.send('Done, {}'.format(ctx.author.mention))
 
     @commands.is_owner()
