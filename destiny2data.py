@@ -627,6 +627,10 @@ class D2data:
                 data_db.auto_reconnect = True
                 break
             except mariadb.PoolError:
+                try:
+                    self.data_pool.add_connection()
+                except mariadb.PoolError:
+                    pass
                 await asyncio.sleep(0.125)
         data_cursor = data_db.cursor()
 
@@ -1793,6 +1797,10 @@ class D2data:
                 data_db.auto_reconnect = True
                 break
             except mariadb.PoolError:
+                try:
+                    self.data_pool.add_connection()
+                except mariadb.PoolError:
+                    pass
                 await asyncio.sleep(0.125)
         data_cursor = data_db.cursor()
 
@@ -1810,6 +1818,10 @@ class D2data:
                 cache_connection.auto_reconnect = True
                 break
             except mariadb.PoolError:
+                try:
+                    self.cache_pool.add_connection()
+                except mariadb.PoolError:
+                    pass
                 await asyncio.sleep(0.125)
         cache_cursor = cache_connection.cursor()
 
