@@ -1909,7 +1909,7 @@ class D2data:
             else:
                 tag = ''
 
-            if clan_members_resp:
+            if clan_members_resp and type(clan_json) == dict:
                 clan_json = clan_members_resp
                 try:
                     for member in clan_json['Response']['results']:
