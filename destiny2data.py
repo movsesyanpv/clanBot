@@ -1902,6 +1902,8 @@ class D2data:
                 code = clan_json['ErrorCode']
             except KeyError:
                 code = 0
+            except TypeError:
+                code = 0
             if code == 1:
                 tag = clan_json['Response']['detail']['clanInfo']['clanCallsign']
             else:
