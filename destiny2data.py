@@ -1876,8 +1876,11 @@ class D2data:
                 cache_connection.close()
                 return False
         else:
-            timestamp = cached_entry[2]
-            response_json = json.loads(cached_entry[0])
+            if cached_entry is not None:
+                timestamp = cached_entry[2]
+                response_json = json.loads(cached_entry[0])
+            else:
+                return False
         cache_cursor.close()
         cache_connection.commit()
         cache_connection.close()
