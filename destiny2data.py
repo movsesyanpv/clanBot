@@ -1880,6 +1880,8 @@ class D2data:
                 timestamp = cached_entry[2]
                 response_json = json.loads(cached_entry[0])
             else:
+                cache_cursor.close()
+                cache_connection.close()
                 return False
         cache_cursor.close()
         cache_connection.commit()

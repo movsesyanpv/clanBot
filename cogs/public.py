@@ -59,7 +59,6 @@ class Public(commands.Cog):
                                                                               metric.lower(), metric.lower(),
                                                                               metric.lower(), metric.lower()))
                     metric_id = internal_cursor.fetchone()
-                    internal_db.close()
                     if 'kda' in metric.lower():
                         is_kda = True
                     else:
@@ -72,9 +71,12 @@ class Public(commands.Cog):
                         if len(metric_id) > 0:
                             metric = metric_id[0]
                         else:
+                            internal_db.close()
                             raise mariadb.Error
                     else:
+                        internal_db.close()
                         raise mariadb.Error
+                    internal_db.close()
                 except mariadb.Error:
                     await ctx.channel.send(translations['unknown_metric'].format(metric), delete_after=10)
                     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
