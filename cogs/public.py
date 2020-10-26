@@ -59,6 +59,7 @@ class Public(commands.Cog):
                                                                               metric.lower(), metric.lower(),
                                                                               metric.lower(), metric.lower()))
                     metric_id = internal_cursor.fetchone()
+                    internal_db.close()
                     if 'kda' in metric.lower():
                         is_kda = True
                     else:
