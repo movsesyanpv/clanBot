@@ -768,7 +768,10 @@ class ClanBot(commands.Bot):
                         hist = []
                         for e in embed:
                             if server.me.permissions_in(channel).embed_links:
-                                message = await channel.send(embed=e, delete_after=time_to_delete)
+                                if channel.type != discord.ChannelType.news:
+                                    message = await channel.send(embed=e, delete_after=time_to_delete)
+                                else:
+                                    message = await channel.send(embed=e)
                             else:
                                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                             hist.append(message.id)
@@ -778,9 +781,15 @@ class ClanBot(commands.Bot):
                     else:
                         if server.me.permissions_in(channel).embed_links:
                             if upd_type in self.embeds_with_img:
-                                message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
+                                if channel.type != discord.ChannelType.news:
+                                    message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
+                                else:
+                                    message = await channel.send(file=image, embed=embed)
                             else:
-                                message = await channel.send(embed=embed, delete_after=time_to_delete)
+                                if channel.type != discord.ChannelType.news:
+                                    message = await channel.send(embed=embed, delete_after=time_to_delete)
+                                else:
+                                    message = await channel.send(embed=embed)
                         else:
                             message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                         hist = message.id
