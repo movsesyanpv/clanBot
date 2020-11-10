@@ -58,15 +58,15 @@ class ClanBot(commands.Bot):
         self.guild_cursor = self.guild_db.cursor()
 
 
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
+        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
+        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='50', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
+        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='50', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
         self.sched.add_job(self.data.get_banshee, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.langs])
 
         self.sched.add_job(self.data.drop_osiris, 'cron', day_of_week='tue', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.langs])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightfall820, 'nightfalls820', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightfall820, 'nightfalls820', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
@@ -116,16 +116,16 @@ class ClanBot(commands.Bot):
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_heroic_story, 'heroicstory', 86400, post=post, get=get, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_forge, 'forge', 86400, post=post, get=get, channels=channels, forceget=forceget)
+                # await self.universal_update(self.data.get_heroic_story, 'heroicstory', 86400, post=post, get=get, channels=channels, forceget=forceget)
+                # await self.universal_update(self.data.get_forge, 'forge', 86400, post=post, get=get, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400, post=post, get=get, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_reckoning_modifiers, 'reckoning', 86400, post=post, get=get, channels=channels, forceget=forceget)
+                # await self.universal_update(self.data.get_reckoning_modifiers, 'reckoning', 86400, post=post, get=get, channels=channels, forceget=forceget)
                 await self.data.get_banshee(self.langs, forceget=forceget)
         if 'weekly' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_nightfall820, 'nightfalls820', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                # await self.universal_update(self.data.get_nightfall820, 'nightfalls820', 604800, post=post, get=get, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_ordeal, 'ordeal', 604800, post=post, get=get, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_nightmares, 'nightmares', 604800, post=post, get=get, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800, post=post, get=get, channels=channels, forceget=forceget)
