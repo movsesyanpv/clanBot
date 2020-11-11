@@ -732,7 +732,7 @@ class D2data:
             #     'timestamp': resp_time
             # }
 
-            items_to_get = banshee_cats[2]['itemIndexes']
+            items_to_get = banshee_cats[3]['itemIndexes']
 
             banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
