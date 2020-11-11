@@ -513,13 +513,13 @@ class D2data:
                     n_items = 0
                     curr_week = []
                     class_items = 0
-                if item['displayCategoryIndex'] == 4 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                if item['displayCategoryIndex'] == 2 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
                                                                                   3187955025, 2638689062]:
                     definition = 'DestinyInventoryItemDefinition'
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
                                                                    language=lang)
-                    cat_number = 4
+                    cat_number = 2
                     if 'screenshot' in item_def.keys():
                         screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
                                      'loading="lazy">'.format(item_def['screenshot'])
@@ -566,13 +566,13 @@ class D2data:
                     n_items = 0
                     curr_week = []
                     class_items = 0
-                if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                if item['displayCategoryIndex'] == 7 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
                                                                                   3187955025, 2638689062]:
                     definition = 'DestinyInventoryItemDefinition'
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
                                                                    language=lang)
-                    cat_number = 9
+                    cat_number = 7
                     if 'screenshot' in item_def.keys():
                         screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}" ' \
                                      'loading="lazy">'.format(item_def['screenshot'])
