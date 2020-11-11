@@ -1198,17 +1198,17 @@ class D2data:
                 format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
             hawthorne_resp = await self.get_cached_json('hawthorne', 'hawthorne', hawthorne_url, self.vendor_params,
                                                         force=forceget)
-            if not hawthorne_resp:
-                return
+
             hawthorne_json = hawthorne_resp
-            resp_time = hawthorne_json['timestamp']
-            for cat in hawthorne_json['Response']['sales']['data']:
-                if hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in last_wish_challenges:
-                    lw_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
-                elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in sotp_challenges:
-                    sotp_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
-                elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in cos_challenges:
-                    cos_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+            if hawthorne_resp:
+                resp_time = hawthorne_json['timestamp']
+                for cat in hawthorne_json['Response']['sales']['data']:
+                    if hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in last_wish_challenges:
+                        lw_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+                    elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in sotp_challenges:
+                        sotp_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+                    elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in cos_challenges:
+                        cos_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
 
             db_data = []
             activities_json = activities_resp
@@ -1267,7 +1267,7 @@ class D2data:
                     })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and lw_ch != 0:
+                        not r_json['matchmaking']['requiresGuardianOath'] and lw_ch != 0 and hawthorne_resp:
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
@@ -1283,7 +1283,7 @@ class D2data:
                     })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and sotp_ch != 0:
+                        not r_json['matchmaking']['requiresGuardianOath'] and sotp_ch != 0 and hawthorne_resp:
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
@@ -1299,7 +1299,7 @@ class D2data:
                     })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['CoS'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and cos_ch != 0:
+                        not r_json['matchmaking']['requiresGuardianOath'] and cos_ch != 0 and hawthorne_resp:
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
@@ -1333,7 +1333,7 @@ class D2data:
                     })
                     self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
-            await self.write_to_db(lang, 'raid_challenges', db_data, 'wide tall',
+            await self.write_to_db(lang, 'raid_challenges', db_data, '',
                                    self.translations[lang]['msg']['raids'], order=1, type='weekly')
 
     async def get_ordeal(self, langs, forceget=False):
@@ -1482,12 +1482,12 @@ class D2data:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
-                if r_json['destinationHash'] == 2777041980:
+                if r_json['destinationHash'] == 4088006058:
                     if len(r_json['challenges']) > 0:
                         obj_def = 'DestinyObjectiveDefinition'
                         objective = await self.destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def,
                                                                    lang)
-                        if self.translations[lang]['rotator'] in objective['displayProperties']['name'] or r_json['challenges'][0]['objectiveHash'] == 1607758693:
+                        if item_hash in [540869524, 903584917, 142028034, 1683791010]:
                             if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
                                 if 'icon' in r_json['displayProperties']:
                                     self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
