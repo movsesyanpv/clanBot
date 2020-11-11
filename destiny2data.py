@@ -969,12 +969,13 @@ class D2data:
 
             db_data = []
             activities_json = activities_resp
+            strikes = await self.destiny.decode_hash(743628305, 'DestinyActivityDefinition', language=lang)
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
 
-                if local_types['heroicstory'] in r_json['displayProperties']['name']:
+                if local_types['vanguard_strikes'] in r_json['displayProperties']['name']:
                     mods = await self.decode_modifiers(key, lang)
                     self.data[lang]['vanguardstrikes']['fields'] = mods[0]
                     db_data = mods[1]
