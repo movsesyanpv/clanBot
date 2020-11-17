@@ -1487,7 +1487,7 @@ class D2data:
                         obj_def = 'DestinyObjectiveDefinition'
                         objective = await self.destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def,
                                                                    lang)
-                        if item_hash in [540869524, 903584917, 142028034, 1683791010]:
+                        if item_hash in [540869524, 3847433434, 142028034, 1683791010]:
                             if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
                                 if 'icon' in r_json['displayProperties']:
                                     self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
