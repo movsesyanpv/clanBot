@@ -20,7 +20,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.16'
+    version = '2.16.1'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'daily', 'strikes', 'spider', 'banshee', 'xur', 'osiris', 'tess', 'alerts', 'events']
@@ -712,6 +712,8 @@ class ClanBot(commands.Bot):
                 else:
                     if upd_type in self.embeds_with_img:
                         image = discord.File("{}-{}.png".format(upd_type, lang), filename='{}-{}.png'.format(upd_type, lang))
+                    if len(src_dict[lang][upd_type]['fields']) == 0:
+                        return
                     embed = discord.Embed.from_dict(src_dict[lang][upd_type])
 
             hist = 0
