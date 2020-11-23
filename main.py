@@ -23,7 +23,7 @@ class ClanBot(commands.Bot):
     version = '2.16'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
-    all_types = ['weekly', 'daily', 'spider', 'xur', 'osiris', 'tess', 'alerts', 'events']
+    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'daily', 'strikes', 'spider', 'banshee', 'xur', 'osiris', 'tess', 'alerts', 'events']
     embeds_with_img = ['thelie']
 
     sched = AsyncIOScheduler(timezone='UTC')
@@ -112,33 +112,50 @@ class ClanBot(commands.Bot):
         self.args = parser.parse_args()
 
     async def force_update(self, upd_type, post=True, get=True, channels=None, forceget=False):
-        if 'daily' in upd_type:
+        if 'daily' in upd_type and post:
+            upd_type = (tuple(upd_type) + ('strikes', 'spider', 'banshee'))
+        if 'weekly' in upd_type and post:
+            upd_type = (tuple(upd_type) + ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly'))
+        if 'strikes' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                # await self.universal_update(self.data.get_heroic_story, 'heroicstory', 86400, post=post, get=get, channels=channels, forceget=forceget)
-                # await self.universal_update(self.data.get_forge, 'forge', 86400, post=post, get=get, channels=channels, forceget=forceget)
                 await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400, post=post, get=get, channels=channels, forceget=forceget)
-                # await self.universal_update(self.data.get_reckoning_modifiers, 'reckoning', 86400, post=post, get=get, channels=channels, forceget=forceget)
-                await self.data.get_banshee(self.langs, forceget=forceget)
-        if 'weekly' in upd_type:
+        if 'banshee' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                # await self.universal_update(self.data.get_nightfall820, 'nightfalls820', 604800, post=post, get=get, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_ordeal, 'ordeal', 604800, post=post, get=get, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_nightmares, 'nightmares', 604800, post=post, get=get, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800, post=post, get=get, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_raids, 'raids', 604800, post=post, get=get, channels=channels, forceget=forceget)
-                await self.data.get_weekly_eververse(self.langs)
-                # await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=get, channels=channels, forceget=forceget)
-                # await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=get, channels=channels, forceget=forceget)
-                # await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=False, get=get, channels=channels, forceget=forceget)
+                await self.data.get_banshee(self.langs, forceget=forceget)
         if 'spider' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 await self.universal_update(self.data.get_spider, 'spider', 86400, post=post, get=get, channels=channels, forceget=forceget)
+        if 'ordeal' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_ordeal, 'ordeal', 604800, post=post, get=get, channels=channels, forceget=forceget)
+        if 'nightmares' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_nightmares, 'nightmares', 604800, post=post, get=get, channels=channels, forceget=forceget)
+        if 'crucible' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800, post=post, get=get, channels=channels, forceget=forceget)
+        if 'raids' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_raids, 'raids', 604800, post=post, get=get, channels=channels, forceget=forceget)
+        if 'evweekly' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.data.get_weekly_eververse(self.langs)
         if 'xur' in upd_type:
             if channels is None:
                 channels = self.notifiers
