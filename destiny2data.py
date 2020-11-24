@@ -1405,7 +1405,7 @@ class D2data:
                     'name': self.data[lang]['nightmares']['fields'][0]['name'],
                     'description': self.data[lang]['nightmares']['fields'][0]['value']
                 }
-                await self.write_to_db(lang, 'nigtmare_hunts', [db_data],
+                await self.write_to_db(lang, 'nightmare_hunts', [db_data],
                                        name=self.translations[lang]['site']['nightmares'], type='weekly')
             return False
         resp_time = activities_resp['timestamp']
