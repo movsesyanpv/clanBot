@@ -38,7 +38,8 @@
         "no_seasonal_reg": "This channel is not registered as a seasonal notifier.",
         "no_regular_reg": "This channel is not registered as a non-seasonal notifier.",
         "no_send_messages": "{}, I'm not allowed to respond in that channel.",
-        "osiris": "Trials of Osiris"
+        "osiris": "Trials of Osiris",
+        "empire_hunts": "Elective difficulty empire hunt"
     },
     "lfg": {
         "go": "Go",
@@ -254,7 +255,8 @@
         "nightfalls820": "Nightfalls",
         "nightmares": "Nightmare hunts",
         "bd": "Eververse",
-        "osiris": "Trials of Osiris"
+        "osiris": "Trials of Osiris",
+        "empire_hunts": "Empire hunts"
     },
     "osiris": {
         "map": "Map",
@@ -287,5 +289,6 @@
         "1391900891": "Grenade Launcher",
         "1604869479": "Sword"
     },
-    "vanguard_strikes": "先鋒突擊任務"
+    "vanguard_strikes": "先鋒突擊任務",
+    "empire_hunt": "Empire Hunt:"
 }
