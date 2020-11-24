@@ -20,10 +20,12 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.16.1'
+    version = '2.16.2'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
-    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'daily', 'strikes', 'spider', 'banshee', 'xur', 'osiris', 'tess', 'alerts', 'events']
+    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'xur', 'osiris', 'tess', 'alerts', 'events']
+    daily_rotations = ('strikes', 'spider', 'banshee')
+    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire')
     embeds_with_img = ['thelie']
 
     sched = AsyncIOScheduler(timezone='UTC')
@@ -69,6 +71,7 @@ class ClanBot(commands.Bot):
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightfall820, 'nightfalls820', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_empire_hunt, 'empire_hunts', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_featured_bd, 'featured_bd', 604800])
@@ -113,9 +116,9 @@ class ClanBot(commands.Bot):
 
     async def force_update(self, upd_type, post=True, get=True, channels=None, forceget=False):
         if 'daily' in upd_type and post:
-            upd_type = (tuple(upd_type) + ('strikes', 'spider', 'banshee'))
+            upd_type = (tuple(upd_type) + self.daily_rotations)
         if 'weekly' in upd_type and post:
-            upd_type = (tuple(upd_type) + ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly'))
+            upd_type = (tuple(upd_type) + self.weekly_rotations)
         if 'strikes' in upd_type:
             if channels is None:
                 channels = self.notifiers
@@ -141,6 +144,11 @@ class ClanBot(commands.Bot):
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 await self.universal_update(self.data.get_nightmares, 'nightmares', 604800, post=post, get=get, channels=channels, forceget=forceget)
+        if 'empire' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_empire_hunt, 'empire_hunts', 604800, post=post, get=get, channels=channels, forceget=forceget)
         if 'crucible' in upd_type:
             if channels is None:
                 channels = self.notifiers

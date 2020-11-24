@@ -1446,6 +1446,55 @@ class D2data:
             await self.write_to_db(lang, 'nightmare_hunts', db_data, name=self.translations[lang]['site']['nightmares'],
                                    order=3, type='weekly')
 
+    async def get_empire_hunt(self, langs, forceget=False):
+        activities_resp = await self.get_activities_response('empire_hunts', force=forceget)
+        if not activities_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.data[lang]['empire_hunts']['fields'][0]['name'],
+                    'description': self.data[lang]['empire_hunts']['fields'][0]['value']
+                }
+                await self.write_to_db(lang, 'empire_hunts', [db_data],
+                                       name=self.translations[lang]['site']['empire_hunts'], type='weekly')
+            return False
+        resp_time = activities_resp['timestamp']
+
+        for lang in langs:
+            local_types = self.translations[lang]
+
+            self.data[lang]['empire_hunts'] = {
+                'thumbnail': {
+                    'url': 'https://www.bungie.net/common/destiny2_content/icons/64ea61b26a2cba84954b4b73960bef7e.jpg'
+                },
+                'fields': [],
+                'color': 0x0a2b4c,
+                'type': 'rich',
+                'title': self.translations[lang]['msg']['empire_hunts'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
+            }
+
+            db_data = []
+            for key in activities_resp['Response']['activities']['data']['availableActivities']:
+                item_hash = key['activityHash']
+                definition = 'DestinyActivityDefinition'
+                r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
+                if r_json['activityTypeHash'] == 494260690 and \
+                        local_types['adept'] in r_json['displayProperties']['name']:
+                    info = {
+                        'inline': True,
+                        'name': r_json['displayProperties']['name'].replace(local_types['adept'], "").
+                            replace(local_types['empire_hunt'], ""),
+                        'value': r_json['displayProperties']['description']
+                    }
+                    db_data.append({
+                        'name': info['name'].replace(local_types['empire_hunt'], '').replace('\"', ''),
+                        'description': info['value']
+                    })
+                    self.data[lang]['empire_hunts']['fields'].append(info)
+            await self.write_to_db(lang, 'empire_hunts', db_data, name=self.translations[lang]['site']['empire_hunts'],
+                                   order=6, type='weekly')
+
     async def get_crucible_rotators(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators',
                                                              force=forceget)
