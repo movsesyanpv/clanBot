@@ -113,7 +113,7 @@ class Admin(commands.Cog):
     @commands.command(
         description='Set Trials of Osiris info'
     )
-    async def osiris(self, ctx, curr_map, win3, win5, win7, flawless):
+    async def osiris(self, ctx, curr_map, win3, win5, win7, flawless, mod):
         url = 'https://bungie.net/Platform/Destiny2/Armory/Search/{}/{}'
         map_resp = await self.bot.data.get_bungie_json('too map', url.format('DestinyActivityDefinition', curr_map),
                                                        change_msg=False)
@@ -139,7 +139,12 @@ class Admin(commands.Cog):
                                                             change_msg=False)
             if len(flawless_resp['Response']['results']['results']) > 0:
                 flawless = flawless_resp['Response']['results']['results'][0]['hash']
-        await self.bot.data.get_osiris_predictions(self.bot.langs, force_info=[curr_map, win3, win5, win7, flawless])
+        if mod not in self.bot.translations['en']['osiris'].keys():
+            mod_resp = await self.bot.data.get_bungie_json('mod', url.format('DestinyCollectibleDefinition', mod),
+                                                            change_msg=False)
+            if len(mod_resp['Response']['results']['results']) > 0:
+                mod = mod_resp['Response']['results']['results'][0]['hash']
+        await self.bot.data.get_osiris_predictions(self.bot.langs, force_info=[curr_map, win3, win5, win7, flawless, mod])
         await ctx.bot.force_update('osiris', get=False, channels=None, forceget=False)
         await ctx.channel.send('done')
 

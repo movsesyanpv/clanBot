@@ -801,7 +801,7 @@ class D2data:
 
                 for key in sorted(xur_sales.keys()):
                     item_hash = xur_sales[key]['itemHash']
-                    if item_hash not in [4285666432, 2293314698]:
+                    if item_hash not in [4285666432, 2293314698, 2125848607]:
                         definition = 'DestinyInventoryItemDefinition'
                         item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
                         item_name = item_resp['displayProperties']['name']
@@ -1752,9 +1752,14 @@ class D2data:
 
     async def get_osiris_predictions(self, langs, forceget=False, force_info = None):
         win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
+        win3_rotation = ['?']
         win5_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
+        win5_rotation = ['?']
         win7_rotation = ['?', 'gloves', '?', 'chest', '?', 'boots', '?', 'helmet', '?', 'class']
+        win7_rotation = ['?']
         flawless_rotation = ['gloves', 'chest', 'class', 'helmet', 'boots']
+        flawless_rotation = ['?']
+        mod_rotation = ['?']
 
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
         week_n = int(week_n.days / 7)
@@ -1795,6 +1800,10 @@ class D2data:
                     {
                         'name': locale['flawless'],
                         'value': '{}?'.format(locale[flawless_rotation[int(week_n % len(flawless_rotation))]])
+                    },
+                    {
+                        'name': locale['mod'],
+                        'value': '{}?'.format(locale[mod_rotation[int(week_n % len(mod_rotation))]])
                     }
                 ]
             else:
@@ -1833,6 +1842,10 @@ class D2data:
                     {
                         'name': locale['flawless'],
                         'value': info[4]
+                    },
+                    {
+                        'name': locale['mod'],
+                        'value': info[5]
                     }
                 ]
             for field in self.data[lang]['osiris']['fields']:
