@@ -39,7 +39,8 @@
         "no_regular_reg": "This channel is not registered as a non-seasonal notifier.",
         "no_send_messages": "{}, I'm not allowed to respond in that channel.",
         "osiris": "Trials of Osiris",
-        "empire_hunts": "Elective difficulty empire hunt"
+        "empire_hunts": "Elective difficulty empire hunt",
+        "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command."
     },
     "lfg": {
         "go": "Go",
