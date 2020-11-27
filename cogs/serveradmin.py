@@ -92,21 +92,26 @@ class ServerAdmin(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def setclan(self, ctx, clan_id, *args):
+        lang = ctx.bot.guild_lang(ctx.message.guild.id)
         try:
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(int(clan_id))
         except ValueError:
             for arg in args:
                 clan_id = '{} {}'.format(clan_id, arg)
             url = 'https://www.bungie.net/Platform/GroupV2/Name/{}/1/'.format(clan_id)
-        clan_resp = await ctx.bot.data.get_bungie_json('clan'.format(clan_id), url, string='clan {}'.format(clan_id))
+        clan_resp = await ctx.bot.data.get_bungie_json('clan'.format(clan_id), url, string='clan {}'.format(clan_id), change_msg=False)
         clan_json = clan_resp
         try:
             code = clan_json['ErrorCode']
         except KeyError:
             code = 0
+        except TypeError:
+            await ctx.channel.send('{}: {}'.format(clan_id, ctx.bot.translations[lang]['msg']['clan_search_error']), delete_after=60)
+            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                await ctx.message.delete()
         if code == 1:
             await ctx.channel.send('{}\nid: {}'.format(clan_json['Response']['detail']['name'],
-                                                       clan_json['Response']['detail']['groupId']), delete_after=10)
+                                                       clan_json['Response']['detail']['groupId']), delete_after=60)
             if await ctx.bot.check_ownership(ctx.message, is_silent=True, admin_check=True):
                 ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
                                              (clan_json['Response']['detail']['name'],
@@ -120,7 +125,7 @@ class ServerAdmin(commands.Cog):
                     except KeyError:
                         pass
         else:
-            await ctx.channel.send('{}: {}'.format(clan_id, clan_json['Message']), delete_after=10)
+            await ctx.channel.send('{}: {}'.format(clan_id, clan_json['Message']), delete_after=60)
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
             await ctx.message.delete()
 

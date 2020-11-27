@@ -182,7 +182,7 @@ class D2data:
             pass
         self.destiny = pydest.Pydest(self.api_data['key'])
 
-    async def get_bungie_json(self, name, url, params=None, lang=None, string=None, change_msg=True):
+    async def get_bungie_json(self, name, url, params=None, lang=None, string=None, change_msg=True, is_get=True, body=None):
         if lang is None:
             lang = list(self.data.keys())
             lang_str = ''
@@ -191,7 +191,10 @@ class D2data:
         if string is None:
             string = str(name)
         try:
-            resp = await self.session.get(url, params=params, headers=self.headers)
+            if is_get:
+                resp = await self.session.get(url, params=params, headers=self.headers)
+            else:
+                resp = await self.session.post(url, params=params, headers=self.headers, json=body)
         except:
             if change_msg:
                 for locale in lang:
