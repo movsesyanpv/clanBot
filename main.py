@@ -251,6 +251,7 @@ class ClanBot(commands.Bot):
         await self.update_langs()
 
     async def on_guild_remove(self, guild):
+        self.guild_cursor.execute('''DELETE FROM clans WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM language WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM seasonal WHERE server_id=?''', (guild.id,))
