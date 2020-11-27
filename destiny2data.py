@@ -1751,15 +1751,15 @@ class D2data:
                 await self.get_player_metric(member_type, member_id, metric, is_global)]
 
     async def get_osiris_predictions(self, langs, forceget=False, force_info = None):
-        win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
-        win3_rotation = ['?']
-        win5_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
-        win5_rotation = ['?']
-        win7_rotation = ['?', 'gloves', '?', 'chest', '?', 'boots', '?', 'helmet', '?', 'class']
-        win7_rotation = ['?']
-        flawless_rotation = ['gloves', 'chest', 'class', 'helmet', 'boots']
-        flawless_rotation = ['?']
-        mod_rotation = ['?']
+        # win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
+        win3_rotation = ['?', '?', '?']
+        # win5_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
+        win5_rotation = ['?', '?', '?']
+        # win7_rotation = ['?', 'gloves', '?', 'chest', '?', 'boots', '?', 'helmet', '?', 'class']
+        win7_rotation = ['?', '?', '?']
+        # flawless_rotation = ['gloves', 'chest', 'class', 'helmet', 'boots']
+        flawless_rotation = ['?', '?', '?']
+        mod_rotation = ['?', '?', '?']
 
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
         week_n = int(week_n.days / 7)
@@ -1814,10 +1814,18 @@ class D2data:
                             definition = await self.destiny.decode_hash(parameter, 'DestinyActivityDefinition', lang)
                             info.append(definition['displayProperties']['name'])
                         except pydest.PydestException:
-                            definition = await self.destiny.decode_hash(parameter, 'DestinyCollectibleDefinition', lang)
-                            for parent in definition['parentNodeHashes']:
-                                if str(parent) in self.translations[lang]['weapon_types'].keys():
-                                    info.append('{} ({})'.format(definition['displayProperties']['name'], self.translations[lang]['weapon_types'][str(parent)]))
+                            try:
+                                definition = await self.destiny.decode_hash(parameter, 'DestinySandboxPerkDefinition',
+                                                                            lang)
+                                info.append(definition['displayProperties']['name'])
+                            except pydest.PydestException:
+                                definition = await self.destiny.decode_hash(parameter, 'DestinyCollectibleDefinition',
+                                                                            lang)
+                                for parent in definition['parentNodeHashes']:
+                                    if str(parent) in self.translations[lang]['weapon_types'].keys():
+                                        info.append('{} ({})'.format(definition['displayProperties']['name'],
+                                                                     self.translations[lang]['weapon_types'][
+                                                                         str(parent)]))
                     elif parameter in locale.keys():
                         info.append(locale[parameter])
                     else:
