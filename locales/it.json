@@ -270,7 +270,8 @@
         "gloves": "Gloves",
         "chest": "Chesh",
         "boots": "Boots",
-        "class": "Class Item"
+        "class": "Class Item",
+        "mod": "Mod"
     },
     "weapon_types": {
         "2766676737": "Auto Rifle",
