@@ -16,13 +16,11 @@
         "guidedgamenightfall": "Current guided game nightfall",
         "ordeal": "Current ordeal",
         "nightmares": "Current nightmare hunts are",
-        "empire_hunts": "Elective difficulty empire hunt",
         "reckoningboss": "The Reckoning boss is",
         "cruciblerotators": "Crucible rotators are",
         "xurloc": "Location",
         "cost": "Cost",
         "xurtitle": "Xur",
-        "osiris": "Trials of Osiris",
         "raids": "Raids",
         "silver": "Featured Silver items",
         "featured_bd": "Featured Bright Dust items",
@@ -40,18 +38,9 @@
         "no_seasonal_reg": "This channel is not registered as a seasonal notifier.",
         "no_regular_reg": "This channel is not registered as a non-seasonal notifier.",
         "no_send_messages": "{}, I'm not allowed to respond in that channel.",
-        "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command."
-    },
-    "site": {
-        "spider": "Spider",
-        "forge": "Forge",
-        "heroicstory": "Heroic story missions",
-        "reckoningboss": "The Reckoning boss",
-        "nightfalls820": "Nightfalls",
-        "nightmares": "Nightmare hunts",
-        "bd": "Eververse",
         "osiris": "Trials of Osiris",
-        "empire_hunts": "Empire hunts"
+        "empire_hunts": "Elective difficulty empire hunt",
+        "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command."
     },
     "lfg": {
         "go": "Go",
@@ -61,7 +50,6 @@
         "newBlood": "There are new guys for:",
         "gotcha": "Got your emote, {}.",
         "server": "of",
-        "dm_start": "{}, check your DMs",
         "name": "Provide the name of the activity",
         "description": "Describe, what are you going to do there",
         "time": "When are you going to start? (format is `%d-%m-%Y %H:%M` for UTC+3 timezone and `%d-%m-%Y %H:%M %z`, for custom timezone)\nExamples of the current time: `{}` for UTC+3, `{}` for custom timezone.",
@@ -83,7 +71,8 @@
         "lfglist": "{}{}. {} @ {} {} in #{} of {}, ID: `{}`\n",
         "lfglist_empty": "No LFGs were found",
         "lfglist_choice_check": "Is the LFG choice correct? Yes/No\n",
-        "no_change": "Not changed"
+        "no_change": "Not changed",
+        "dm_start": "{}, check your DMs"
     },
     "lfge": {
         "roles": "Roles",
@@ -106,25 +95,10 @@
         "NULL": "Unable to get the info",
         "noxur": "Only the Nine know"
     },
-    "osiris": {
-        "map": "Map",
-        "?": "?",
-        "3win": "3 wins",
-        "5win": "5 wins",
-        "7win": "7 wins",
-        "flawless": "Flawless",
-        "helmet": "Helmet",
-        "gloves": "Gloves",
-        "chest": "Chesh",
-        "boots": "Boots",
-        "class": "Class Item",
-        "mod": "Mod"
-    },
     "forge": "Forge",
-    "vanguard_strikes": "Vanguard Strikes",
+    "heroicstory": "Daily Heroic Story Mission: ",
     "ordeal": "Nightfall: The Ordeal",
     "nightmare": "Nightmare Hunt:",
-    "empire_hunt": "Empire Hunt:",
     "adept": ": Master",
     "Warlock": "Warlock",
     "Titan": "Titan",
@@ -142,24 +116,6 @@
         "2449714930": "1. Royal Pools\n2. The Gauntlet\n3. Pleasure Gardens\n4. Throne",
         "3446541099": "1. Pleasure Gardens\n2. Royal Pools\n3. The Gauntlet\n4. Throne",
         "3879860661": "1. Royal Pools\n2. Pleasure Gardens\n3. The Gauntlet\n4. Throne"
-    },
-    "weapon_types": {
-        "2766676737": "Auto Rifle",
-        "2174985928": "Scout Rifle",
-        "3263747939": "Pulse Rifle",
-        "1956740204": "Hand Cannon",
-        "2081696512": "Submachine Gun",
-        "3779085124": "Sidearm",
-        "2976016363": "Bow",
-        "1186584658": "Sniper Rifle",
-        "2122496537": "Fusion Rifle",
-        "4089315591": "Grenade Launcher",
-        "3058624876": "Shotgun",
-        "3935277741": "Machine Gun",
-        "690633563": "Linear Fusion Rifle",
-        "3106206619": "Rocket Launcher",
-        "1391900891": "Grenade Launcher",
-        "1604869479": "Sword"
     },
     "lairs": "Eater of Worlds and Spire of Stars",
     "EoW": "Eater of Worlds: Prestige",
@@ -202,25 +158,16 @@
         "plan_maintenance": "Prevent updates at given time frame",
         "lfg": "Create an LFG message",
         "edit_lfg": "Edit LFG message",
-        "prefix": "Print available prefixes",
-        "setprefix": "Set available prefixes",
         "regnotifier": "Register notifier channel",
         "rmnotifier": "Deregister notifier channel",
         "update": "Get updates from Bungie for the given TYPE",
         "setclan": "Set Destiny 2 clan for the server.",
         "top": "Print top players for one of the available metrics.",
-        "support": "Get the link to the support server",
         "additional_info": "Type `{}help command language` for more info on a `command` in `language`. Available languages are `{}` (Some lines might be untranslated).\nType `{}ruhelp command` for more info on a `command` in russian.",
         "aliases": "Can be called with the following names:```{}```",
         "parameters": "Usage:```{}```",
         "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
         "commands": {
-            "prefix": {
-                "info": "Print available prefixes."
-            },
-            "setprefix": {
-                "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes. Send `none` as the parameter to disable all prefixes, except bot mention."
-            },
             "setclan": {
                 "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
             },
@@ -279,8 +226,17 @@
                 "edit_title": "__**LFG editing**__\nEvery group has it's own ID. To get information about your LFGs message the bot in DM `lfglist`. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**.\nIn order to edit the group send `editlfg` command in the channel you want the updated group announcement be in. The syntax is the same as in `lfg`",
                 "manual": "__**Managing manual groups**__\nWhen someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate along with some information about the group (time, channel, server).\nTo choose a person press the corresponding emote. The list will update. **Don't** press multiple emotes, wait for the list update!!!",
                 "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner)."
+            },
+            "prefix": {
+                "info": "Print available prefixes."
+            },
+            "setprefix": {
+                "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes. Send `none` as the parameter to disable all prefixes, except bot mention."
             }
-        }
+        },
+        "prefix": "Print available prefixes",
+        "setprefix": "Set available prefixes",
+        "support": "Get the link to the support server"
     },
     "graph": {
         "percentage": "Completion percentage",
@@ -291,5 +247,50 @@
         "unknown_metric": "Unknown metric `{}`. Use `help top` to get the list of available metrics.",
         "in_progress": "Getting the leaderboard, could take a long time.",
         "no_data": "No data for the metric."
-    }
+    },
+    "site": {
+        "spider": "Spider",
+        "forge": "Forge",
+        "heroicstory": "Heroic story missions",
+        "reckoningboss": "The Reckoning boss",
+        "nightfalls820": "Nightfalls",
+        "nightmares": "Nightmare hunts",
+        "bd": "Eververse",
+        "osiris": "Trials of Osiris",
+        "empire_hunts": "Empire hunts"
+    },
+    "osiris": {
+        "map": "Map",
+        "?": "?",
+        "3win": "3 wins",
+        "5win": "5 wins",
+        "7win": "7 wins",
+        "flawless": "Flawless",
+        "helmet": "Helmet",
+        "gloves": "Gloves",
+        "chest": "Chesh",
+        "boots": "Boots",
+        "class": "Class Item",
+        "mod": "Mod"
+    },
+    "weapon_types": {
+        "2766676737": "Auto Rifle",
+        "2174985928": "Scout Rifle",
+        "3263747939": "Pulse Rifle",
+        "1956740204": "Hand Cannon",
+        "2081696512": "Submachine Gun",
+        "3779085124": "Sidearm",
+        "2976016363": "Bow",
+        "1186584658": "Sniper Rifle",
+        "2122496537": "Fusion Rifle",
+        "4089315591": "Grenade Launcher",
+        "3058624876": "Shotgun",
+        "3935277741": "Machine Gun",
+        "690633563": "Linear Fusion Rifle",
+        "3106206619": "Rocket Launcher",
+        "1391900891": "Grenade Launcher",
+        "1604869479": "Sword"
+    },
+    "vanguard_strikes": "Vanguard Strikes",
+    "empire_hunt": "Empire Hunt:"
 }
