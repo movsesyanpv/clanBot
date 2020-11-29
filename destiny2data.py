@@ -1318,16 +1318,36 @@ class D2data:
                     })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath']:
+                        not r_json['matchmaking']['requiresGuardianOath'] and len(r_json['modifiers']) >= 1:
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    mods = await self.get_modifiers(lang, r_json['hash'])
+                    # mods = await self.get_modifiers(lang, r_json['hash'])
+                    mods = await self.destiny.decode_hash(key['modifierHashes'][0], 'DestinyActivityModifierDefinition', lang)
                     resp_time = datetime.utcnow().isoformat()
                     if mods:
-                        info['value'] = mods[0]['name']
+                        info['value'] = mods['displayProperties']['name']
+                    else:
+                        info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                    db_data.append({
+                        'name': info['name'],
+                        'description': info['value'].replace('\n', '<br>')
+                    })
+                    self.data[lang]['raids']['fields'].append(info)
+                if self.translations[lang]['DSC'] in r_json['displayProperties']['name'] and \
+                        not r_json['matchmaking']['requiresGuardianOath']:# and len(r_json['modifiers']) >= 1:
+                    info = {
+                        'inline': True,
+                        'name': r_json['originalDisplayProperties']['name'],
+                        'value': u"\u2063"
+                    }
+                    # mods = await self.get_modifiers(lang, r_json['hash'])
+                    mods = await self.destiny.decode_hash(key['modifierHashes'][0], 'DestinyActivityModifierDefinition', lang)
+                    resp_time = datetime.utcnow().isoformat()
+                    if mods:
+                        info['value'] = mods['displayProperties']['name']
                     else:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
                     db_data.append({
