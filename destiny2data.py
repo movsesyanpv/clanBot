@@ -1171,6 +1171,11 @@ class D2data:
                                        type='weekly')
             return False
         resp_time = activities_resp['timestamp']
+
+        hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
+            format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
+        hawthorne_resp = await self.get_cached_json('hawthorne', 'hawthorne', hawthorne_url, self.vendor_params,
+                                                    force=forceget)
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -1196,11 +1201,6 @@ class D2data:
             lw_ch = 0
             sotp_ch = 0
             cos_ch = 0
-
-            hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
-                format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
-            hawthorne_resp = await self.get_cached_json('hawthorne', 'hawthorne', hawthorne_url, self.vendor_params,
-                                                        force=forceget)
 
             hawthorne_json = hawthorne_resp
             if hawthorne_resp:
@@ -1318,7 +1318,7 @@ class D2data:
                     })
                     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and len(r_json['modifiers']) >= 1:
+                        not r_json['matchmaking']['requiresGuardianOath'] and 'modifierHashes' in key.keys():
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
@@ -1336,14 +1336,12 @@ class D2data:
                         'description': info['value'].replace('\n', '<br>')
                     })
                     self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]['DSC'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath']:# and len(r_json['modifiers']) >= 1:
+                if r_json['hash'] == 910380154 and 'modifierHashes' in key.keys():
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    # mods = await self.get_modifiers(lang, r_json['hash'])
                     mods = await self.destiny.decode_hash(key['modifierHashes'][0], 'DestinyActivityModifierDefinition', lang)
                     resp_time = datetime.utcnow().isoformat()
                     if mods:
