@@ -109,6 +109,7 @@ class ServerAdmin(commands.Cog):
             await ctx.channel.send('{}: {}'.format(clan_id, ctx.bot.translations[lang]['msg']['clan_search_error']), delete_after=60)
             if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
                 await ctx.message.delete()
+            return
         if code == 1:
             await ctx.channel.send('{}\nid: {}'.format(clan_json['Response']['detail']['name'],
                                                        clan_json['Response']['detail']['groupId']), delete_after=60)
