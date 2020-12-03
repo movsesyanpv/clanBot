@@ -281,6 +281,8 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         time = msg.content
         if time != '--':
+            ts = dateparser.parse(msg.content)
+            time = ts.strftime('%d-%m-%Y %H:%M%z')
             text = '{}-t:{}\n'.format(text, time)
 
         q_line = '{}\n{}'.format(translations['size'], translations['dm_noedit'])
@@ -351,7 +353,7 @@ class Group(commands.Cog):
             if 'group_mode' not in args.keys():
                 args['group_mode'] = translations['no_change']
             if time != '--':
-                ts = datetime.fromtimestamp(args['time']).replace(tzinfo=ts.tzinfo)
+                ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
                 args['time'] = ts
             else:
                 args['time'] = translations['no_change']
