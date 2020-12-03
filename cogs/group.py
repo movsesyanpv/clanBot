@@ -2,6 +2,7 @@ from discord.ext import commands
 import discord
 from datetime import datetime, timedelta, timezone
 from hashids import Hashids
+import dateparser
 
 
 class Group(commands.Cog):
@@ -87,7 +88,8 @@ class Group(commands.Cog):
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         await dm.send(content=translations['time'].format(datetime.now().strftime('%d-%m-%Y %H:%M'), datetime.now().replace(tzinfo=ts.tzinfo).strftime('%d-%m-%Y %H:%M%z')))
         msg = await self.bot.wait_for('message', check=check)
-        time = msg.content
+        ts = dateparser.parse(msg.content)
+        time = ts.strftime('%d-%m-%Y %H:%M%z')
 
         await dm.send(content=translations['size'])
         msg = await self.bot.wait_for('message', check=check)
@@ -125,7 +127,7 @@ class Group(commands.Cog):
         args = ctx.bot.raid.parse_args('lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.
                                        format(name, description, time, size, length, a_type, mode, role).splitlines(),
                                        ctx.message, True)
-        ts = datetime.fromtimestamp(args['time']).replace(tzinfo=ts.tzinfo)
+        ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
         check_msg = translations['check'].format(args['name'], args['description'], ts, args['size'],
                                                  args['length']/3600, at[args['is_embed']], args['group_mode'], role)
         if len(check_msg) <= 2000:
