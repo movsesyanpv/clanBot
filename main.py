@@ -731,10 +731,12 @@ class ClanBot(commands.Bot):
                 last = last.fetchone()
                 if last is not None:
                     if type(src_dict[lang][upd_type]) == list:
-                        if last[0] is not None:
-                            hist = eval(last[0])
-                        else:
-                            hist = [0]
+                        hist = [0]
+                        if len(last) > 0:
+                            if last[0] is not None:
+                                hist = eval(last[0])
+                            else:
+                                hist = [0]
                     else:
                         if len(last) > 0:
                             if last[0] is not None:
@@ -803,7 +805,10 @@ class ClanBot(commands.Bot):
                                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                             hist.append(message.id)
                             if channel.type == discord.ChannelType.news:
-                                await message.publish()
+                                try:
+                                    await message.publish()
+                                except discord.errors.Forbidden:
+                                    pass
                         hist = str(hist)
                     else:
                         if server.me.permissions_in(channel).embed_links:
@@ -821,7 +826,10 @@ class ClanBot(commands.Bot):
                             message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                         hist = message.id
                         if channel.type == discord.ChannelType.news:
-                            await message.publish()
+                            try:
+                                await message.publish()
+                            except discord.errors.Forbidden:
+                                pass
             self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type), (str(hist), server.id))
             self.guild_db.commit()
 
@@ -833,7 +841,10 @@ class ClanBot(commands.Bot):
                     if channel.id in self.update_ch:
                         message = await channel.send(msg)
                         if channel.type == discord.ChannelType.news:
-                            await message.publish()
+                            try:
+                                await message.publish()
+                            except discord.errors.Forbidden:
+                                pass
 
     async def update_metrics(self):
         clan_ids_c = self.guild_cursor.execute('''SELECT clan_id FROM clans''')
