@@ -88,8 +88,9 @@ class Group(commands.Cog):
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         await dm.send(content=translations['time'].format(datetime.now().strftime('%d-%m-%Y %H:%M'), datetime.now().replace(tzinfo=ts.tzinfo).strftime('%d-%m-%Y %H:%M%z')))
         msg = await self.bot.wait_for('message', check=check)
-        ts = dateparser.parse(msg.content)
-        time = ts.strftime('%d-%m-%Y %H:%M%z')
+        time = self.parse_date(msg.content)
+        # ts = dateparser.parse(msg.content)
+        # time = ts.strftime('%d-%m-%Y %H:%M%z')
 
         await dm.send(content=translations['size'])
         msg = await self.bot.wait_for('message', check=check)
@@ -195,6 +196,20 @@ class Group(commands.Cog):
         await out.add_reaction('❓')
         await out.add_reaction('❌')
 
+    def parse_date(self, time):
+        try:
+            time_t = datetime.strptime(time, "%d-%m-%Y %H:%M%z")
+        except ValueError:
+            try:
+                time_t = datetime.strptime(time, "%d-%m-%Y %H:%M")
+            except ValueError:
+                try:
+                    ts = dateparser.parse(time)
+                    time = ts.strftime('%d-%m-%Y %H:%M%z')
+                except AttributeError:
+                    time = datetime.now().strftime("%d-%m-%Y %H:%M")
+        return time
+
     async def dm_edit_lfg(self, ctx, lang, hashids):
 
         def check(ms):
@@ -282,7 +297,7 @@ class Group(commands.Cog):
         time = msg.content
         if time != '--':
             ts = dateparser.parse(msg.content)
-            time = ts.strftime('%d-%m-%Y %H:%M%z')
+            time = self.parse_date(msg.content)
             text = '{}-t:{}\n'.format(text, time)
 
         q_line = '{}\n{}'.format(translations['size'], translations['dm_noedit'])
