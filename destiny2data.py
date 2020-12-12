@@ -602,6 +602,57 @@ class D2data:
                         class_items = class_items + 1
         return bd
 
+    async def get_seasonal_featured_silver(self, langs, start):
+        tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
+
+        bd = []
+
+        for lang in langs:
+            classnames = self.translations[lang]['classnames']
+            n_items = 0
+            curr_week = []
+            i_week = 1
+            class_items = 0
+            n_order = 0
+            for i, item in enumerate(tess_def['itemList']):
+                if n_items >= 5 and n_items - class_items / 3 * 2 >= 5:
+                    i_week = i_week + 1
+                    bd.append(list.copy(curr_week))
+                    n_items = 0
+                    curr_week = []
+                    class_items = 0
+                if item['displayCategoryIndex'] == 1 and item['categoryIndex'] != 37:
+                    definition = 'DestinyInventoryItemDefinition'
+                    item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                   language=lang)
+                    cat_number = 2
+                    if 'screenshot' in item_def.keys():
+                        screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
+                                     'loading="lazy">'.format(item_def['screenshot'])
+                    else:
+                        screenshot = ''
+                    curr_week.append({
+                        'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
+                        'icon': item_def['displayProperties']['icon'],
+                        'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
+                        'hash': item['itemHash'],
+                        'name': item_def['displayProperties']['name'],
+                        'screenshot': screenshot,
+                        'costs': [
+                            {
+                                'currency_icon': currency_resp['displayProperties']['icon'],
+                                'cost': item['currencies'][0]['quantity'],
+                                'currency_name': currency_resp['displayProperties']['name']
+                            }]
+                    })
+                    n_order += 1
+                    n_items = n_items + 1
+                    if item_def['classType'] < 3 or any(
+                            class_name in item_def['itemTypeDisplayName'].lower() for class_name in classnames):
+                        class_items = class_items + 1
+        return bd
+
     async def get_weekly_eververse(self, langs):
         data = []
         start = await self.get_season_start()
@@ -612,16 +663,19 @@ class D2data:
             bd = await self.get_seasonal_bd([lang], start)
             featured_bd = await self.get_seasonal_featured_bd([lang], start)
             # await self.get_seasonal_consumables(langs, start)
-            # await self.get_seasonal_featured_silver(langs, start)
+            silver = await self.get_seasonal_featured_silver([lang], start)
             if len(bd) == len(featured_bd):
                 for i in range(0, len(bd)):
                     data.append({
                         'items': [*bd[i], *featured_bd[i]]
                     })
+            if len(bd) == len(silver):
+                for i in range(0, len(bd)):
+                    data[i]['items'] = [*data[i]['items'], *silver[i]]
 
                 await self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'],
                                        name=self.translations[lang]['site']['bd'],
-                                       template='hover_items.html', order=2, type='weekly')
+                                       template='hover_items.html', order=0, type='weekly', size='tall')
 
     async def write_to_db(self, lang, id, response, size='', name='', template='table_items.html', order=0, type='daily'):
         while True:
@@ -1415,7 +1469,7 @@ class D2data:
                         self.data[lang]['ordeal']['fields'][0]['value'] = strike['description']
                         db_data[0]['description'] = strike['description']
                         break
-            await self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'], order=5,
+            await self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'], order=3,
                                    type='weekly')
 
     async def get_nightmares(self, langs, forceget=False):
@@ -1465,7 +1519,7 @@ class D2data:
                     })
                     self.data[lang]['nightmares']['fields'].append(info)
             await self.write_to_db(lang, 'nightmare_hunts', db_data, name=self.translations[lang]['site']['nightmares'],
-                                   order=3, type='weekly')
+                                   order=2, type='weekly')
 
     async def get_empire_hunt(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('empire_hunts', force=forceget)
@@ -1514,7 +1568,7 @@ class D2data:
                     })
                     self.data[lang]['empire_hunts']['fields'].append(info)
             await self.write_to_db(lang, 'empire_hunts', db_data, name=self.translations[lang]['site']['empire_hunts'],
-                                   order=6, type='weekly')
+                                   order=5, type='weekly')
 
     async def get_crucible_rotators(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators',
