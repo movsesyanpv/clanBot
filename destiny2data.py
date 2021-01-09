@@ -1823,12 +1823,12 @@ class D2data:
                 await self.get_player_metric(member_type, member_id, metric, is_global)]
 
     async def get_osiris_predictions(self, langs, forceget=False, force_info = None):
-        # win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
-        win3_rotation = ['?', '?', '?']
-        # win5_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
-        win5_rotation = ['?', '?', '?']
-        # win7_rotation = ['?', 'gloves', '?', 'chest', '?', 'boots', '?', 'helmet', '?', 'class']
-        win7_rotation = ['?', '?', '?']
+        win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
+        # win3_rotation = ['?', '?', '?']
+        win5_rotation = ['?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class', '?']
+        # win5_rotation = ['?', '?', '?']
+        win7_rotation = ['gloves', '?', 'chest', '?', 'boots', '?', 'helmet', '?', 'class', '?']
+        # win7_rotation = ['?', '?', '?']
         # flawless_rotation = ['gloves', 'chest', 'class', 'helmet', 'boots']
         flawless_rotation = ['?', '?', '?']
         mod_rotation = ['?', '?', '?']
