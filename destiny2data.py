@@ -1859,7 +1859,7 @@ class D2data:
                     },
                     {
                         'name': locale['3win'],
-                        'value': '{}?'.format(locale[win3_rotation[int((week_n - 1 if week_n > 0 else week_n) % len(win3_rotation))]])
+                        'value': '{}?'.format(locale[win3_rotation[int((week_n if week_n > 0 else week_n) % len(win3_rotation))]])
                     },
                     {
                         'name': locale['5win'],
