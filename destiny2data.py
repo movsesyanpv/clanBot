@@ -495,6 +495,8 @@ class D2data:
                     current_season = season
                     return start
             except KeyError:
+                if 'startDate' in season_json[season].keys() and 'endDate' not in season_json[season].keys():
+                    return isoparse(season_json[season]['startDate'])
                 pass
 
     async def get_seasonal_featured_bd(self, langs, start):
