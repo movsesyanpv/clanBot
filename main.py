@@ -282,8 +282,11 @@ class ClanBot(commands.Bot):
         if user == self.user:
             return
 
-        message = await self.fetch_channel(payload.channel_id)
-        message = await message.fetch_message(payload.message_id)
+        try:
+            message = await self.fetch_channel(payload.channel_id)
+            message = await message.fetch_message(payload.message_id)
+        except discord.NotFound:
+            return
         for guild in self.guilds:
             if guild.id == payload.guild_id:
                 user = guild.get_member(payload.user_id)
