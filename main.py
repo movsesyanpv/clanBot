@@ -772,7 +772,8 @@ class ClanBot(commands.Bot):
                                     if tmp_embed not in dict_embeds:
                                         last.append(message)
                                 if len(last) == 0:
-                                    return
+                                    pass
+                                    #return
                             else:
                                 if hist != "[]":
                                     last = await channel.fetch_message(hist)
