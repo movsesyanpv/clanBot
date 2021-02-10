@@ -226,6 +226,9 @@ class ClanBot(commands.Bot):
         self.all_commands['update'].enabled = True
         self.all_commands['top'].enabled = True
         await self.dm_owner('on_ready tasks finished')
+        char_file = open('data.json', 'w')
+        char_file.write(json.dumps(json.dumps(self.data.data)))
+        char_file.close()
         return
 
     async def on_guild_join(self, guild):
