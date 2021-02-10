@@ -666,18 +666,20 @@ class D2data:
             featured_bd = await self.get_seasonal_featured_bd([lang], start)
             # await self.get_seasonal_consumables(langs, start)
             silver = await self.get_seasonal_featured_silver([lang], start)
+            for i in range(0, len(bd)):
+                data.append({
+                    'items': [*bd[i]]
+                })
             if len(bd) == len(featured_bd):
                 for i in range(0, len(bd)):
-                    data.append({
-                        'items': [*bd[i], *featured_bd[i]]
-                    })
+                    data[i]['items'] = [*data[i]['items'], *featured_bd[i]]
             if len(bd) == len(silver):
                 for i in range(0, len(bd)):
                     data[i]['items'] = [*data[i]['items'], *silver[i]]
 
-                await self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'],
-                                       name=self.translations[lang]['site']['bd'],
-                                       template='hover_items.html', order=0, type='weekly', size='tall')
+            await self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'],
+                                   name=self.translations[lang]['site']['bd'],
+                                   template='hover_items.html', order=0, type='weekly', size='tall')
 
     async def write_to_db(self, lang, id, response, size='', name='', template='table_items.html', order=0, type='daily'):
         while True:

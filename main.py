@@ -207,8 +207,8 @@ class ClanBot(commands.Bot):
         await self.update_history()
         await self.update_langs()
         await self.update_prefixes()
-        if not self.args.production:
-            await self.update_metric_list()
+        # if not self.args.production:
+        await self.update_metric_list()
         self.get_channels()
         await self.data.get_chars()
         if self.args.forceupdate:
