@@ -1036,7 +1036,7 @@ class D2data:
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
 
-                if local_types['vanguard_strikes'] in r_json['displayProperties']['name']:
+                if item_hash == 743628305:
                     mods = await self.decode_modifiers(key, lang)
                     self.data[lang]['vanguardstrikes']['fields'] = mods[0]
                     db_data = mods[1]
