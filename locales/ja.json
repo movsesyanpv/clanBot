@@ -271,7 +271,8 @@
         "chest": "Chesh",
         "boots": "Boots",
         "class": "Class Item",
-        "mod": "Mod"
+        "mod": "Mod",
+        "random": "Random"
     },
     "weapon_types": {
         "2766676737": "Auto Rifle",
