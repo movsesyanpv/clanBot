@@ -173,7 +173,7 @@ class Admin(commands.Cog):
     @commands.is_owner()
     @commands.command()
     async def fetchclans(self, ctx, max_id=1):
-        reason = await ctx.bot.data.iterate_clans(max_id)
+        reason = await ctx.bot.data.iterate_clans_new(max_id)
         await ctx.channel.send('Exited ({})'.format(reason))
 
     @commands.is_owner()

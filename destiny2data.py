@@ -1820,11 +1820,14 @@ class D2data:
         else:
             return -1
 
-    async def get_member_metric_wrapper(self, member, metric, is_global=False):
+    async def get_member_metric_wrapper(self, member, metric, is_global=False, tag=''):
         member_id = member['destinyUserInfo']['membershipId']
         member_type = member['destinyUserInfo']['membershipType']
-        return [member['destinyUserInfo']['LastSeenDisplayName'],
-                await self.get_player_metric(member_type, member_id, metric, is_global)]
+        if is_global:
+            player = '{} [{}]'.format(member['destinyUserInfo']['LastSeenDisplayName'], tag)
+        else:
+            player = member['destinyUserInfo']['LastSeenDisplayName']
+        return [player, await self.get_player_metric(member_type, member_id, metric, is_global)]
 
     async def get_osiris_predictions(self, langs, forceget=False, force_info = None):
         win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
@@ -2064,10 +2067,12 @@ class D2data:
             if clan_members_resp and type(clan_json) == dict:
                 clan_json = clan_members_resp
                 try:
+                    tasks = []
                     for member in clan_json['Response']['results']:
-                        metric_list.append(await self.get_member_metric_wrapper(member, metric, is_global))
-                        if is_global:
-                            metric_list[-1][0] = '{} [{}]'.format(metric_list[-1][0], tag)
+                        task = asyncio.ensure_future(self.get_member_metric_wrapper(member, metric, is_global, tag))
+                        tasks.append(task)
+                    results = await asyncio.gather(*tasks)
+                    metric_list = [*metric_list, *results]
                 except KeyError:
                     pass
 
@@ -2117,10 +2122,18 @@ class D2data:
             return metric_list
 
     async def iterate_clans(self, max_id):
-        clan_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
-                                  password=self.api_data['pass'], port=self.api_data['db_port'],
-                                  database=self.api_data['cache_name'])
-        clan_cursor = clan_db.cursor()
+        while True:
+            try:
+                cache_connection = self.cache_pool.get_connection()
+                cache_connection.auto_reconnect = True
+                break
+            except mariadb.PoolError:
+                try:
+                    self.cache_pool.add_connection()
+                except mariadb.PoolError:
+                    pass
+                await asyncio.sleep(0.125)
+        clan_cursor = cache_connection.cursor()
 
         min_id = 1
         try:
@@ -2139,25 +2152,94 @@ class D2data:
             clan_json = clan_resp
 
             if not clan_json:
-                clan_db.close()
-                return 'unable to fetch clan {}'.format(clan_id)
+                continue
+                # clan_cursor.close()
+                # cache_connection.close()
+                # return 'unable to fetch clan {}'.format(clan_id)
             try:
                 code = clan_json['ErrorCode']
                 # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
             except KeyError:
                 code = 0
-                clan_db.close()
+                clan_cursor.close()
+                cache_connection.close()
                 return '```{}```'.format(json.dumps(clan_json))
             if code in [621, 622, 686]:
                 continue
             if code != 1:
-                clan_db.close()
+                clan_cursor.close()
+                cache_connection.close()
                 return code
             # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
             if clan_json['Response']['detail']['features']['capabilities'] & 16:
                 clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
                 # clan_db.commit()
-        clan_db.close()
+        clan_cursor.close()
+        cache_connection.close()
+        return 'Finished'
+
+    async def iterate_clans_new(self, max_id):
+        while True:
+            try:
+                cache_connection = self.cache_pool.get_connection()
+                cache_connection.auto_reconnect = True
+                break
+            except mariadb.PoolError:
+                try:
+                    self.cache_pool.add_connection()
+                except mariadb.PoolError:
+                    pass
+                await asyncio.sleep(0.125)
+        clan_cursor = cache_connection.cursor()
+
+        min_id = 1
+        try:
+            clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
+            # clan_db.commit()
+        except mariadb.Error:
+            # clan_cursor = clan_db.cursor()
+            clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
+            min_id_tuple = clan_cursor.fetchall()
+            if min_id_tuple is not None:
+                min_id = min_id_tuple[0][0] + 1
+
+        tasks = []
+        for clan_id in range(min_id, max_id+1):
+            task = asyncio.ensure_future(self.get_cached_json('clan_{}'.format(clan_id), '{} clan info'.format(clan_id),
+                                                              'https://www.bungie.net/Platform/GroupV2/{}/'.
+                                                              format(clan_id), expires_in=86400))
+            tasks.append(task)
+
+        responses = await asyncio.gather(*tasks)
+
+        for clan_json in responses:
+            if not clan_json:
+                continue
+                # clan_cursor.close()
+                # cache_connection.close()
+                # return 'unable to fetch clan {}'.format(clan_id)
+            try:
+                code = clan_json['ErrorCode']
+                # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
+            except KeyError:
+                code = 0
+                clan_cursor.close()
+                cache_connection.close()
+                return '```{}```'.format(json.dumps(clan_json))
+            if code in [621, 622, 686]:
+                continue
+            if code != 1:
+                clan_cursor.close()
+                cache_connection.close()
+                return code
+            # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
+            if clan_json['Response']['detail']['features']['capabilities'] & 16:
+                clan_id = clan_json['Response']['detail']['groupId']
+                clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
+                # clan_db.commit()
+
+        clan_cursor.close()
+        cache_connection.close()
         return 'Finished'
 
     async def fetch_players(self):
