@@ -204,6 +204,7 @@ class ClanBot(commands.Bot):
         await self.change_presence(status=discord.Status.dnd, activity=game)
         self.all_commands['update'].enabled = False
         self.all_commands['top'].enabled = False
+        self.all_commands['online'].enabled = False
         await self.data.token_update()
         await self.update_history()
         await self.update_langs()
@@ -226,6 +227,7 @@ class ClanBot(commands.Bot):
         await self.change_presence(status=discord.Status.online, activity=game)
         self.all_commands['update'].enabled = True
         self.all_commands['top'].enabled = True
+        self.all_commands['online'].enabled = True
         await self.dm_owner('on_ready tasks finished')
         char_file = open('data.json', 'w')
         char_file.write(json.dumps(self.data.data))
