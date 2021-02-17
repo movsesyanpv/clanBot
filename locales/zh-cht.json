@@ -300,6 +300,8 @@
     "empire_hunt": "Empire Hunt:",
     "online": {
         "nick": "Nickname",
-        "since": "Online for"
+        "since": "Last activity",
+        "error": "Error",
+        "error_t": "Unable to fetch the clan"
     }
 }
