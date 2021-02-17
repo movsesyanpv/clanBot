@@ -2133,22 +2133,72 @@ class D2data:
         else:
             return metric_list
 
+    async def get_last_activity(self, member, lang):
+        status_change = datetime.fromtimestamp(float(member['lastOnlineStatusChange']))
+        now = datetime.utcnow()
+
+        membership_id = member['destinyUserInfo']['membershipId']
+        membership_type = member['destinyUserInfo']['membershipType']
+        url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type,
+                                                                               membership_id)
+        profile_resp = await self.get_bungie_json('playeractivity_{}'.format(membership_id),
+                                                  url, params={'components': 204}, change_msg=False)
+        if profile_resp:
+            for char in profile_resp['Response']['characterActivities']['data']:
+                char_resp = profile_resp['Response']['characterActivities']['data'][char]
+                if char_resp['currentActivityHash'] != 0:
+                    activity = await self.destiny.decode_hash(char_resp['currentActivityHash'],
+                                                              'DestinyActivityDefinition', language=lang)
+                    try:
+                        activity_mode = await self.destiny.decode_hash(char_resp['currentActivityModeHash'],
+                                                                       'DestinyActivityModeDefinition', language=lang)
+                    except pydest.PydestException:
+                        activity_mode = {'displayProperties': {'name': ''}}
+                    activity_type = await self.destiny.decode_hash(activity['activityTypeHash'],
+                                                                   'DestinyActivityTypeDefinition', language=lang)
+                    place = await self.destiny.decode_hash(activity['placeHash'], 'DestinyPlaceDefinition',
+                                                           language=lang)
+                    if activity['activityTypeHash'] in [332181804] and char_resp['currentActivityHash'] not in [
+                        82913930]:
+                        activity_string = activity['displayProperties']['name']
+                    elif char_resp['currentActivityHash'] in [82913930]:
+                        activity_string = place['displayProperties']['name']
+                    elif activity['activityTypeHash'] in [4088006058]:
+                        activity_string = '{}: {}: {}'.format(activity_type['displayProperties']['name'],
+                                                              activity_mode['displayProperties']['name'],
+                                                              activity['displayProperties']['name'])
+                    elif activity['activityTypeHash'] in [4110605575, 1686739444, 248695599, 2043403989] and char_resp[
+                        'currentActivityModeHash'] not in [2166136261]:
+                        activity_string = '{}: {}'.format(activity_mode['displayProperties']['name'],
+                                                          activity['displayProperties']['name'])
+                    elif activity['activityTypeHash'] in [3497767639]:
+                        activity_string = '{}: {}'.format(activity_mode['displayProperties']['name'],
+                                                          place['displayProperties']['name'])
+                    else:
+                        activity_string = '{}'.format(activity['displayProperties']['name'])
+                    break
+        pass
+        length = now - datetime.fromisoformat(char_resp['dateActivityStarted'].replace('Z', ''))
+        return [member['destinyUserInfo']['LastSeenDisplayName'],
+                               '{} ({})'.format(activity_string, str(timedelta(seconds=length.seconds)))]
+
     async def get_online_clan_members(self, clan_id, lang):
         url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
 
         clan_members_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url,
                                                        change_msg=False, force=True)
 
-        online_members = [[self.translations[lang]['online']['nick'], self.translations[lang]['online']['since']]]
+        header = [[self.translations[lang]['online']['nick'], self.translations[lang]['online']['since']]]
         if clan_members_resp:
+            tasks = []
             for member in clan_members_resp['Response']['results']:
                 if member['isOnline']:
-                    status_change = datetime.fromtimestamp(float(member['lastOnlineStatusChange']))
-                    now = datetime.now()
-                    time_from_status_change = now - status_change
-                    online_members.append([member['destinyUserInfo']['LastSeenDisplayName'], str(timedelta(seconds=time_from_status_change.seconds))])
+                    task = asyncio.ensure_future(self.get_last_activity(member, lang))
+                    tasks.append(task)
+            online_members = await asyncio.gather(*tasks)
+            online_members = [*header, *online_members]
         else:
-            online_members = [['Error', 'Unable to fetch the clan']]
+            online_members = [[self.translations[lang]['online']['error'], self.translations[lang]['online']['error_t']]]
         return online_members
 
     async def iterate_clans(self, max_id):

@@ -159,7 +159,11 @@ class Public(commands.Cog):
         if len(clan_id) > 0:
             clan_ids = clan_id[0]
             data = await ctx.bot.data.get_online_clan_members(clan_ids, lang)
-            msg = '```{}```'.format(tabulate(data, tablefmt='simple', colalign=('left', 'left'), headers='firstrow'))
+            if len(data) > 1:
+                msg = '```{}```'.format(tabulate(data, tablefmt='simple', colalign=('left', 'left'), headers='firstrow'))
+            else:
+                msg = '```{}```'.format(
+                    tabulate(data, tablefmt='simple', colalign=('left', 'left')))
             if len(msg) > 2000:
                 msg_strs = msg.splitlines()
                 msg = ''
