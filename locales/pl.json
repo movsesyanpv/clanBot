@@ -232,11 +232,15 @@
             },
             "setprefix": {
                 "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes. Send `none` as the parameter to disable all prefixes, except bot mention."
+            },
+            "online": {
+                "info": "Get the list of online clan members."
             }
         },
         "prefix": "Print available prefixes",
         "setprefix": "Set available prefixes",
-        "support": "Get the link to the support server"
+        "support": "Get the link to the support server",
+        "online": "Get the list of online clan members."
     },
     "graph": {
         "percentage": "Completion percentage",
@@ -293,5 +297,9 @@
         "1604869479": "Sword"
     },
     "vanguard_strikes": "Szturmy Straży Przedniej",
-    "empire_hunt": "Empire Hunt:"
+    "empire_hunt": "Empire Hunt:",
+    "online": {
+        "nick": "Nickname",
+        "since": "Online for"
+    }
 }
