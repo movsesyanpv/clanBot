@@ -13,6 +13,7 @@ import csv
 import codecs
 import mariadb
 import asyncio
+import tracemalloc
 
 
 class D2data:
@@ -209,11 +210,13 @@ class D2data:
             if change_msg:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
+            resp.close()
             return False
         except aiohttp.ContentTypeError:
             if change_msg:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
+            resp.close()
             return False
         print('getting {} {}'.format(string, lang_str))
         curr_try = 2
@@ -239,17 +242,20 @@ class D2data:
                 if change_msg:
                     for locale in lang:
                         self.data[locale][name] = self.data[locale]['api_is_down']
+                resp.close()
                 return False
             resp_code = resp_code['ErrorCode']
             if resp_code in [5, 1618]:
                 if change_msg:
                     for locale in lang:
                         self.data[locale][name] = self.data[locale]['api_maintenance']
+                resp.close()
                 return False
             print("{} get error".format(name), json.dumps(resp.json(), indent=4, sort_keys=True) + "\n")
             if change_msg:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
+            resp.close()
             return False
         else:
             try:
@@ -258,6 +264,7 @@ class D2data:
                 if change_msg:
                     for locale in lang:
                         self.data[locale][name] = self.data[locale]['api_is_down']
+                resp.close()
                 return False
             if 'ErrorCode' in resp_code.keys():
                 resp_code = resp_code['ErrorCode']
@@ -265,18 +272,23 @@ class D2data:
                     if change_msg:
                         for locale in lang:
                             self.data[locale][name] = self.data[locale]['api_maintenance']
+                    resp.close()
                     return False
             else:
                 for suspected_season in resp_code:
                     if 'seasonNumber' in resp_code[suspected_season].keys():
+                        resp.close()
                         return resp_code
             resp_code = await resp.json()
             if 'Response' not in resp_code.keys():
                 if change_msg:
                     for locale in lang:
                         self.data[locale][name] = self.data[locale]['api_is_down']
+                resp.close()
                 return False
-        return await resp.json()
+        resp_json = await resp.json()
+        resp.close()
+        return resp_json
 
     async def get_vendor_sales(self, lang, vendor_resp, cats, exceptions=[]):
         embed_sales = []
@@ -2121,6 +2133,24 @@ class D2data:
         else:
             return metric_list
 
+    async def get_online_clan_members(self, clan_id, lang):
+        url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
+
+        clan_members_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url,
+                                                       change_msg=False, force=True)
+
+        online_members = [[self.translations[lang]['online']['nick'], self.translations[lang]['online']['since']]]
+        if clan_members_resp:
+            for member in clan_members_resp['Response']['results']:
+                if member['isOnline']:
+                    status_change = datetime.fromtimestamp(float(member['lastOnlineStatusChange']))
+                    now = datetime.now()
+                    time_from_status_change = now - status_change
+                    online_members.append([member['destinyUserInfo']['LastSeenDisplayName'], str(timedelta(seconds=time_from_status_change.seconds))])
+        else:
+            online_members = [['Error', 'Unable to fetch the clan']]
+        return online_members
+
     async def iterate_clans(self, max_id):
         while True:
             try:
@@ -2179,6 +2209,8 @@ class D2data:
         return 'Finished'
 
     async def iterate_clans_new(self, max_id):
+        #tracemalloc.start()
+        #snapshot1 = tracemalloc.take_snapshot()
         while True:
             try:
                 cache_connection = self.cache_pool.get_connection()
@@ -2240,6 +2272,9 @@ class D2data:
 
         clan_cursor.close()
         cache_connection.close()
+        #snapshot2 = tracemalloc.take_snapshot()
+        #top_stats = snapshot2.compare_to(snapshot1, 'lineno')
+        #print(top_stats)
         return 'Finished'
 
     async def fetch_players(self):

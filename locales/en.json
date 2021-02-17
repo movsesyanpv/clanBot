@@ -167,9 +167,13 @@
         "aliases": "Can be called with the following names:```{}```",
         "parameters": "Usage:```{}```",
         "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
+        "online": "Get the list of online clan members.",
         "commands": {
             "setclan": {
                 "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
+            },
+            "online":{
+                "info": "Get the list of online clan members."
             },
             "top": {
                 "info": "Print top players for one of the available metrics. Metric's description is available through the link. You can also pass the metric's hash to the command. Use `gtop` or `globaltop` to get lists across all the clans that are known to the bot.",
@@ -293,5 +297,9 @@
         "1604869479": "Sword"
     },
     "vanguard_strikes": "Vanguard Strikes",
-    "empire_hunt": "Empire Hunt:"
+    "empire_hunt": "Empire Hunt:",
+    "online": {
+        "nick": "Nickname",
+        "since": "Online for"
+    }
 }

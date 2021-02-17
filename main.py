@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 import asyncio
 import pydest
 import mariadb
+import gc
 
 from discord.ext.commands.bot import Bot
 import sqlite3
@@ -20,7 +21,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.17.2'
+    version = '2.17.3'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'xur', 'osiris', 'alerts', 'events']
@@ -554,6 +555,7 @@ class ClanBot(commands.Bot):
                     await message.author.dm_channel.send(self.translations['en']['error'])
 
     async def on_command_completion(self, ctx):
+        gc.collect()
         self.logger.info(ctx.message.content)
 
     def get_channel_type(self, ch_type):
