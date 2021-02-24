@@ -4,6 +4,7 @@ import os
 from datetime import datetime, timezone, timedelta
 from hashids import Hashids
 from babel.dates import format_datetime, get_timezone_name, get_timezone, get_timezone_gmt
+from babel import Locale
 
 
 class LFG:
@@ -432,11 +433,13 @@ class LFG:
                 embed['description'] = description
                 embed_length = embed_length + len(description)
 
+        if lang == 'zh-cht':
+            lang = 'zh'
         embed['fields'].append({
             "inline": True,
             "name": translations['lfge']['date'],
             # "value": '{} {}'.format(time.strftime('%d-%m-%Y %H:%M'), tz)
-            "value": '{} {}'.format(format_datetime(time, 'medium', tzinfo=ts, locale=lang), tz)
+            "value": '{} {}'.format(format_datetime(time, 'medium', tzinfo=ts, locale=Locale.parse(lang, sep='-')), tz)
         })
         embed_length = embed_length + len(embed['fields'][-1]['name']) + len(embed['fields'][-1]['value'])
 
