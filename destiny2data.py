@@ -2143,6 +2143,7 @@ class D2data:
                                                                                membership_id)
         profile_resp = await self.get_bungie_json('playeractivity_{}'.format(membership_id),
                                                   url, params={'components': 204}, change_msg=False)
+        activity_string = ''
         if profile_resp:
             for char in profile_resp['Response']['characterActivities']['data']:
                 char_resp = profile_resp['Response']['characterActivities']['data'][char]
@@ -2177,10 +2178,9 @@ class D2data:
                     else:
                         activity_string = '{}'.format(activity['displayProperties']['name'])
                     break
-        pass
-        length = now - datetime.fromisoformat(char_resp['dateActivityStarted'].replace('Z', ''))
-        return [member['destinyUserInfo']['LastSeenDisplayName'],
-                               '{} ({})'.format(activity_string, str(timedelta(seconds=length.seconds)))]
+            length = now - datetime.fromisoformat(char_resp['dateActivityStarted'].replace('Z', ''))
+            activity_string = '{} ({})'.format(activity_string, str(timedelta(seconds=length.seconds)))
+        return [member['destinyUserInfo']['LastSeenDisplayName'], activity_string]
 
     async def get_online_clan_members(self, clan_id, lang):
         url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
