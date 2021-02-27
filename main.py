@@ -5,7 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta, timezone
 import asyncio
 import pydest
-import mariadb
+import psycopg2 as mariadb
 import gc
 
 from discord.ext.commands.bot import Bot
@@ -866,15 +866,15 @@ class ClanBot(commands.Bot):
         await self.data.get_clan_leaderboard(clan_ids, 1572939289, 10)
 
     async def update_metric_list(self):
-        internal_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
-                                      password=self.api_data['pass'], port=self.api_data['db_port'],
+        internal_db = mariadb.connect(host='localhost', user='postgres',
+                                      password='9068Paul', port=5432,
                                       database='metrics')
         internal_cursor = internal_db.cursor()
 
         metrics_manifest = await self.data.destiny.decode_hash(1074663644, 'DestinyPresentationNodeDefinition')
 
         for node in metrics_manifest['children']['presentationNodes']:
-            internal_cursor.execute('''SELECT name FROM metrictables WHERE id=?''', (node['presentationNodeHash'],))
+            internal_cursor.execute('''SELECT name FROM metrictables WHERE id=%s''', (node['presentationNodeHash'],))
             metric_node = internal_cursor.fetchone()
             node_manifest = await self.data.destiny.decode_hash(node['presentationNodeHash'], 'DestinyPresentationNodeDefinition')
             if metric_node is not None:
@@ -889,11 +889,11 @@ class ClanBot(commands.Bot):
                     except pydest.PydestException:
                         tmp[2] = 0
                     metrics[metrics.index(metric)] = tuple(tmp)
-                internal_cursor.executemany('''UPDATE {} SET hash=?, name=?, is_working=? WHERE hash=?'''.format(metric_node[0]), metrics)
+                internal_cursor.executemany('''UPDATE {} SET hash=%s, name=%s, is_working=%s WHERE hash=%s'''.format(metric_node[0]), metrics)
                 metrics = []
                 for metric in node_manifest['children']['metrics']:
                     metrics.append(tuple(['', metric['metricHash'], 1]))
-                internal_cursor.executemany('''INSERT IGNORE INTO {} VALUES (?,?,?)'''.format(metric_node[0]), metrics)
+                internal_cursor.executemany('''INSERT INTO {} VALUES (%s,%s,%s) ON CONFLICT DO NOTHING'''.format(metric_node[0]), metrics)
                 pass
 
         internal_db.commit()

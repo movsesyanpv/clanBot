@@ -11,7 +11,8 @@ import sqlite3
 import matplotlib.pyplot as plt
 import csv
 import codecs
-import mariadb
+import psycopg2
+from psycopg2.pool import ThreadedConnectionPool
 import asyncio
 import tracemalloc
 
@@ -91,21 +92,19 @@ class D2data:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
         try:
-            self.cache_pool = mariadb.ConnectionPool(pool_name='cache', pool_size=10, pool_reset_connection=False,
-                                                     host=self.api_data['db_host'], user=self.api_data['cache_login'],
-                                                     password=self.api_data['pass'], port=self.api_data['db_port'],
-                                                     database=self.api_data['cache_name'])
+            self.cache_pool = ThreadedConnectionPool(1, 10, host='localhost', user='postgres',
+                                                                  password='9068Paul', port=5432,
+                                                                  database='cache_dev')
             # self.cache_pool.pool_reset_connection = True
-        except mariadb.ProgrammingError:
+        except psycopg2.Error:
             pass
         # self.cache_db.auto_reconnect = True
         try:
-            self.data_pool = mariadb.ConnectionPool(pool_name='data', pool_size=10, pool_reset_connection=False,
-                                                    host=self.api_data['db_host'], user=self.api_data['cache_login'],
-                                                    password=self.api_data['pass'], port=self.api_data['db_port'],
-                                                    database=self.api_data['data_db'])
+            self.data_pool = ThreadedConnectionPool(1, 10, host='localhost', user='postgres',
+                                                                  password='9068Paul', port=5432,
+                                                                  database='d2data')
             # self.data_pool.pool_reset_connection = True
-        except mariadb.ProgrammingError:
+        except psycopg2.Error:
             pass
         # self.data_db.auto_reconnect = True
 
@@ -1979,29 +1978,24 @@ class D2data:
                               force=False, cache_only=False, expires_in=1800):
         while True:
             try:
-                cache_connection = self.cache_pool.get_connection()
-                cache_connection.auto_reconnect = True
+                cache_connection = self.cache_pool.getconn()
                 break
-            except mariadb.PoolError:
-                try:
-                    self.cache_pool.add_connection()
-                except mariadb.PoolError:
-                    pass
+            except psycopg2.ProgrammingError:
                 await asyncio.sleep(0.125)
         cache_cursor = cache_connection.cursor()
 
         try:
-            cache_cursor.execute('''SELECT json, expires, timestamp from cache WHERE id=?''', (cache_id,))
+            cache_cursor.execute('''SELECT json, expires, timestamp from cache WHERE id=%s''', (cache_id,))
             cached_entry = cache_cursor.fetchone()
             if cached_entry is not None:
                 expired = datetime.now().timestamp() > cached_entry[1]
             else:
                 expired = True
-        except mariadb.Error:
+        except psycopg2.ProgrammingError:
             expired = True
             if cache_only:
                 cache_cursor.close()
-                cache_connection.close()
+                self.cache_pool.putconn(cache_connection, close=True)
                 return False
 
         if (expired or force) and not cache_only:
@@ -2010,22 +2004,21 @@ class D2data:
             if response:
                 response_json = response
                 try:
-                    cache_cursor.execute(
-                        '''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
+                    cache_cursor.execute('''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
                     cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id(256))''')
-                    cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                    cache_cursor.execute('''INSERT INTO cache VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING''',
                                          (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                           timestamp))
-                except mariadb.Error:
+                except psycopg2.ProgrammingError:
                     try:
                         cache_cursor.execute('''ALTER TABLE cache ADD COLUMN timestamp text''')
-                        cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                        cache_cursor.execute('''INSERT INTO cache VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING''',
                                              (cache_id, int(datetime.now().timestamp() + expires_in),
                                               json.dumps(response_json), timestamp))
-                    except mariadb.Error:
+                    except psycopg2.ProgrammingError:
                         pass
                 # try:
-                cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                cache_cursor.execute('''INSERT INTO cache VALUES (?,?,?,?) ON CONFLICT DO NOTHING''',
                                      (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                       timestamp))
                 # except mariadb.Error:
@@ -2038,7 +2031,7 @@ class D2data:
                 #     pass
             else:
                 cache_cursor.close()
-                cache_connection.close()
+                self.cache_pool.putconn(cache_connection, close=True)
                 return False
         else:
             if cached_entry is not None:
@@ -2046,11 +2039,11 @@ class D2data:
                 response_json = json.loads(cached_entry[0])
             else:
                 cache_cursor.close()
-                cache_connection.close()
+                self.cache_pool.putconn(cache_connection, close=True)
                 return False
         cache_cursor.close()
         cache_connection.commit()
-        cache_connection.close()
+        self.cache_pool.putconn(cache_connection, close=True)
         response_json['timestamp'] = timestamp
         return response_json
 
