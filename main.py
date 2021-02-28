@@ -5,7 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta, timezone
 import asyncio
 import pydest
-import mariadb
+import mysql.connector as mariadb
 import gc
 
 from discord.ext.commands.bot import Bot
@@ -535,7 +535,22 @@ class ClanBot(commands.Bot):
                     traceback_str = ''
                     for line in traceback.format_exception(type(exception), exception, exception.__traceback__):
                         traceback_str = '{}{}'.format(traceback_str, line)
-                    await owner.dm_channel.send('`{}`'.format(traceback_str))
+                    msg = '`{}`'.format(traceback_str)
+                    if len(msg) > 2000:
+                        msg_strs = msg.splitlines()
+                        msg = ''
+                        for line in msg_strs:
+                            if len(msg) + len(line) <= 1990:
+                                msg = '{}{}\n'.format(msg, line)
+                            else:
+                                msg = '{}```'.format(msg)
+                                await owner.dm_channel.send(msg)
+                                msg = '```{}\n'.format(line)
+                        if len(msg) > 0:
+                            msg = '{}'.format(msg)
+                            await owner.dm_channel.send(msg)
+                    else:
+                        await owner.dm_channel.send(msg)
                     await owner.dm_channel.send('{}:\n{}'.format(message.author, message.content))
                     if message.author.dm_channel is None:
                         await message.author.create_dm()
@@ -874,7 +889,7 @@ class ClanBot(commands.Bot):
         metrics_manifest = await self.data.destiny.decode_hash(1074663644, 'DestinyPresentationNodeDefinition')
 
         for node in metrics_manifest['children']['presentationNodes']:
-            internal_cursor.execute('''SELECT name FROM metrictables WHERE id=?''', (node['presentationNodeHash'],))
+            internal_cursor.execute('''SELECT name FROM metrictables WHERE id=%s''', (node['presentationNodeHash'],))
             metric_node = internal_cursor.fetchone()
             node_manifest = await self.data.destiny.decode_hash(node['presentationNodeHash'], 'DestinyPresentationNodeDefinition')
             if metric_node is not None:
@@ -889,11 +904,11 @@ class ClanBot(commands.Bot):
                     except pydest.PydestException:
                         tmp[2] = 0
                     metrics[metrics.index(metric)] = tuple(tmp)
-                internal_cursor.executemany('''UPDATE {} SET hash=?, name=?, is_working=? WHERE hash=?'''.format(metric_node[0]), metrics)
+                internal_cursor.executemany('''UPDATE {} SET hash=%s, name=%s, is_working=%s WHERE hash=%s'''.format(metric_node[0]), metrics)
                 metrics = []
                 for metric in node_manifest['children']['metrics']:
                     metrics.append(tuple(['', metric['metricHash'], 1]))
-                internal_cursor.executemany('''INSERT IGNORE INTO {} VALUES (?,?,?)'''.format(metric_node[0]), metrics)
+                internal_cursor.executemany('''INSERT IGNORE INTO {} VALUES (%s,%s,%s)'''.format(metric_node[0]), metrics)
                 pass
 
         internal_db.commit()

@@ -11,7 +11,8 @@ import sqlite3
 import matplotlib.pyplot as plt
 import csv
 import codecs
-import mariadb
+import mysql.connector as mariadb
+import mysql.connector.pooling
 import asyncio
 import tracemalloc
 
@@ -90,8 +91,9 @@ class D2data:
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
+        print('opening connections')
         try:
-            self.cache_pool = mariadb.ConnectionPool(pool_name='cache', pool_size=10, pool_reset_connection=False,
+            self.cache_pool = mariadb.pooling.MySQLConnectionPool(pool_name='cache', pool_size=10, #pool_reset_connection=False,
                                                      host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                                      password=self.api_data['pass'], port=self.api_data['db_port'],
                                                      database=self.api_data['cache_name'])
@@ -100,13 +102,14 @@ class D2data:
             pass
         # self.cache_db.auto_reconnect = True
         try:
-            self.data_pool = mariadb.ConnectionPool(pool_name='data', pool_size=10, pool_reset_connection=False,
+            self.data_pool = mariadb.pooling.MySQLConnectionPool(pool_name='data', pool_size=10, #pool_reset_connection=False,
                                                     host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                                     password=self.api_data['pass'], port=self.api_data['db_port'],
                                                     database=self.api_data['data_db'])
             # self.data_pool.pool_reset_connection = True
         except mariadb.ProgrammingError:
             pass
+        print("opened connections")
         # self.data_db.auto_reconnect = True
 
     async def get_chars(self):
@@ -714,7 +717,7 @@ class D2data:
             pass
 
         try:
-            data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (?,?,?,?,?,?,?,?,?)'''.format(lang),
+            data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)'''.format(lang),
                                 (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
                                  datetime.utcnow().isoformat(), size, name, template, order, type))
             data_db.commit()
@@ -722,7 +725,7 @@ class D2data:
             pass
 
         try:
-            data_cursor.execute('''UPDATE `{}` SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=? WHERE id=?'''.format(lang),
+            data_cursor.execute('''UPDATE `{}` SET timestamp_int=%s, json=%s, timestamp=%s, name=%s, size=%s, template=%s, place=%s, type=%s WHERE id=%s'''.format(lang),
                                 (datetime.utcnow().timestamp(), json.dumps({'data': response}),
                                  datetime.utcnow().isoformat(), name, size, template, order, type, id))
             data_db.commit()
@@ -1970,7 +1973,7 @@ class D2data:
         data_cursor = data_db.cursor()
 
         for lang in langs:
-            data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
+            data_cursor.execute('''DELETE FROM `{}` WHERE id=%s'''.format(lang), ('trials_of_osiris',))
         data_db.commit()
         data_cursor.close()
         data_db.close()
@@ -1978,20 +1981,20 @@ class D2data:
     async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True,
                               force=False, cache_only=False, expires_in=1800):
         while True:
-            try:
-                cache_connection = self.cache_pool.get_connection()
-                cache_connection.auto_reconnect = True
-                break
-            except mariadb.PoolError:
-                try:
-                    self.cache_pool.add_connection()
-                except mariadb.PoolError:
-                    pass
-                await asyncio.sleep(0.125)
+            # try:
+            cache_connection = self.cache_pool.get_connection()
+            cache_connection.auto_reconnect = True
+            break
+            # except mariadb.PoolError:
+            #     try:
+            #         self.cache_pool.add_connection()
+            #     # except mariadb.PoolError:
+            #     #     pass
+            #     await asyncio.sleep(0.125)
         cache_cursor = cache_connection.cursor()
 
         try:
-            cache_cursor.execute('''SELECT json, expires, timestamp from cache WHERE id=?''', (cache_id,))
+            cache_cursor.execute('''SELECT json, expires, timestamp from cache WHERE id=%s''', (cache_id,))
             cached_entry = cache_cursor.fetchone()
             if cached_entry is not None:
                 expired = datetime.now().timestamp() > cached_entry[1]
@@ -2013,25 +2016,25 @@ class D2data:
                     cache_cursor.execute(
                         '''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
                     cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id(256))''')
-                    cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                    cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (%s,%s,%s,%s)''',
                                          (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                           timestamp))
                 except mariadb.Error:
                     try:
                         cache_cursor.execute('''ALTER TABLE cache ADD COLUMN timestamp text''')
-                        cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                        cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (%s,%s,%s,%s)''',
                                              (cache_id, int(datetime.now().timestamp() + expires_in),
                                               json.dumps(response_json), timestamp))
                     except mariadb.Error:
                         pass
                 # try:
-                cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (%s,%s,%s,%s)''',
                                      (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                       timestamp))
                 # except mariadb.Error:
                 #     pass
                 # try:
-                cache_cursor.execute('''UPDATE cache SET expires=?, json=?, timestamp=? WHERE id=?''',
+                cache_cursor.execute('''UPDATE cache SET expires=%s, json=%s, timestamp=%s WHERE id=%s''',
                                      (int(datetime.now().timestamp() + expires_in), json.dumps(response_json), timestamp,
                                       cache_id))
                 # except mariadb.Error:
@@ -2252,7 +2255,7 @@ class D2data:
                 return code
             # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
             if clan_json['Response']['detail']['features']['capabilities'] & 16:
-                clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
+                clan_cursor.execute('''INSERT INTO clans VALUES (%s,%s)''', (clan_id, json.dumps(clan_json)))
                 # clan_db.commit()
         clan_cursor.close()
         cache_connection.close()
@@ -2317,7 +2320,7 @@ class D2data:
             # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
             if clan_json['Response']['detail']['features']['capabilities'] & 16:
                 clan_id = clan_json['Response']['detail']['groupId']
-                clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
+                clan_cursor.execute('''INSERT INTO clans VALUES (%s,%s)''', (clan_id, json.dumps(clan_json)))
                 # clan_db.commit()
 
         clan_cursor.close()
@@ -2353,7 +2356,7 @@ class D2data:
                     continue
                 if code in [622, 621]:
                     try:
-                        clan_cursor.execute('''DELETE FROM clans WHERE id=?''', (clan_id,))
+                        clan_cursor.execute('''DELETE FROM clans WHERE id=%s''', (clan_id,))
                         # clan_db.commit()
                     except mariadb.Error:
                         pass

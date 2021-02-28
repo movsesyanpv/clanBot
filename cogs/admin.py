@@ -8,7 +8,7 @@ import updater
 import os
 import sqlite3
 import pydest
-import mariadb
+import mysql.connector as mariadb
 import asyncio
 
 import main

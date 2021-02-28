@@ -1,7 +1,7 @@
 from discord.ext import commands
 import discord
 from tabulate import tabulate
-import mariadb
+import mysql.connector as mariadb
 import pydest
 
 
@@ -40,24 +40,25 @@ class Public(commands.Cog):
                                                   password=ctx.bot.api_data['pass'], port=ctx.bot.api_data['db_port'],
                                                   database='metrics')
                     internal_cursor = internal_db.cursor()
-                    internal_cursor.execute('''SELECT hash FROM seasonsmetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM accountmetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM cruciblemetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM destinationmetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM gambitmetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM raidsmetrics WHERE name=?
-                    UNION ALL 
-                    SELECT hash FROM strikesmetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM trialsofosirismetrics WHERE name=? ''', (metric.lower(), metric.lower(),
-                                                                              metric.lower(), metric.lower(),
-                                                                              metric.lower(), metric.lower(),
-                                                                              metric.lower(), metric.lower()))
+                    internal_cursor.execute('''SELECT hash FROM seasonsmetrics WHERE name=%s
+                                    UNION ALL
+                                    SELECT hash FROM accountmetrics WHERE name=%s
+                                    UNION ALL
+                                    SELECT hash FROM cruciblemetrics WHERE name=%s
+                                    UNION ALL
+                                    SELECT hash FROM destinationmetrics WHERE name=%s
+                                    UNION ALL
+                                    SELECT hash FROM gambitmetrics WHERE name=%s
+                                    UNION ALL
+                                    SELECT hash FROM raidsmetrics WHERE name=%s
+                                    UNION ALL 
+                                    SELECT hash FROM strikesmetrics WHERE name=%s
+                                    UNION ALL
+                                    SELECT hash FROM trialsofosirismetrics WHERE name=%s ''',
+                                            (metric.lower(), metric.lower(),
+                                             metric.lower(), metric.lower(),
+                                             metric.lower(), metric.lower(),
+                                             metric.lower(), metric.lower()))
                     metric_id = internal_cursor.fetchone()
                     if 'kda' in metric.lower():
                         is_kda = True
