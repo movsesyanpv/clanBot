@@ -2164,7 +2164,7 @@ class D2data:
                         activity_string = activity['displayProperties']['name']
                     elif char_resp['currentActivityHash'] in [82913930]:
                         activity_string = place['displayProperties']['name']
-                    elif activity['activityTypeHash'] in [4088006058]:
+                    elif activity['activityTypeHash'] in [4088006058, 2371050408]:
                         activity_string = '{}: {}: {}'.format(activity_type['displayProperties']['name'],
                                                               activity_mode['displayProperties']['name'],
                                                               activity['displayProperties']['name'])
