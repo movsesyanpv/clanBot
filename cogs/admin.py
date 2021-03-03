@@ -111,6 +111,14 @@ class Admin(commands.Cog):
 
     @commands.is_owner()
     @commands.command(
+        description='Force update playermetrics'
+    )
+    async def forcemetrics(self, ctx):
+        await ctx.bot.update_metrics()
+        await ctx.message.reply('Done')
+
+    @commands.is_owner()
+    @commands.command(
         description='Set Trials of Osiris info'
     )
     async def osiris(self, ctx, curr_map, win3, win5, win7, flawless, mod):
