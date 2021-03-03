@@ -1977,17 +1977,19 @@ class D2data:
 
     async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True,
                               force=False, cache_only=False, expires_in=1800):
-        while True:
-            try:
-                cache_connection = self.cache_pool.get_connection()
-                cache_connection.auto_reconnect = True
-                break
-            except mariadb.PoolError:
-                try:
-                    self.cache_pool.add_connection()
-                except mariadb.PoolError:
-                    pass
-                await asyncio.sleep(0.125)
+        # while True:
+        #     try:
+        #         cache_connection = self.cache_pool.get_connection()
+        #         cache_connection.auto_reconnect = True
+        #         break
+        #     except mariadb.PoolError:
+        #         try:
+        #             self.cache_pool.add_connection()
+        #         except mariadb.PoolError:
+        #             pass
+        #         await asyncio.sleep(0.125)
+        # cache_cursor = cache_connection.cursor()
+        cache_connection = sqlite3.connect('cache.db')
         cache_cursor = cache_connection.cursor()
 
         try:
@@ -1997,7 +1999,8 @@ class D2data:
                 expired = datetime.now().timestamp() > cached_entry[1]
             else:
                 expired = True
-        except mariadb.Error:
+        except sqlite3.OperationalError:
+        # except mariadb.Error:
             expired = True
             if cache_only:
                 cache_cursor.close()
@@ -2016,16 +2019,18 @@ class D2data:
                     cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
                                          (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                           timestamp))
-                except mariadb.Error:
+                except sqlite3.OperationalError:
+                # except mariadb.Error:
                     try:
                         cache_cursor.execute('''ALTER TABLE cache ADD COLUMN timestamp text''')
                         cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
                                              (cache_id, int(datetime.now().timestamp() + expires_in),
                                               json.dumps(response_json), timestamp))
-                    except mariadb.Error:
+                    # except mariadb.Error:
+                    except sqlite3.OperationalError:
                         pass
                 # try:
-                cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
                                      (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                       timestamp))
                 # except mariadb.Error:
@@ -2259,72 +2264,83 @@ class D2data:
         return 'Finished'
 
     async def iterate_clans_new(self, max_id):
-        #tracemalloc.start()
-        #snapshot1 = tracemalloc.take_snapshot()
-        while True:
-            try:
-                cache_connection = self.cache_pool.get_connection()
-                cache_connection.auto_reconnect = True
-                break
-            except mariadb.PoolError:
-                try:
-                    self.cache_pool.add_connection()
-                except mariadb.PoolError:
-                    pass
-                await asyncio.sleep(0.125)
+        # tracemalloc.start()
+        # snapshot1 = tracemalloc.take_snapshot()
+        # while True:
+        #     try:
+        #         cache_connection = self.cache_pool.get_connection()
+        #         cache_connection.auto_reconnect = True
+        #         break
+        #     except mariadb.PoolError:
+        #         try:
+        #             self.cache_pool.add_connection()
+        #         except mariadb.PoolError:
+        #             pass
+        #         await asyncio.sleep(0.125)
+        # clan_cursor = cache_connection.cursor()
+        cache_connection = sqlite3.connect("cache.db")
         clan_cursor = cache_connection.cursor()
 
         min_id = 1
         try:
             clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
             # clan_db.commit()
-        except mariadb.Error:
+        # except mariadb.Error:
+        except sqlite3.OperationalError:
             # clan_cursor = clan_db.cursor()
             clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
             min_id_tuple = clan_cursor.fetchall()
             if min_id_tuple is not None:
                 min_id = min_id_tuple[0][0] + 1
 
-        tasks = []
-        for clan_id in range(min_id, max_id+1):
-            task = asyncio.ensure_future(self.get_cached_json('clan_{}'.format(clan_id), '{} clan info'.format(clan_id),
-                                                              'https://www.bungie.net/Platform/GroupV2/{}/'.
-                                                              format(clan_id), expires_in=86400))
-            tasks.append(task)
+        ranges = list(range(min_id, max_id, 1000))
+        if max(ranges) != max_id:
+            ranges.append(max_id)
+        for max_id_ranged in ranges[1:]:
+            min_id = ranges[ranges.index(max_id_ranged) - 1]
+            max_id = max_id_ranged
+            tasks = []
+            for clan_id in range(min_id, max_id+1):
+                task = asyncio.ensure_future(self.get_cached_json('clan_{}'.format(clan_id), '{} clan info'.format(clan_id),
+                                                                  'https://www.bungie.net/Platform/GroupV2/{}/'.
+                                                                  format(clan_id), expires_in=86400))
+                tasks.append(task)
 
-        responses = await asyncio.gather(*tasks)
+            responses = await asyncio.gather(*tasks)
 
-        for clan_json in responses:
-            if not clan_json:
-                continue
-                # clan_cursor.close()
-                # cache_connection.close()
-                # return 'unable to fetch clan {}'.format(clan_id)
-            try:
-                code = clan_json['ErrorCode']
-                # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
-            except KeyError:
-                code = 0
-                clan_cursor.close()
-                cache_connection.close()
-                return '```{}```'.format(json.dumps(clan_json))
-            if code in [621, 622, 686]:
-                continue
-            if code != 1:
-                clan_cursor.close()
-                cache_connection.close()
-                return code
-            # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
-            if clan_json['Response']['detail']['features']['capabilities'] & 16:
-                clan_id = clan_json['Response']['detail']['groupId']
-                clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
-                # clan_db.commit()
+            a = ''
+            for clan_json in responses:
+                if not clan_json:
+                    continue
+                    # clan_cursor.close()
+                    # cache_connection.close()
+                    # return 'unable to fetch clan {}'.format(clan_id)
+                try:
+                    code = clan_json['ErrorCode']
+                    # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
+                except KeyError:
+                    code = 0
+                    clan_cursor.close()
+                    cache_connection.close()
+                    return '```{}```'.format(json.dumps(clan_json))
+                if code in [621, 622, 686]:
+                    continue
+                if code != 1:
+                    clan_cursor.close()
+                    cache_connection.close()
+                    return code
+                # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
+                if clan_json['Response']['detail']['features']['capabilities'] & 16:
+                    clan_id = clan_json['Response']['detail']['groupId']
+                    clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
+                    cache_connection.commit()
+                    # clan_db.commit()
 
         clan_cursor.close()
         cache_connection.close()
-        #snapshot2 = tracemalloc.take_snapshot()
-        #top_stats = snapshot2.compare_to(snapshot1, 'lineno')
-        #print(top_stats)
+        # snapshot2 = tracemalloc.take_snapshot()
+        # top_stats = snapshot2.compare_to(snapshot1, 'lineno')
+        # print(top_stats)
         return 'Finished'
 
     async def fetch_players(self):
