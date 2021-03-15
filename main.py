@@ -732,7 +732,7 @@ class ClanBot(commands.Bot):
                     if upd_type in self.embeds_with_img:
                         image = discord.File("{}-{}.png".format(upd_type, lang), filename='{}-{}.png'.format(upd_type, lang))
                     if len(src_dict[lang][upd_type]['fields']) == 0:
-                        return
+                        continue
                     embed = discord.Embed.from_dict(src_dict[lang][upd_type])
 
             hist = 0
@@ -779,13 +779,15 @@ class ClanBot(commands.Bot):
                                     if tmp_embed not in dict_embeds:
                                         last.append(message)
                                 if len(last) == 0:
-                                    return
+                                    continue
                             else:
                                 if hist != "[]":
                                     last = await channel.fetch_message(hist)
                                     if len(last.embeds) > 0:
-                                        if last.embeds[0].to_dict() == embed.to_dict():
-                                            return
+                                        last_dict = last.embeds[0].to_dict()
+                                        last_dict['author'].pop('proxy_icon', None)
+                                        if last.embeds[0].to_dict() == last_dict:
+                                            continue
                             try:
                                 if type(hist) == list:
                                     if len(hist) < 100:
