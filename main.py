@@ -784,9 +784,7 @@ class ClanBot(commands.Bot):
                                 if hist != "[]":
                                     last = await channel.fetch_message(hist)
                                     if len(last.embeds) > 0:
-                                        last_dict = last.embeds[0].to_dict()
-                                        last_dict['author'].pop('proxy_icon', None)
-                                        if last.embeds[0].to_dict() == last_dict:
+                                        if last.embeds[0].to_dict()['fields'] == embed.to_dict()['fields']:
                                             continue
                             try:
                                 if type(hist) == list:
