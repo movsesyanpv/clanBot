@@ -783,8 +783,9 @@ class ClanBot(commands.Bot):
                             else:
                                 if hist != "[]":
                                     last = await channel.fetch_message(hist)
-                                    if last.embeds[0].to_dict() == embed.to_dict():
-                                        return
+                                    if len(last.embeds) > 0:
+                                        if last.embeds[0].to_dict() == embed.to_dict():
+                                            return
                             try:
                                 if type(hist) == list:
                                     if len(hist) < 100:
