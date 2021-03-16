@@ -783,7 +783,10 @@ class ClanBot(commands.Bot):
                                     continue
                             else:
                                 if hist != "[]":
-                                    last = await channel.fetch_message(hist)
+                                    try:
+                                        last = await channel.fetch_message(hist)
+                                    except discord.errors.HTTPException:
+                                        last = await channel.fetch_message(0)
                                     if len(last.embeds) > 0:
                                         if last.embeds[0].to_dict()['fields'] == embed.to_dict()['fields']:
                                             continue
@@ -793,7 +796,8 @@ class ClanBot(commands.Bot):
                                         for msg in last:
                                             await msg.delete()
                                 else:
-                                    await last.delete()
+                                    if type(last) != tuple:
+                                        await last.delete()
                             except discord.errors.Forbidden:
                                 pass
                             except discord.NotFound:
