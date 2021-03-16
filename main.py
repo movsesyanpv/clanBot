@@ -765,7 +765,7 @@ class ClanBot(commands.Bot):
 
             for channel in server.channels:
                 if channel.id in channels:
-                    if hist and not self.args.noclear and channel.type != discord.ChannelType.news:
+                    if hist and not self.args.noclear:
                         try:
                             if type(hist) == list:
                                 last = []
@@ -791,12 +791,12 @@ class ClanBot(commands.Bot):
                                         if last.embeds[0].to_dict()['fields'] == embed.to_dict()['fields']:
                                             continue
                             try:
-                                if type(hist) == list:
+                                if type(hist) == list and channel.type != discord.ChannelType.news:
                                     if len(hist) < 100:
                                         for msg in last:
                                             await msg.delete()
                                 else:
-                                    if type(last) != tuple:
+                                    if type(last) != tuple and channel.type != discord.ChannelType.news:
                                         await last.delete()
                             except discord.errors.Forbidden:
                                 pass
