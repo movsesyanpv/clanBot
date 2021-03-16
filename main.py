@@ -774,10 +774,11 @@ class ClanBot(commands.Bot):
                                     dict_embeds.append(embed_p.to_dict())
                                 for msg in hist:
                                     message = await channel.fetch_message(msg)
-                                    tmp_embed = message.embeds[0].to_dict()
-                                    tmp_embed['author'].pop('proxy_icon_url', None)
-                                    if tmp_embed not in dict_embeds:
-                                        last.append(message)
+                                    if len(message.embeds) > 0:
+                                        tmp_embed = message.embeds[0].to_dict()
+                                        tmp_embed['author'].pop('proxy_icon_url', None)
+                                        if tmp_embed not in dict_embeds:
+                                            last.append(message)
                                 if len(last) == 0:
                                     continue
                             else:
