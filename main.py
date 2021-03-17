@@ -12,6 +12,8 @@ from discord.ext.commands.bot import Bot
 import sqlite3
 import logging
 import traceback
+from inspect import currentframe, getframeinfo
+from tabulate import tabulate
 
 from discord.ext import commands
 
@@ -21,7 +23,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.17.5'
+    version = '2.18'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'xur', 'osiris', 'alerts', 'events']
@@ -720,135 +722,175 @@ class ClanBot(commands.Bot):
         if post:
             await self.post_embed(name, self.data.data, time_to_delete, channels)
 
-    async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
-        for server in self.guilds:
-            lang = self.guild_lang(server.id)
-            if not self.args.nomessage:
+    async def post_embed_to_channel(self, upd_type, src_dict, time_to_delete, channel_id):
+        channel = self.get_channel(channel_id)
+        if channel is None:
+            frameinfo = getframeinfo(currentframe())
+            return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
+        server = channel.guild
+        lang = self.guild_lang(channel.guild.id)
+
+        if not self.args.nomessage:
+            if type(src_dict[lang][upd_type]) == list:
+                embed = []
+                for field in src_dict[lang][upd_type]:
+                    embed.append(discord.Embed.from_dict(field))
+            else:
+                if upd_type in self.embeds_with_img:
+                    image = discord.File("{}-{}.png".format(upd_type, lang),
+                                         filename='{}-{}.png'.format(upd_type, lang))
+                if len(src_dict[lang][upd_type]['fields']) == 0:
+                    frameinfo = getframeinfo(currentframe())
+                    return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
+                embed = discord.Embed.from_dict(src_dict[lang][upd_type])
+
+        hist = 0
+        try:
+            last = self.guild_cursor.execute('''SELECT {} FROM history WHERE server_id=?'''.format(upd_type),
+                                             (server.id,))
+            last = last.fetchone()
+            if last is not None:
                 if type(src_dict[lang][upd_type]) == list:
-                    embed = []
-                    for field in src_dict[lang][upd_type]:
-                        embed.append(discord.Embed.from_dict(field))
-                else:
-                    if upd_type in self.embeds_with_img:
-                        image = discord.File("{}-{}.png".format(upd_type, lang), filename='{}-{}.png'.format(upd_type, lang))
-                    if len(src_dict[lang][upd_type]['fields']) == 0:
-                        continue
-                    embed = discord.Embed.from_dict(src_dict[lang][upd_type])
-
-            hist = 0
-            try:
-                last = self.guild_cursor.execute('''SELECT {} FROM history WHERE server_id=?'''.format(upd_type), (server.id,))
-                last = last.fetchone()
-                if last is not None:
-                    if type(src_dict[lang][upd_type]) == list:
-                        hist = [0]
-                        if len(last) > 0:
-                            if last[0] is not None:
-                                hist = eval(last[0])
-                            else:
-                                hist = [0]
-                    else:
-                        if len(last) > 0:
-                            if last[0] is not None:
-                                hist = last[0]
-
-            except sqlite3.OperationalError:
-                try:
-                    if type(src_dict[lang][upd_type]) == list:
-                        self.guild_cursor.execute(
-                            '''ALTER TABLE history ADD COLUMN {} text'''.format(upd_type))
-                    else:
-                        self.guild_cursor.execute('''ALTER TABLE history ADD COLUMN {} INTEGER'''.format(upd_type))
-                    self.guild_db.commit()
-                except sqlite3.OperationalError:
-                    await self.update_history()
-
-            for channel in server.channels:
-                if channel.id in channels:
-                    if hist and not self.args.noclear:
-                        try:
-                            if type(hist) == list:
-                                last = []
-                                dict_embeds = []
-                                for embed_p in embed:
-                                    dict_embeds.append(embed_p.to_dict())
-                                for msg in hist:
-                                    message = await channel.fetch_message(msg)
-                                    if len(message.embeds) > 0:
-                                        tmp_embed = message.embeds[0].to_dict()
-                                        tmp_embed['author'].pop('proxy_icon_url', None)
-                                        if tmp_embed not in dict_embeds:
-                                            last.append(message)
-                                if len(last) == 0:
-                                    continue
-                            else:
-                                if hist != "[]":
-                                    try:
-                                        last = await channel.fetch_message(hist)
-                                    except discord.errors.HTTPException:
-                                        last = await channel.fetch_message(0)
-                                    if len(last.embeds) > 0:
-                                        if last.embeds[0].to_dict()['fields'] == embed.to_dict()['fields']:
-                                            continue
-                            try:
-                                if type(hist) == list and channel.type != discord.ChannelType.news:
-                                    if len(hist) < 100:
-                                        for msg in last:
-                                            await msg.delete()
-                                else:
-                                    if type(last) != tuple and channel.type != discord.ChannelType.news:
-                                        await last.delete()
-                            except discord.errors.Forbidden:
-                                pass
-                            except discord.NotFound:
-                                pass
-                            except discord.errors.HTTPException as e:
-                                bot_info = await self.application_info()
-                                await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
-                        except discord.NotFound:
-                            pass
-                            # bot_info = await self.application_info()
-                            # await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.
-                            #                           format(upd_type, channel.name, server.name))
-                    if type(embed) == list:
-                        hist = []
-                        for e in embed:
-                            if server.me.permissions_in(channel).embed_links:
-                                if channel.type != discord.ChannelType.news:
-                                    message = await channel.send(embed=e, delete_after=time_to_delete)
-                                else:
-                                    message = await channel.send(embed=e)
-                            else:
-                                message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
-                            hist.append(message.id)
-                            if channel.type == discord.ChannelType.news:
-                                try:
-                                    await message.publish()
-                                except discord.errors.Forbidden:
-                                    pass
-                        hist = str(hist)
-                    else:
-                        if server.me.permissions_in(channel).embed_links:
-                            if upd_type in self.embeds_with_img:
-                                if channel.type != discord.ChannelType.news:
-                                    message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
-                                else:
-                                    message = await channel.send(file=image, embed=embed)
-                            else:
-                                if channel.type != discord.ChannelType.news:
-                                    message = await channel.send(embed=embed, delete_after=time_to_delete)
-                                else:
-                                    message = await channel.send(embed=embed)
+                    hist = [0]
+                    if len(last) > 0:
+                        if last[0] is not None:
+                            hist = eval(last[0])
                         else:
-                            message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
-                        hist = message.id
-                        if channel.type == discord.ChannelType.news:
-                            try:
-                                await message.publish()
-                            except discord.errors.Forbidden:
-                                pass
-            self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type), (str(hist), server.id))
-            self.guild_db.commit()
+                            hist = [0]
+                else:
+                    if len(last) > 0:
+                        if last[0] is not None:
+                            hist = last[0]
+
+        except sqlite3.OperationalError:
+            try:
+                if type(src_dict[lang][upd_type]) == list:
+                    self.guild_cursor.execute(
+                        '''ALTER TABLE history ADD COLUMN {} text'''.format(upd_type))
+                else:
+                    self.guild_cursor.execute('''ALTER TABLE history ADD COLUMN {} INTEGER'''.format(upd_type))
+                self.guild_db.commit()
+            except sqlite3.OperationalError:
+                await self.update_history()
+
+        if hist and not self.args.noclear:
+            try:
+                if type(hist) == list:
+                    last = []
+                    dict_embeds = []
+                    for embed_p in embed:
+                        dict_embeds.append(embed_p.to_dict())
+                    for msg in hist:
+                        message = await channel.fetch_message(msg)
+                        if len(message.embeds) > 0:
+                            tmp_embed = message.embeds[0].to_dict()
+                            tmp_embed['author'].pop('proxy_icon_url', None)
+                            if tmp_embed not in dict_embeds:
+                                last.append(message)
+                    if len(last) == 0:
+                        frameinfo = getframeinfo(currentframe())
+                        return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
+                else:
+                    if hist != "[]":
+                        try:
+                            last = await channel.fetch_message(hist)
+                        except discord.errors.HTTPException:
+                            last = await channel.fetch_message(0)
+                        if len(last.embeds) > 0:
+                            if last.embeds[0].to_dict()['fields'] == embed.to_dict()['fields']:
+                                frameinfo = getframeinfo(currentframe())
+                                return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
+                try:
+                    if type(hist) == list and channel.type != discord.ChannelType.news:
+                        if len(hist) < 100:
+                            for msg in last:
+                                await msg.delete()
+                    else:
+                        if type(last) != tuple and channel.type != discord.ChannelType.news:
+                            await last.delete()
+                except discord.errors.Forbidden:
+                    pass
+                except discord.NotFound:
+                    pass
+                except discord.errors.HTTPException as e:
+                    bot_info = await self.application_info()
+                    await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+            except discord.NotFound:
+                pass
+                # bot_info = await self.application_info()
+                # await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.
+                #                           format(upd_type, channel.name, server.name))
+        if type(embed) == list:
+            hist = []
+            for e in embed:
+                if server.me.permissions_in(channel).embed_links:
+                    if channel.type != discord.ChannelType.news:
+                        message = await channel.send(embed=e, delete_after=time_to_delete)
+                    else:
+                        message = await channel.send(embed=e)
+                else:
+                    message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
+                hist.append(message.id)
+                if channel.type == discord.ChannelType.news:
+                    try:
+                        await message.publish()
+                    except discord.errors.Forbidden:
+                        pass
+            hist = str(hist)
+        else:
+            if server.me.permissions_in(channel).embed_links:
+                if upd_type in self.embeds_with_img:
+                    if channel.type != discord.ChannelType.news:
+                        message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
+                    else:
+                        message = await channel.send(file=image, embed=embed)
+                else:
+                    if channel.type != discord.ChannelType.news:
+                        message = await channel.send(embed=embed, delete_after=time_to_delete)
+                    else:
+                        message = await channel.send(embed=embed)
+            else:
+                message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
+            hist = message.id
+            if channel.type == discord.ChannelType.news:
+                try:
+                    await message.publish()
+                except discord.errors.Forbidden:
+                    pass
+
+        self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type),
+                                  (str(hist), server.id))
+        self.guild_db.commit()
+
+        frameinfo = getframeinfo(currentframe())
+        return [channel_id, 'posted ({})'.format(frameinfo.lineno + 1)]
+
+    async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
+        tasks = []
+        for channel_id in channels:
+            task = asyncio.ensure_future(self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
+            tasks.append(task)
+
+        responses = await asyncio.gather(*tasks)
+
+        msg = '{} is posted'.format(upd_type)
+        statuses = tabulate(responses, tablefmt='simple', colalign=('left', 'left'), headers=['channel', 'status'])
+        msg = '{}\n```{}```'.format(msg, statuses)
+        if len(msg) > 2000:
+            msg_strs = msg.splitlines()
+            msg = ''
+            for line in msg_strs:
+                if len(msg) + len(line) <= 1990:
+                    msg = '{}{}\n'.format(msg, line)
+                else:
+                    msg = '{}```'.format(msg)
+                    await self.dm_owner(msg)
+                    msg = '```{}\n'.format(line)
+            if len(msg) > 0:
+                msg = '{}'.format(msg)
+                await self.dm_owner(msg)
+        else:
+            await self.dm_owner(msg)
 
     async def post_updates(self, version, content, lang):
         msg = '`{} v{}`\n{}'.format(self.user.name, version, content)
