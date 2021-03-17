@@ -208,12 +208,12 @@ class ClanBot(commands.Bot):
         self.all_commands['top'].enabled = False
         self.all_commands['online'].enabled = False
         await self.data.token_update()
-        await self.update_history()
         await self.update_langs()
         await self.update_prefixes()
         # if not self.args.production:
         await self.update_metric_list()
         self.get_channels()
+        await self.update_history()
         await self.data.get_chars()
         if self.args.forceupdate:
             await self.force_update(self.args.type)
@@ -675,14 +675,15 @@ class ClanBot(commands.Bot):
 
     async def update_history(self):
         try:
-            self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer)''')
-            self.guild_cursor.execute('''CREATE UNIQUE INDEX hist ON history(server_id)''')
+            self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer, channel_id integer)''')
+            self.guild_cursor.execute('''CREATE UNIQUE INDEX hist ON history(channel_id)''')
         except sqlite3.OperationalError:
             pass
-        for server in self.guilds:
+        for channel_id in self.notifiers:
             try:
-                init_values = [server.name, server.id]
-                self.guild_cursor.execute("INSERT or IGNORE INTO history (server_name, server_id) VALUES (?,?)", init_values)
+                channel = self.get_channel(channel_id)
+                init_values = [channel.guild.name, channel.guild.id, channel_id]
+                self.guild_cursor.execute("INSERT or IGNORE INTO history (server_name, server_id, channel_id) VALUES (?,?,?)", init_values)
                 self.guild_db.commit()
             except sqlite3.OperationalError:
                 pass
@@ -746,8 +747,8 @@ class ClanBot(commands.Bot):
 
         hist = 0
         try:
-            last = self.guild_cursor.execute('''SELECT {} FROM history WHERE server_id=?'''.format(upd_type),
-                                             (server.id,))
+            last = self.guild_cursor.execute('''SELECT {} FROM history WHERE channel_id=?'''.format(upd_type),
+                                             (channel_id,))
             last = last.fetchone()
             if last is not None:
                 if type(src_dict[lang][upd_type]) == list:
@@ -761,6 +762,14 @@ class ClanBot(commands.Bot):
                     if len(last) > 0:
                         if last[0] is not None:
                             hist = last[0]
+            else:
+                try:
+                    init_values = [channel.guild.name, channel.guild.id, channel_id]
+                    self.guild_cursor.execute(
+                        "INSERT or IGNORE INTO history (server_name, server_id, channel_id) VALUES (?,?,?)", init_values)
+                    self.guild_db.commit()
+                except sqlite3.OperationalError:
+                    pass
 
         except sqlite3.OperationalError:
             try:
@@ -858,8 +867,8 @@ class ClanBot(commands.Bot):
                 except discord.errors.Forbidden:
                     pass
 
-        self.guild_cursor.execute('''UPDATE history SET {}=? WHERE server_id=?'''.format(upd_type),
-                                  (str(hist), server.id))
+        self.guild_cursor.execute('''UPDATE history SET {}=? WHERE channel_id=?'''.format(upd_type),
+                                  (str(hist), channel_id))
         self.guild_db.commit()
 
         frameinfo = getframeinfo(currentframe())
