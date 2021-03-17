@@ -682,9 +682,10 @@ class ClanBot(commands.Bot):
         for channel_id in self.notifiers:
             try:
                 channel = self.get_channel(channel_id)
-                init_values = [channel.guild.name, channel.guild.id, channel_id]
-                self.guild_cursor.execute("INSERT or IGNORE INTO history (server_name, server_id, channel_id) VALUES (?,?,?)", init_values)
-                self.guild_db.commit()
+                if channel is not None:
+                    init_values = [channel.guild.name, channel.guild.id, channel_id]
+                    self.guild_cursor.execute("INSERT or IGNORE INTO history (server_name, server_id, channel_id) VALUES (?,?,?)", init_values)
+                    self.guild_db.commit()
             except sqlite3.OperationalError:
                 pass
 
