@@ -190,6 +190,15 @@ class Admin(commands.Cog):
         reason = await ctx.bot.data.fetch_players()
         await ctx.channel.send('Exited ({})'.format(reason))
 
+    @commands.is_owner()
+    @commands.command(
+        description='Switch update status posting',
+        aliases=['poststatus']
+    )
+    async def switchupdstatus(self, ctx):
+        ctx.bot.update_status = not ctx.bot.update_status
+        await ctx.message.reply('Done, switched to {}'.format(ctx.bot.update_status))
+
     @commands.command(
         name='help',
         description='The help command!',

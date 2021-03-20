@@ -39,6 +39,8 @@ class ClanBot(commands.Bot):
     api_data = json.loads(api_data_file.read())
     logger = logging.getLogger('ClanBot')
 
+    update_status = False
+
     lfgs = []
 
     notifiers = []
@@ -883,24 +885,25 @@ class ClanBot(commands.Bot):
 
         responses = await asyncio.gather(*tasks)
 
-        msg = '{} is posted'.format(upd_type)
-        statuses = tabulate(responses, tablefmt='simple', colalign=('left', 'left'), headers=['channel', 'status'])
-        msg = '{}\n```{}```'.format(msg, statuses)
-        if len(msg) > 2000:
-            msg_strs = msg.splitlines()
-            msg = ''
-            for line in msg_strs:
-                if len(msg) + len(line) <= 1990:
-                    msg = '{}{}\n'.format(msg, line)
-                else:
-                    msg = '{}```'.format(msg)
+        if self.update_status:
+            msg = '{} is posted'.format(upd_type)
+            statuses = tabulate(responses, tablefmt='simple', colalign=('left', 'left'), headers=['channel', 'status'])
+            msg = '{}\n```{}```'.format(msg, statuses)
+            if len(msg) > 2000:
+                msg_strs = msg.splitlines()
+                msg = ''
+                for line in msg_strs:
+                    if len(msg) + len(line) <= 1990:
+                        msg = '{}{}\n'.format(msg, line)
+                    else:
+                        msg = '{}```'.format(msg)
+                        await self.dm_owner(msg)
+                        msg = '```{}\n'.format(line)
+                if len(msg) > 0:
+                    msg = '{}'.format(msg)
                     await self.dm_owner(msg)
-                    msg = '```{}\n'.format(line)
-            if len(msg) > 0:
-                msg = '{}'.format(msg)
+            else:
                 await self.dm_owner(msg)
-        else:
-            await self.dm_owner(msg)
 
     async def post_updates(self, version, content, lang):
         msg = '`{} v{}`\n{}'.format(self.user.name, version, content)
