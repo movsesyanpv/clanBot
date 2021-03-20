@@ -2173,8 +2173,8 @@ class D2data:
                         activity_string = '{}: {}: {}'.format(activity_type['displayProperties']['name'],
                                                               activity_mode['displayProperties']['name'],
                                                               activity['displayProperties']['name'])
-                    elif activity['activityTypeHash'] in [4110605575, 1686739444, 248695599, 2043403989] and char_resp[
-                        'currentActivityModeHash'] not in [2166136261]:
+                    elif activity['activityTypeHash'] in [4110605575, 1686739444, 248695599, 2043403989, 2112637710] \
+                            and char_resp['currentActivityModeHash'] not in [2166136261]:
                         activity_string = '{}: {}'.format(activity_mode['displayProperties']['name'],
                                                           activity['displayProperties']['name'])
                     elif activity['activityTypeHash'] in [3497767639]:
