@@ -740,7 +740,7 @@ class D2data:
         if not spider_resp:
             for locale in lang:
                 db_data = {
-                    'name': self.data[locale]['spider']['fields'][0]['name'],
+                    'name': self.translations[locale]['msg']['spider'],
                     'description': self.data[locale]['spider']['fields'][0]['value']
                 }
                 await self.write_to_db(locale, 'spider_mats', [db_data],
@@ -782,7 +782,7 @@ class D2data:
             for locale in lang:
                 banshee_def = await self.destiny.decode_hash(672118013, 'DestinyVendorDefinition', language=locale)
                 db_data = {
-                    'name': self.data[locale]['spider']['fields'][0]['name'],
+                    'name': self.data[locale]['msg']['error'],
                     'description': self.data[locale]['spider']['fields'][0]['value']
                 }
                 await self.write_to_db(locale, 'spider_mats', [db_data], name=banshee_def['displayProperties']['name'])
