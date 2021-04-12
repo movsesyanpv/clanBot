@@ -783,7 +783,7 @@ class D2data:
                 banshee_def = await self.destiny.decode_hash(672118013, 'DestinyVendorDefinition', language=locale)
                 db_data = {
                     'name': self.translations[locale]['msg']['error'],
-                    'description': self.data[locale]['spider']['fields'][0]['value']
+                    'description': self.translations[locale]['msg']['noapi']
                 }
                 await self.write_to_db(locale, 'spider_mats', [db_data], name=banshee_def['displayProperties']['name'])
             return False
