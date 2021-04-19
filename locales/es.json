@@ -93,7 +93,8 @@
         "Io": "Io",
         "Nessus": "Nessus",
         "NULL": "Unable to get the info",
-        "noxur": "Only the Nine know"
+        "noxur": "Only the Nine know",
+        "copyright": "Location is provided by paracausal.science."
     },
     "forge": "Fragua",
     "heroicstory": "Misión de historia heroica diaria: ",
