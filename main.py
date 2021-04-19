@@ -23,7 +23,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.18'
+    version = '2.18.1'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'xur', 'osiris', 'alerts', 'events']
