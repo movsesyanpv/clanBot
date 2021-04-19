@@ -815,14 +815,16 @@ class D2data:
                              # size='tall')
 
     async def get_xur_loc(self):
-        url = 'https://wherethefuckisxur.com/'
+        # url = 'https://wherethefuckisxur.com/'
+        url = 'https://paracausal.science/xur/current.json'
         r = await self.session.get(url)
-        r_text = await r.text()
-        soup = BeautifulSoup(r_text, features="html.parser")
-        modifier_list = soup.find('div', {'class': 'xur-location'})
-        loc = modifier_list.find('h1', {'class': 'page-title'})
-        location = loc.text.split(' >')
-        return location[0]
+        r_json = await r.json()
+        # r_text = await r.text()
+        # soup = BeautifulSoup(r_text, features="html.parser")
+        # modifier_list = soup.find('div', {'class': 'xur-location'})
+        # loc = modifier_list.find('h1', {'class': 'page-title'})
+        # location = loc.text.split(' >')
+        return r_json
 
     async def get_xur(self, langs, forceget=False):
         char_info = self.char_info
@@ -833,6 +835,7 @@ class D2data:
         if not xur_resp:
             return False
         resp_time = xur_resp['timestamp']
+        xur_loc = await self.get_xur_loc()
         for lang in langs:
 
             xur_def = await self.destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
@@ -860,11 +863,14 @@ class D2data:
                     'name': self.translations[lang]['msg']['weapon'],
                     'value': ''
                 }
-                try:
-                    loc_field['value'] = self.translations[lang]['xur'][await self.get_xur_loc()]
+
+                if xur_loc:
+                    xur_place_name = await self.destiny.decode_hash(xur_loc['placeHash'], 'DestinyPlaceDefinition', language=lang)
+                    xur_destination_name = await self.destiny.decode_hash(xur_loc['destinationHash'], 'DestinyDestinationDefinition', language=lang)
+                    loc_field['value'] = '{}, {}'.format(xur_place_name, xur_destination_name)
                     self.data[lang]['xur']['fields'].append(loc_field)
-                except:
-                    pass
+                    self.data[lang]['xur']['footer']['text'] = '{} {}'.format(self.translations[lang]['xur']['copyright'], self.data[lang]['xur']['footer']['text'])
+
                 xur_sales = xur_json['Response']['sales']['data']
 
                 self.data[lang]['xur']['fields'].append(weapon)
