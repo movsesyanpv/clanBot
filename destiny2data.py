@@ -37,7 +37,7 @@ class D2data:
     max_retries = 10
 
     vendor_params = {
-        'components': '400,401,402'
+        'components': '400,401,402,302,304,306,310,305'
     }
 
     activities_params = {
@@ -331,6 +331,60 @@ class D2data:
                         'currency_icon': currency_icon,
                         'cost': currency_cost
                     })
+                if 'screenshot' in item_resp.keys():
+                    screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}" ' \
+                                 'loading="lazy">'.format(item_resp['screenshot'])
+                else:
+                    screenshot = ''
+
+                stats = []
+                perks = []
+                if 'itemComponents' in vendor_json['Response']:
+                    if str(item['vendorItemIndex']) in vendor_json['Response']['itemComponents']['stats']['data'].keys():
+                        stats_json = \
+                        vendor_json['Response']['itemComponents']['stats']['data'][str(item['vendorItemIndex'])]['stats']
+                        for stat in stats_json:
+                            value = stats_json[stat]['value']
+                            if value == 0:
+                                continue
+                            stat_def = await self.destiny.decode_hash(stats_json[stat]['statHash'], 'DestinyStatDefinition',
+                                                                      language=lang)
+                            stats.append({
+                                'name': stat_def['displayProperties']['name'],
+                                'value': stats_json[stat]['value']
+                            })
+
+                    if str(item['vendorItemIndex']) in vendor_json['Response']['itemComponents']['perks']['data'].keys():
+                        try:
+                            plugs_json = vendor_json['Response']['itemComponents']['reusablePlugs']['data'][
+                                str(item['vendorItemIndex'])]['plugs']
+                            plug_str = 'plugItemHash'
+                        except KeyError:
+                            plugs_json = \
+                            vendor_json['Response']['itemComponents']['sockets']['data'][str(item['vendorItemIndex'])][
+                                'sockets']
+                            plug_str = 'plugHash'
+                        plug = []
+                        for perk in plugs_json:
+                            if type(perk) == str:
+                                perk_list = plugs_json[perk]
+                            elif type(perk) == dict:
+                                perk_list = [perk]
+                            else:
+                                raise TypeError
+                            for perk_dict in perk_list:
+                                if plug_str in perk_dict.keys():
+                                    perk_def = await self.destiny.decode_hash(perk_dict[plug_str],
+                                                                              'DestinyInventoryItemDefinition',
+                                                                              language=lang)
+                                    if 'name' in perk_def['displayProperties'].keys() and 'icon' in perk_def[
+                                        'displayProperties'].keys():
+                                        plug.append({
+                                            'name': perk_def['displayProperties']['name'],
+                                            'icon': 'https://bungie.net{}'.format(perk_def['displayProperties']['icon'])
+                                        })
+                        perks.append(plug)
+
                 cost_line = cost_line[:-1]
                 item_data = {
                     'inline': True,
@@ -339,11 +393,16 @@ class D2data:
                 }
                 data_sales.append({
                     'id': '{}_{}_{}'.format(item['itemHash'], key, n_order),
-                    'name': item_name.capitalize(),
                     'icon': item_resp['displayProperties']['icon'],
-                    'description': cost_line.replace('\n', '<br>'),
+                    'name': item_name.capitalize(),
+                    'description': "{}: {} {}".format('Цена', currency_cost,
+                                                currency_item.capitalize()),
                     'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], key, n_order),
-                    'costs': costs
+                    'hash': item['itemHash'],
+                    'screenshot': screenshot,
+                    'costs': costs,
+                    'stats': stats,
+                    'perks': perks
                 })
                 embed_sales.append(item_data)
                 n_order += 1
@@ -693,7 +752,8 @@ class D2data:
                                    name=self.translations[lang]['site']['bd'],
                                    template='hover_items.html', order=0, type='weekly', size='tall')
 
-    async def write_to_db(self, lang, id, response, size='', name='', template='table_items.html', order=0, type='daily'):
+    async def write_to_db(self, lang, id, response, size='', name='', template='table_items.html', order=0,
+                          type='daily', annotations=[]):
         while True:
             try:
                 data_db = self.data_pool.get_connection()
@@ -708,23 +768,23 @@ class D2data:
         data_cursor = data_db.cursor()
 
         try:
-            data_cursor.execute('''CREATE TABLE `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text)'''.format(lang))
+            data_cursor.execute('''CREATE TABLE `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text, annotations text)'''.format(lang))
             data_cursor.execute('''CREATE UNIQUE INDEX `data_id_{}` ON `{}`(id(256))'''.format(lang, lang))
         except mariadb.Error:
             pass
 
         try:
-            data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (?,?,?,?,?,?,?,?,?)'''.format(lang),
+            data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (?,?,?,?,?,?,?,?,?,?)'''.format(lang),
                                 (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
-                                 datetime.utcnow().isoformat(), size, name, template, order, type))
+                                 datetime.utcnow().isoformat(), size, name, template, order, type, str(annotations)))
             data_db.commit()
         except mariadb.Error:
             pass
 
         try:
-            data_cursor.execute('''UPDATE `{}` SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=? WHERE id=?'''.format(lang),
+            data_cursor.execute('''UPDATE `{}` SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=?, annotations=? WHERE id=?'''.format(lang),
                                 (datetime.utcnow().timestamp(), json.dumps({'data': response}),
-                                 datetime.utcnow().isoformat(), name, size, template, order, type, id))
+                                 datetime.utcnow().isoformat(), name, size, template, order, type, str(annotations), id))
             data_db.commit()
         except mariadb.Error:
             pass
@@ -823,11 +883,23 @@ class D2data:
 
     async def get_xur(self, langs, forceget=False):
         char_info = self.char_info
+        cat_templates = {
+            '6': 'contract_item.html',
+            '0': 'weapon_item.html',
+            '4': 'armor_item.html'
+        }
 
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         xur_resp = await self.get_cached_json('xur', 'xur', xur_url, self.vendor_params, force=forceget)
         if not xur_resp:
+            for lang in langs:
+                db_data = {
+                    'name': self.translations[lang]['msg']['xur'],
+                    'description': self.data[lang]['xur']['fields'][0]['value']
+                }
+                await self.write_to_db(lang, 'xur', [db_data],
+                                       name=self.translations[lang]['msg']['xur'])
             return False
         resp_time = xur_resp['timestamp']
         xur_loc = await self.get_xur_loc()
@@ -859,20 +931,28 @@ class D2data:
                     'value': ''
                 }
 
+                sales = []
                 if xur_loc:
                     xur_place_name = await self.destiny.decode_hash(xur_loc['placeHash'], 'DestinyPlaceDefinition', language=lang)
                     xur_destination_name = await self.destiny.decode_hash(xur_loc['destinationHash'], 'DestinyDestinationDefinition', language=lang)
                     loc_field['value'] = '{}, {}'.format(xur_place_name['displayProperties']['name'], xur_destination_name['displayProperties']['name'])
                     self.data[lang]['xur']['fields'].append(loc_field)
                     self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
+                    sales = [{'name': '{}, {}'.format(xur_place_name['displayProperties']['name'],
+                                                      xur_destination_name['displayProperties']['name']),
+                              'items': [], 'template': cat_templates['6']},
+                             {'name': 'Оружие', 'items': [], 'template': cat_templates['0']},
+                             {'name': 'Броня', 'items': [], 'template': cat_templates['4']}]
 
+                xur_cats = xur_resp['Response']['categories']['data']['categories']
+                cat_sales = await self.get_vendor_sales(lang, xur_resp, xur_cats[0]['itemIndexes'], [3875551374])
                 xur_sales = xur_json['Response']['sales']['data']
 
                 self.data[lang]['xur']['fields'].append(weapon)
 
                 for key in sorted(xur_sales.keys()):
                     item_hash = xur_sales[key]['itemHash']
-                    if item_hash not in [4285666432, 2293314698, 2125848607]:
+                    if item_hash not in [4285666432, 2293314698, 2125848607, 3875551374]:
                         definition = 'DestinyInventoryItemDefinition'
                         item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
                         item_name = item_resp['displayProperties']['name']
@@ -897,12 +977,20 @@ class D2data:
                                 exotic['name'] = self.translations[lang]['Warlock']
 
                             self.data[lang]['xur']['fields'].append(exotic)
+                            for item in cat_sales[1]:
+                                if item['hash'] == item_hash:
+                                    sales[2]['items'].append(item)
                         else:
                             i = 0
                             for item in self.data[lang]['xur']['fields']:
                                 if item['name'] == self.translations[lang]['msg']['weapon']:
                                     self.data[lang]['xur']['fields'][i]['value'] = item_name
                                 i += 1
+                            for item in cat_sales[1]:
+                                if item['hash'] == item_hash:
+                                    sales[1]['items'].append(item)
+
+                await self.write_to_db(lang, 'xur', sales, template='vendor_items.html', order=7, name=xur_def['displayProperties']['name'], annotations=[self.translations[lang]['xur']['copyright']])
             else:
                 loc_field = {
                     "inline": False,
@@ -1953,10 +2041,10 @@ class D2data:
                     'name': field['name'],
                     'description': field['value']
                 })
-            await self.write_to_db(lang, 'trials_of_osiris', db_data, order=5,
+            await self.write_to_db(lang, 'trials_of_osiris', db_data, order=6,
                                    name=self.translations[lang]['site']['osiris'])
 
-    async def drop_osiris(self, langs):
+    async def drop_weekend_info(self, langs):
         while True:
             try:
                 data_db = self.data_pool.get_connection()
@@ -1972,6 +2060,7 @@ class D2data:
 
         for lang in langs:
             data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
+            data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('xur',))
         data_db.commit()
         data_cursor.close()
         data_db.close()
