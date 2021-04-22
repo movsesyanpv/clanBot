@@ -944,53 +944,61 @@ class D2data:
                              {'name': 'Оружие', 'items': [], 'template': cat_templates['0']},
                              {'name': 'Броня', 'items': [], 'template': cat_templates['4']}]
 
-                xur_cats = xur_resp['Response']['categories']['data']['categories']
-                cat_sales = await self.get_vendor_sales(lang, xur_resp, xur_cats[0]['itemIndexes'], [3875551374])
-                xur_sales = xur_json['Response']['sales']['data']
+                    xur_cats = xur_resp['Response']['categories']['data']['categories']
+                    cat_sales = await self.get_vendor_sales(lang, xur_resp, xur_cats[0]['itemIndexes'], [3875551374])
+                    xur_sales = xur_json['Response']['sales']['data']
 
-                self.data[lang]['xur']['fields'].append(weapon)
+                    self.data[lang]['xur']['fields'].append(weapon)
 
-                for key in sorted(xur_sales.keys()):
-                    item_hash = xur_sales[key]['itemHash']
-                    if item_hash not in [4285666432, 2293314698, 2125848607, 3875551374]:
-                        definition = 'DestinyInventoryItemDefinition'
-                        item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
-                        item_name = item_resp['displayProperties']['name']
-                        if item_resp['itemType'] == 2:
-                            item_sockets = item_resp['sockets']['socketEntries']
-                            plugs = []
-                            for s in item_sockets:
-                                if len(s['reusablePlugItems']) > 0 and s['plugSources'] == 2:
-                                    plugs.append(s['reusablePlugItems'][0]['plugItemHash'])
+                    for key in sorted(xur_sales.keys()):
+                        item_hash = xur_sales[key]['itemHash']
+                        if item_hash not in [4285666432, 2293314698, 2125848607, 3875551374]:
+                            definition = 'DestinyInventoryItemDefinition'
+                            item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
+                            item_name = item_resp['displayProperties']['name']
+                            if item_resp['itemType'] == 2:
+                                item_sockets = item_resp['sockets']['socketEntries']
+                                plugs = []
+                                for s in item_sockets:
+                                    if len(s['reusablePlugItems']) > 0 and s['plugSources'] == 2:
+                                        plugs.append(s['reusablePlugItems'][0]['plugItemHash'])
 
-                            exotic = {
-                                'inline': True,
-                                'name': '',
-                                'value': item_name
-                            }
+                                exotic = {
+                                    'inline': True,
+                                    'name': '',
+                                    'value': item_name
+                                }
 
-                            if item_resp['classType'] == 0:
-                                exotic['name'] = self.translations[lang]['Titan']
-                            elif item_resp['classType'] == 1:
-                                exotic['name'] = self.translations[lang]['Hunter']
-                            elif item_resp['classType'] == 2:
-                                exotic['name'] = self.translations[lang]['Warlock']
+                                if item_resp['classType'] == 0:
+                                    exotic['name'] = self.translations[lang]['Titan']
+                                elif item_resp['classType'] == 1:
+                                    exotic['name'] = self.translations[lang]['Hunter']
+                                elif item_resp['classType'] == 2:
+                                    exotic['name'] = self.translations[lang]['Warlock']
 
-                            self.data[lang]['xur']['fields'].append(exotic)
-                            for item in cat_sales[1]:
-                                if item['hash'] == item_hash:
-                                    sales[2]['items'].append(item)
-                        else:
-                            i = 0
-                            for item in self.data[lang]['xur']['fields']:
-                                if item['name'] == self.translations[lang]['msg']['weapon']:
-                                    self.data[lang]['xur']['fields'][i]['value'] = item_name
-                                i += 1
-                            for item in cat_sales[1]:
-                                if item['hash'] == item_hash:
-                                    sales[1]['items'].append(item)
+                                self.data[lang]['xur']['fields'].append(exotic)
+                                for item in cat_sales[1]:
+                                    if item['hash'] == item_hash:
+                                        sales[2]['items'].append(item)
+                            else:
+                                i = 0
+                                for item in self.data[lang]['xur']['fields']:
+                                    if item['name'] == self.translations[lang]['msg']['weapon']:
+                                        self.data[lang]['xur']['fields'][i]['value'] = item_name
+                                    i += 1
+                                for item in cat_sales[1]:
+                                    if item['hash'] == item_hash:
+                                        sales[1]['items'].append(item)
 
-                await self.write_to_db(lang, 'xur', sales, template='vendor_items.html', order=7, name=xur_def['displayProperties']['name'], annotations=[self.translations[lang]['xur']['copyright']])
+                else:
+                    loc_field = {
+                        "inline": False,
+                        "name": self.translations[lang]['msg']['xurloc'],
+                        "value": self.translations[lang]['xur']['noxur']
+                    }
+                    self.data[lang]['xur']['fields'].append(loc_field)
+                    sales = [{'name': self.translations[lang]['xur']['noxur'],
+                              'items': [], 'template': cat_templates['6']}]
             else:
                 loc_field = {
                     "inline": False,
@@ -998,6 +1006,11 @@ class D2data:
                     "value": self.translations[lang]['xur']['noxur']
                 }
                 self.data[lang]['xur']['fields'].append(loc_field)
+                sales = [{'name': self.translations[lang]['xur']['noxur'],
+                          'items': [], 'template': cat_templates['6']}]
+            await self.write_to_db(lang, 'xur', sales, template='vendor_items.html', order=7,
+                                   name=xur_def['displayProperties']['name'],
+                                   annotations=[self.translations[lang]['xur']['copyright']])
 
     async def get_heroic_story(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions',
