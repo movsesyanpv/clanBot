@@ -204,6 +204,7 @@ class LFG:
         return args
 
     def find_roles(self, is_init, guild, roles):
+        roles = [i.lower() for i in roles]
         for i in [0, 1]:
             the_role = []
             if len(roles) == 0 and is_init or len(the_role) > 0:
