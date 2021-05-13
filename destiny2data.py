@@ -834,6 +834,11 @@ class D2data:
 
     async def get_banshee(self, lang, forceget=False):
         char_info = self.char_info
+        cat_templates = {
+            '6': 'contract_item.html',
+            '0': 'weapon_item.html',
+            '4': 'armor_item.html'
+        }
 
         banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
@@ -867,12 +872,71 @@ class D2data:
 
             items_to_get = banshee_cats[3]['itemIndexes']
 
+            sales = []
             banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
-            data = banshee_sales[1]
-            await self.write_to_db(locale, 'banshee_mods', data, name=banshee_def['displayProperties']['name'], order=5,
-                                   template='hover_items.html')
+            sales.append({'name': "", "items": banshee_sales[1], "template": cat_templates['6']})
+            items_to_get = banshee_cats[4]['itemIndexes']
+            banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468])
+            sales.append({'name': "", "items": banshee_sales[1], "template": cat_templates['0']})
+            await self.write_to_db(locale, 'banshee_mods', sales, name=banshee_def['displayProperties']['name'], order=5,
+                                   template='vendor_items.html', annotations=[])
                              # size='tall')
+
+    async def get_ada(self, lang, forceget=False):
+        char_info = self.char_info
+        cat_templates = {
+            '6': 'contract_item.html',
+            '0': 'weapon_item.html',
+            '4': 'armor_item.html'
+        }
+
+        ada_resps = []
+        for char in char_info['charid']:
+            ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/350061650/'. \
+                format(char_info['platform'], char_info['membershipid'], char)
+            ada_resps.append(await self.get_cached_json('ada_{}'.format(char), 'ada', ada_url, self.vendor_params, force=forceget))
+        for ada_resp in ada_resps:
+            if not ada_resp:
+                for locale in lang:
+                    ada_def = await self.destiny.decode_hash(350061650, 'DestinyVendorDefinition', language=locale)
+                    db_data = {
+                        'name': self.translations[locale]['msg']['error'],
+                        'description': self.translations[locale]['msg']['noapi']
+                    }
+                    await self.write_to_db(locale, 'spider_mats', [db_data], name=ada_def['displayProperties']['name'])
+                return False
+        ada_json = ada_resps[0]
+        ada_cats = ada_json['Response']['categories']['data']['categories']
+        resp_time = ada_json['timestamp']
+        for locale in lang:
+            ada_def = await self.destiny.decode_hash(350061650, 'DestinyVendorDefinition', language=locale)
+
+            # self.data[locale]['spider'] = {
+            #     'thumbnail': {
+            #         'url': self.icon_prefix + banshee_def['displayProperties']['smallTransparentIcon']
+            #     },
+            #     'fields': [],
+            #     'color': 7102001,
+            #     'type': "rich",
+            #     'title': self.translations[locale]['msg']['spider'],
+            #     'footer': {'text': self.translations[locale]['msg']['resp_time']},
+            #     'timestamp': resp_time
+            # }
+
+            items_to_get = ada_cats[1]['itemIndexes']
+
+            sales = []
+            ada_sales = await self.get_vendor_sales(locale, ada_resps[0], items_to_get, [1812969468])
+            # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
+            sales.append({'name': "", "items": ada_sales[1], "template": cat_templates['6']})
+            items_to_get = ada_cats[2]['itemIndexes']
+            for ada_resp in ada_resps:
+                items_to_get = ada_resp['Response']['categories']['data']['categories'][2]['itemIndexes']
+                ada_sales = await self.get_vendor_sales(locale, ada_resp, items_to_get, [1812969468])
+                sales.append({'name': "", "items": ada_sales[1], "template": cat_templates['4']})
+            await self.write_to_db(locale, 'ada_mods', sales, name=ada_def['displayProperties']['name'], order=5,
+                                   template='vendor_items.html', annotations=[], size='tall')
 
     async def get_xur_loc(self):
         url = 'https://paracausal.science/xur/current.json'
