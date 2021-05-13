@@ -364,8 +364,8 @@ class D2data:
                             vendor_json['Response']['itemComponents']['sockets']['data'][str(item['vendorItemIndex'])][
                                 'sockets']
                             plug_str = 'plugHash'
-                        plug = []
                         for perk in plugs_json:
+                            plug = []
                             if type(perk) == str:
                                 perk_list = plugs_json[perk]
                             elif type(perk) == dict:
@@ -383,7 +383,7 @@ class D2data:
                                             'name': perk_def['displayProperties']['name'],
                                             'icon': 'https://bungie.net{}'.format(perk_def['displayProperties']['icon'])
                                         })
-                        perks.append(plug)
+                            perks.append(plug)
 
                 cost_line = cost_line[:-1]
                 item_data = {
