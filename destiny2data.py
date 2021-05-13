@@ -1568,7 +1568,7 @@ class D2data:
                 if r_json['activityTypeHash'] == 4110605575:
                     strikes.append({"name": r_json['displayProperties']['name'],
                                     "description": r_json['displayProperties']['description']})
-                if local_types['ordeal'] in r_json['displayProperties']['name'] and \
+                if r_json['activityTypeHash'] == 575572995 and \
                         local_types['adept'] in r_json['displayProperties']['name']:
                     info = {
                         'inline': True,
