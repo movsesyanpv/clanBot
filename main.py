@@ -7,6 +7,7 @@ import asyncio
 import pydest
 import mariadb
 import gc
+import random
 
 from discord.ext.commands.bot import Bot
 import sqlite3
@@ -825,6 +826,7 @@ class ClanBot(commands.Bot):
                                 await msg.delete()
                     else:
                         if type(last) != tuple and channel.type != discord.ChannelType.news:
+                            await asyncio.sleep(random.uniform(0, 1))
                             await last.delete()
                 except discord.errors.Forbidden:
                     pass
