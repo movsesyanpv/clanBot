@@ -780,7 +780,7 @@ class ClanBot(commands.Bot):
                     init_values = [channel.guild.name, channel.guild.id, channel_id]
                     self.guild_cursor.execute(
                         "INSERT or IGNORE INTO history (server_name, server_id, channel_id) VALUES (?,?,?)", init_values)
-                    self.guild_db.commit()
+                    # self.guild_db.commit()
                 except sqlite3.OperationalError:
                     pass
 
@@ -791,7 +791,7 @@ class ClanBot(commands.Bot):
                         '''ALTER TABLE history ADD COLUMN {} text'''.format(upd_type))
                 else:
                     self.guild_cursor.execute('''ALTER TABLE history ADD COLUMN {} INTEGER'''.format(upd_type))
-                self.guild_db.commit()
+                # self.guild_db.commit()
             except sqlite3.OperationalError:
                 await self.update_history()
 
