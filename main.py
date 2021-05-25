@@ -740,6 +740,8 @@ class ClanBot(commands.Bot):
             return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
         server = channel.guild
         lang = self.guild_lang(channel.guild.id)
+        delay = random.uniform(0, 0.2)
+        print('delay is {}'.format(delay))
 
         if not self.args.nomessage:
             if type(src_dict[lang][upd_type]) == list:
@@ -800,7 +802,7 @@ class ClanBot(commands.Bot):
                     for embed_p in embed:
                         dict_embeds.append(embed_p.to_dict())
                     for msg in hist:
-                        await asyncio.sleep(random.uniform(0, 0.3))
+                        await asyncio.sleep(delay)
                         message = await channel.fetch_message(msg)
                         if len(message.embeds) > 0:
                             tmp_embed = message.embeds[0].to_dict()
@@ -813,10 +815,10 @@ class ClanBot(commands.Bot):
                 else:
                     if hist != "[]":
                         try:
-                            await asyncio.sleep(random.uniform(0, 0.3))
+                            await asyncio.sleep(delay)
                             last = await channel.fetch_message(hist)
                         except discord.errors.HTTPException:
-                            await asyncio.sleep(random.uniform(0, 0.3))
+                            await asyncio.sleep(delay)
                             last = await channel.fetch_message(0)
                         if len(last.embeds) > 0:
                             if last.embeds[0].to_dict()['fields'] == embed.to_dict()['fields']:
@@ -826,11 +828,11 @@ class ClanBot(commands.Bot):
                     if type(hist) == list and channel.type != discord.ChannelType.news:
                         if len(hist) < 100:
                             for msg in last:
-                                await asyncio.sleep(random.uniform(0, 0.3))
+                                await asyncio.sleep(delay)
                                 await msg.delete()
                     else:
                         if type(last) != tuple and channel.type != discord.ChannelType.news:
-                            await asyncio.sleep(random.uniform(0, 0.3))
+                            await asyncio.sleep(delay)
                             await last.delete()
                 except discord.errors.Forbidden:
                     pass
@@ -849,18 +851,18 @@ class ClanBot(commands.Bot):
             for e in embed:
                 if server.me.permissions_in(channel).embed_links:
                     if channel.type != discord.ChannelType.news:
-                        await asyncio.sleep(random.uniform(0, 0.3))
+                        await asyncio.sleep(delay)
                         message = await channel.send(embed=e, delete_after=time_to_delete)
                     else:
-                        await asyncio.sleep(random.uniform(0, 0.3))
+                        await asyncio.sleep(delay)
                         message = await channel.send(embed=e)
                 else:
-                    await asyncio.sleep(random.uniform(0, 0.3))
+                    await asyncio.sleep(delay)
                     message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                 hist.append(message.id)
                 if channel.type == discord.ChannelType.news:
                     try:
-                        await asyncio.sleep(random.uniform(0, 0.3))
+                        await asyncio.sleep(delay)
                         await message.publish()
                     except discord.errors.Forbidden:
                         pass
@@ -869,25 +871,25 @@ class ClanBot(commands.Bot):
             if server.me.permissions_in(channel).embed_links:
                 if upd_type in self.embeds_with_img:
                     if channel.type != discord.ChannelType.news:
-                        await asyncio.sleep(random.uniform(0, 0.3))
+                        await asyncio.sleep(delay)
                         message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
                     else:
-                        await asyncio.sleep(random.uniform(0, 0.3))
+                        await asyncio.sleep(delay)
                         message = await channel.send(file=image, embed=embed)
                 else:
                     if channel.type != discord.ChannelType.news:
-                        await asyncio.sleep(random.uniform(0, 0.3))
+                        await asyncio.sleep(delay)
                         message = await channel.send(embed=embed, delete_after=time_to_delete)
                     else:
-                        await asyncio.sleep(random.uniform(0, 0.3))
+                        await asyncio.sleep(delay)
                         message = await channel.send(embed=embed)
             else:
-                await asyncio.sleep(random.uniform(0, 0.3))
+                await asyncio.sleep(delay)
                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
             hist = message.id
             if channel.type == discord.ChannelType.news:
                 try:
-                    await asyncio.sleep(random.uniform(0, 0.3))
+                    await asyncio.sleep(delay)
                     await message.publish()
                 except discord.errors.Forbidden:
                     pass
