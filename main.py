@@ -848,6 +848,8 @@ class ClanBot(commands.Bot):
                 # bot_info = await self.application_info()
                 # await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.
                 #                           format(upd_type, channel.name, server.name))
+            except discord.Forbidden:
+                pass
         if type(embed) == list:
             hist = []
             for e in embed:
