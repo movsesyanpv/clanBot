@@ -740,8 +740,8 @@ class ClanBot(commands.Bot):
             return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
         server = channel.guild
         lang = self.guild_lang(channel.guild.id)
-        delay = random.uniform(0, 0.2)
-        print('delay is {}'.format(delay))
+        delay = 0#random.uniform(0, 0.2)
+        # print('delay is {}'.format(delay))
 
         if not self.args.nomessage:
             if type(src_dict[lang][upd_type]) == list:
@@ -841,6 +841,7 @@ class ClanBot(commands.Bot):
                 except discord.errors.HTTPException as e:
                     bot_info = await self.application_info()
                     await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
+                    pass
             except discord.NotFound:
                 pass
                 # bot_info = await self.application_info()
