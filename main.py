@@ -732,6 +732,7 @@ class ClanBot(commands.Bot):
 
         if post:
             await self.post_embed(name, self.data.data, time_to_delete, channels)
+            self.guild_db.commit()
 
     async def post_embed_to_channel(self, upd_type, src_dict, time_to_delete, channel_id):
         channel = self.get_channel(channel_id)
@@ -897,7 +898,6 @@ class ClanBot(commands.Bot):
 
         self.guild_cursor.execute('''UPDATE history SET {}=? WHERE channel_id=?'''.format(upd_type),
                                   (str(hist), channel_id))
-        self.guild_db.commit()
 
         frameinfo = getframeinfo(currentframe())
         return [channel_id, 'posted ({})'.format(frameinfo.lineno + 1)]
