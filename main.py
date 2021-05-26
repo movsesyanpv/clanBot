@@ -744,6 +744,9 @@ class ClanBot(commands.Bot):
             frameinfo = getframeinfo(currentframe())
             return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
         server = channel.guild
+        if not server.me.permissions_in(channel).send_messages:
+            frameinfo = getframeinfo(currentframe())
+            return [channel_id, 'no permission to send messages ({})'.format(frameinfo.lineno + 1)]
         lang = self.guild_lang(channel.guild.id)
         delay = 0#random.uniform(0, 0.2)
         # print('delay is {}'.format(delay))
