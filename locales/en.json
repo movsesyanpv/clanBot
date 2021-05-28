@@ -52,7 +52,7 @@
         "server": "of",
         "name": "Provide the name of the activity",
         "description": "Describe, what are you going to do there",
-        "time": "When are you going to start? (format is `%d-%m-%Y %H:%M` for UTC+3 timezone and `%d-%m-%Y %H:%M %z`, for custom timezone)\nExamples of the current time: `{}` for UTC+3, `{}` for custom timezone.",
+        "time": "When are you going to start? (format is `%d-%m-%Y %H:%M` for UTC+3 timezone and `%d-%m-%Y %H:%M%z`, for custom timezone)\nExamples of the current time: `{}` for UTC+3, `{}` for custom timezone.",
         "size": "What is the group size?",
         "length": "How long are you planning to do this? Example: 1h 30m for one and a half hour group.",
         "type": "What is the type of the activity? (pve, pvp, gambit/reckoning, raid)",
@@ -168,13 +168,9 @@
         "aliases": "Can be called with the following names:```{}```",
         "parameters": "Usage:```{}```",
         "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
-        "online": "Get the list of online clan members.",
         "commands": {
             "setclan": {
                 "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
-            },
-            "online":{
-                "info": "Get the list of online clan members."
             },
             "top": {
                 "info": "Print top players for one of the available metrics. Metric's description is available through the link. You can also pass the metric's hash to the command. Use `gtop` or `globaltop` to get lists across all the clans that are known to the bot.",
@@ -217,7 +213,7 @@
             "lfg": {
                 "info": "You can set up LFG either with arguments or in direct messages. For the latter, just don't pass any arguments for the command and answer the questions about the group.",
                 "creation": "__**Creating a group**__\nList of 'lfg' command arguments. The arguments must be on the separate lines.",
-                "creation_note": "Every parameter should be in **separate lines**\n`%Hh %Mm` - time format, in which one and a half hour activity will be written as `1h 30m` or `1.5h` or `90m`.\n`%d-%m-%Y %H:%M %z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00 +0300`.",
+                "creation_note": "Every parameter should be in **separate lines**\n`%Hh %Mm` - time format, in which one and a half hour activity will be written as `1h 30m` or `1.5h` or `90m`.\n`%d-%m-%Y %H:%M%z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00+0300`.",
                 "name": "LFG name or planned activity",
                 "time": "Time of the activity start, format %d-%m-%Y %H:%M%z",
                 "description": "Description of the activity",
@@ -237,11 +233,15 @@
             },
             "setprefix": {
                 "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes. Send `none` as the parameter to disable all prefixes, except bot mention."
+            },
+            "online": {
+                "info": "Get the list of online clan members."
             }
         },
         "prefix": "Print available prefixes",
         "setprefix": "Set available prefixes",
-        "support": "Get the link to the support server"
+        "support": "Get the link to the support server",
+        "online": "Get the list of online clan members."
     },
     "graph": {
         "percentage": "Completion percentage",
