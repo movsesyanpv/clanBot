@@ -405,7 +405,7 @@ class LFG:
 
         if is_embed == 1:
             self.lfg_categories[self.lfg_i[is_embed]] = {
-                'thumbnail': str(message.guild.icon_url_as(format='png', static_format='png', size=1024)).split('?')[0],
+                'thumbnail': message.guild.icon.url.split('?')[0],
                 'color': 0x000000
             }
 
@@ -532,7 +532,7 @@ class LFG:
     async def update_group_msg(self, message, translations, lang):
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
 
-        if is_embed and message.guild.me.permissions_in(message.channel).embed_links:
+        if is_embed and message.channel.permissions_for(message.guild.me).embed_links:
             embed = self.make_embed(message, translations, lang)
             await message.edit(content=None, embed=embed)
             return

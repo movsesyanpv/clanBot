@@ -27,7 +27,7 @@ class ServerAdmin(commands.Cog):
             if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=True):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
                 await ctx.message.channel.send(msg.format(n), delete_after=30)
-            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await ctx.message.delete()
 
     @commands.command()
@@ -45,7 +45,7 @@ class ServerAdmin(commands.Cog):
             ctx.bot.get_channels()
             msg = 'Got it, {}'.format(message.author.mention)
             await message.channel.send(msg, delete_after=10)
-        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+        if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await message.delete()
         return
 
@@ -64,7 +64,7 @@ class ServerAdmin(commands.Cog):
             ctx.bot.get_channels()
             msg = 'Got it, {}'.format(message.author.mention)
             await message.channel.send(msg, delete_after=10)
-        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+        if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await message.delete()
         return
 
@@ -85,7 +85,7 @@ class ServerAdmin(commands.Cog):
         if ctx.guild.me.guild_permissions.change_nickname:
             await ctx.guild.me.edit(nick=ctx.bot.translations[lang.lower()]['nick'], reason='language change')
         await message.channel.send(msg, delete_after=10)
-        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+        if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await message.delete()
         return
 
@@ -107,7 +107,7 @@ class ServerAdmin(commands.Cog):
             code = 0
         except TypeError:
             await ctx.channel.send('{}: {}'.format(clan_id, ctx.bot.translations[lang]['msg']['clan_search_error']), delete_after=60)
-            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await ctx.message.delete()
             return
         if code == 1:
@@ -127,7 +127,7 @@ class ServerAdmin(commands.Cog):
                         pass
         else:
             await ctx.channel.send('{}: {}'.format(clan_id, clan_json['Message']), delete_after=60)
-        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+        if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await ctx.message.delete()
 
     @commands.command()
@@ -140,13 +140,13 @@ class ServerAdmin(commands.Cog):
         channels = None
         if not list(set(ctx.bot.all_types).intersection(args)):
             if ctx.guild is not None:
-                if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     await ctx.message.delete()
             await ctx.channel.send(ctx.bot.translations[lang]['msg']['invalid_type'])
             return
         if ctx.message.guild is not None:
             if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=True):
-                if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     await ctx.message.delete()
                 get = False
                 channels = [ctx.message.channel.id]
@@ -179,7 +179,7 @@ class ServerAdmin(commands.Cog):
                     if correct_ch:
                         await ctx.channel.send(ctx.bot.translations[lang]['msg']['in_progress'])
             else:
-                if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     await ctx.message.delete()
                 return
         else:
@@ -193,7 +193,7 @@ class ServerAdmin(commands.Cog):
     async def setprefix(self, ctx, prefix, *prefixes):
         prefix = [prefix, *prefixes]
         if await ctx.bot.check_ownership(ctx.message, is_silent=True, admin_check=True):
-            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 await ctx.message.delete()
             if prefix[0].lower() == 'none':
                 prefix = []

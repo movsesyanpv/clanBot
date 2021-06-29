@@ -42,7 +42,7 @@ class Group(commands.Cog):
                     while len(msg) < 1900:
                         msg = '{} {},'.format(msg, parts[0])
                         parts.pop(0)
-        if is_embed and ctx.guild.me.permissions_in(ctx.message.channel).embed_links:
+        if is_embed and ctx.channel.permissions_for(ctx.guild.me).embed_links:
             embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[lang], lang)
             out = await message.channel.send(content=msg)
             await out.edit(content=None, embed=embed)
@@ -50,7 +50,7 @@ class Group(commands.Cog):
             out = await message.channel.send(msg)
         ctx.bot.raid.set_id(out.id, message.id)
         await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang], lang)
-        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+        if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             try:
                 await message.delete()
             except discord.NotFound:
@@ -131,13 +131,19 @@ class Group(commands.Cog):
         ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
         check_msg = translations['check'].format(args['name'], args['description'], ts, args['size'],
                                                  args['length']/3600, at[args['is_embed']], args['group_mode'], role)
+        view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()), "Да", "Нет")
+        view.add_item(view.confirm_button)
+        view.add_item(view.cancel_button)
         if len(check_msg) <= 2000:
-            await dm.send(check_msg)
+            await dm.send(check_msg, view=view)
         else:
             check_lines = check_msg.splitlines()
             for line in check_lines:
+                last_view = None
+                if line == check_lines[-1]:
+                    last_view = None
                 if len(line) <= 2000:
-                    await dm.send(line)
+                    await dm.send(line, view=last_view)
                 else:
                     line_parts = line.split(':')
                     lines = ['{}:'.format(line_parts[0]), line_parts[1]]
@@ -145,16 +151,35 @@ class Group(commands.Cog):
                         for arg_part in line_parts[2:]:
                             lines[1] = '{}: {}'.format(lines[1], arg_part)
                     await dm.send(lines[0])
-                    await dm.send(lines[1])
-        msg = await self.bot.wait_for('message', check=check)
-        if msg.content.lower() == translations['no']:
-            await dm.send(translations['again'].format(translations['creation'], translations['creation'].lower()))
-            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
-                try:
-                    await ctx.message.delete()
-                except discord.NotFound:
-                    pass
+                    await dm.send(lines[1], view=last_view)
+
+        view.confirm_button.label = 'Да'
+        await view.wait()
+        if view.value is None:
+            await dm.send('Timed out')
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                    try:
+                        await ctx.message.delete()
+                    except discord.NotFound:
+                        pass
             return False
+        elif not view.value:
+            # await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                    try:
+                        await ctx.message.delete()
+                    except discord.NotFound:
+                        pass
+            return False
+        # msg = await self.bot.wait_for('message', check=check)
+        # if msg.content.lower() == translations['no']:
+        #     await dm.send(translations['again'].format(translations['creation'], translations['creation'].lower()))
+        #     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+        #         try:
+        #             await ctx.message.delete()
+        #         except discord.NotFound:
+        #             pass
+        #     return False
 
         group_id = await self.guild_lfg(ctx, lang, 'lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.
                                         format(name, description, time, size, length, at[args['is_embed']], mode,
@@ -271,7 +296,7 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         if msg.content.lower() == translations['no']:
             await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
-            if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 try:
                     await ctx.message.delete()
                 except discord.NotFound:
@@ -376,13 +401,19 @@ class Group(commands.Cog):
                 role = translations['no_change']
             check_msg = translations['check'].format(args['name'], args['description'], args['time'], args['size'],
                                                      args['length'], args['is_embed'], args['group_mode'], role)
+            view = ConfirmLFG(translations['again'].format(translations['edit'], translations['edit'].lower()), "Да", "Нет")
+            view.add_item(view.confirm_button)
+            view.add_item(view.cancel_button)
             if len(check_msg) <= 2000:
-                await dm.send(check_msg)
+                await dm.send(check_msg, view=view)
             else:
                 check_lines = check_msg.splitlines()
                 for line in check_lines:
+                    last_view = None
+                    if line == check_lines[-1]:
+                        last_view = view
                     if len(line) <= 2000:
-                        await dm.send(line)
+                        await dm.send(line, view=last_view)
                     else:
                         line_parts = line.split(':')
                         lines = ['{}:'.format(line_parts[0]), line_parts[1]]
@@ -390,16 +421,33 @@ class Group(commands.Cog):
                             for arg_part in line_parts[2:]:
                                 lines[1] = '{}: {}'.format(lines[1], arg_part)
                         await dm.send(lines[0])
-                        await dm.send(lines[1])
-            msg = await self.bot.wait_for('message', check=check)
-            if msg.content.lower() == translations['no']:
-                await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
-                if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                        await dm.send(lines[1], view=last_view)
+
+            await view.wait()
+            if view.value is None:
+                await dm.send('Timed out')
+                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     try:
                         await ctx.message.delete()
                     except discord.NotFound:
                         pass
+            elif not view.value:
+                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                    try:
+                        await ctx.message.delete()
+                    except discord.NotFound:
+                        pass
+                # await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
                 return False
+            # msg = await self.bot.wait_for('message', check=check)
+            # if msg.content.lower() == translations['no']:
+            #     await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
+            #     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+            #         try:
+            #             await ctx.message.delete()
+            #         except discord.NotFound:
+            #             pass
+            #     return False
 
         return text
 
@@ -431,12 +479,39 @@ class Group(commands.Cog):
                     await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang], lang, text)
                 else:
                     await ctx.bot.check_ownership(message)
-                    if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                    if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                         await ctx.message.delete()
             else:
-                if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     await ctx.message.delete()
         return
+
+
+class MyButton(discord.ui.Button):
+    def __init__(self, type, label, style):
+        super().__init__(style=style, label=label)
+        self.button_type = type
+
+    async def callback(self, interaction: discord.Interaction):
+        if self.button_type == 'confirm':
+            await interaction.response.send_message('OK', ephemeral=True)
+            self.view.value = True
+            self.view.stop()
+        elif self.button_type == 'cancel':
+            await interaction.response.send_message(self.view.cancel_line, ephemeral=True)
+            self.view.value = False
+            self.view.stop()
+
+
+class ConfirmLFG(discord.ui.View):
+    def __init__(self, cancel_line, confirm='Confirm', cancel='Cancel'):
+        super().__init__()
+        self.cancel_line = cancel_line
+        self.confirm_button = MyButton(type='confirm', label=confirm, style=discord.ButtonStyle.green)
+        self.cancel_button = MyButton(type='cancel', label=cancel, style=discord.ButtonStyle.red)
+        self.confirm = confirm
+        self.cancel = cancel
+        self.value = None
 
 
 def setup(bot):

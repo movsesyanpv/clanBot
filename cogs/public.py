@@ -79,14 +79,14 @@ class Public(commands.Cog):
                     internal_db.close()
                 except mariadb.Error:
                     await ctx.channel.send(translations['unknown_metric'].format(metric), delete_after=10)
-                    if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                    if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                         await ctx.message.delete()
                     return
             try:
                 top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
             except pydest.pydest.PydestException:
                 await ctx.channel.send(translations['unknown_metric'].format(metric), delete_after=10)
-                if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     await ctx.message.delete()
                 return
             await ctx.channel.send(translations['in_progress'], delete_after=30)
@@ -119,7 +119,7 @@ class Public(commands.Cog):
                 await ctx.channel.send(translations['no_data'])
         else:
             await ctx.channel.send(translations['no_clan'], delete_after=10)
-        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+        if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await ctx.message.delete()
 
     @commands.command()
@@ -137,7 +137,7 @@ class Public(commands.Cog):
         else:
             msg = '{}\n'.format(ctx.bot.translations[lang]['msg']['no_prefixes'].format(ctx.message.guild.me.display_name))
         await ctx.message.channel.send(msg)
-        if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
+        if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await ctx.message.delete()
 
     @commands.command()
