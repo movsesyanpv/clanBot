@@ -153,7 +153,6 @@ class Group(commands.Cog):
                     await dm.send(lines[0])
                     await dm.send(lines[1], view=last_view)
 
-        view.confirm_button.label = 'Да'
         await view.wait()
         if view.value is None:
             await dm.send('Timed out')

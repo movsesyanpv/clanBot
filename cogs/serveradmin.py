@@ -138,6 +138,11 @@ class ServerAdmin(commands.Cog):
             lang = 'en'
         get = True
         channels = None
+        if len(args) == 0:
+            view = UpdateTypes()
+            await ctx.channel.send('Select update types', view=view)
+            await view.wait()
+            args = view.value
         if not list(set(ctx.bot.all_types).intersection(args)):
             if ctx.guild is not None:
                 if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
@@ -202,6 +207,22 @@ class ServerAdmin(commands.Cog):
             ctx.bot.guild_db.commit()
             msg = 'Got it, {}'.format(ctx.message.author.mention)
             await ctx.message.channel.send(msg, delete_after=10)
+
+
+class UpdateTypes(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    @discord.ui.select(placeholder='Update type', max_values=2, options=[
+        discord.SelectOption(label='Strikes', value='strikes', description='Daily vanguard strike playlist modifiers'),
+        discord.SelectOption(label='Spider', value='spider', description='Spider\'s material exchange')
+    ])
+    async def updates(self, select: discord.ui.Select, interaction: discord.Interaction):
+        self.value = []
+        for selected in select.values:
+            self.value.append(selected)
+            self.stop()
 
 
 def setup(bot):

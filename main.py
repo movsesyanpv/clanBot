@@ -744,7 +744,7 @@ class ClanBot(commands.Bot):
             frameinfo = getframeinfo(currentframe())
             return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
         server = channel.guild
-        if not server.channel.permissions_for(server.me).send_messages:
+        if not channel.permissions_for(server.me).send_messages:
             frameinfo = getframeinfo(currentframe())
             return [channel_id, 'no permission to send messages ({})'.format(frameinfo.lineno + 1)]
         lang = self.guild_lang(channel.guild.id)
@@ -860,7 +860,7 @@ class ClanBot(commands.Bot):
         if type(embed) == list:
             hist = []
             for e in embed:
-                if server.channel.permissions_for(server.me).embed_links:
+                if channel.permissions_for(server.me).embed_links:
                     if channel.type != discord.ChannelType.news:
                         # await asyncio.sleep(delay)
                         message = await channel.send(embed=e, delete_after=time_to_delete)
@@ -879,7 +879,7 @@ class ClanBot(commands.Bot):
                         pass
             hist = str(hist)
         else:
-            if server.channel.permissions_for(server.me).embed_links:
+            if channel.permissions_for(server.me).embed_links:
                 if upd_type in self.embeds_with_img:
                     if channel.type != discord.ChannelType.news:
                         # await asyncio.sleep(delay)
