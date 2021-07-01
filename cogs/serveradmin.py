@@ -214,9 +214,15 @@ class UpdateTypes(discord.ui.View):
         super().__init__()
         self.value = None
 
-    @discord.ui.select(placeholder='Update type', max_values=2, options=[
+    @discord.ui.select(placeholder='Update type', max_values=8, options=[
         discord.SelectOption(label='Strikes', value='strikes', description='Daily vanguard strike playlist modifiers'),
-        discord.SelectOption(label='Spider', value='spider', description='Spider\'s material exchange')
+        discord.SelectOption(label='Spider', value='spider', description='Spider\'s material exchange'),
+        discord.SelectOption(label='Nightmare hunts', value='nightmares', description='Currently available nightmare hunts'),
+        discord.SelectOption(label='Crucible rotators', value='crucible', description='Currently available crucible rotators'),
+        discord.SelectOption(label='Raid challenges', value='raids', description='Current week\'s raid challenges'),
+        discord.SelectOption(label='Nightfall: The Ordeal', value='ordeal', description='Current nightfall'),
+        discord.SelectOption(label='Empire hunt', value='empire', description='Current empire hunt'),
+        discord.SelectOption(label='Xur', value='xur', description='Xur\'s location and exotics')
     ])
     async def updates(self, select: discord.ui.Select, interaction: discord.Interaction):
         self.value = []

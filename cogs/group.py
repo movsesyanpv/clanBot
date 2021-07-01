@@ -100,27 +100,73 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         length = msg.content
 
-        await dm.send(content=translations['type'])
-        msg = await self.bot.wait_for('message', check=check)
-        a_type = msg.content
+        view = ActivityType()
+        await dm.send(content=translations['type'], view=view)
+        await view.wait()
+        if view.value is None:
+            await dm.send('Timed out')
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                try:
+                    await ctx.message.delete()
+                except discord.NotFound:
+                    pass
+                return False
+        a_type = view.value
 
-        await dm.send(content=translations['mode'])
-        msg = await self.bot.wait_for('message', check=check)
-        mode = msg.content
+        view = ModeLFG()
+        await dm.send(content=translations['mode'], view=view)
+        await view.wait()
+        if view.value is None:
+            await dm.send('Timed out')
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                try:
+                    await ctx.message.delete()
+                except discord.NotFound:
+                    pass
+                return False
+        mode = view.value
 
-        await dm.send(content=translations['role'])
-        msg = await self.bot.wait_for('message', check=check)
-        role = msg.content
-        role_raw = msg.content
+        role_list = []
+        for role in ctx.guild.roles:
+            if role.mentionable and not role.managed:
+                role_list.append(discord.SelectOption(label=role.name, value=role.id))
+        view = RoleLFG(len(role_list), role_list)
+        await dm.send(content=translations['role'], view=view)
+        await view.wait()
+        if view.value is None:
+            await dm.send('Timed out')
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                try:
+                    await ctx.message.delete()
+                except discord.NotFound:
+                    pass
+                return False
+        elif view.value in ['-', 'custom']:
+            if view.value == 'custom':
+                msg = await self.bot.wait_for('message', check=check)
+                role = msg.content
+                role_raw = msg.content
+            else:
+                role = '-'
+                role_raw = '-'
 
-        role_str = ctx.bot.raid.find_roles(True, ctx.guild, [r.strip() for r in role.split(';')])
-        role = ''
-        for role_mention in role_str.split(', '):
-            try:
-                role_obj = ctx.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
-                role = '{} {};'.format(role, role_obj.name)
-            except ValueError:
-                pass
+            role_str = ctx.bot.raid.find_roles(True, ctx.guild, [r.strip() for r in role.split(';')])
+            role = ''
+            for role_mention in role_str.split(', '):
+                try:
+                    role_obj = ctx.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
+                    role = '{} {};'.format(role, role_obj.name)
+                except ValueError:
+                    pass
+        else:
+            role = ''
+            for role_id in view.value:
+                try:
+                    role_obj = ctx.guild.get_role(int(role_id))
+                    role = '{} {};'.format(role, role_obj.name)
+                except ValueError:
+                    pass
+
         if len(role) > 0:
             role = role[:-1]
 
@@ -163,22 +209,12 @@ class Group(commands.Cog):
                         pass
             return False
         elif not view.value:
-            # await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     try:
                         await ctx.message.delete()
                     except discord.NotFound:
                         pass
             return False
-        # msg = await self.bot.wait_for('message', check=check)
-        # if msg.content.lower() == translations['no']:
-        #     await dm.send(translations['again'].format(translations['creation'], translations['creation'].lower()))
-        #     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
-        #         try:
-        #             await ctx.message.delete()
-        #         except discord.NotFound:
-        #             pass
-        #     return False
 
         group_id = await self.guild_lfg(ctx, lang, 'lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.
                                         format(name, description, time, size, length, at[args['is_embed']], mode,
@@ -339,9 +375,22 @@ class Group(commands.Cog):
             text = '{}-l:{}\n'.format(text, length)
 
         q_line = '{}\n{}'.format(translations['type'], translations['dm_noedit'])
-        await dm.send(content=q_line)
-        msg = await self.bot.wait_for('message', check=check)
-        a_type = msg.content
+        view = ActivityType()
+        no_change_button = MyButton(type='nochange', label='no change', style=discord.ButtonStyle.red)
+        view.add_item(no_change_button)
+        await dm.send(content=q_line, view=view)
+        await view.wait()
+        await dm.send('Timed out')
+        if view.value is None:
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                try:
+                    await ctx.message.delete()
+                except discord.NotFound:
+                    pass
+                return False
+
+        #msg = await self.bot.wait_for('message', check=check)
+        a_type = view.value
         if a_type != '--':
             text = '{}-at:{}\n'.format(text, a_type)
 
@@ -436,17 +485,7 @@ class Group(commands.Cog):
                         await ctx.message.delete()
                     except discord.NotFound:
                         pass
-                # await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
                 return False
-            # msg = await self.bot.wait_for('message', check=check)
-            # if msg.content.lower() == translations['no']:
-            #     await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
-            #     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
-            #         try:
-            #             await ctx.message.delete()
-            #         except discord.NotFound:
-            #             pass
-            #     return False
 
         return text
 
@@ -487,9 +526,10 @@ class Group(commands.Cog):
 
 
 class MyButton(discord.ui.Button):
-    def __init__(self, type, label, style):
-        super().__init__(style=style, label=label)
+    def __init__(self, type, label, style, row=1, response_line=''):
+        super().__init__(style=style, label=label, row=row)
         self.button_type = type
+        self.response_line = response_line
 
     async def callback(self, interaction: discord.Interaction):
         if self.button_type == 'confirm':
@@ -499,6 +539,45 @@ class MyButton(discord.ui.Button):
         elif self.button_type == 'cancel':
             await interaction.response.send_message(self.view.cancel_line, ephemeral=True)
             self.view.value = False
+            self.view.stop()
+        elif self.button_type == 'raid':
+            self.view.value = 'raid'
+            self.view.stop()
+        elif self.button_type == 'pve':
+            self.view.value = 'pve'
+            self.view.stop()
+        elif self.button_type == 'gambit':
+            self.view.value = 'gambit'
+            self.view.stop()
+        elif self.button_type == 'pvp':
+            self.view.value = 'pvp'
+            self.view.stop()
+        elif self.button_type == 'nochange':
+            self.view.value = '--'
+            self.view.stop()
+        elif self.button_type == 'basic':
+            self.view.value = 'basic'
+            self.view.stop()
+        elif self.button_type == 'manual':
+            self.view.value = 'manual'
+            self.view.stop()
+        elif self.button_type == 'default':
+            self.view.value = '-'
+            self.view.stop()
+        elif self.button_type == 'custom':
+            self.view.value = 'custom'
+            await interaction.response.send_message(self.response_line)
+            self.view.stop()
+
+
+class MySelect(discord.ui.Select):
+    def __init__(self, min_values, max_values, options, row=1):
+        super().__init__(min_values=min_values, max_values=max_values, options=options, row=row)
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.value = []
+        for selected in self.values:
+            self.view.value.append(selected)
             self.view.stop()
 
 
@@ -510,6 +589,44 @@ class ConfirmLFG(discord.ui.View):
         self.cancel_button = MyButton(type='cancel', label=cancel, style=discord.ButtonStyle.red)
         self.confirm = confirm
         self.cancel = cancel
+        self.value = None
+
+
+class ActivityType(discord.ui.View):
+    def __init__(self, raid='Raid', pve='pve', gambit='gambit', pvp='pvp'):
+        super().__init__()
+        self.raid_button = MyButton(type='raid', label='raid', style=discord.ButtonStyle.gray)
+        self.pve_button = MyButton(type='pve', label='pve', style=discord.ButtonStyle.gray)
+        self.gambit_button = MyButton(type='gambit', label='gambit', style=discord.ButtonStyle.gray)
+        self.pvp_button = MyButton(type='pvp', label='pvp', style=discord.ButtonStyle.gray)
+        self.other_button = MyButton(type='default', label='other', style=discord.ButtonStyle.gray)
+        self.add_item(self.raid_button)
+        self.add_item(self.pve_button)
+        self.add_item(self.pvp_button)
+        self.add_item(self.gambit_button)
+        self.add_item(self.other_button)
+        self.value = None
+
+
+class ModeLFG(discord.ui.View):
+    def __init__(self, basic='Basic', manual='Manual'):
+        super().__init__()
+        self.basic_button = MyButton(type='basic', label=basic, style=discord.ButtonStyle.green)
+        self.manual_button = MyButton(type='manual', label=manual, style=discord.ButtonStyle.red)
+        self.add_item(self.basic_button)
+        self.add_item(self.manual_button)
+        self.value = None
+
+
+class RoleLFG(discord.ui.View):
+    def __init__(self, max_val, options, manual='Enter manually', auto='Automatic', response_line='Enter names of the roles'):
+        super().__init__()
+        self.select = MySelect(min_values=0, max_values=max_val, options=options, row=1)
+        self.custom_button = MyButton(type='custom', label=manual, style=discord.ButtonStyle.gray, row=2, response_line=response_line)
+        self.default_button = MyButton(type='default', label=auto, style=discord.ButtonStyle.gray, row=2)
+        self.add_item(self.select)
+        self.add_item(self.custom_button)
+        self.add_item(self.default_button)
         self.value = None
 
 
