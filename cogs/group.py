@@ -166,6 +166,7 @@ class Group(commands.Cog):
                     role = '{} {};'.format(role, role_obj.name)
                 except ValueError:
                     pass
+            role_raw = role[:-1]
 
         if len(role) > 0:
             role = role[:-1]
