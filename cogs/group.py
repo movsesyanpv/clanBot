@@ -377,12 +377,12 @@ class Group(commands.Cog):
 
         q_line = '{}\n{}'.format(translations['type'], translations['dm_noedit'])
         view = ActivityType()
-        no_change_button = MyButton(type='nochange', label='no change', style=discord.ButtonStyle.red)
+        no_change_button = MyButton(type='nochange', label='no change', style=discord.ButtonStyle.red, row=2)
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
         await view.wait()
-        await dm.send('Timed out')
         if view.value is None:
+            await dm.send('Timed out')
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 try:
                     await ctx.message.delete()
@@ -390,35 +390,78 @@ class Group(commands.Cog):
                     pass
                 return False
 
-        #msg = await self.bot.wait_for('message', check=check)
         a_type = view.value
         if a_type != '--':
             text = '{}-at:{}\n'.format(text, a_type)
 
         q_line = '{}\n{}'.format(translations['mode'], translations['dm_noedit'])
-        await dm.send(content=q_line)
-        msg = await self.bot.wait_for('message', check=check)
-        mode = msg.content
+        view = ModeLFG()
+        view.add_item(no_change_button)
+        await dm.send(content=q_line, view=view)
+        await view.wait()
+        if view.value is None:
+            await dm.send('Timed out')
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                try:
+                    await ctx.message.delete()
+                except discord.NotFound:
+                    pass
+                return False
+        mode = view.value
         if mode != '--':
             text = '{}-m:{}\n'.format(text, mode)
 
         q_line = '{}\n{}'.format(translations['role'], translations['dm_noedit'])
-        await dm.send(content=q_line)
-        msg = await self.bot.wait_for('message', check=check)
-        role = msg.content
-        role_raw = msg.content
-        if role != '--':
+        role_list = []
+        for role in ctx.guild.roles:
+            if role.mentionable and not role.managed:
+                role_list.append(discord.SelectOption(label=role.name, value=role.id))
+        view = RoleLFG(len(role_list), role_list)
+        view.add_item(no_change_button)
+        await dm.send(content=q_line, view=view)
+        await view.wait()
+        if view.value is None:
+            await dm.send('Timed out')
+            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                try:
+                    await ctx.message.delete()
+                except discord.NotFound:
+                    pass
+                return False
+        elif view.value in ['-', 'custom']:
+            if view.value == 'custom':
+                msg = await self.bot.wait_for('message', check=check)
+                role = msg.content
+                role_raw = msg.content
+            else:
+                role = '--'
+                role_raw = '--'
+
             role_str = ctx.bot.raid.find_roles(True, ctx.guild, [r.strip() for r in role.split(';')])
             role = ''
             for role_mention in role_str.split(', '):
                 try:
-                    role_obj = ctx.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
+                    role_obj = ctx.guild.get_role(
+                        int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
                     role = '{} {};'.format(role, role_obj.name)
                 except ValueError:
                     pass
             if len(role) > 0:
                 role = role[:-1]
-            text = '{}-r:{}\n'.format(text, role)
+        elif view.value == '--':
+            role = view.value
+        else:
+            role = ''
+            for role_id in view.value:
+                try:
+                    role_obj = ctx.guild.get_role(int(role_id))
+                    role = '{} {};'.format(role, role_obj.name)
+                except ValueError:
+                    pass
+
+            if len(role) > 0:
+                role = role[:-1]
+        text = '{}-r:{}\n'.format(text, role)
 
         at = ['default', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
         args = ctx.bot.raid.parse_args(text.splitlines(), ctx.message, False)
