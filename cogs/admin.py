@@ -27,7 +27,6 @@ class Admin(commands.Cog):
         await ctx.message.channel.send(msg)
         ctx.bot.sched.shutdown(wait=True)
         await ctx.bot.data.destiny.close()
-        await ctx.bot.logout()
         await ctx.bot.close()
         return
 
