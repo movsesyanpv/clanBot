@@ -1,5 +1,6 @@
 from discord.ext import commands
 import discord
+from discord_slash import cog_ext, SlashContext
 from tabulate import tabulate
 import mariadb
 import pydest
@@ -17,7 +18,7 @@ class Public(commands.Cog):
     async def top(self, ctx, metric, number=10):
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         if ctx.invoked_with in ['gtop', 'globaltop']:
             is_global = True
@@ -26,6 +27,8 @@ class Public(commands.Cog):
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
+            if type(ctx) == SlashContext:
+                return translations['no_clan']
             await ctx.channel.send(translations['no_clan'], delete_after=60)
             return
         if len(clan_id) > 0:
@@ -78,6 +81,8 @@ class Public(commands.Cog):
                         raise mariadb.Error
                     internal_db.close()
                 except mariadb.Error:
+                    if type(ctx) == SlashContext:
+                        return translations['unknown_metric'].format(metric)
                     await ctx.channel.send(translations['unknown_metric'].format(metric), delete_after=10)
                     if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                         await ctx.message.delete()
@@ -85,11 +90,14 @@ class Public(commands.Cog):
             try:
                 top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
             except pydest.pydest.PydestException:
+                if type(ctx) == SlashContext:
+                    return translations['unknown_metric'].format(metric)
                 await ctx.channel.send(translations['unknown_metric'].format(metric), delete_after=10)
                 if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     await ctx.message.delete()
                 return
-            await ctx.channel.send(translations['in_progress'], delete_after=30)
+            if type(ctx) != SlashContext:
+                await ctx.channel.send(translations['in_progress'], delete_after=30)
             if is_global:
                 clan_ids_c = ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans''')
                 clan_ids_c = clan_ids_c.fetchall()
@@ -100,6 +108,8 @@ class Public(commands.Cog):
             max_len = min(number, len(top_list))
             if len(top_list) > 0:
                 msg = '{}```{}```'.format(top_name['displayProperties']['description'], tabulate(top_list, tablefmt='plain', colalign=('left', 'left')))
+                if type(ctx) == SlashContext:
+                    return msg
                 if len(msg) > 2000:
                     msg_strs = msg.splitlines()
                     msg = ''
@@ -116,8 +126,12 @@ class Public(commands.Cog):
                 else:
                     await ctx.channel.send(msg)
             else:
+                if type(ctx) == SlashContext:
+                    return translations['no_data']
                 await ctx.channel.send(translations['no_data'])
         else:
+            if type(ctx) == SlashContext:
+                return translations['no_clan']
             await ctx.channel.send(translations['no_clan'], delete_after=10)
         if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await ctx.message.delete()
@@ -149,7 +163,7 @@ class Public(commands.Cog):
     async def online(self, ctx):
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         if clan_id is None:
             clan_id = [0]
@@ -164,6 +178,8 @@ class Public(commands.Cog):
             else:
                 msg = '```{}```'.format(
                     tabulate(data, tablefmt='simple', colalign=('left', 'left')))
+            if type(ctx) == SlashContext:
+                return msg
             if len(msg) > 2000:
                 msg_strs = msg.splitlines()
                 msg = ''
@@ -180,7 +196,54 @@ class Public(commands.Cog):
             else:
                 await ctx.channel.send(msg)
         else:
+            if type(ctx) == SlashContext:
+                return translations['no_clan']
             await ctx.channel.send(translations['no_clan'], delete_after=10)
+
+    @cog_ext.cog_slash(name='online',
+                       description='Show online clan members')
+    async def sl_online(self, ctx):
+        await ctx.defer()
+        msg = await self.online(ctx)
+        if len(msg) > 2000:
+            msg_strs = msg.splitlines()
+            msg = ''
+            for line in msg_strs:
+                if len(msg) + len(line) <= 1990:
+                    msg = '{}{}\n'.format(msg, line)
+                else:
+                    msg = '{}```'.format(msg)
+                    await ctx.send(msg)
+        else:
+            await ctx.send(msg)
+
+    @cog_ext.cog_slash(name='top',
+                       description='Print top players for one of the available metrics',
+                       options=[{
+                           "name": "metric",
+                           "description": "Metric name or hash",
+                           "type": 3,
+                           "required": "true"
+                       }, {
+                           "name": "number",
+                           "description": "Max number of players, defaults to 10",
+                           "type": 4,
+                           "required": "false"
+                       }])
+    async def sl_top(self, ctx, metric: str, number=10):
+        await ctx.defer()
+        msg = await self.top(ctx, metric, number)
+        if len(msg) > 2000:
+            msg_strs = msg.splitlines()
+            msg = ''
+            for line in msg_strs:
+                if len(msg) + len(line) <= 1990:
+                    msg = '{}{}\n'.format(msg, line)
+                else:
+                    msg = '{}```'.format(msg)
+                    await ctx.send(msg)
+        else:
+            await ctx.send(msg)
 
 
 def setup(bot):

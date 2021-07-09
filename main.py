@@ -17,6 +17,7 @@ from inspect import currentframe, getframeinfo
 from tabulate import tabulate
 
 from discord.ext import commands
+from discord_slash import cog_ext, SlashCommand
 
 import raid as lfg
 import destiny2data as d2
@@ -24,7 +25,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '3.0a1'
+    version = '3.0a2'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
@@ -1000,6 +1001,7 @@ class ClanBot(commands.Bot):
         token = self.api_data['token']
         print('hmm')
         self.remove_command('help')
+        SlashCommand(self, sync_commands=True, sync_on_cog_reload=True)
         for cog in self.cog_list:
             self.load_extension(cog)
         self.run(token)
