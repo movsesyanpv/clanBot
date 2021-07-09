@@ -168,6 +168,8 @@ class Public(commands.Cog):
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
+            if type(ctx) == SlashContext:
+                return translations['no_clan']
             await ctx.channel.send(translations['no_clan'], delete_after=60)
             return
         if len(clan_id) > 0:
