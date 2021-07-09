@@ -89,7 +89,7 @@ class Public(commands.Cog):
                 if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     await ctx.message.delete()
                 return
-            await ctx.channel.send(translations['in_progress'], delete_after=30)
+                await ctx.channel.send(translations['in_progress'], delete_after=30)
             if is_global:
                 clan_ids_c = ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans''')
                 clan_ids_c = clan_ids_c.fetchall()
