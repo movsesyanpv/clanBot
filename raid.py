@@ -524,7 +524,7 @@ class LFG:
             embed['fields'] = embed['fields'][:-1]
 
         embed = discord.Embed.from_dict(embed)
-        embed.timestamp = time
+        # embed.timestamp = time
 
         print(embed_length)
 
