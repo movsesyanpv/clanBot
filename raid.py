@@ -440,7 +440,8 @@ class LFG:
             "inline": True,
             "name": translations['lfge']['date'],
             # "value": '{} {}'.format(time.strftime('%d-%m-%Y %H:%M'), tz)
-            "value": '{} {}'.format(format_datetime(time, 'medium', tzinfo=ts, locale=Locale.parse(lang, sep='-')), tz)
+            # "value": '{} {}'.format(format_datetime(time, 'medium', tzinfo=ts, locale=Locale.parse(lang, sep='-')), tz)
+            "value": '{}'.format(discord.utils.format_dt(time))
         })
         embed_length = embed_length + len(embed['fields'][-1]['name']) + len(embed['fields'][-1]['value'])
 
