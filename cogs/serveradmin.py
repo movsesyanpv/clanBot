@@ -208,6 +208,18 @@ class ServerAdmin(commands.Cog):
             msg = 'Got it, {}'.format(ctx.message.author.mention)
             await ctx.message.channel.send(msg, delete_after=10)
 
+    @commands.command()
+    @commands.guild_only()
+    async def reglfg(self, ctx):
+        pass
+
+    @commands.command(
+        description="View and change settings for the server"
+    )
+    @commands.guild_only()
+    async def settings(self, ctx):
+        pass
+
 
 class UpdateTypes(discord.ui.View):
     def __init__(self):
