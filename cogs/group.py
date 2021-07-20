@@ -83,7 +83,7 @@ class Group(commands.Cog):
 
         await response.delete()
 
-        description = await get_proper_length_arg('description', 2048)
+        description = await get_proper_length_arg('description', 4096)
 
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         await dm.send(content=translations['time'].format(datetime.now().strftime('%d-%m-%Y %H:%M'), datetime.now().replace(tzinfo=ts.tzinfo).strftime('%d-%m-%Y %H:%M%z')))
@@ -188,7 +188,7 @@ class Group(commands.Cog):
             for line in check_lines:
                 last_view = None
                 if line == check_lines[-1]:
-                    last_view = None
+                    last_view = view
                 if len(line) <= 2000:
                     await dm.send(line, view=last_view)
                 else:
@@ -198,7 +198,7 @@ class Group(commands.Cog):
                         for arg_part in line_parts[2:]:
                             lines[1] = '{}: {}'.format(lines[1], arg_part)
                     await dm.send(lines[0])
-                    await dm.send(lines[1], view=last_view)
+                    await dm.send('{}...'.format(lines[1][:1997]), view=last_view)
 
         await view.wait()
         if view.value is None:
