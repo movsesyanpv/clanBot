@@ -3,6 +3,7 @@ import discord
 from datetime import datetime, timedelta, timezone
 from hashids import Hashids
 import dateparser
+import asyncio
 
 
 class Group(commands.Cog):
@@ -59,7 +60,7 @@ class Group(commands.Cog):
 
     async def dm_lfg(self, ctx, lang):
         def check(ms):
-            return ms.channel == ctx.author.dm_channel and ms.author == ctx.message.author
+            return (ms.channel == dm) and ms.author == ctx.message.author
 
         async def get_proper_length_arg(arg_name, max_len):
             await dm.send(content=translations[arg_name])
@@ -71,17 +72,22 @@ class Group(commands.Cog):
                 arg = q_msg.content
             return arg
 
-        if ctx.author.dm_channel is None:
-            await ctx.author.create_dm()
-        dm = ctx.author.dm_channel
-
         translations = ctx.bot.translations[lang]['lfg']
 
-        response = await ctx.message.channel.send(translations['dm_start'].format(ctx.author.mention))
+        if ctx.channel.permissions_for(ctx.guild.me).use_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
+            dm = await ctx.message.start_thread(name='LFG', auto_archive_duration=60)
+            await dm.add_user(ctx.message.author)
 
-        name = await get_proper_length_arg('name', 256)
+            name = await get_proper_length_arg('name', 256)
+        else:
+            if ctx.author.dm_channel is None:
+                await ctx.author.create_dm()
+            dm = ctx.author.dm_channel
+            response = await ctx.message.channel.send(translations['dm_start'].format(ctx.author.mention))
 
-        await response.delete()
+            name = await get_proper_length_arg('name', 256)
+
+            await response.delete()
 
         description = await get_proper_length_arg('description', 4096)
 
@@ -100,7 +106,7 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         length = msg.content
 
-        view = ActivityType()
+        view = ActivityType(ctx.message.author)
         await dm.send(content=translations['type'], view=view)
         await view.wait()
         if view.value is None:
@@ -110,10 +116,13 @@ class Group(commands.Cog):
                     await ctx.message.delete()
                 except discord.NotFound:
                     pass
+                if type(dm) == discord.Thread:
+                    await asyncio.sleep(10)
+                    await dm.delete()
                 return False
         a_type = view.value
 
-        view = ModeLFG()
+        view = ModeLFG(ctx.message.author)
         await dm.send(content=translations['mode'], view=view)
         await view.wait()
         if view.value is None:
@@ -123,6 +132,9 @@ class Group(commands.Cog):
                     await ctx.message.delete()
                 except discord.NotFound:
                     pass
+                if type(dm) == discord.Thread:
+                    await asyncio.sleep(10)
+                    await dm.delete()
                 return False
         mode = view.value
 
@@ -130,7 +142,7 @@ class Group(commands.Cog):
         for role in ctx.guild.roles:
             if role.mentionable and not role.managed:
                 role_list.append(discord.SelectOption(label=role.name, value=role.id))
-        view = RoleLFG(len(role_list), role_list)
+        view = RoleLFG(len(role_list), role_list, ctx.message.author)
         await dm.send(content=translations['role'], view=view)
         await view.wait()
         if view.value is None:
@@ -140,6 +152,9 @@ class Group(commands.Cog):
                     await ctx.message.delete()
                 except discord.NotFound:
                     pass
+                if type(dm) == discord.Thread:
+                    await asyncio.sleep(10)
+                    await dm.delete()
                 return False
         elif view.value in ['-', 'custom']:
             if view.value == 'custom':
@@ -178,7 +193,7 @@ class Group(commands.Cog):
         ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
         check_msg = translations['check'].format(args['name'], args['description'], ts, args['size'],
                                                  args['length']/3600, at[args['is_embed']], args['group_mode'], role)
-        view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()), "Да", "Нет")
+        view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()), ctx.message.author, "Да", "Нет")
         view.add_item(view.confirm_button)
         view.add_item(view.cancel_button)
         if len(check_msg) <= 2000:
@@ -208,6 +223,9 @@ class Group(commands.Cog):
                         await ctx.message.delete()
                     except discord.NotFound:
                         pass
+            if type(dm) == discord.Thread:
+                await asyncio.sleep(10)
+                await dm.delete()
             return False
         elif not view.value:
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
@@ -215,6 +233,9 @@ class Group(commands.Cog):
                         await ctx.message.delete()
                     except discord.NotFound:
                         pass
+            if type(dm) == discord.Thread:
+                await asyncio.sleep(10)
+                await dm.delete()
             return False
 
         group_id = await self.guild_lfg(ctx, lang, 'lfg\n-n:{}\n-d:{}\n-t:{}\n-s:{}\n-l:{}\n-at:{}\n-m:{}\n-r:{}'.
@@ -222,6 +243,8 @@ class Group(commands.Cog):
                                                role_raw))
         ctx.bot.raid.set_owner(ctx.author.id, group_id)
 
+        if type(dm) == discord.Thread:
+            await dm.delete()
         return group_id
 
     @commands.command(aliases=['сбор', 'лфг'])
@@ -274,7 +297,7 @@ class Group(commands.Cog):
     async def dm_edit_lfg(self, ctx, lang, hashids):
 
         def check(ms):
-            return ms.channel == ctx.author.dm_channel and ms.author == ctx.message.author
+            return ms.channel == dm and ms.author == ctx.message.author
 
         async def get_proper_length_arg(arg_name, max_len):
             dm_content = '{}\n{}'.format(translations[arg_name], translations['dm_noedit'])
@@ -309,20 +332,34 @@ class Group(commands.Cog):
                     pass
             return number
 
-        if ctx.author.dm_channel is None:
-            await ctx.author.create_dm()
-        dm = ctx.author.dm_channel
-
         translations = ctx.bot.translations[lang]['lfg']
 
-        response = await ctx.message.channel.send(translations['dm_start'].format(ctx.author.mention))
+        if ctx.channel.permissions_for(ctx.guild.me).use_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
+            dm = await ctx.message.start_thread(name='LFG', auto_archive_duration=60)
+            await dm.add_user(ctx.message.author)
 
-        lfg_list = await self.lfglist(ctx, lang)
-        if not lfg_list:
-            return
-        number = await get_numerical_answer('lfg_choice', len(lfg_list)+1)
+            lfg_list = await self.lfglist(ctx, lang)
+            if not lfg_list:
+                if type(dm) == discord.Thread:
+                    await asyncio.sleep(10)
+                    await dm.delete()
+                return
+            number = await get_numerical_answer('lfg_choice', len(lfg_list) + 1)
+        else:
+            if ctx.author.dm_channel is None:
+                await ctx.author.create_dm()
+            dm = ctx.author.dm_channel
+            response = await ctx.message.channel.send(translations['dm_start'].format(ctx.author.mention))
 
-        await response.delete()
+            lfg_list = await self.lfglist(ctx, lang)
+            if not lfg_list:
+                if type(dm) == discord.Thread:
+                    await asyncio.sleep(10)
+                    await dm.delete()
+                return
+            number = await get_numerical_answer('lfg_choice', len(lfg_list)+1)
+
+            await response.delete()
 
         check_msg = translations['lfglist_choice_check']
         lfg = lfg_list[number]
@@ -337,6 +374,9 @@ class Group(commands.Cog):
                     await ctx.message.delete()
                 except discord.NotFound:
                     pass
+            if type(dm) == discord.Thread:
+                await asyncio.sleep(10)
+                await dm.delete()
             return False
         text = '{}\n'.format(lfg[0])
 
@@ -376,7 +416,7 @@ class Group(commands.Cog):
             text = '{}-l:{}\n'.format(text, length)
 
         q_line = '{}\n{}'.format(translations['type'], translations['dm_noedit'])
-        view = ActivityType()
+        view = ActivityType(ctx.message.author)
         no_change_button = MyButton(type='nochange', label='no change', style=discord.ButtonStyle.red, row=2)
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
@@ -388,6 +428,9 @@ class Group(commands.Cog):
                     await ctx.message.delete()
                 except discord.NotFound:
                     pass
+                if type(dm) == discord.Thread:
+                    await asyncio.sleep(10)
+                    await dm.delete()
                 return False
 
         a_type = view.value
@@ -395,7 +438,7 @@ class Group(commands.Cog):
             text = '{}-at:{}\n'.format(text, a_type)
 
         q_line = '{}\n{}'.format(translations['mode'], translations['dm_noedit'])
-        view = ModeLFG()
+        view = ModeLFG(ctx.message.author)
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
         await view.wait()
@@ -406,6 +449,9 @@ class Group(commands.Cog):
                     await ctx.message.delete()
                 except discord.NotFound:
                     pass
+                if type(dm) == discord.Thread:
+                    await asyncio.sleep(10)
+                    await dm.delete()
                 return False
         mode = view.value
         if mode != '--':
@@ -416,7 +462,7 @@ class Group(commands.Cog):
         for role in ctx.guild.roles:
             if role.mentionable and not role.managed:
                 role_list.append(discord.SelectOption(label=role.name, value=role.id))
-        view = RoleLFG(len(role_list), role_list)
+        view = RoleLFG(len(role_list), role_list, ctx.message.author)
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
         await view.wait()
@@ -427,6 +473,9 @@ class Group(commands.Cog):
                     await ctx.message.delete()
                 except discord.NotFound:
                     pass
+                if type(dm) == discord.Thread:
+                    await asyncio.sleep(10)
+                    await dm.delete()
                 return False
         elif view.value in ['-', 'custom']:
             if view.value == 'custom':
@@ -493,7 +542,7 @@ class Group(commands.Cog):
                 role = translations['no_change']
             check_msg = translations['check'].format(args['name'], args['description'], args['time'], args['size'],
                                                      args['length'], args['is_embed'], args['group_mode'], role)
-            view = ConfirmLFG(translations['again'].format(translations['edit'], translations['edit'].lower()), "Да", "Нет")
+            view = ConfirmLFG(translations['again'].format(translations['edit'], translations['edit'].lower()), ctx.message.author, "Да", "Нет")
             view.add_item(view.confirm_button)
             view.add_item(view.cancel_button)
             if len(check_msg) <= 2000:
@@ -529,8 +578,13 @@ class Group(commands.Cog):
                         await ctx.message.delete()
                     except discord.NotFound:
                         pass
+                if type(dm) == discord.Thread:
+                    await asyncio.sleep(10)
+                    await dm.delete()
                 return False
 
+        if type(dm) == discord.Thread:
+            await dm.delete()
         return text
 
     @commands.command(aliases=['editlfg', 'editLfg', 'editLFG'])
@@ -576,6 +630,8 @@ class MyButton(discord.ui.Button):
         self.response_line = response_line
 
     async def callback(self, interaction: discord.Interaction):
+        if interaction.user != self.view.owner:
+            return
         if self.button_type == 'confirm':
             await interaction.response.send_message('OK', ephemeral=True)
             self.view.value = True
@@ -619,6 +675,8 @@ class MySelect(discord.ui.Select):
         super().__init__(min_values=min_values, max_values=max_values, options=options, row=row)
 
     async def callback(self, interaction: discord.Interaction):
+        if interaction.user != self.view.owner:
+            return
         self.view.value = []
         for selected in self.values:
             self.view.value.append(selected)
@@ -626,8 +684,9 @@ class MySelect(discord.ui.Select):
 
 
 class ConfirmLFG(discord.ui.View):
-    def __init__(self, cancel_line, confirm='Confirm', cancel='Cancel'):
+    def __init__(self, cancel_line, owner, confirm='Confirm', cancel='Cancel'):
         super().__init__()
+        self.owner = owner
         self.cancel_line = cancel_line
         self.confirm_button = MyButton(type='confirm', label=confirm, style=discord.ButtonStyle.green)
         self.cancel_button = MyButton(type='cancel', label=cancel, style=discord.ButtonStyle.red)
@@ -637,8 +696,9 @@ class ConfirmLFG(discord.ui.View):
 
 
 class ActivityType(discord.ui.View):
-    def __init__(self, raid='Raid', pve='pve', gambit='gambit', pvp='pvp'):
+    def __init__(self, owner, raid='Raid', pve='pve', gambit='gambit', pvp='pvp'):
         super().__init__()
+        self.owner = owner
         self.raid_button = MyButton(type='raid', label='raid', style=discord.ButtonStyle.gray)
         self.pve_button = MyButton(type='pve', label='pve', style=discord.ButtonStyle.gray)
         self.gambit_button = MyButton(type='gambit', label='gambit', style=discord.ButtonStyle.gray)
@@ -653,8 +713,9 @@ class ActivityType(discord.ui.View):
 
 
 class ModeLFG(discord.ui.View):
-    def __init__(self, basic='Basic', manual='Manual'):
+    def __init__(self, owner, basic='Basic', manual='Manual'):
         super().__init__()
+        self.owner = owner
         self.basic_button = MyButton(type='basic', label=basic, style=discord.ButtonStyle.green)
         self.manual_button = MyButton(type='manual', label=manual, style=discord.ButtonStyle.red)
         self.add_item(self.basic_button)
@@ -663,8 +724,9 @@ class ModeLFG(discord.ui.View):
 
 
 class RoleLFG(discord.ui.View):
-    def __init__(self, max_val, options, manual='Enter manually', auto='Automatic', response_line='Enter names of the roles'):
+    def __init__(self, max_val, options, owner, manual='Enter manually', auto='Automatic', response_line='Enter names of the roles'):
         super().__init__()
+        self.owner = owner
         self.select = MySelect(min_values=0, max_values=max_val, options=options, row=1)
         self.custom_button = MyButton(type='custom', label=manual, style=discord.ButtonStyle.gray, row=2, response_line=response_line)
         self.default_button = MyButton(type='default', label=auto, style=discord.ButtonStyle.gray, row=2)
