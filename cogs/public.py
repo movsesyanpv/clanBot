@@ -17,7 +17,7 @@ class Public(commands.Cog):
                     guilds.append(guild.id)
             translations = self.bot.translations[lang]
             try:
-                self.bot.slash.add_slash_command(self.sl_online, name=translations['help']['commands']['online'][], description=translations['help']['online'], guild_ids=guilds)
+                self.bot.slash.add_slash_command(self.sl_online, name=translations['help']['commands']['online']['name'], description=translations['help']['online'], guild_ids=guilds)
             except error.DuplicateCommand:
                 self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang),
                                                  description=translations['help']['online'], guild_ids=guilds)
