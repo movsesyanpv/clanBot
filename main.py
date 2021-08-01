@@ -214,8 +214,9 @@ class ClanBot(commands.Bot):
         await self.dm_owner('on_ready fired')
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(status=discord.Status.dnd, activity=game)
+        self.remove_command('help')
         for cog in self.cog_list:
-            self.load_extension(cog)
+            self.reload_extension(cog)
         try:
             await self.slash.sync_all_commands()
         except discord.Forbidden:
@@ -1007,6 +1008,8 @@ class ClanBot(commands.Bot):
         token = self.api_data['token']
         print('hmm')
         self.remove_command('help')
+        for cog in self.cog_list:
+            self.load_extension(cog)
         self.run(token)
 
 
