@@ -18,11 +18,12 @@ class Public(commands.Cog):
                 if self.bot.guild_lang(guild.id) == lang:
                     g_guilds[-1].append(guild.id)
             translations = self.bot.translations[lang]
-            try:
-                self.bot.slash.add_slash_command(self.sl_online, name=translations['help']['commands']['online']['name'], description=translations['help']['online'], guild_ids=g_guilds[-1])
-            except error.DuplicateCommand:
-                self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang),
-                                                 description=translations['help']['online'], guild_ids=g_guilds[-1])
+            if len(g_guilds[-1]) > 0:
+                try:
+                    self.bot.slash.add_slash_command(self.sl_online, name=translations['help']['commands']['online']['name'], description=translations['help']['online'], guild_ids=g_guilds[-1])
+                except error.DuplicateCommand:
+                    self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang),
+                                                     description=translations['help']['online'], guild_ids=g_guilds[-1])
 
         print(g_guilds)
 
