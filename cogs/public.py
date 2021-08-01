@@ -10,8 +10,9 @@ class Public(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        guilds = []
         for lang in self.bot.langs:
-            guilds = []
+            guilds.clear()
             for guild in self.bot.guilds:
                 if self.bot.guild_lang(guild.id) == lang:
                     guilds.append(guild.id)
