@@ -216,7 +216,10 @@ class ClanBot(commands.Bot):
         await self.change_presence(status=discord.Status.dnd, activity=game)
         for cog in self.cog_list:
             self.load_extension(cog)
-        await self.slash.sync_all_commands()
+        try:
+            await self.slash.sync_all_commands()
+        except discord.Forbidden:
+            pass
         self.all_commands['update'].enabled = False
         self.all_commands['top'].enabled = False
         self.all_commands['online'].enabled = False
