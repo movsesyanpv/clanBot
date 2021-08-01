@@ -1,6 +1,6 @@
 from discord.ext import commands
 import discord
-from discord_slash import cog_ext, SlashContext, manage_commands
+from discord_slash import cog_ext, SlashContext, manage_commands, error
 from tabulate import tabulate
 import mariadb
 import pydest
@@ -16,7 +16,11 @@ class Public(commands.Cog):
                 if self.bot.guild_lang(guild.id) == lang:
                     guilds.append(guild.id)
             translations = self.bot.translations[lang]
-            self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang), description=translations['help']['online'], guild_ids=guilds)
+            try:
+                self.bot.slash.add_slash_command(self.sl_online, name=translations['help']['commands']['online'][], description=translations['help']['online'], guild_ids=guilds)
+            except error.DuplicateCommand:
+                self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang),
+                                                 description=translations['help']['online'], guild_ids=guilds)
 
     @commands.command(
         aliases=['gtop', 'globaltop']
