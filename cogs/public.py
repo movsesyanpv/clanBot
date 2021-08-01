@@ -23,8 +23,8 @@ class Public(commands.Cog):
             except error.DuplicateCommand:
                 self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang),
                                                  description=translations['help']['online'], guild_ids=g_guilds[-1])
-            #guilds.clear()
-            pass
+
+        print(g_guilds)
 
     @commands.command(
         aliases=['gtop', 'globaltop']
