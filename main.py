@@ -216,9 +216,9 @@ class ClanBot(commands.Bot):
         await self.change_presence(status=discord.Status.dnd, activity=game)
         self.remove_command('help')
         for cog in self.cog_list:
-            self.reload_extension(cog)
+            self.load_extension(cog)
         try:
-            await self.slash.sync_all_commands()
+            await self.slash.sync_all_commands(delete_from_unused_guilds=True)
         except discord.Forbidden:
             pass
         self.all_commands['update'].enabled = False
@@ -1007,9 +1007,9 @@ class ClanBot(commands.Bot):
         self.get_args()
         token = self.api_data['token']
         print('hmm')
-        self.remove_command('help')
-        for cog in self.cog_list:
-            self.load_extension(cog)
+        # self.remove_command('help')
+        # for cog in self.cog_list:
+        #     self.load_extension(cog)
         self.run(token)
 
 

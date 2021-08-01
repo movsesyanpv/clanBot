@@ -10,18 +10,21 @@ class Public(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        guilds = []
+        g_guilds = []
         for lang in self.bot.langs:
-            guilds.clear()
+            g_guilds.append([])
             for guild in self.bot.guilds:
+                guild_lang = self.bot.guild_lang(guild.id)
                 if self.bot.guild_lang(guild.id) == lang:
-                    guilds.append(guild.id)
+                    g_guilds[-1].append(guild.id)
             translations = self.bot.translations[lang]
             try:
-                self.bot.slash.add_slash_command(self.sl_online, name=translations['help']['commands']['online']['name'], description=translations['help']['online'], guild_ids=guilds)
+                self.bot.slash.add_slash_command(self.sl_online, name=translations['help']['commands']['online']['name'], description=translations['help']['online'], guild_ids=g_guilds[-1])
             except error.DuplicateCommand:
                 self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang),
-                                                 description=translations['help']['online'], guild_ids=guilds)
+                                                 description=translations['help']['online'], guild_ids=g_guilds[-1])
+            #guilds.clear()
+            pass
 
     @commands.command(
         aliases=['gtop', 'globaltop']
