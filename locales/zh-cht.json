@@ -203,7 +203,8 @@
                 "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes. Send `none` as the parameter to disable all prefixes, except bot mention."
             },
             "online": {
-                "info": "Get the list of online clan members."
+                "info": "Get the list of online clan members.",
+                "name": "online"
             }
         },
         "prefix": "Print available prefixes",
