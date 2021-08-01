@@ -1456,55 +1456,55 @@ class D2data:
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 i = 1
-                if str(r_json['hash']) in self.translations[lang]['levi_order'] and \
-                        not r_json['matchmaking']['requiresGuardianOath']:
-                    challenges = await self.get_modifiers(lang, item_hash)
-                    if challenges:
-                        challenge = set(challenges[0]['name'].lower().replace('"', '').split(' '))
-                        challenge.discard('the')
-                        order_strings = self.translations[lang]['levi_order'][str(r_json['hash'])].splitlines()
-                        levi_str = ''
-                        for string in order_strings:
-                            intersection = challenge.intersection(set(string.lower().split(' ')))
-                            if intersection:
-                                levi_str = '{}<b>{}</b>\n'.format(levi_str, string)
-                            else:
-                                levi_str = '{}{}\n'.format(levi_str, string)
-                        levi_str = levi_str[:-1]
-                    else:
-                        levi_str = self.translations[lang]['levi_order'][str(r_json['hash'])]
-                    info = {
-                        'inline': True,
-                        'name': r_json['originalDisplayProperties']['name'],
-                        'value': levi_str.replace('<b>', '**').replace('</b>', '**')
-                    }
-                    db_data.append({
-                        'name': info['name'],
-                        'description': levi_str.replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]["EoW"] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath']:
-                    info = {
-                        'inline': False,
-                        'name': self.translations[lang]['lairs'],
-                        'value': u"\u2063"
-                    }
-                    mods = await self.get_modifiers(lang, r_json['hash'])
-                    resp_time = datetime.utcnow().isoformat()
-                    if mods:
-                        loadout = '{}\n{}\n{}'.format(self.translations[lang]['armsmaster'][eow_loadout*3],
-                                                      self.translations[lang]['armsmaster'][eow_loadout*3+1],
-                                                      self.translations[lang]['armsmaster'][eow_loadout*3+2])
-                        info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'],
-                                                                   mods[1]['name'], loadout)
-                    else:
-                        info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n\n', '<br>').replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
+                # if str(r_json['hash']) in self.translations[lang]['levi_order'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath']:
+                #     challenges = await self.get_modifiers(lang, item_hash)
+                #     if challenges:
+                #         challenge = set(challenges[0]['name'].lower().replace('"', '').split(' '))
+                #         challenge.discard('the')
+                #         order_strings = self.translations[lang]['levi_order'][str(r_json['hash'])].splitlines()
+                #         levi_str = ''
+                #         for string in order_strings:
+                #             intersection = challenge.intersection(set(string.lower().split(' ')))
+                #             if intersection:
+                #                 levi_str = '{}<b>{}</b>\n'.format(levi_str, string)
+                #             else:
+                #                 levi_str = '{}{}\n'.format(levi_str, string)
+                #         levi_str = levi_str[:-1]
+                #     else:
+                #         levi_str = self.translations[lang]['levi_order'][str(r_json['hash'])]
+                #     info = {
+                #         'inline': True,
+                #         'name': r_json['originalDisplayProperties']['name'],
+                #         'value': levi_str.replace('<b>', '**').replace('</b>', '**')
+                #     }
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': levi_str.replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
+                # if self.translations[lang]["EoW"] in r_json['displayProperties']['name'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath']:
+                #     info = {
+                #         'inline': False,
+                #         'name': self.translations[lang]['lairs'],
+                #         'value': u"\u2063"
+                #     }
+                #     mods = await self.get_modifiers(lang, r_json['hash'])
+                #     resp_time = datetime.utcnow().isoformat()
+                #     if mods:
+                #         loadout = '{}\n{}\n{}'.format(self.translations[lang]['armsmaster'][eow_loadout*3],
+                #                                       self.translations[lang]['armsmaster'][eow_loadout*3+1],
+                #                                       self.translations[lang]['armsmaster'][eow_loadout*3+2])
+                #         info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'],
+                #                                                    mods[1]['name'], loadout)
+                #     else:
+                #         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': info['value'].replace('\n\n', '<br>').replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
                         not r_json['matchmaking']['requiresGuardianOath'] and lw_ch != 0 and hawthorne_resp:
                     info = {
@@ -1521,38 +1521,38 @@ class D2data:
                         'description': info['value'].replace('\n', '<br>')
                     })
                     self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and sotp_ch != 0 and hawthorne_resp:
-                    info = {
-                        'inline': True,
-                        'name': r_json['originalDisplayProperties']['name'],
-                        'value': u"\u2063"
-                    }
-                    curr_challenge = sotp_ch
-                    curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
-                                                                    language=lang)
-                    info['value'] = curr_challenge['displayProperties']['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]['CoS'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and cos_ch != 0 and hawthorne_resp:
-                    info = {
-                        'inline': True,
-                        'name': r_json['originalDisplayProperties']['name'],
-                        'value': u"\u2063"
-                    }
-                    curr_challenge = cos_ch
-                    curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
-                                                                    language=lang)
-                    info['value'] = curr_challenge['displayProperties']['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
+                # if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath'] and sotp_ch != 0 and hawthorne_resp:
+                #     info = {
+                #         'inline': True,
+                #         'name': r_json['originalDisplayProperties']['name'],
+                #         'value': u"\u2063"
+                #     }
+                #     curr_challenge = sotp_ch
+                #     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                #                                                     language=lang)
+                #     info['value'] = curr_challenge['displayProperties']['name']
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': info['value'].replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
+                # if self.translations[lang]['CoS'] in r_json['displayProperties']['name'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath'] and cos_ch != 0 and hawthorne_resp:
+                #     info = {
+                #         'inline': True,
+                #         'name': r_json['originalDisplayProperties']['name'],
+                #         'value': u"\u2063"
+                #     }
+                #     curr_challenge = cos_ch
+                #     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                #                                                     language=lang)
+                #     info['value'] = curr_challenge['displayProperties']['name']
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': info['value'].replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
                         not r_json['matchmaking']['requiresGuardianOath'] and 'modifierHashes' in key.keys():
                     info = {

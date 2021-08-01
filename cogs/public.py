@@ -1,5 +1,6 @@
 from discord.ext import commands
 import discord
+from discord_slash import cog_ext, SlashContext, manage_commands
 from tabulate import tabulate
 import mariadb
 import pydest
@@ -9,6 +10,13 @@ class Public(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        for lang in self.bot.langs:
+            guilds = []
+            for guild in self.bot.guilds:
+                if self.bot.guild_lang(guild.id) == lang:
+                    guilds.append(guild.id)
+            translations = self.bot.translations[lang]
+            self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang), description=translations['help']['online'], guild_ids=guilds)
 
     @commands.command(
         aliases=['gtop', 'globaltop']
@@ -149,21 +157,26 @@ class Public(commands.Cog):
     async def online(self, ctx):
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
+            if type(ctx) == SlashContext:
+                return translations['no_clan']
             await ctx.channel.send(translations['no_clan'], delete_after=60)
             return
         if len(clan_id) > 0:
             clan_ids = clan_id[0]
             data = await ctx.bot.data.get_online_clan_members(clan_ids, lang)
             if len(data) > 1:
-                msg = '```{}```'.format(tabulate(data, tablefmt='simple', colalign=('left', 'left'), headers='firstrow'))
+                msg = '```{}```'.format(
+                    tabulate(data, tablefmt='simple', colalign=('left', 'left'), headers='firstrow'))
             else:
                 msg = '```{}```'.format(
                     tabulate(data, tablefmt='simple', colalign=('left', 'left')))
+            if type(ctx) == SlashContext:
+                return msg
             if len(msg) > 2000:
                 msg_strs = msg.splitlines()
                 msg = ''
@@ -180,7 +193,24 @@ class Public(commands.Cog):
             else:
                 await ctx.channel.send(msg)
         else:
+            if type(ctx) == SlashContext:
+                return translations['no_clan']
             await ctx.channel.send(translations['no_clan'], delete_after=10)
+
+    async def sl_online(self, ctx):
+        await ctx.defer()
+        msg = await self.online(ctx)
+        if len(msg) > 2000:
+            msg_strs = msg.splitlines()
+            msg = ''
+            for line in msg_strs:
+                if len(msg) + len(line) <= 1990:
+                    msg = '{}{}\n'.format(msg, line)
+                else:
+                    msg = '{}```'.format(msg)
+                    await ctx.send(msg)
+        else:
+            await ctx.send(msg)
 
 
 def setup(bot):

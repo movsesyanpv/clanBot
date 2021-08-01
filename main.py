@@ -17,6 +17,7 @@ from inspect import currentframe, getframeinfo
 from tabulate import tabulate
 
 from discord.ext import commands
+from discord_slash import SlashCommand
 
 import raid as lfg
 import destiny2data as d2
@@ -24,7 +25,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.19'
+    version = '2.20'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
@@ -213,6 +214,9 @@ class ClanBot(commands.Bot):
         await self.dm_owner('on_ready fired')
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(status=discord.Status.dnd, activity=game)
+        for cog in self.cog_list:
+            self.load_extension(cog)
+        await self.slash.sync_all_commands()
         self.all_commands['update'].enabled = False
         self.all_commands['top'].enabled = False
         self.all_commands['online'].enabled = False
@@ -1000,8 +1004,6 @@ class ClanBot(commands.Bot):
         token = self.api_data['token']
         print('hmm')
         self.remove_command('help')
-        for cog in self.cog_list:
-            self.load_extension(cog)
         self.run(token)
 
 
@@ -1017,4 +1019,5 @@ if __name__ == '__main__':
     intents = discord.Intents.default()
     intents.members = True
     b = ClanBot(command_prefix=get_prefix, intents=intents)
+    slash = SlashCommand(b, sync_commands=True)
     b.start_up()
