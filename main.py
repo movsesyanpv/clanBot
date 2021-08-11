@@ -25,7 +25,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.20'
+    version = '2.20.1'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
@@ -216,7 +216,10 @@ class ClanBot(commands.Bot):
         await self.change_presence(status=discord.Status.dnd, activity=game)
         self.remove_command('help')
         for cog in self.cog_list:
-            self.load_extension(cog)
+            try:
+                self.load_extension(cog)
+            except discord.ext.commands.ExtensionAlreadyLoaded:
+                self.reload_extension(cog)
         try:
             await self.slash.sync_all_commands(delete_from_unused_guilds=True)
         except discord.Forbidden:

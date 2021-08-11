@@ -25,8 +25,6 @@ class Public(commands.Cog):
                     self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang),
                                                      description=translations['help']['online'], guild_ids=g_guilds[-1])
 
-        print(g_guilds)
-
     @commands.command(
         aliases=['gtop', 'globaltop']
     )
