@@ -139,7 +139,7 @@ class ServerAdmin(commands.Cog):
         get = True
         channels = None
         if len(args) == 0:
-            view = UpdateTypes()
+            view = UpdateTypes(ctx.message.author)
             await ctx.channel.send('Select update types', view=view)
             await view.wait()
             args = view.value
@@ -222,8 +222,9 @@ class ServerAdmin(commands.Cog):
 
 
 class UpdateTypes(discord.ui.View):
-    def __init__(self):
+    def __init__(self, owner):
         super().__init__()
+        self.owner = owner
         self.value = None
 
     @discord.ui.select(placeholder='Update type', max_values=8, options=[
@@ -238,6 +239,8 @@ class UpdateTypes(discord.ui.View):
     ])
     async def updates(self, select: discord.ui.Select, interaction: discord.Interaction):
         self.value = []
+        if self.owner != interaction.user:
+            return
         for selected in select.values:
             self.value.append(selected)
             self.stop()
