@@ -386,6 +386,18 @@ class Admin(commands.Cog):
             help_msg = '{}\n'.format(help_translations['use_lfg'])
             await channel.send(help_msg)
             pass
+        elif command.name in ['setlang']:
+            if command.name in help_translations['commands'].keys():
+                translations = help_translations['commands'][command.name]
+                command_desc = translations['info']
+            else:
+                command_desc = command.description
+            lang_list = ''
+            for lang in self.bot.langs:
+                lang_list = '{}`, `{}'.format(lang_list, lang)
+            help_msg = '{}'.format(command_desc).format(lang_list[3:]+'`')
+            await channel.send(help_msg)
+            pass
         else:
             if command.name in help_translations['commands'].keys():
                 translations = help_translations['commands'][command.name]
