@@ -158,7 +158,7 @@
                 }
             },
             "setlang": {
-                "info": "Available languages are `en`, `ru`. Available only to the server's admins."
+                "info": "Available languages are {}. Available only to the server's admins."
             },
             "update": {
                 "info": "Get updates from Bungie for the given `args`. The types should be separated with spaces. Available args:\n - `daily` for strike modifiers and spider\n - `weekly` for available empire hunts and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics\nUpdates are posted in the channel, the command was invoked, if the channel was registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the server's admins."
