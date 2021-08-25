@@ -22,8 +22,11 @@ class Public(commands.Cog):
                 try:
                     self.bot.slash.add_slash_command(self.sl_online, name=translations['help']['commands']['online']['name'], description=translations['help']['online'], guild_ids=g_guilds[-1])
                 except error.DuplicateCommand:
-                    self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang),
+                    try:
+                        self.bot.slash.add_slash_command(self.sl_online, name="online_{}".format(lang),
                                                      description=translations['help']['online'], guild_ids=g_guilds[-1])
+                    except error.DuplicateCommand:
+                        pass
 
     @commands.command(
         aliases=['gtop', 'globaltop']
