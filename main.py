@@ -25,11 +25,11 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '2.20.1'
+    version = '2.21'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
-    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
-    daily_rotations = ('strikes', 'spider', 'banshee', 'ada')
+    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'mods', 'xur', 'osiris', 'alerts', 'events']
+    daily_rotations = ('strikes', 'spider', 'banshee', 'ada', 'mods')
     weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire')
     embeds_with_img = ['thelie']
 
@@ -187,6 +187,11 @@ class ClanBot(commands.Bot):
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 await self.universal_update(self.data.get_osiris_predictions, 'osiris', 345600, post=post, get=get, channels=channels, forceget=forceget)
+        if 'mods' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_daily_mods, 'daily_mods', 345600, post=post, get=get, channels=channels, forceget=forceget)
         if 'tess' in upd_type:
             if channels is None:
                 channels = self.notifiers
@@ -891,20 +896,20 @@ class ClanBot(commands.Bot):
             hist = str(hist)
         else:
             if server.me.permissions_in(channel).embed_links:
-                if upd_type in self.embeds_with_img:
-                    if channel.type != discord.ChannelType.news:
-                        # await asyncio.sleep(delay)
-                        message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
-                    else:
-                        # await asyncio.sleep(delay)
-                        message = await channel.send(file=image, embed=embed)
+            if upd_type in self.embeds_with_img:
+                if channel.type != discord.ChannelType.news:
+                    # await asyncio.sleep(delay)
+                    message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
                 else:
-                    if channel.type != discord.ChannelType.news:
-                        # await asyncio.sleep(delay)
-                        message = await channel.send(embed=embed, delete_after=time_to_delete)
-                    else:
-                        # await asyncio.sleep(delay)
-                        message = await channel.send(embed=embed)
+                    # await asyncio.sleep(delay)
+                    message = await channel.send(file=image, embed=embed)
+            else:
+                if channel.type != discord.ChannelType.news:
+                    # await asyncio.sleep(delay)
+                    message = await channel.send(embed=embed, delete_after=time_to_delete)
+                else:
+                    # await asyncio.sleep(delay)
+                    message = await channel.send(embed=embed)
             else:
                 # await asyncio.sleep(delay)
                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])

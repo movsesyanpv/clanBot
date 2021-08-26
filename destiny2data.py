@@ -938,6 +938,54 @@ class D2data:
             await self.write_to_db(locale, 'ada_mods', sales, name=ada_def['displayProperties']['name'], order=5,
                                    template='vendor_items.html', annotations=[], size='tall')
 
+    async def get_daily_mods(self, langs, forceget=False):
+        char_info = self.char_info
+
+        ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/350061650/'.\
+            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
+        banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
+            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
+
+        ada_resp = await self.get_cached_json('ada_{}'.format(char_info['charid'][0]), 'ada', ada_url, self.vendor_params, force=forceget)
+        banshee_resp = await self.get_cached_json('banshee', 'banshee', banshee_url, self.vendor_params, force=forceget)
+
+        if not(ada_resp and banshee_resp):
+            return False
+
+        ada_cats = ada_resp['Response']['categories']['data']['categories']
+        banshee_cats = banshee_resp['Response']['categories']['data']['categories']
+        resp_time = banshee_resp['timestamp']
+
+        for lang in langs:
+            self.data[lang]['daily_mods'] = {
+                'fields': [],
+                'color': 0x3DD5D6,
+                'type': "rich",
+                'title': self.translations[lang]['msg']['daily_mods'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
+            }
+
+            ada_def = await self.destiny.decode_hash(350061650, 'DestinyVendorDefinition', language=lang)
+            banshee_def = await self.destiny.decode_hash(672118013, 'DestinyVendorDefinition', language=lang)
+
+            mods = []
+            items_to_get = ada_cats[1]['itemIndexes']
+            ada_sales = await self.get_vendor_sales(lang, ada_resp, items_to_get, [1812969468])
+
+            for item in ada_sales[1]:
+                item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
+                if item_def['itemType'] == 19:
+                    mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
+
+            items_to_get = banshee_cats[3]['itemIndexes']
+            banshee_sales = await self.get_vendor_sales(lang, banshee_resp, items_to_get, [1812969468, 2731650749])
+            for item in banshee_sales[1]:
+                item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
+                if item_def['itemType'] == 19:
+                    mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
+            self.data[lang]['daily_mods']['fields'] = mods
+
     async def get_xur_loc(self):
         url = 'https://paracausal.science/xur/current.json'
         r = await self.session.get(url)
@@ -2001,10 +2049,14 @@ class D2data:
     async def get_member_metric_wrapper(self, member, metric, is_global=False, tag=''):
         member_id = member['destinyUserInfo']['membershipId']
         member_type = member['destinyUserInfo']['membershipType']
-        if is_global:
-            player = '{} [{}]'.format(member['destinyUserInfo']['LastSeenDisplayName'], tag)
+        if member['destinyUserInfo']['bungieGlobalDisplayName'] != '' and False:
+            name = '{}#{}'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], member['destinyUserInfo']['bungieGlobalDisplayNameCode'])
         else:
-            player = member['destinyUserInfo']['LastSeenDisplayName']
+            name = member['destinyUserInfo']['LastSeenDisplayName']
+        if is_global:
+            player = '{} [{}]'.format(name, tag)
+        else:
+            player = name
         return [player, await self.get_player_metric(member_type, member_id, metric, is_global)]
 
     async def get_osiris_predictions(self, langs, forceget=False, force_info = None):
