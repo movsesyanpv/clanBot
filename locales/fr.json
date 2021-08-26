@@ -14,10 +14,10 @@
         "reckoningmods": "Justice",
         "nightfalls820": "Les Nuits Noires 820 disponibles",
         "guidedgamenightfall": "Nuit Noire Guidée actuelle",
-        "ordeal": "Current ordeal",
+        "ordeal": "Nuit Noire actuelle",
         "nightmares": "Chasses aux cauchemars disponibles ",
         "reckoningboss": "Le Boss du jugement est",
-        "cruciblerotators": "Crucible rotators are",
+        "cruciblerotators": "Les rotations de l’épreuve sont",
         "xurloc": "Emplacement",
         "cost": "Coût",
         "xurtitle": "Xur",
@@ -31,7 +31,7 @@
         "no_embed_links": "Aucune permission pour 'Embed Links', nécessaire pour poster.",
         "complete": "Complétée",
         "prefixes": "Here are the available prefixes aside from `@{}`, i.e. you can send `{}prefix` to call this command.",
-        "no_prefixes": "The bot's commands can be invoked only with `@{}`",
+        "no_prefixes": "Les commandes du bot doivent être précéder de `@{}`",
         "no_notifiers": "There are no notifier channels here. Please set up a notifier channel with `regnotifier` command.",
         "in_progress": "Getting updates. If the types match with the registered channels, they will be posted. Keep in mind, that this command does not force me to get updates from Bungie.",
         "invalid_type": "Invalid update type. Please see `help update` for the available update types.",
@@ -144,21 +144,21 @@
                 "info": "Print top players for one of the available metrics. Metric's description is available through the link. You can also pass the metric's hash to the command. Use `gtop` or `globaltop` to get lists across all the clans that are known to the bot.",
                 "seasonsmetrics": "Saisons",
                 "accountmetrics": "Compte",
-                "cruciblemetrics": "Crucible",
-                "destinationmetrics": "Destinations",
+                "cruciblemetrics": "Epreuve",
+                "destinationmetrics": "Desintations",
                 "gambitmetrics": "Gambit",
                 "raidsmetrics": "Raids",
-                "strikesmetrics": "Strikes",
-                "trialsofosirismetrics": "Trials of Osiris",
+                "strikesmetrics": "Assauts",
+                "trialsofosirismetrics": "Jugement d'Osiris",
                 "cat_list": "Available categories. To get the category's metric list send `{}help top category`. The categories are listed in the table below (left column), right column contains the descriptions of the aforementioned categories. The categories match in-game ones.",
                 "unavailable": {
                     "displayProperties": {
-                        "name": "Metric is unavailable"
+                        "name": "La mesure n'est pas disponible"
                     }
                 }
             },
             "setlang": {
-                "info": "Available languages are {}. Available only to the server's admins."
+                "info": "Les langues disponibles sont {}. Disponible uniquement pour les admins du serveur."
             },
             "update": {
                 "info": "Get updates from Bungie for the given `args`. The types should be separated with spaces. Available args:\n - `daily` for strike modifiers and spider\n - `weekly` for available empire hunts and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics\nUpdates are posted in the channel, the command was invoked, if the channel was registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the server's admins."
@@ -170,7 +170,7 @@
                 "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
             },
             "plan_maintenance": {
-                "info": "Available only to the bot's owners."
+                "info": "Disponible uniquement pour le propriétaire du bot"
             },
             "stop": {
                 "info": "Disponible uniquement pour le propriétaire du Bot"
@@ -182,81 +182,81 @@
                 "info": "You can set up LFG either with arguments or in direct messages. For the latter, just don't pass any arguments for the command and answer the questions about the group.",
                 "creation": "__**Creating a group**__\nList of 'lfg' command arguments. The arguments must be on the separate lines.",
                 "creation_note": "Every parameter should be in **separate lines**\n`%Hh %Mm` - time format, in which one and a half hour activity will be written as `1h 30m` or `1.5h` or `90m`.\n`%d-%m-%Y %H:%M%z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00+0300`.",
-                "name": "LFG name or planned activity",
-                "time": "Time of the activity start, format %d-%m-%Y %H:%M%z",
-                "description": "Description of the activity",
-                "size": "Size of the group",
-                "mode": "Type of lfg(basic or manual)",
-                "role": "Names of the roles to mention, separated by ';'. Defaults to 'Guardian, Recruit, Destiny'",
-                "length": "The duration of the activity, format '%Hh %Mm'",
-                "type": "Activity type: (pve, pvp, gambit/reckoning, raid)",
-                "example_title": "__Here's an example of LFG creation command:__",
-                "example_lfg": "lfg\n-at: pve\n-s: 3\n-n: Nightfall\n-t: 13-02-2020 19:00+0300\n-d: Farm ascendant shards\n-m: basic\n-r: Guardian\n-l: 01h 30m",
+                "name": "Nom du LFG ou de l'activité planifiée",
+                "time": "Heure de départ de l'activité, format %d-%m-%Y %H:%M%z",
+                "description": "Description de l'activité",
+                "size": "Taille du groupe",
+                "mode": "Format du LFG(basic ou manuel)",
+                "role": "Nom des rôles a mentionnés, séparé par ';'. Defaut pour 'Gardien, Recrue, Destiny'",
+                "length": "La durée de l'activité, format '%Hh %Mm'",
+                "type": "Type d'activité: (pve, pvp, gambit/justice, raid)",
+                "example_title": "__Voici un exemple d'une commande pour la création d'un LFG:__",
+                "example_lfg": "lfg\n-at: pve\n-s: 3\n-n: Nightfall\n-t: 13-02-2020 19:00+0300\n-d: Farm ascendant shards\n-m: basic\n-r: Guardian\n-l: 01h 30m\n",
                 "edit_title": "__**LFG editing**__\nEvery group has it's own ID. To get information about your LFGs message the bot in DM `lfglist`. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**.\nIn order to edit the group send `editlfg` command in the channel you want the updated group announcement be in. The syntax is the same as in `lfg`",
                 "manual": "__**Managing manual groups**__\nWhen someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate along with some information about the group (time, channel, server).\nTo choose a person press the corresponding emote. The list will update. **Don't** press multiple emotes, wait for the list update!!!",
                 "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner)."
             },
             "prefix": {
-                "info": "Print available prefixes."
+                "info": "Affichage des préfixes disponibles"
             },
             "setprefix": {
                 "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes. Send `none` as the parameter to disable all prefixes, except bot mention."
             },
             "online": {
                 "info": "Get the list of online clan members.",
-                "name": "online"
+                "name": "en_ligne"
             }
         },
-        "prefix": "Print available prefixes",
-        "setprefix": "Set available prefixes",
+        "prefix": "Affichage des préfixes disponibles",
+        "setprefix": "Définir les préfixes disponibles",
         "support": "Get the link to the support server",
         "online": "Get the list of online clan members."
     },
     "graph": {
-        "percentage": "Completion percentage",
-        "datefromstart": "Days from start"
+        "percentage": "Pourcentage d'achèvement",
+        "datefromstart": "Jours avant le départ"
     },
     "top": {
-        "no_clan": "There is no clan to get information from. Please use the `setclan` command to set up a valid Destiny 2 clan.",
-        "unknown_metric": "Unknown metric `{}`. Use `help top` to get the list of available metrics.",
-        "in_progress": "Getting the leaderboard, could take a long time.",
-        "no_data": "No data for the metric."
+        "no_clan": "Il n'y a aucune information sur ce clan. Merci d'utiliser la commande `setclan` pour activer un clan Destiny 2.",
+        "unknown_metric": "Mesure inconnue `{}`. Utiliser `help top` pour avoir une liste des mesures disponibles.",
+        "in_progress": "Récupération du classement, ca peut être long.",
+        "no_data": "Aucune donnée pour la mesure"
     },
     "site": {
-        "spider": "Spider",
-        "forge": "Forge",
+        "spider": "L'araignée",
+        "forge": "la Forge",
         "heroicstory": "Heroic story missions",
         "reckoningboss": "The Reckoning boss",
         "nightfalls820": "Nightfalls",
         "nightmares": "Nightmare hunts",
         "bd": "Eververse",
-        "osiris": "Trials of Osiris",
+        "osiris": "Jugement d'Osiris",
         "empire_hunts": "Empire hunts"
     },
     "osiris": {
-        "map": "Map",
+        "map": "Carte",
         "?": "?",
-        "3win": "3 wins",
-        "5win": "5 wins",
-        "7win": "7 wins",
+        "3win": "3 victoires",
+        "5win": "5 victoires",
+        "7win": "7 victoires",
         "flawless": "Flawless",
-        "helmet": "Helmet",
-        "gloves": "Gloves",
-        "chest": "Chest",
-        "boots": "Boots",
-        "class": "Class Item",
+        "helmet": "Casque",
+        "gloves": "Gant",
+        "chest": "Veste",
+        "boots": "Botte",
+        "class": "élément de classe",
         "mod": "Mod",
         "random": "Random"
     },
     "weapon_types": {
-        "2766676737": "Auto Rifle",
-        "2174985928": "Scout Rifle",
-        "3263747939": "Pulse Rifle",
-        "1956740204": "Hand Cannon",
-        "2081696512": "Submachine Gun",
-        "3779085124": "Sidearm",
-        "2976016363": "Bow",
-        "1186584658": "Sniper Rifle",
+        "2766676737": "Fusil d'assaut",
+        "2174985928": "Fusil d'éclaireur",
+        "3263747939": "Fusil impulsion",
+        "1956740204": "Revolver",
+        "2081696512": "Pistolet Mitrailleur",
+        "3779085124": "Pistolet",
+        "2976016363": "Arc",
+        "1186584658": "Fusil de précision",
         "2122496537": "Fusion Rifle",
         "4089315591": "Grenade Launcher",
         "3058624876": "Shotgun",
