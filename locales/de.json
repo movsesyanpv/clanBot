@@ -38,9 +38,9 @@
         "no_seasonal_reg": "Dieser Kanal ist nicht als saisonalermelder registriert.",
         "no_regular_reg": "Dieser Kanal ist nicht als nicht saisonalmelder registriert.",
         "no_send_messages": "{}, ich darf in diesem Kanal nicht antworten.",
-        "osiris": "Trials of Osiris",
-        "empire_hunts": "Elective difficulty empire hunt",
-        "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command."
+        "osiris": "Prüfung von Osiris",
+        "empire_hunts": "Schwierigkeiten Wahl Imperium Jagten",
+        "clan_search_error": "Der angeforderte Clan wurde nicht gefunden. Sie können es erneut versuchen, wobei beim Namen des Clans die Groß-/Kleinschreibung beachtet wird. Wenn das nicht hilft, versuchen Sie, die ID Ihres Clans einzugeben. Die ID finden Sie auf der bungie.net-Seite des Clans nach der Zeichenfolge `groupId=` (Sie wollen die Zahlen danach). Wenn das nicht funktioniert, können Sie jederzeit auf meinem Support-Server um Hilfe bitten, den Link zu dem Sie mit dem Befehl `support` finden."
     },
     "lfg": {
         "go": "Los",
@@ -55,8 +55,8 @@
         "time": "Wann willst du anfangen? (Format ist `%d-%m-%Y %H:%M` für UTC+3 Zeitzone und `%d-%m-%Y %H:%M%z` für benutzerdefinierte Zeitzone) Beispiele für die aktuelle Zeit: `{}` für UTC+3, `{}` für benutzerdefinierte Zeitzone.",
         "size": "Was ist die Gruppen Größe?",
         "length": "Wie lange planst du das zu tun? Beispiel: 1h 30m für eine eineinhalbstündige Gruppe.",
-        "type": "Was ist die Art der Aktivität? (pve, pvp, gambit/abrechnung, raid)",
-        "mode": "Was ist der Modus für diese Gruppe? (`manuell`, wenn Sie alle genehmigen möchten, `Basic` für automatische Genehmigungen)",
+        "type": "Was ist die Art der Aktivität? (pve, pvp, gambit, raid)",
+        "mode": "Was ist der Modus für diese Gruppe? (`manual`, wenn Sie alle genehmigen möchten, `basic` für automatische Genehmigungen)",
         "role": "Benennen die zu erwähnenden Rollen, getrennt durch `;`. Senden Sie `-` für die automatische Rollenwahl.",
         "check": "Sind die Angaben richtig? \nName: {} \nBeschreibung: {} \nStartzeit: {} \nGruppengröße: {} \nLänge: {} \nAktivitätstyp: {} \nModus: {} \nRollen: {}",
         "no": "nein",
@@ -94,7 +94,7 @@
         "Nessus": "Nessus",
         "NULL": "Die Infos können nicht abgerufen werden",
         "noxur": "Nur die Neun wissen es",
-        "copyright": "Location is provided by paracausal.science."
+        "copyright": "Der Standort wird von paracausal.science bereitgestellt."
     },
     "forge": "Schmiede",
     "heroicstory": "Tägliche Story-Mission (Heroisch): ",
@@ -189,7 +189,7 @@
                 "mode": "lfg-Typ (einfach oder manuell)",
                 "role": "Namen der zu erwähnenden Rollen, getrennt durch ';'. Standardmäßig \"Wächter, Rekrut, Schicksal\"",
                 "length": "Die Dauer der Aktivität, Format '%Hh %Mm'",
-                "type": "Aktivitätstyp: (Pve, PvP, Gambit/Abrechnung, Raid)",
+                "type": "Aktivitätstyp: (Pve, PvP, Gambit, Raid)",
                 "example_title": "__Hier ist ein Beispiel für einen LFG-Erstellungsbefehl:__",
                 "example_lfg": "lfg\n-at: pve \n-s: 3\n-n: Einbruch der Dunkelheit\n-t: 13-02-2020 19:00+0300\n-d: Aszendentscherben auf der Farm\n-m: einfach\n-r: Wächter\n-l: 01h 30m",
                 "edit_title": "__**LFG-Bearbeitung**__\nJede Gruppe hat ihre eigene ID. Um Informationen über deine LFGs zu erhalten, schicke den Bot in DM `lfglist`. Der Bot schickt dir die Liste deiner Gruppen mit folgenden Informationen: Name, Startzeit, Kanalname, Servername, **ID**. Um die Gruppe zu bearbeiten, senden Sie den Befehl `editlfg` in dem Kanal, in dem sich die aktualisierte Gruppenansage befinden soll. Die Syntax ist die gleiche wie in `lfg`",
@@ -203,14 +203,14 @@
                 "info": "Legen Sie Präfixe für diesen Server fest. Um mehrere Präfixe zu setzen, senden Sie sie mit Leerzeichen voneinander getrennt, z. B. `setprefix ? !`, um `?` und `!` als Präfixe zu setzen. Senden Sie `none` als Parameter, um alle Präfixe außer Bot-Erwähnung zu deaktivieren."
             },
             "online": {
-                "info": "Get the list of online clan members.",
-                "name": "online"
+                "info": "Zeig die Liste der Online Clan Member.",
+                "name": "Online"
             }
         },
         "prefix": "Verfügbare Präfixe anzeigen",
         "setprefix": "Verfügbare Präfixe festlegen",
-        "support": "Get the link to the support server",
-        "online": "Get the list of online clan members."
+        "support": "Der link zum Support Server",
+        "online": "Zeig die Liste der Clan Member."
     },
     "graph": {
         "percentage": "Fertiggestellt Prozent",
@@ -225,53 +225,53 @@
     "site": {
         "spider": "Spider",
         "forge": "Schmiede",
-        "heroicstory": "Heroic story missions",
-        "reckoningboss": "The Reckoning boss",
-        "nightfalls820": "Nightfalls",
-        "nightmares": "Nightmare hunts",
-        "bd": "Eververse",
-        "osiris": "Trials of Osiris",
-        "empire_hunts": "Empire hunts"
+        "heroicstory": "Heroische Story Mission",
+        "reckoningboss": "Der Albtraum Boss",
+        "nightfalls820": "Dämmerung",
+        "nightmares": "Albtraum Jagten",
+        "bd": "Everversum",
+        "osiris": "Prüfung von Osiris",
+        "empire_hunts": "Imperium Jagten"
     },
     "osiris": {
-        "map": "Map",
+        "map": "Karte",
         "?": "?",
-        "3win": "3 wins",
-        "5win": "5 wins",
-        "7win": "7 wins",
+        "3win": "3 Gewonnen",
+        "5win": "5 Gewonnen",
+        "7win": "7 Gewonnen",
         "flawless": "Flawless",
-        "helmet": "Helmet",
-        "gloves": "Gloves",
-        "chest": "Chesh",
-        "boots": "Boots",
-        "class": "Class Item",
+        "helmet": "Helm",
+        "gloves": "Handschuhe",
+        "chest": "Brust",
+        "boots": "Stiefel",
+        "class": "Klassen Item",
         "mod": "Mod",
         "random": "Random"
     },
     "weapon_types": {
-        "2766676737": "Auto Rifle",
-        "2174985928": "Scout Rifle",
-        "3263747939": "Pulse Rifle",
-        "1956740204": "Hand Cannon",
-        "2081696512": "Submachine Gun",
-        "3779085124": "Sidearm",
-        "2976016363": "Bow",
-        "1186584658": "Sniper Rifle",
-        "2122496537": "Fusion Rifle",
-        "4089315591": "Grenade Launcher",
-        "3058624876": "Shotgun",
-        "3935277741": "Machine Gun",
-        "690633563": "Linear Fusion Rifle",
-        "3106206619": "Rocket Launcher",
-        "1391900891": "Grenade Launcher",
-        "1604869479": "Sword"
+        "2766676737": "Automatikgewehr",
+        "2174985928": "Scoutgewehr",
+        "3263747939": "Impulsgewehr",
+        "1956740204": "Handfeuerwaffe",
+        "2081696512": "Maschinenpistole",
+        "3779085124": "Pistole",
+        "2976016363": "Bogen",
+        "1186584658": "Scharfschützengewehr",
+        "2122496537": "Fusionsgewehr",
+        "4089315591": "Granatenwerfer",
+        "3058624876": "Schrotflinte",
+        "3935277741": "Maschinengewehr",
+        "690633563": "Linear Fusionsgewehr",
+        "3106206619": "Raketenwerfer",
+        "1391900891": "Granatenwerfer",
+        "1604869479": "Schwert"
     },
     "vanguard_strikes": "Vorhut-Strikes",
-    "empire_hunt": "Empire Hunt:",
+    "empire_hunt": "Imperium Jagt:",
     "online": {
         "nick": "Nickname",
-        "since": "Last activity",
-        "error": "Error",
-        "error_t": "Unable to fetch the clan"
+        "since": "Letzte Aktivität",
+        "error": "Fehler",
+        "error_t": "Clan kann nicht abgerufen werden"
     }
 }
