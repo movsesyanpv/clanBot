@@ -896,20 +896,20 @@ class ClanBot(commands.Bot):
             hist = str(hist)
         else:
             if server.me.permissions_in(channel).embed_links:
-            if upd_type in self.embeds_with_img:
-                if channel.type != discord.ChannelType.news:
-                    # await asyncio.sleep(delay)
-                    message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
+                if upd_type in self.embeds_with_img:
+                    if channel.type != discord.ChannelType.news:
+                        # await asyncio.sleep(delay)
+                        message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
+                    else:
+                        # await asyncio.sleep(delay)
+                        message = await channel.send(file=image, embed=embed)
                 else:
-                    # await asyncio.sleep(delay)
-                    message = await channel.send(file=image, embed=embed)
-            else:
-                if channel.type != discord.ChannelType.news:
-                    # await asyncio.sleep(delay)
-                    message = await channel.send(embed=embed, delete_after=time_to_delete)
-                else:
-                    # await asyncio.sleep(delay)
-                    message = await channel.send(embed=embed)
+                    if channel.type != discord.ChannelType.news:
+                        # await asyncio.sleep(delay)
+                        message = await channel.send(embed=embed, delete_after=time_to_delete)
+                    else:
+                        # await asyncio.sleep(delay)
+                        message = await channel.send(embed=embed)
             else:
                 # await asyncio.sleep(delay)
                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
