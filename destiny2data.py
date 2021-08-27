@@ -959,7 +959,7 @@ class D2data:
         for lang in langs:
             self.data[lang]['daily_mods'] = {
                 'fields': [],
-                'color': 0x3DD5D6,
+                'color': 0x4c3461,
                 'type': "rich",
                 'title': self.translations[lang]['msg']['daily_mods'],
                 'footer': {'text': self.translations[lang]['msg']['resp_time']},
