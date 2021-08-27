@@ -1081,7 +1081,7 @@ class D2data:
                                     'value': item_name
                                 }
 
-                                if item_resp['summaryItemHash'] == 715326750:
+                                if item_resp['summaryItemHash'] in [715326750, 2673424576]:
                                     if item_resp['classType'] == 0:
                                         exotic['name'] = self.translations[lang]['Titan']
                                     elif item_resp['classType'] == 1:
@@ -1094,7 +1094,7 @@ class D2data:
                                         if item['hash'] == item_hash:
                                             sales[2]['items'].append(item)
                             else:
-                                if item_resp['summaryItemHash'] == 715326750:
+                                if item_resp['summaryItemHash'] in [715326750, 2673424576]:
                                     i = 0
                                     for item in self.data[lang]['xur']['fields']:
                                         if item['name'] == self.translations[lang]['msg']['weapon']:
