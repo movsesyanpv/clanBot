@@ -1081,26 +1081,28 @@ class D2data:
                                     'value': item_name
                                 }
 
-                                if item_resp['classType'] == 0:
-                                    exotic['name'] = self.translations[lang]['Titan']
-                                elif item_resp['classType'] == 1:
-                                    exotic['name'] = self.translations[lang]['Hunter']
-                                elif item_resp['classType'] == 2:
-                                    exotic['name'] = self.translations[lang]['Warlock']
+                                if item_resp['summaryItemHash'] == 715326750:
+                                    if item_resp['classType'] == 0:
+                                        exotic['name'] = self.translations[lang]['Titan']
+                                    elif item_resp['classType'] == 1:
+                                        exotic['name'] = self.translations[lang]['Hunter']
+                                    elif item_resp['classType'] == 2:
+                                        exotic['name'] = self.translations[lang]['Warlock']
 
-                                self.data[lang]['xur']['fields'].append(exotic)
-                                for item in cat_sales[1]:
-                                    if item['hash'] == item_hash:
-                                        sales[2]['items'].append(item)
+                                    self.data[lang]['xur']['fields'].append(exotic)
+                                    for item in cat_sales[1]:
+                                        if item['hash'] == item_hash:
+                                            sales[2]['items'].append(item)
                             else:
-                                i = 0
-                                for item in self.data[lang]['xur']['fields']:
-                                    if item['name'] == self.translations[lang]['msg']['weapon']:
-                                        self.data[lang]['xur']['fields'][i]['value'] = item_name
-                                    i += 1
-                                for item in cat_sales[1]:
-                                    if item['hash'] == item_hash:
-                                        sales[1]['items'].append(item)
+                                if item_resp['summaryItemHash'] == 715326750:
+                                    i = 0
+                                    for item in self.data[lang]['xur']['fields']:
+                                        if item['name'] == self.translations[lang]['msg']['weapon']:
+                                            self.data[lang]['xur']['fields'][i]['value'] = item_name
+                                        i += 1
+                                    for item in cat_sales[1]:
+                                        if item['hash'] == item_hash:
+                                            sales[1]['items'].append(item)
 
                 else:
                     loc_field = {
