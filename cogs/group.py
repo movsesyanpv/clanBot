@@ -106,7 +106,8 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         length = msg.content
 
-        view = ActivityType(ctx.message.author)
+        view = ActivityType(ctx.message.author, raid=translations['raid'], pve=translations['pve'],
+                            gambit=translations['gambit'], pvp=translations['pvp'], default=translations['default'])
         await dm.send(content=translations['type'], view=view)
         await view.wait()
         if view.value is None:
@@ -122,8 +123,8 @@ class Group(commands.Cog):
                 return False
         a_type = view.value
 
-        view = ModeLFG(ctx.message.author)
-        await dm.send(content=translations['mode'], view=view)
+        view = ModeLFG(ctx.message.author, basic=translations['basic_mode'], manual=translations['manual_mode'])
+        await dm.send(content=translations['mode'].format(translations['basic_mode'], translations['manual_mode']), view=view)
         await view.wait()
         if view.value is None:
             await dm.send('Timed out')
@@ -142,7 +143,8 @@ class Group(commands.Cog):
         for role in ctx.guild.roles:
             if role.mentionable and not role.managed:
                 role_list.append(nextcord.SelectOption(label=role.name, value=role.id))
-        view = RoleLFG(len(role_list), role_list, ctx.message.author)
+        view = RoleLFG(len(role_list), role_list, ctx.message.author, manual=translations['manual_roles'],
+                       auto=translations['auto_roles'])
         await dm.send(content=translations['role'], view=view)
         await view.wait()
         if view.value is None:
@@ -158,6 +160,7 @@ class Group(commands.Cog):
                 return False
         elif view.value in ['-', 'custom']:
             if view.value == 'custom':
+                await dm.send(content=translations['role_manual'])
                 msg = await self.bot.wait_for('message', check=check)
                 role = msg.content
                 role_raw = msg.content
@@ -696,14 +699,14 @@ class ConfirmLFG(nextcord.ui.View):
 
 
 class ActivityType(nextcord.ui.View):
-    def __init__(self, owner, raid='Raid', pve='pve', gambit='gambit', pvp='pvp'):
+    def __init__(self, owner, raid='Raid', pve='pve', gambit='gambit', pvp='pvp', default='other'):
         super().__init__()
         self.owner = owner
-        self.raid_button = MyButton(type='raid', label='raid', style=nextcord.ButtonStyle.gray)
-        self.pve_button = MyButton(type='pve', label='pve', style=nextcord.ButtonStyle.gray)
-        self.gambit_button = MyButton(type='gambit', label='gambit', style=nextcord.ButtonStyle.gray)
-        self.pvp_button = MyButton(type='pvp', label='pvp', style=nextcord.ButtonStyle.gray)
-        self.other_button = MyButton(type='default', label='other', style=nextcord.ButtonStyle.gray)
+        self.raid_button = MyButton(type='raid', label=raid, style=nextcord.ButtonStyle.gray)
+        self.pve_button = MyButton(type='pve', label=pve, style=nextcord.ButtonStyle.gray)
+        self.gambit_button = MyButton(type='gambit', label=gambit, style=nextcord.ButtonStyle.gray)
+        self.pvp_button = MyButton(type='pvp', label=pvp, style=nextcord.ButtonStyle.gray)
+        self.other_button = MyButton(type='default', label=default, style=nextcord.ButtonStyle.gray)
         self.add_item(self.raid_button)
         self.add_item(self.pve_button)
         self.add_item(self.pvp_button)
