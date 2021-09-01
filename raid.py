@@ -1,4 +1,4 @@
-import discord
+import nextcord
 import sqlite3
 import os
 from datetime import datetime, timezone, timedelta
@@ -38,7 +38,7 @@ class LFG:
         self.conn = sqlite3.connect('lfg.db')
         self.c = self.conn.cursor()
 
-    def add(self, message: discord.Message, lfg_string=None):
+    def add(self, message: nextcord.Message, lfg_string=None):
         if lfg_string is None:
             content = message.content.splitlines()
         else:
@@ -441,7 +441,7 @@ class LFG:
             "name": translations['lfge']['date'],
             # "value": '{} {}'.format(time.strftime('%d-%m-%Y %H:%M'), tz)
             # "value": '{} {}'.format(format_datetime(time, 'medium', tzinfo=ts, locale=Locale.parse(lang, sep='-')), tz)
-            "value": '{}'.format(discord.utils.format_dt(time))
+            "value": '{}'.format(nextcord.utils.format_dt(time))
         })
         embed_length = embed_length + len(embed['fields'][-1]['name']) + len(embed['fields'][-1]['value'])
 
@@ -523,7 +523,7 @@ class LFG:
             embed_length = embed_length - len(embed['fields'][-1]['value']) - len(embed['fields'][-1]['name'])
             embed['fields'] = embed['fields'][:-1]
 
-        embed = discord.Embed.from_dict(embed)
+        embed = nextcord.Embed.from_dict(embed)
         # embed.timestamp = time
 
         print(embed_length)
@@ -597,7 +597,7 @@ class LFG:
             try:
                 dm_message = await owner.dm_channel.fetch_message(dm_id)
                 await dm_message.delete()
-            except discord.NotFound:
+            except nextcord.NotFound:
                 pass
             dm_id = 0
 

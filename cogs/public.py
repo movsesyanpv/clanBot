@@ -1,5 +1,5 @@
-from discord.ext import commands
-import discord
+import nextcord
+from nextcord.ext import commands
 from tabulate import tabulate
 import mariadb
 import pydest

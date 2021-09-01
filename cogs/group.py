@@ -1,5 +1,5 @@
-from discord.ext import commands
-import discord
+import nextcord
+from nextcord.ext import commands
 from datetime import datetime, timedelta, timezone
 from hashids import Hashids
 import dateparser
@@ -54,7 +54,7 @@ class Group(commands.Cog):
         if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             try:
                 await message.delete()
-            except discord.NotFound:
+            except nextcord.NotFound:
                 pass
         return out.id
 
@@ -74,8 +74,8 @@ class Group(commands.Cog):
 
         translations = ctx.bot.translations[lang]['lfg']
 
-        if ctx.channel.permissions_for(ctx.guild.me).use_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
-            dm = await ctx.message.start_thread(name='LFG', auto_archive_duration=60)
+        if ctx.channel.permissions_for(ctx.guild.me).create_public_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
+            dm = await ctx.message.create_thread(name='LFG', auto_archive_duration=60)
             await dm.add_user(ctx.message.author)
 
             name = await get_proper_length_arg('name', 256)
@@ -114,9 +114,9 @@ class Group(commands.Cog):
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 try:
                     await ctx.message.delete()
-                except discord.NotFound:
+                except nextcord.NotFound:
                     pass
-                if type(dm) == discord.Thread:
+                if type(dm) == nextcord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
                 return False
@@ -130,9 +130,9 @@ class Group(commands.Cog):
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 try:
                     await ctx.message.delete()
-                except discord.NotFound:
+                except nextcord.NotFound:
                     pass
-                if type(dm) == discord.Thread:
+                if type(dm) == nextcord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
                 return False
@@ -141,7 +141,7 @@ class Group(commands.Cog):
         role_list = []
         for role in ctx.guild.roles:
             if role.mentionable and not role.managed:
-                role_list.append(discord.SelectOption(label=role.name, value=role.id))
+                role_list.append(nextcord.SelectOption(label=role.name, value=role.id))
         view = RoleLFG(len(role_list), role_list, ctx.message.author)
         await dm.send(content=translations['role'], view=view)
         await view.wait()
@@ -150,9 +150,9 @@ class Group(commands.Cog):
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 try:
                     await ctx.message.delete()
-                except discord.NotFound:
+                except nextcord.NotFound:
                     pass
-                if type(dm) == discord.Thread:
+                if type(dm) == nextcord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
                 return False
@@ -221,9 +221,9 @@ class Group(commands.Cog):
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     try:
                         await ctx.message.delete()
-                    except discord.NotFound:
+                    except nextcord.NotFound:
                         pass
-            if type(dm) == discord.Thread:
+            if type(dm) == nextcord.Thread:
                 await asyncio.sleep(10)
                 await dm.delete()
             return False
@@ -231,9 +231,9 @@ class Group(commands.Cog):
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     try:
                         await ctx.message.delete()
-                    except discord.NotFound:
+                    except nextcord.NotFound:
                         pass
-            if type(dm) == discord.Thread:
+            if type(dm) == nextcord.Thread:
                 await asyncio.sleep(10)
                 await dm.delete()
             return False
@@ -243,7 +243,7 @@ class Group(commands.Cog):
                                                role_raw))
         ctx.bot.raid.set_owner(ctx.author.id, group_id)
 
-        if type(dm) == discord.Thread:
+        if type(dm) == nextcord.Thread:
             await dm.delete()
         return group_id
 
@@ -266,9 +266,9 @@ class Group(commands.Cog):
             group_ch_id = 0
             if ctx.guild.me.guild_permissions.manage_channels:
                 overwrites = {
-                    ctx.guild.default_role: discord.PermissionOverwrite(connect=False, view_channel=False),
-                    group_role: discord.PermissionOverwrite(connect=True, view_channel=True),
-                    ctx.guild.me: discord.PermissionOverwrite(connect=True, manage_channels=True, view_channel=True)
+                    ctx.guild.default_role: nextcord.PermissionOverwrite(connect=False, view_channel=False),
+                    group_role: nextcord.PermissionOverwrite(connect=True, view_channel=True),
+                    ctx.guild.me: nextcord.PermissionOverwrite(connect=True, manage_channels=True, view_channel=True)
                 }
                 group_ch = await ctx.guild.create_voice_channel(name='{} | {}'.format(name, group),
                                                                 reason='LFG creation', category=ctx.channel.category,
@@ -334,13 +334,13 @@ class Group(commands.Cog):
 
         translations = ctx.bot.translations[lang]['lfg']
 
-        if ctx.channel.permissions_for(ctx.guild.me).use_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
-            dm = await ctx.message.start_thread(name='LFG', auto_archive_duration=60)
+        if ctx.channel.permissions_for(ctx.guild.me).create_public_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
+            dm = await ctx.message.create_thread(name='LFG', auto_archive_duration=60)
             await dm.add_user(ctx.message.author)
 
             lfg_list = await self.lfglist(ctx, lang)
             if not lfg_list:
-                if type(dm) == discord.Thread:
+                if type(dm) == nextcord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
                 return
@@ -353,7 +353,7 @@ class Group(commands.Cog):
 
             lfg_list = await self.lfglist(ctx, lang)
             if not lfg_list:
-                if type(dm) == discord.Thread:
+                if type(dm) == nextcord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
                 return
@@ -372,9 +372,9 @@ class Group(commands.Cog):
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 try:
                     await ctx.message.delete()
-                except discord.NotFound:
+                except nextcord.NotFound:
                     pass
-            if type(dm) == discord.Thread:
+            if type(dm) == nextcord.Thread:
                 await asyncio.sleep(10)
                 await dm.delete()
             return False
@@ -417,7 +417,7 @@ class Group(commands.Cog):
 
         q_line = '{}\n{}'.format(translations['type'], translations['dm_noedit'])
         view = ActivityType(ctx.message.author)
-        no_change_button = MyButton(type='nochange', label='no change', style=discord.ButtonStyle.red, row=2)
+        no_change_button = MyButton(type='nochange', label='no change', style=nextcord.ButtonStyle.red, row=2)
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
         await view.wait()
@@ -426,9 +426,9 @@ class Group(commands.Cog):
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 try:
                     await ctx.message.delete()
-                except discord.NotFound:
+                except nextcord.NotFound:
                     pass
-                if type(dm) == discord.Thread:
+                if type(dm) == nextcord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
                 return False
@@ -447,9 +447,9 @@ class Group(commands.Cog):
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 try:
                     await ctx.message.delete()
-                except discord.NotFound:
+                except nextcord.NotFound:
                     pass
-                if type(dm) == discord.Thread:
+                if type(dm) == nextcord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
                 return False
@@ -461,7 +461,7 @@ class Group(commands.Cog):
         role_list = []
         for role in ctx.guild.roles:
             if role.mentionable and not role.managed:
-                role_list.append(discord.SelectOption(label=role.name, value=role.id))
+                role_list.append(nextcord.SelectOption(label=role.name, value=role.id))
         view = RoleLFG(len(role_list), role_list, ctx.message.author)
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
@@ -471,9 +471,9 @@ class Group(commands.Cog):
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                 try:
                     await ctx.message.delete()
-                except discord.NotFound:
+                except nextcord.NotFound:
                     pass
-                if type(dm) == discord.Thread:
+                if type(dm) == nextcord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
                 return False
@@ -570,20 +570,20 @@ class Group(commands.Cog):
                 if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     try:
                         await ctx.message.delete()
-                    except discord.NotFound:
+                    except nextcord.NotFound:
                         pass
             elif not view.value:
                 if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     try:
                         await ctx.message.delete()
-                    except discord.NotFound:
+                    except nextcord.NotFound:
                         pass
-                if type(dm) == discord.Thread:
+                if type(dm) == nextcord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
                 return False
 
-        if type(dm) == discord.Thread:
+        if type(dm) == nextcord.Thread:
             await dm.delete()
         return text
 
@@ -623,13 +623,13 @@ class Group(commands.Cog):
         return
 
 
-class MyButton(discord.ui.Button):
+class MyButton(nextcord.ui.Button):
     def __init__(self, type, label, style, row=1, response_line=''):
         super().__init__(style=style, label=label, row=row)
         self.button_type = type
         self.response_line = response_line
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: nextcord.Interaction):
         if interaction.user != self.view.owner:
             return
         if self.button_type == 'confirm':
@@ -670,11 +670,11 @@ class MyButton(discord.ui.Button):
             self.view.stop()
 
 
-class MySelect(discord.ui.Select):
+class MySelect(nextcord.ui.Select):
     def __init__(self, min_values, max_values, options, row=1):
         super().__init__(min_values=min_values, max_values=max_values, options=options, row=row)
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: nextcord.Interaction):
         if interaction.user != self.view.owner:
             return
         self.view.value = []
@@ -683,27 +683,27 @@ class MySelect(discord.ui.Select):
             self.view.stop()
 
 
-class ConfirmLFG(discord.ui.View):
+class ConfirmLFG(nextcord.ui.View):
     def __init__(self, cancel_line, owner, confirm='Confirm', cancel='Cancel'):
         super().__init__()
         self.owner = owner
         self.cancel_line = cancel_line
-        self.confirm_button = MyButton(type='confirm', label=confirm, style=discord.ButtonStyle.green)
-        self.cancel_button = MyButton(type='cancel', label=cancel, style=discord.ButtonStyle.red)
+        self.confirm_button = MyButton(type='confirm', label=confirm, style=nextcord.ButtonStyle.green)
+        self.cancel_button = MyButton(type='cancel', label=cancel, style=nextcord.ButtonStyle.red)
         self.confirm = confirm
         self.cancel = cancel
         self.value = None
 
 
-class ActivityType(discord.ui.View):
+class ActivityType(nextcord.ui.View):
     def __init__(self, owner, raid='Raid', pve='pve', gambit='gambit', pvp='pvp'):
         super().__init__()
         self.owner = owner
-        self.raid_button = MyButton(type='raid', label='raid', style=discord.ButtonStyle.gray)
-        self.pve_button = MyButton(type='pve', label='pve', style=discord.ButtonStyle.gray)
-        self.gambit_button = MyButton(type='gambit', label='gambit', style=discord.ButtonStyle.gray)
-        self.pvp_button = MyButton(type='pvp', label='pvp', style=discord.ButtonStyle.gray)
-        self.other_button = MyButton(type='default', label='other', style=discord.ButtonStyle.gray)
+        self.raid_button = MyButton(type='raid', label='raid', style=nextcord.ButtonStyle.gray)
+        self.pve_button = MyButton(type='pve', label='pve', style=nextcord.ButtonStyle.gray)
+        self.gambit_button = MyButton(type='gambit', label='gambit', style=nextcord.ButtonStyle.gray)
+        self.pvp_button = MyButton(type='pvp', label='pvp', style=nextcord.ButtonStyle.gray)
+        self.other_button = MyButton(type='default', label='other', style=nextcord.ButtonStyle.gray)
         self.add_item(self.raid_button)
         self.add_item(self.pve_button)
         self.add_item(self.pvp_button)
@@ -712,24 +712,24 @@ class ActivityType(discord.ui.View):
         self.value = None
 
 
-class ModeLFG(discord.ui.View):
+class ModeLFG(nextcord.ui.View):
     def __init__(self, owner, basic='Basic', manual='Manual'):
         super().__init__()
         self.owner = owner
-        self.basic_button = MyButton(type='basic', label=basic, style=discord.ButtonStyle.green)
-        self.manual_button = MyButton(type='manual', label=manual, style=discord.ButtonStyle.red)
+        self.basic_button = MyButton(type='basic', label=basic, style=nextcord.ButtonStyle.green)
+        self.manual_button = MyButton(type='manual', label=manual, style=nextcord.ButtonStyle.red)
         self.add_item(self.basic_button)
         self.add_item(self.manual_button)
         self.value = None
 
 
-class RoleLFG(discord.ui.View):
+class RoleLFG(nextcord.ui.View):
     def __init__(self, max_val, options, owner, manual='Enter manually', auto='Automatic', response_line='Enter names of the roles'):
         super().__init__()
         self.owner = owner
         self.select = MySelect(min_values=0, max_values=max_val, options=options, row=1)
-        self.custom_button = MyButton(type='custom', label=manual, style=discord.ButtonStyle.gray, row=2, response_line=response_line)
-        self.default_button = MyButton(type='default', label=auto, style=discord.ButtonStyle.gray, row=2)
+        self.custom_button = MyButton(type='custom', label=manual, style=nextcord.ButtonStyle.gray, row=2, response_line=response_line)
+        self.default_button = MyButton(type='default', label=auto, style=nextcord.ButtonStyle.gray, row=2)
         self.add_item(self.select)
         self.add_item(self.custom_button)
         self.add_item(self.default_button)

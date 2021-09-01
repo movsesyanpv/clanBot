@@ -1,6 +1,6 @@
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 import importlib
-import discord
 import json
 from tabulate import tabulate
 from datetime import datetime, timedelta, timezone
@@ -221,23 +221,23 @@ class ServerAdmin(commands.Cog):
         pass
 
 
-class UpdateTypes(discord.ui.View):
+class UpdateTypes(nextcord.ui.View):
     def __init__(self, owner):
         super().__init__()
         self.owner = owner
         self.value = None
 
-    @discord.ui.select(placeholder='Update type', max_values=8, options=[
-        discord.SelectOption(label='Strikes', value='strikes', description='Daily vanguard strike playlist modifiers'),
-        discord.SelectOption(label='Spider', value='spider', description='Spider\'s material exchange'),
-        discord.SelectOption(label='Nightmare hunts', value='nightmares', description='Currently available nightmare hunts'),
-        discord.SelectOption(label='Crucible rotators', value='crucible', description='Currently available crucible rotators'),
-        discord.SelectOption(label='Raid challenges', value='raids', description='Current week\'s raid challenges'),
-        discord.SelectOption(label='Nightfall: The Ordeal', value='ordeal', description='Current nightfall'),
-        discord.SelectOption(label='Empire hunt', value='empire', description='Current empire hunt'),
-        discord.SelectOption(label='Xur', value='xur', description='Xur\'s location and exotics')
+    @nextcord.ui.select(placeholder='Update type', max_values=8, options=[
+        nextcord.SelectOption(label='Strikes', value='strikes', description='Daily vanguard strike playlist modifiers'),
+        nextcord.SelectOption(label='Spider', value='spider', description='Spider\'s material exchange'),
+        nextcord.SelectOption(label='Nightmare hunts', value='nightmares', description='Currently available nightmare hunts'),
+        nextcord.SelectOption(label='Crucible rotators', value='crucible', description='Currently available crucible rotators'),
+        nextcord.SelectOption(label='Raid challenges', value='raids', description='Current week\'s raid challenges'),
+        nextcord.SelectOption(label='Nightfall: The Ordeal', value='ordeal', description='Current nightfall'),
+        nextcord.SelectOption(label='Empire hunt', value='empire', description='Current empire hunt'),
+        nextcord.SelectOption(label='Xur', value='xur', description='Xur\'s location and exotics')
     ])
-    async def updates(self, select: discord.ui.Select, interaction: discord.Interaction):
+    async def updates(self, select: nextcord.ui.Select, interaction: nextcord.Interaction):
         self.value = []
         if self.owner != interaction.user:
             return

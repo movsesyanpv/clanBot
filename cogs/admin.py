@@ -1,6 +1,6 @@
-from discord.ext import commands
+import nextcord
+from nextcord.ext import commands
 import importlib
-import discord
 import json
 from tabulate import tabulate
 from datetime import datetime, timedelta, timezone

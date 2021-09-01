@@ -1,5 +1,5 @@
 import json
-import discord
+import nextcord
 import argparse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta, timezone
@@ -9,14 +9,14 @@ import mariadb
 import gc
 import random
 
-from discord.ext.commands.bot import Bot
+from nextcord.ext.commands.bot import Bot
 import sqlite3
 import logging
 import traceback
 from inspect import currentframe, getframeinfo
 from tabulate import tabulate
 
-from discord.ext import commands
+from nextcord.ext import commands
 
 import raid as lfg
 import destiny2data as d2
@@ -24,7 +24,7 @@ import unauthorized
 
 
 class ClanBot(commands.Bot):
-    version = '3.0a2'
+    version = '3.0a3'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
@@ -211,8 +211,8 @@ class ClanBot(commands.Bot):
 
     async def on_ready(self):
         await self.dm_owner('on_ready fired')
-        game = discord.Game('v{}'.format(self.version))
-        await self.change_presence(status=discord.Status.dnd, activity=game)
+        game = nextcord.Game('v{}'.format(self.version))
+        await self.change_presence(status=nextcord.Status.dnd, activity=game)
         self.all_commands['update'].enabled = False
         self.all_commands['top'].enabled = False
         self.all_commands['online'].enabled = False
@@ -234,8 +234,8 @@ class ClanBot(commands.Bot):
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
                                    second='10', misfire_grace_time=86300, args=[lang])
             self.sched.start()
-        game = discord.Game('v{}'.format(self.version))
-        await self.change_presence(status=discord.Status.online, activity=game)
+        game = nextcord.Game('v{}'.format(self.version))
+        await self.change_presence(status=nextcord.Status.online, activity=game)
         self.all_commands['update'].enabled = True
         self.all_commands['top'].enabled = True
         self.all_commands['online'].enabled = True
@@ -302,7 +302,7 @@ class ClanBot(commands.Bot):
         try:
             message = await self.fetch_channel(payload.channel_id)
             message = await message.fetch_message(payload.message_id)
-        except discord.NotFound:
+        except nextcord.NotFound:
             return
         for guild in self.guilds:
             if guild.id == payload.guild_id:
@@ -342,11 +342,11 @@ class ClanBot(commands.Bot):
             try:
                 message = await self.fetch_channel(payload.channel_id)
                 message = await message.fetch_message(payload.message_id)
-            except discord.errors.NotFound:
+            except nextcord.errors.NotFound:
                 if self.raid.is_raid(payload.message_id):
                     self.raid.del_entry(payload.message_id)
                 return
-            except discord.errors.Forbidden:
+            except nextcord.errors.Forbidden:
                 return
 
             if self.raid.is_raid(message.id):
@@ -377,7 +377,7 @@ class ClanBot(commands.Bot):
                         if str(reaction.emoji) == str(payload.emoji):
                             try:
                                 await reaction.remove(user)
-                            except discord.errors.Forbidden:
+                            except nextcord.errors.Forbidden:
                                 pass
                             return
                 if str(payload.emoji) == '👌':
@@ -385,14 +385,14 @@ class ClanBot(commands.Bot):
                         if str(reaction.emoji) == '❓':
                             try:
                                 await reaction.remove(user)
-                            except discord.errors.Forbidden:
+                            except nextcord.errors.Forbidden:
                                 pass
                 if str(payload.emoji) == '❓':
                     for reaction in message.reactions:
                         if str(reaction.emoji) == '👌':
                             try:
                                 await reaction.remove(user)
-                            except discord.errors.Forbidden:
+                            except nextcord.errors.Forbidden:
                                 pass
                 owner = self.raid.get_cell('group_id', message.id, 'owner')
                 owner = self.get_user(owner)
@@ -456,7 +456,7 @@ class ClanBot(commands.Bot):
                     await lfg_msg.delete()
                     self.raid.del_entry(lfg[0])
                     i = i + 1
-            except discord.errors.NotFound:
+            except nextcord.errors.NotFound:
                 self.raid.del_entry(lfg[0])
                 i = i + 1
         return i
@@ -524,7 +524,7 @@ class ClanBot(commands.Bot):
                 await ctx.author.dm_channel.send(msg, embed=e)
 
             # elif isinstance(exception, commands.CommandInvokeError):
-            #     if isinstance(exception.original, discord.errors.Forbidden):
+            #     if isinstance(exception.original, nextcord.errors.Forbidden):
             #         bot_info = await self.application_info()
             #         owner = bot_info.owner
             #         if owner.dm_channel is None:
@@ -534,7 +534,7 @@ class ClanBot(commands.Bot):
             #         #await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
             #         return
             #     raise exception
-            elif isinstance(exception.original, discord.errors.Forbidden):
+            elif isinstance(exception.original, nextcord.errors.Forbidden):
                 pass
             else:
                 if 'stop' not in message.content.lower() or (
@@ -552,7 +552,7 @@ class ClanBot(commands.Bot):
                         await message.author.create_dm()
                     if message.author != owner:
                         await message.author.dm_channel.send(self.translations['en']['error'])
-        except discord.errors.Forbidden:
+        except nextcord.errors.Forbidden:
             pass
         except Exception as e:
             if 'stop' not in message.content.lower() or (self.user not in message.mentions and str(message.channel.type) != 'private'):
@@ -737,7 +737,7 @@ class ClanBot(commands.Bot):
         await asyncio.sleep(random.randint(0, 60))
         try:
             channel = self.get_channel(channel_id)
-        except discord.Forbidden:
+        except nextcord.Forbidden:
             frameinfo = getframeinfo(currentframe())
             return [channel_id, 'unable to fetch the channel ({})'.format(frameinfo.lineno + 1)]
         if channel is None:
@@ -755,15 +755,15 @@ class ClanBot(commands.Bot):
             if type(src_dict[lang][upd_type]) == list:
                 embed = []
                 for field in src_dict[lang][upd_type]:
-                    embed.append(discord.Embed.from_dict(field))
+                    embed.append(nextcord.Embed.from_dict(field))
             else:
                 if upd_type in self.embeds_with_img:
-                    image = discord.File("{}-{}.png".format(upd_type, lang),
+                    image = nextcord.File("{}-{}.png".format(upd_type, lang),
                                          filename='{}-{}.png'.format(upd_type, lang))
                 if len(src_dict[lang][upd_type]['fields']) == 0:
                     frameinfo = getframeinfo(currentframe())
                     return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
-                embed = discord.Embed.from_dict(src_dict[lang][upd_type])
+                embed = nextcord.Embed.from_dict(src_dict[lang][upd_type])
 
         hist = 0
         try:
@@ -825,7 +825,7 @@ class ClanBot(commands.Bot):
                         try:
                             # await asyncio.sleep(delay)
                             last = await channel.fetch_message(hist)
-                        except discord.errors.HTTPException:
+                        except nextcord.errors.HTTPException:
                             # await asyncio.sleep(delay)
                             last = await channel.fetch_message(0)
                         if len(last.embeds) > 0:
@@ -833,35 +833,35 @@ class ClanBot(commands.Bot):
                                 frameinfo = getframeinfo(currentframe())
                                 return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
                 try:
-                    if type(hist) == list and channel.type != discord.ChannelType.news:
+                    if type(hist) == list and channel.type != nextcord.ChannelType.news:
                         if len(hist) < 100:
                             for msg in last:
                                 # await asyncio.sleep(delay)
                                 await msg.delete()
                     else:
-                        if type(last) != tuple and channel.type != discord.ChannelType.news:
+                        if type(last) != tuple and channel.type != nextcord.ChannelType.news:
                             # await asyncio.sleep(delay)
                             await last.delete()
-                except discord.errors.Forbidden:
+                except nextcord.errors.Forbidden:
                     pass
-                except discord.NotFound:
+                except nextcord.NotFound:
                     pass
-                except discord.errors.HTTPException as e:
+                except nextcord.errors.HTTPException as e:
                     bot_info = await self.application_info()
                     await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
                     pass
-            except discord.NotFound:
+            except nextcord.NotFound:
                 pass
                 # bot_info = await self.application_info()
                 # await bot_info.owner.send('Not found at ```{}```. Channel ```{}``` of ```{}```'.
                 #                           format(upd_type, channel.name, server.name))
-            except discord.Forbidden:
+            except nextcord.Forbidden:
                 pass
         if type(embed) == list:
             hist = []
             for e in embed:
                 if channel.permissions_for(server.me).embed_links:
-                    if channel.type != discord.ChannelType.news:
+                    if channel.type != nextcord.ChannelType.news:
                         # await asyncio.sleep(delay)
                         message = await channel.send(embed=e, delete_after=time_to_delete)
                     else:
@@ -871,24 +871,24 @@ class ClanBot(commands.Bot):
                     # await asyncio.sleep(delay)
                     message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
                 hist.append(message.id)
-                if channel.type == discord.ChannelType.news:
+                if channel.type == nextcord.ChannelType.news:
                     try:
                         # await asyncio.sleep(delay)
                         await message.publish()
-                    except discord.errors.Forbidden:
+                    except nextcord.errors.Forbidden:
                         pass
             hist = str(hist)
         else:
             if channel.permissions_for(server.me).embed_links:
                 if upd_type in self.embeds_with_img:
-                    if channel.type != discord.ChannelType.news:
+                    if channel.type != nextcord.ChannelType.news:
                         # await asyncio.sleep(delay)
                         message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
                     else:
                         # await asyncio.sleep(delay)
                         message = await channel.send(file=image, embed=embed)
                 else:
-                    if channel.type != discord.ChannelType.news:
+                    if channel.type != nextcord.ChannelType.news:
                         # await asyncio.sleep(delay)
                         message = await channel.send(embed=embed, delete_after=time_to_delete)
                     else:
@@ -898,11 +898,11 @@ class ClanBot(commands.Bot):
                 # await asyncio.sleep(delay)
                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
             hist = message.id
-            if channel.type == discord.ChannelType.news:
+            if channel.type == nextcord.ChannelType.news:
                 try:
                     # await asyncio.sleep(delay)
                     await message.publish()
-                except discord.errors.Forbidden:
+                except nextcord.errors.Forbidden:
                     pass
 
         self.guild_cursor.execute('''UPDATE history SET {}=? WHERE channel_id=?'''.format(upd_type),
@@ -947,10 +947,10 @@ class ClanBot(commands.Bot):
                 for channel in server.channels:
                     if channel.id in self.update_ch:
                         message = await channel.send(msg)
-                        if channel.type == discord.ChannelType.news:
+                        if channel.type == nextcord.ChannelType.news:
                             try:
                                 await message.publish()
-                            except discord.errors.Forbidden:
+                            except nextcord.errors.Forbidden:
                                 pass
 
     async def update_metrics(self):
@@ -1014,7 +1014,7 @@ def get_prefix(client, message):
 
 
 if __name__ == '__main__':
-    intents = discord.Intents.default()
+    intents = nextcord.Intents.default()
     intents.members = True
     b = ClanBot(command_prefix=get_prefix, intents=intents)
     b.start_up()
