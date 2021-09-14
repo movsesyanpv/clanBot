@@ -2097,24 +2097,8 @@ class D2data:
                         'value': locale['?']
                     },
                     {
-                        'name': locale['3win'],
-                        'value': '{}?'.format(locale[win3_rotation[int((week_n if week_n > 0 else week_n) % len(win3_rotation))]])
-                    },
-                    {
-                        'name': locale['5win'],
-                        'value': '{}?'.format(locale[win5_rotation[int(week_n % len(win5_rotation))]])
-                    },
-                    {
-                        'name': locale['7win'],
-                        'value': '{}?'.format(locale[win7_rotation[int(week_n % len(win7_rotation))]])
-                    },
-                    {
                         'name': locale['flawless'],
                         'value': '{}?'.format(locale[flawless_rotation[int(week_n % len(flawless_rotation))]])
-                    },
-                    {
-                        'name': locale['mod'],
-                        'value': '{}?'.format(locale[mod_rotation[int(week_n % len(mod_rotation))]])
                     }
                 ]
             else:
@@ -2147,24 +2131,8 @@ class D2data:
                         'value': info[0]
                     },
                     {
-                        'name': locale['3win'],
-                        'value': info[1]
-                    },
-                    {
-                        'name': locale['5win'],
-                        'value': info[2]
-                    },
-                    {
-                        'name': locale['7win'],
-                        'value': info[3]
-                    },
-                    {
                         'name': locale['flawless'],
-                        'value': info[4]
-                    },
-                    {
-                        'name': locale['mod'],
-                        'value': info[5]
+                        'value': info[1]
                     }
                 ]
             for field in self.data[lang]['osiris']['fields']:
