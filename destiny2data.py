@@ -2072,8 +2072,28 @@ class D2data:
         flawless_rotation = ['?', '?', '?']
         mod_rotation = ['?', '?', '?']
 
+        def find_adept(saint_resp):
+            flawless = '?'
+            for item in saint_resp['Response']['sales']['data']:
+                for cost in saint_resp['Response']['sales']['data'][item]['costs']:
+                    if cost['quantity'] == 50000:
+                        flawless = saint_resp['Response']['sales']['data'][item]['itemHash']
+            return flawless
+
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
         week_n = int(week_n.days / 7)
+
+        saint_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/765357505/'.\
+            format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
+        saint_resp = await self.get_cached_json('saint', 'saint', saint_url, self.vendor_params, force=forceget)
+
+        if force_info is not None:
+            if force_info[1] != '?':
+                flawless = force_info[1]
+            else:
+                flawless = find_adept(saint_resp)
+        else:
+            flawless = find_adept(saint_resp)
 
         for lang in langs:
             db_data = []
@@ -2090,6 +2110,13 @@ class D2data:
                 'timestamp': datetime.utcnow().isoformat()
             }
             locale = self.translations[lang]['osiris']
+            if flawless != '?':
+                flawless_def = await self.destiny.decode_hash(flawless, 'DestinyInventoryItemDefinition', language=lang)
+            else:
+                flawless_def = {
+                    'displayProperties': {'name': '?'},
+                    'itemTypeDisplayName': '?'
+                }
             if force_info is None:
                 self.data[lang]['osiris']['fields'] = [
                     {
@@ -2098,7 +2125,7 @@ class D2data:
                     },
                     {
                         'name': locale['flawless'],
-                        'value': '{}?'.format(locale[flawless_rotation[int(week_n % len(flawless_rotation))]])
+                        'value': '{} ({})'.format(flawless_def['displayProperties']['name'], flawless_def['itemTypeDisplayName'])
                     }
                 ]
             else:
@@ -2114,13 +2141,10 @@ class D2data:
                                                                             lang)
                                 info.append(definition['displayProperties']['name'])
                             except pydest.PydestException:
-                                definition = await self.destiny.decode_hash(parameter, 'DestinyCollectibleDefinition',
+                                definition = await self.destiny.decode_hash(parameter, 'DestinyInventoryItemDefinition',
                                                                             lang)
-                                for parent in definition['parentNodeHashes']:
-                                    if str(parent) in self.translations[lang]['weapon_types'].keys():
-                                        info.append('{} ({})'.format(definition['displayProperties']['name'],
-                                                                     self.translations[lang]['weapon_types'][
-                                                                         str(parent)]))
+                                info.append('{} ({})'.format(definition['displayProperties']['name'],
+                                                             definition['itemTypeDisplayName']))
                     elif parameter in locale.keys():
                         info.append(locale[parameter])
                     else:
@@ -2132,7 +2156,7 @@ class D2data:
                     },
                     {
                         'name': locale['flawless'],
-                        'value': info[1]
+                        'value': '{} ({})'.format(flawless_def['displayProperties']['name'], flawless_def['itemTypeDisplayName'])
                     }
                 ]
             for field in self.data[lang]['osiris']['fields']:

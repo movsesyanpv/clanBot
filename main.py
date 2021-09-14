@@ -88,7 +88,7 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
 
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
         self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 86400])
@@ -245,7 +245,7 @@ class ClanBot(commands.Bot):
             await self.force_update(self.args.type)
         if not self.sched.running:
             types = self.all_types.copy()
-            types.pop(types.index('osiris'))
+            # types.pop(types.index('osiris'))
             await self.force_update(types, post=False)
             for lang in self.langs:
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',

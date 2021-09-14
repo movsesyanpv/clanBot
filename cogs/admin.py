@@ -121,14 +121,14 @@ class Admin(commands.Cog):
     @commands.command(
         description='Set Trials of Osiris info'
     )
-    async def osiris(self, ctx, curr_map, flawless):
+    async def osiris(self, ctx, curr_map, flawless='?'):
         url = 'https://bungie.net/Platform/Destiny2/Armory/Search/{}/{}'
         map_resp = await self.bot.data.get_bungie_json('too map', url.format('DestinyActivityDefinition', curr_map),
                                                        change_msg=False)
         if len(map_resp['Response']['results']['results']) > 0:
             curr_map = map_resp['Response']['results']['results'][0]['hash']
-        if flawless not in self.bot.translations['en']['osiris'].keys():
-            flawless_resp = await self.bot.data.get_bungie_json('flawless', url.format('DestinyCollectibleDefinition', flawless),
+        if flawless not in self.bot.translations['en']['osiris'].keys() and flawless != '?':
+            flawless_resp = await self.bot.data.get_bungie_json('flawless', url.format('DestinyInventoryItemDefinition', flawless),
                                                             change_msg=False)
             if len(flawless_resp['Response']['results']['results']) > 0:
                 if len(flawless_resp['Response']['results']['results']) > 1 and '(' in flawless_resp['Response']['results']['results'][0]['displayProperties']['name']:
