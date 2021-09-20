@@ -41,7 +41,7 @@
         "osiris": "Prüfung von Osiris",
         "empire_hunts": "Schwierigkeiten Wahl Imperium Jagten",
         "clan_search_error": "Der angeforderte Clan wurde nicht gefunden. Sie können es erneut versuchen, wobei beim Namen des Clans die Groß-/Kleinschreibung beachtet wird. Wenn das nicht hilft, versuchen Sie, die ID Ihres Clans einzugeben. Die ID finden Sie auf der bungie.net-Seite des Clans nach der Zeichenfolge `groupId=` (Sie wollen die Zahlen danach). Wenn das nicht funktioniert, können Sie jederzeit auf meinem Support-Server um Hilfe bitten, den Link zu dem Sie mit dem Befehl `support` finden.",
-        "daily_mods": "Ada-1 and Banshee-44 sell these"
+        "daily_mods": "Ada-1 und Bansher-44 verkaufen dies"
     },
     "lfg": {
         "go": "Los",
