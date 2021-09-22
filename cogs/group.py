@@ -30,10 +30,18 @@ class Group(commands.Cog):
         time = datetime.fromtimestamp(ctx.bot.raid.get_cell('group_id', message.id, 'time'))
         is_embed = ctx.bot.raid.get_cell('group_id', message.id, 'is_embed')
         description = ctx.bot.raid.get_cell('group_id', message.id, 'description')
-        msg = "{}, {} {}\n{} {}\n{}".format(role, ctx.bot.translations[lang]['lfg']['go'], name,
-                                            ctx.bot.translations[lang]['lfg']['at'], time, description)
+        lang_overrides = ['pt-br']
+        if lang not in lang_overrides:
+            msg = "{}, {} {}\n{} {}\n{}".format(role, ctx.bot.translations[lang]['lfg']['go'], name,
+                                                ctx.bot.translations[lang]['lfg']['at'], time, description)
+        else:
+            msg = "{}, {} {}\n{} {}\n{}".format(role, name, ctx.bot.translations[lang]['lfg']['go'],
+                                                ctx.bot.translations[lang]['lfg']['at'], time, description)
         if len(msg) > 2000:
-            msg = "{}, {} {}".format(role, ctx.bot.translations[lang]['lfg']['go'], name)
+            if lang not in lang_overrides:
+                msg = "{}, {} {}".format(role, ctx.bot.translations[lang]['lfg']['go'], name)
+            else:
+                msg = "{} {} {}".format(role, name, ctx.bot.translations[lang]['lfg']['go'])
             if len(msg) > 2000:
                 msg = role
                 if len(msg) > 2000:
