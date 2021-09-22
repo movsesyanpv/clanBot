@@ -751,7 +751,7 @@ class ClanBot(commands.Bot):
             await self.post_embed(name, self.data.data, time_to_delete, channels)
 
     async def post_embed_to_channel(self, upd_type, src_dict, time_to_delete, channel_id):
-        await asyncio.sleep(random.randint(0, 60))
+        await asyncio.sleep(random.randint(0, 180))
         try:
             channel = self.get_channel(channel_id)
         except discord.Forbidden:
