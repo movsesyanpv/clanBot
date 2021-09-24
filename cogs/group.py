@@ -89,7 +89,10 @@ class Group(commands.Cog):
 
         name = await get_proper_length_arg('name', 256)
 
-        await response.delete()
+        try:
+            await response.delete()
+        except discord.NotFound:
+            pass
 
         description = await get_proper_length_arg('description', 2048)
 
