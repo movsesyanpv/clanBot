@@ -751,21 +751,21 @@ class ClanBot(commands.Bot):
             await self.post_embed(name, self.data.data, time_to_delete, channels)
 
     async def post_embed_to_channel(self, upd_type, src_dict, time_to_delete, channel_id):
-        await asyncio.sleep(random.randint(0, 180))
+        delay = random.uniform(0, 180)
+        await asyncio.sleep(delay)
         try:
             channel = self.get_channel(channel_id)
         except discord.Forbidden:
             frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'unable to fetch the channel ({})'.format(frameinfo.lineno + 1)]
+            return [channel_id, 'unable to fetch the channel ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
         if channel is None:
             frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
+            return [channel_id, 'channel id None ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
         server = channel.guild
         if not server.me.permissions_in(channel).send_messages:
             frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'no permission to send messages ({})'.format(frameinfo.lineno + 1)]
+            return [channel_id, 'no permission to send messages ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
         lang = self.guild_lang(channel.guild.id)
-        delay = 0#random.uniform(0, 0.2)
         # print('delay is {}'.format(delay))
 
         if not self.args.nomessage:
@@ -779,7 +779,7 @@ class ClanBot(commands.Bot):
                                          filename='{}-{}.png'.format(upd_type, lang))
                 if len(src_dict[lang][upd_type]['fields']) == 0:
                     frameinfo = getframeinfo(currentframe())
-                    return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
+                    return [channel_id, 'no need to post ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
                 embed = discord.Embed.from_dict(src_dict[lang][upd_type])
 
         hist = 0
@@ -836,7 +836,7 @@ class ClanBot(commands.Bot):
                                 last.append(message)
                     if len(last) == 0:
                         frameinfo = getframeinfo(currentframe())
-                        return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
+                        return [channel_id, 'no need to post ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
                 else:
                     if hist != "[]":
                         try:
@@ -848,7 +848,7 @@ class ClanBot(commands.Bot):
                         if len(last.embeds) > 0:
                             if last.embeds[0].to_dict()['fields'] == embed.to_dict()['fields']:
                                 frameinfo = getframeinfo(currentframe())
-                                return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
+                                return [channel_id, 'no need to post ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
                 try:
                     if type(hist) == list and channel.type != discord.ChannelType.news:
                         if len(hist) < 100:
@@ -927,7 +927,7 @@ class ClanBot(commands.Bot):
         self.guild_db.commit()
 
         frameinfo = getframeinfo(currentframe())
-        return [channel_id, 'posted ({})'.format(frameinfo.lineno + 1)]
+        return [channel_id, 'posted ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
 
     async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
         tasks = []
