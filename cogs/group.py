@@ -839,7 +839,7 @@ class DeleteButton(nextcord.ui.Button):
 
 class GroupButtons(nextcord.ui.View):
 
-    def __init__(self, group_id, bot, label_go='👌', label_help='❓', label_delete='❌', label_no_go='-'):
+    def __init__(self, group_id, bot, label_go='👌', label_help='❓', label_no_go='-', label_delete='❌'):
         super().__init__(timeout=None)
         self.bot = bot
 
