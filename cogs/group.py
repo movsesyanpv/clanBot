@@ -48,8 +48,8 @@ class Group(commands.Cog):
             out = await message.channel.send(content=msg)
             buttons = GroupButtons(out.id, ctx.bot, label_go=ctx.bot.translations[lang]['lfg']['button_want'],
                                    label_help=ctx.bot.translations[lang]['lfg']['button_help'],
-                                   label_delete=ctx.bot.translations[lang]['lfg']['button_no_go'],
-                                   label_no_go=ctx.bot.translations[lang]['lfg']['button_delete'])
+                                   label_no_go=ctx.bot.translations[lang]['lfg']['button_no_go'],
+                                   label_delete=ctx.bot.translations[lang]['lfg']['button_delete'])
             await out.edit(content=None, embed=embed, view=buttons)
         else:
             out = await message.channel.send(msg)
@@ -636,8 +636,8 @@ class Group(commands.Cog):
                     new_lfg = await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang], lang, text)
                     buttons = GroupButtons(new_lfg.id, ctx.bot, label_go=ctx.bot.translations[lang]['lfg']['button_want'],
                                            label_help=ctx.bot.translations[lang]['lfg']['button_help'],
-                                           label_delete=ctx.bot.translations[lang]['lfg']['button_no_go'],
-                                           label_no_go=ctx.bot.translations[lang]['lfg']['button_delete'])
+                                           label_no_go=ctx.bot.translations[lang]['lfg']['button_no_go'],
+                                           label_delete=ctx.bot.translations[lang]['lfg']['button_delete'])
                     await new_lfg.edit(view=buttons)
                 else:
                     await ctx.bot.check_ownership(message)
