@@ -84,7 +84,11 @@
         "manual_roles": "Enter manually",
         "auto_roles": "Automatic",
         "confirm_yes": "Yes",
-        "confirm_no": "No"
+        "confirm_no": "No",
+        "button_want": "I want to go",
+        "button_help": "I'll help/Maybe I'll go",
+        "button_no_go": "Remove registration",
+        "button_delete": "Delete the post"
     },
     "lfge": {
         "roles": "Roles",

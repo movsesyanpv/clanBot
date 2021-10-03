@@ -84,7 +84,11 @@
         "manual_roles": "Ввести вручную",
         "auto_roles": "Автовыбор",
         "confirm_yes": "Да",
-        "confirm_no": "Нет"
+        "confirm_no": "Нет",
+        "button_want": "Хочу пойти",
+        "button_help": "Помогу, если нужно",
+        "button_no_go": "Не пойду",
+        "button_delete": "Удалить"
     },
     "lfge": {
         "roles": "Роли",

@@ -306,6 +306,9 @@ class LFG:
         self.conn.commit()
 
     def add_people(self, group_id, user):
+        mb_goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
+        mb_goers = mb_goers.fetchone()[0]
+
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
         goers = eval(goers.fetchone()[0])
 
@@ -317,6 +320,14 @@ class LFG:
 
         size = self.get_cell('group_id', group_id, 'size')
         group_mode = self.get_cell('group_id', group_id, 'group_mode')
+
+        if mb_goers is None:
+            mb_goers = []
+        else:
+            mb_goers = eval(mb_goers)
+
+        if user.mention in mb_goers:
+            mb_goers.pop(mb_goers.index(user.mention))
 
         if user.id == self.get_cell('group_id', group_id, 'owner') and user.mention not in goers:
             goers = [user.mention, *goers]
@@ -335,6 +346,7 @@ class LFG:
         self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
         self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
         self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
+        self.c.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
         self.conn.commit()
 
     def rm_people(self, group_id, user, emoji=''):
@@ -571,7 +583,7 @@ class LFG:
                 for wanter in wanters:
                     msg = '{} {},'.format(msg, wanter)
                 msg = '{}.'.format(msg[:-1])
-        await message.edit(content=msg)
+        await message.edit(content=msg,)
 
     async def upd_dm(self, owner, group_id, translations):
         wanters = self.c.execute('SELECT want_dm FROM raid WHERE owner=? AND group_id=?', (owner.id, group_id))
@@ -680,9 +692,9 @@ class LFG:
 
         if message.channel.id != old_lfg.channel.id or role_changed:
             new_lfg = await message.channel.send(self.get_cell('group_id', old_lfg.id, 'the_role'))
-            await new_lfg.add_reaction('👌')
-            await new_lfg.add_reaction('❓')
-            await new_lfg.add_reaction('❌')
+            # await new_lfg.add_reaction('👌')
+            # await new_lfg.add_reaction('❓')
+            # await new_lfg.add_reaction('❌')
 
             self.c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_lfg.id, old_lfg.id))
             self.c.execute('''UPDATE raid SET lfg_channel=? WHERE group_id=?''', (message.channel.id, new_lfg.id))
@@ -692,6 +704,7 @@ class LFG:
         await message.delete()
         await self.update_group_msg(new_lfg, translations, lang)
         self.conn.commit()
+        return new_lfg
 
     def purge_guild(self, guild_id):
         self.c.executemany('''DELETE FROM raid WHERE server_id LIKE (?)''', [(guild_id,)])
