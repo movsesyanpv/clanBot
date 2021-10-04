@@ -138,7 +138,10 @@ class Public(commands.Cog):
         else:
             await ctx.channel.send(translations['no_clan'], delete_after=10)
         if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
-            await ctx.message.delete()
+            try:
+                await ctx.message.delete()
+            except discord.NotFound:
+                pass
 
     @commands.command()
     @commands.guild_only()
