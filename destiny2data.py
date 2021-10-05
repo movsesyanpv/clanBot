@@ -7,7 +7,7 @@ from bungied2auth import BungieOAuth
 from datetime import datetime, timezone, timedelta
 from dateutil.parser import *
 import aiohttp
-import sqlite3
+import aiosqlite
 import matplotlib.pyplot as plt
 import csv
 import codecs
@@ -90,6 +90,7 @@ class D2data:
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
+        asyncio.run(self.set_up_cache())
         try:
             self.cache_pool = mariadb.ConnectionPool(pool_name='cache', pool_size=10, pool_reset_connection=False,
                                                      host=self.api_data['db_host'], user=self.api_data['cache_login'],
@@ -108,6 +109,18 @@ class D2data:
         except mariadb.ProgrammingError:
             pass
         # self.data_db.auto_reconnect = True
+
+    async def set_up_cache(self):
+        self.cache_db = await aiosqlite.connect('cache.db')
+        cache_cursor = await self.cache_db.cursor()
+        try:
+            await cache_cursor.execute(
+                '''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
+            await cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id)''')
+            await self.cache_db.commit()
+            await cache_cursor.close()
+        except aiosqlite.OperationalError:
+            pass
 
     async def get_chars(self):
         platform = 0
@@ -2156,22 +2169,22 @@ class D2data:
         #             pass
         #         await asyncio.sleep(0.125)
         # cache_cursor = cache_connection.cursor()
-        cache_connection = sqlite3.connect('cache.db')
-        cache_cursor = cache_connection.cursor()
+        cache_connection = self.cache_db
+        cache_cursor = await cache_connection.cursor()
 
         try:
-            cache_cursor.execute('''SELECT json, expires, timestamp from cache WHERE id=?''', (cache_id,))
-            cached_entry = cache_cursor.fetchone()
+            await cache_cursor.execute('''SELECT json, expires, timestamp from cache WHERE id=?''', (cache_id,))
+            cached_entry = await cache_cursor.fetchone()
             if cached_entry is not None:
                 expired = datetime.now().timestamp() > cached_entry[1]
             else:
                 expired = True
-        except sqlite3.OperationalError:
+        except aiosqlite.OperationalError:
         # except mariadb.Error:
             expired = True
             if cache_only:
-                cache_cursor.close()
-                cache_connection.close()
+                await cache_cursor.close()
+                # await cache_connection.close()
                 return False
 
         if (expired or force) and not cache_only:
@@ -2180,49 +2193,49 @@ class D2data:
             if response:
                 response_json = response
                 try:
-                    cache_cursor.execute(
+                    await cache_cursor.execute(
                         '''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
-                    cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id(256))''')
-                    cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                    await cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id)''')
+                    await cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
                                          (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                           timestamp))
-                except sqlite3.OperationalError:
+                except aiosqlite.OperationalError:
                 # except mariadb.Error:
                     try:
-                        cache_cursor.execute('''ALTER TABLE cache ADD COLUMN timestamp text''')
-                        cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                        await cache_cursor.execute('''ALTER TABLE cache ADD COLUMN timestamp text''')
+                        await cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
                                              (cache_id, int(datetime.now().timestamp() + expires_in),
                                               json.dumps(response_json), timestamp))
                     # except mariadb.Error:
-                    except sqlite3.OperationalError:
+                    except aiosqlite.OperationalError:
                         pass
                 # try:
-                cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
+                await cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
                                      (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                       timestamp))
                 # except mariadb.Error:
                 #     pass
                 # try:
-                cache_cursor.execute('''UPDATE cache SET expires=?, json=?, timestamp=? WHERE id=?''',
+                await cache_cursor.execute('''UPDATE cache SET expires=?, json=?, timestamp=? WHERE id=?''',
                                      (int(datetime.now().timestamp() + expires_in), json.dumps(response_json), timestamp,
                                       cache_id))
                 # except mariadb.Error:
                 #     pass
             else:
-                cache_cursor.close()
-                cache_connection.close()
+                await cache_cursor.close()
+                # await cache_connection.close()
                 return False
         else:
             if cached_entry is not None:
                 timestamp = cached_entry[2]
                 response_json = json.loads(cached_entry[0])
             else:
-                cache_cursor.close()
-                cache_connection.close()
+                await cache_cursor.close()
+                # await cache_connection.close()
                 return False
-        cache_cursor.close()
-        cache_connection.commit()
-        cache_connection.close()
+        await cache_cursor.close()
+        await cache_connection.commit()
+        # await cache_connection.close()
         response_json['timestamp'] = timestamp
         return response_json
 
@@ -2445,18 +2458,18 @@ class D2data:
         #             pass
         #         await asyncio.sleep(0.125)
         # clan_cursor = cache_connection.cursor()
-        cache_connection = sqlite3.connect("cache.db")
-        clan_cursor = cache_connection.cursor()
+        cache_connection = self.cache_db
+        clan_cursor = await cache_connection.cursor()
 
         min_id = 1
         try:
-            clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
+            await clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
             # clan_db.commit()
         # except mariadb.Error:
-        except sqlite3.OperationalError:
+        except aiosqlite.OperationalError:
             # clan_cursor = clan_db.cursor()
-            clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
-            min_id_tuple = clan_cursor.fetchall()
+            await clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
+            min_id_tuple = await clan_cursor.fetchall()
             if min_id_tuple is not None:
                 min_id = min_id_tuple[0][0] + 1
 
@@ -2487,24 +2500,24 @@ class D2data:
                     # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
                 except KeyError:
                     code = 0
-                    clan_cursor.close()
-                    cache_connection.close()
+                    await clan_cursor.close()
+                    # await cache_connection.close()
                     return '```{}```'.format(json.dumps(clan_json))
                 if code in [621, 622, 686]:
                     continue
                 if code != 1:
-                    clan_cursor.close()
-                    cache_connection.close()
+                    await clan_cursor.close()
+                    # await cache_connection.close()
                     return code
                 # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
                 if clan_json['Response']['detail']['features']['capabilities'] & 16:
                     clan_id = clan_json['Response']['detail']['groupId']
-                    clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
-                    cache_connection.commit()
+                    await clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
+                    await cache_connection.commit()
                     # clan_db.commit()
 
-        clan_cursor.close()
-        cache_connection.close()
+        await clan_cursor.close()
+        # await cache_connection.close()
         # snapshot2 = tracemalloc.take_snapshot()
         # top_stats = snapshot2.compare_to(snapshot1, 'lineno')
         # print(top_stats)
