@@ -465,7 +465,7 @@ class Group(commands.Cog):
         if a_type != '--':
             text = '{}-at:{}\n'.format(text, a_type)
 
-        q_line = '{}\n{}'.format(translations['mode'], translations['dm_noedit'])
+        q_line = '{}\n{}'.format(translations['mode'].format(translations['basic_mode'], translations['manual_mode']), translations['dm_noedit'])
         view = ModeLFG(ctx.message.author, basic=translations['basic_mode'], manual=translations['manual_mode'])
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
