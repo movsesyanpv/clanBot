@@ -395,6 +395,191 @@ class Admin(commands.Cog):
             await channel.send(help_msg)
             pass
 
+    @commands.slash_command(
+        name='help',
+        description='The help command!',
+        guild_ids=[173495302823608320]
+    )
+    async def help_command_sl(self, ctx, command_name='all', lang=None, additional_arg=None):
+        await ctx.defer()
+        channel = ctx.channel
+        if lang is not None and lang not in ctx.bot.langs:
+            additional_arg = lang
+            lang = None
+        if ctx.guild is not None and lang is None:
+            lang = ctx.bot.guild_lang(ctx.guild.id)
+        if lang not in ctx.bot.langs:
+            lang = 'en'
+        if ctx.guild is not None:
+            name = ctx.guild.me.display_name
+        else:
+            name = ctx.bot.user.name
+        help_translations = ctx.bot.translations[lang]['help']
+        command_name = command_name.lower()
+        metric_tables = ['seasonsmetrics', 'accountmetrics', 'cruciblemetrics', 'destinationmetrics',
+                         'gambitmetrics', 'raidsmetrics', 'strikesmetrics', 'trialsofosirismetrics']
+        command_list = []
+        help_msg = '`{} v{}`'.format(name, ctx.bot.version)
+        await ctx.respond(help_msg)
+        aliases = ''
+        prefix = '/'
+        if command_name != 'all':
+            try:
+                for command_id in ctx.bot.application_commands:
+                    if ctx.bot.application_commands[command_id].name == command_name:
+                        command = ctx.bot.application_commands[command_id]
+            except KeyError:
+                if command_name in metric_tables:
+                    for command_id in ctx.bot.application_commands:
+                        if ctx.bot.application_commands[command_id].name == 'top':
+                            command = ctx.bot.application_commands[command_id]
+                    additional_arg = command_name
+                else:
+                    await ctx.channel.send(help_translations['no_command'].format(command_name))
+                    return
+            command_string = command.name
+            for arg in command.options:
+                command_string = '{} {}'.format(command_string, arg.name)
+            await channel.send(help_translations['parameters'].format(command_string))
+        if command_name == 'all':
+            help_msg = '{}\n'.format(help_translations['list'])
+            for command_id in ctx.bot.application_commands:
+                command = ctx.bot.application_commands[command_id]
+                if command.name in help_translations.keys():
+                    command_desc = help_translations[command.name]
+                else:
+                    command_desc = command.description
+                if (not (command.cog.qualified_name == 'Admin' and command.name != 'help') or await ctx.bot.is_owner(
+                        ctx.author)):
+                    command_list.append([command.name, command_desc])
+
+            help_msg = '{}```\t{}```'.format(help_msg,
+                                             tabulate(command_list, tablefmt='plain', colalign=('left', 'left'))
+                                             .replace('\n', '\n\t'))
+            lang_list = ''
+            for lang in self.bot.langs:
+                lang_list = '{}`, `{}'.format(lang_list, lang)
+            help_msg = '{}{}'.format(help_msg, help_translations['additional_info'].format(prefix, lang_list[4:], prefix))
+            await ctx.channel.send(help_msg)
+            pass
+        elif command.name == 'top':
+            translations = help_translations['commands'][command.name]
+            help_msg = '{}'.format(translations['info'])
+            await channel.send(help_msg)
+
+            try:
+                if additional_arg in metric_tables and additional_arg is not None:
+                    metric_tables = [additional_arg]
+                internal_db = mariadb.connect(host=ctx.bot.api_data['db_host'], user=ctx.bot.api_data['cache_login'],
+                                              password=ctx.bot.api_data['pass'], port=ctx.bot.api_data['db_port'],
+                                              database='metrics')
+                internal_cursor = internal_db.cursor()
+                help_msg = ''
+                if len(metric_tables) == 1:
+                    for table in metric_tables:
+                        metric_list = []
+                        internal_cursor.execute('''SELECT name, hash, is_working FROM {}'''.format(table))
+                        metrics = internal_cursor.fetchall()
+                        if len(metrics) > 0:
+                            for metric in metrics:
+                                if str(metric[0]) != 'None':
+                                    try:
+                                        top_name = await ctx.bot.data.destiny.decode_hash(metric[1],
+                                                                                          'DestinyMetricDefinition',
+                                                                                          language=lang)
+                                        if 'weekly' in metric[0] or 'season' in metric[0]:
+                                            if 2230116619 in top_name['traitHashes']:
+                                                trait = await ctx.bot.data.destiny.decode_hash(2230116619,
+                                                                                               'DestinyTraitDefinition',
+                                                                                               language=lang)
+                                            elif 2356777566 in top_name['traitHashes']:
+                                                trait = await ctx.bot.data.destiny.decode_hash(2356777566,
+                                                                                               'DestinyTraitDefinition',
+                                                                                               language=lang)
+                                            modifier = ' ({})'.format(trait['displayProperties']['name'])
+                                        else:
+                                            modifier = ''
+                                    except pydest.PydestException:
+                                        top_name = translations['unavailable']
+                                        modifier = ''
+                                    if metric[2]:
+                                        if metric[0] == '':
+                                            name = str(metric[1])
+                                        else:
+                                            name = metric[0]
+                                        metric_list.append(['`{}'.format(name), '{}{}`'.format(top_name['displayProperties']['name'], modifier)])
+                            if len(metric_list) > 0:
+                                help_msg = '{}**{}**'.format(help_msg, translations[table])
+                                help_msg = '{}\n{}\n'.format(help_msg, tabulate(metric_list, tablefmt='plain',
+                                                                                colalign=('left', 'left')))
+                else:
+                    cat_list = []
+                    for table in metric_tables:
+                        cat_list.append([table, translations[table]])
+                    help_msg = '{}\n```{}``` '.format(translations['cat_list'].format(prefix), tabulate(cat_list, tablefmt='plain',
+                                                                                           colalign=('left', 'left')))
+                if len(help_msg) > 1:
+                    help_msg = help_msg[:-1]
+                internal_db.close()
+            except mariadb.Error:
+                pass
+            if len(help_msg) > 2000:
+                help_lines = help_msg.splitlines()
+                help_msg = help_lines[0]
+                while len(help_lines) > 1:
+                    if len(help_msg) + 1 + len(help_lines[1]) <= 2000:
+                        help_msg = '{}\n{}'.format(help_msg, help_lines[1])
+                        if len(help_lines) > 1 and help_lines[1] in help_msg:
+                            help_lines.pop(1)
+                    else:
+                        await channel.send(help_msg)
+                        help_msg = ''
+                    if len(help_lines) == 0:
+                        break
+            await channel.send(help_msg)
+            pass
+        elif command.name in ['lfg', 'edit_lfg']:
+            help_translations = help_translations['commands']['lfg']
+            help_msg = '{}\n{}\n'.format(help_translations['info'], help_translations['creation'])
+            args = [
+                ['[-n:][name:]', help_translations['name']],
+                ['[-t:][time:]', help_translations['time']],
+                ['[-d:][description:]', help_translations['description']],
+                ['[-s:][size:]', help_translations['size']],
+                ['[-m:][mode:]', help_translations['mode']],
+                ['[-r:][role:]', help_translations['role']],
+                ['[-l:][length:]', help_translations['length']],
+                ['[-at:][type:]', help_translations['type']]
+            ]
+            help_msg = '{}```\t{}```'.format(help_msg,
+                                             tabulate(args, tablefmt='plain', colalign=('left', 'left')).
+                                             replace('\n', '\n\t'))
+            await channel.send(help_msg)
+
+            help_msg = '{}\n'.format(help_translations['creation_note'])
+            await channel.send(help_msg)
+
+            help_msg = '{}\n'.format(help_translations['example_title'])
+            help_msg = '{}```@{} {}```'.format(help_msg, name, help_translations['example_lfg'])
+            await channel.send(help_msg)
+
+            help_msg = '{}\n'.format(help_translations['edit_title'])
+            help_msg = '{}{}\n'.format(help_msg, help_translations['manual'])
+            await channel.send(help_msg)
+
+            help_msg = '{}\n'.format(help_translations['use_lfg'])
+            await channel.send(help_msg)
+            pass
+        else:
+            if command.name in help_translations['commands'].keys():
+                translations = help_translations['commands'][command.name]
+                command_desc = translations['info']
+            else:
+                command_desc = command.description
+            help_msg = '{}'.format(command_desc)
+            await channel.send(help_msg)
+            pass
+
 
 def setup(bot):
     bot.add_cog(Admin(bot))

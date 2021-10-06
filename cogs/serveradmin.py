@@ -193,6 +193,62 @@ class ServerAdmin(commands.Cog):
         await ctx.bot.force_update(args, get=get, channels=channels, forceget=get)
         return
 
+    @commands.slash_command(
+        name='update',
+        description='Get updates from Bungie'
+    )
+    @commands.guild_only()
+    async def update_sl(self, ctx):
+        await ctx.defer(ephemeral=True)
+        if ctx.guild is not None:
+            lang = ctx.bot.guild_lang(ctx.guild.id)
+        else:
+            lang = 'en'
+        if not ctx.channel.permissions_for(ctx.author).administrator:
+            await ctx.respond("You lack the administrator permissions to use this command")
+            return
+        get = True
+        channels = None
+
+        get = False
+        channels = [ctx.channel.id]
+        reg_ch_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?
+                                                    UNION ALL
+                                                    SELECT channel_id FROM seasonal WHERE server_id=?''',
+                                                (ctx.guild.id, ctx.guild.id))
+        reg_ch_c = reg_ch_c.fetchall()
+        reg_ch = []
+        for ch in reg_ch_c:
+            reg_ch.append(ch[0])
+        if len(reg_ch) == 0:
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_notifiers'])
+            return
+        else:
+            view = UpdateTypes(ctx.author)
+            await ctx.respond('Select update types', view=view)
+            await view.wait()
+            args = view.value
+
+            notifiers_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?''',
+                                                       (ctx.guild.id,))
+            notifiers_c = notifiers_c.fetchall()
+            notifiers = []
+            for ch in notifiers_c:
+                notifiers.append(ch[0])
+
+            correct_ch = False
+            regular_types = ctx.bot.all_types.copy()
+            if not list(set(notifiers).intersection(channels)):
+                if list(set(regular_types).intersection(args)):
+                    await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['no_regular_reg'], view=None)
+                    return
+            else:
+                if list(set(regular_types).intersection(args)):
+                    correct_ch = True
+        await ctx.bot.force_update(args, get=get, channels=channels, forceget=get)
+        await ctx.interaction.edit_original_message(content="Done", view=None)
+        return
+
     @commands.command()
     @commands.guild_only()
     async def setprefix(self, ctx, prefix, *prefixes):
@@ -235,7 +291,8 @@ class UpdateTypes(discord.ui.View):
         discord.SelectOption(label='Raid challenges', value='raids', description='Current week\'s raid challenges'),
         discord.SelectOption(label='Nightfall: The Ordeal', value='ordeal', description='Current nightfall'),
         discord.SelectOption(label='Empire hunt', value='empire', description='Current empire hunt'),
-        discord.SelectOption(label='Xur', value='xur', description='Xur\'s location and exotics')
+        discord.SelectOption(label='Xur', value='xur', description='Xur\'s location and exotics'),
+        discord.SelectOption(label='Trials of osiris', value='osiris', description="Current ToO info")
     ])
     async def updates(self, select: discord.ui.Select, interaction: discord.Interaction):
         self.value = []

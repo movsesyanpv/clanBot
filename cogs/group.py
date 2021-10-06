@@ -46,7 +46,14 @@ class Group(commands.Cog):
         if is_embed and ctx.channel.permissions_for(ctx.guild.me).embed_links:
             embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[lang], lang)
             out = await message.channel.send(content=msg)
-            await out.edit(content=None, embed=embed)
+            buttons = GroupButtons(out.id, ctx.bot, label_go=ctx.bot.translations[lang]['lfg']['button_want'],
+                                   label_help=ctx.bot.translations[lang]['lfg']['button_help'],
+                                   label_no_go=ctx.bot.translations[lang]['lfg']['button_no_go'],
+                                   label_delete=ctx.bot.translations[lang]['lfg']['button_delete'])
+            await out.edit(content=None, embed=embed, view=buttons)
+
+            ctx.bot.persistent_views.pop(ctx.bot.persistent_views.index(buttons)) #This bs is a workaround for a pycord broken persistent view processing
+            ctx.bot.add_view(GroupButtons(out.id, ctx.bot)) #This bs is a workaround for a pycord broken persistent view processing
         else:
             out = await message.channel.send(msg)
         ctx.bot.raid.set_id(out.id, message.id)
@@ -74,8 +81,8 @@ class Group(commands.Cog):
 
         translations = ctx.bot.translations[lang]['lfg']
 
-        if ctx.channel.permissions_for(ctx.guild.me).use_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
-            dm = await ctx.message.start_thread(name='LFG', auto_archive_duration=60)
+        if ctx.channel.permissions_for(ctx.guild.me).create_public_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
+            dm = await ctx.message.create_thread(name='LFG', auto_archive_duration=60)
             await dm.add_user(ctx.message.author)
 
             name = await get_proper_length_arg('name', 256)
@@ -106,7 +113,8 @@ class Group(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         length = msg.content
 
-        view = ActivityType(ctx.message.author)
+        view = ActivityType(ctx.message.author, raid=translations['raid'], pve=translations['pve'],
+                            gambit=translations['gambit'], pvp=translations['pvp'], default=translations['default'])
         await dm.send(content=translations['type'], view=view)
         await view.wait()
         if view.value is None:
@@ -122,8 +130,9 @@ class Group(commands.Cog):
                 return False
         a_type = view.value
 
-        view = ModeLFG(ctx.message.author)
-        await dm.send(content=translations['mode'], view=view)
+        view = ModeLFG(ctx.message.author, basic=translations['basic_mode'], manual=translations['manual_mode'])
+        await dm.send(content=translations['mode'].format(translations['basic_mode'], translations['manual_mode']),
+                      view=view)
         await view.wait()
         if view.value is None:
             await dm.send('Timed out')
@@ -142,7 +151,8 @@ class Group(commands.Cog):
         for role in ctx.guild.roles:
             if role.mentionable and not role.managed:
                 role_list.append(discord.SelectOption(label=role.name, value=role.id))
-        view = RoleLFG(len(role_list), role_list, ctx.message.author)
+        view = RoleLFG(len(role_list), role_list, ctx.message.author, manual=translations['manual_roles'],
+                       auto=translations['auto_roles'])
         await dm.send(content=translations['role'], view=view)
         await view.wait()
         if view.value is None:
@@ -158,6 +168,7 @@ class Group(commands.Cog):
                 return False
         elif view.value in ['-', 'custom']:
             if view.value == 'custom':
+                await dm.send(content=translations['role_manual'])
                 msg = await self.bot.wait_for('message', check=check)
                 role = msg.content
                 role_raw = msg.content
@@ -193,7 +204,7 @@ class Group(commands.Cog):
         ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
         check_msg = translations['check'].format(args['name'], args['description'], ts, args['size'],
                                                  args['length']/3600, at[args['is_embed']], args['group_mode'], role)
-        view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()), ctx.message.author, "Да", "Нет")
+        view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()), ctx.message.author, translations['confirm_yes'], translations['confirm_no'])
         view.add_item(view.confirm_button)
         view.add_item(view.cancel_button)
         if len(check_msg) <= 2000:
@@ -276,9 +287,9 @@ class Group(commands.Cog):
                 group_ch_id = group_ch.id
             ctx.bot.raid.set_group_space(group_id, group_role.id, group_ch_id)
         out = await ctx.channel.fetch_message(group_id)
-        await out.add_reaction('👌')
-        await out.add_reaction('❓')
-        await out.add_reaction('❌')
+        # await out.add_reaction('👌')
+        # await out.add_reaction('❓')
+        # await out.add_reaction('❌')
 
     def parse_date(self, time):
         try:
@@ -294,7 +305,7 @@ class Group(commands.Cog):
                     time = datetime.now().strftime("%d-%m-%Y %H:%M")
         return time
 
-    async def dm_edit_lfg(self, ctx, lang, hashids):
+    async def dm_edit_lfg(self, ctx, lang, hashids, group_id=None):
 
         def check(ms):
             return ms.channel == dm and ms.author == ctx.message.author
@@ -334,16 +345,30 @@ class Group(commands.Cog):
 
         translations = ctx.bot.translations[lang]['lfg']
 
-        if ctx.channel.permissions_for(ctx.guild.me).use_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
-            dm = await ctx.message.start_thread(name='LFG', auto_archive_duration=60)
+        if ctx.channel.permissions_for(ctx.guild.me).create_public_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
+            dm = await ctx.message.create_thread(name='LFG', auto_archive_duration=60)
             await dm.add_user(ctx.message.author)
 
-            lfg_list = await self.lfglist(ctx, lang)
-            if not lfg_list:
-                if type(dm) == discord.Thread:
-                    await asyncio.sleep(10)
-                    await dm.delete()
-                return
+            lfg_list = ctx.bot.raid.c.execute(
+                'SELECT group_id, name, time, channel_name, server_name, timezone FROM raid WHERE owner=?',
+                (ctx.message.author.id,))
+            lfg_list = lfg_list.fetchall()
+
+            msg = translations['lfglist_head']
+            i = 1
+            for lfg in lfg_list:
+                msg = translations['lfglist'].format(msg, i, lfg[1], datetime.fromtimestamp(lfg[2]), lfg[5],
+                                                     lfg[3], lfg[4], ctx.bot.raid.hashids.encode(lfg[0]))
+                i = i + 1
+            if len(lfg_list) > 0:
+                await dm.send(msg)
+            else:
+                await dm.send(translations['lfglist_empty'])
+                if not lfg_list:
+                    if type(dm) == discord.Thread:
+                        await asyncio.sleep(10)
+                        await dm.delete()
+                    return
             number = await get_numerical_answer('lfg_choice', len(lfg_list) + 1)
         else:
             if ctx.author.dm_channel is None:
@@ -398,6 +423,8 @@ class Group(commands.Cog):
         time = msg.content
         if time != '--':
             ts = dateparser.parse(msg.content)
+            if ts is None:
+                ts = datetime.now(timezone(timedelta(0))).astimezone()
             time = self.parse_date(msg.content)
             text = '{}-t:{}\n'.format(text, time)
 
@@ -416,7 +443,8 @@ class Group(commands.Cog):
             text = '{}-l:{}\n'.format(text, length)
 
         q_line = '{}\n{}'.format(translations['type'], translations['dm_noedit'])
-        view = ActivityType(ctx.message.author)
+        view = ActivityType(ctx.message.author, raid=translations['raid'], pve=translations['pve'],
+                            gambit=translations['gambit'], pvp=translations['pvp'], default=translations['default'])
         no_change_button = MyButton(type='nochange', label='no change', style=discord.ButtonStyle.red, row=2)
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
@@ -438,7 +466,7 @@ class Group(commands.Cog):
             text = '{}-at:{}\n'.format(text, a_type)
 
         q_line = '{}\n{}'.format(translations['mode'], translations['dm_noedit'])
-        view = ModeLFG(ctx.message.author)
+        view = ModeLFG(ctx.message.author, basic=translations['basic_mode'], manual=translations['manual_mode'])
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
         await view.wait()
@@ -462,7 +490,8 @@ class Group(commands.Cog):
         for role in ctx.guild.roles:
             if role.mentionable and not role.managed:
                 role_list.append(discord.SelectOption(label=role.name, value=role.id))
-        view = RoleLFG(len(role_list), role_list, ctx.message.author)
+        view = RoleLFG(len(role_list), role_list, ctx.message.author, manual=translations['manual_roles'],
+                       auto=translations['auto_roles'])
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
         await view.wait()
@@ -542,7 +571,8 @@ class Group(commands.Cog):
                 role = translations['no_change']
             check_msg = translations['check'].format(args['name'], args['description'], args['time'], args['size'],
                                                      args['length'], args['is_embed'], args['group_mode'], role)
-            view = ConfirmLFG(translations['again'].format(translations['edit'], translations['edit'].lower()), ctx.message.author, "Да", "Нет")
+            view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()),
+                              ctx.message.author, translations['confirm_yes'], translations['confirm_no'])
             view.add_item(view.confirm_button)
             view.add_item(view.cancel_button)
             if len(check_msg) <= 2000:
@@ -590,13 +620,19 @@ class Group(commands.Cog):
     @commands.command(aliases=['editlfg', 'editLfg', 'editLFG'])
     @commands.guild_only()
     async def edit_lfg(self, ctx, arg_id=None, *args):
+        if arg_id is not None:
+            if type(arg_id) == discord.Message:
+                ctx.message = arg_id
         if ctx.message.guild is not None:
             lang = ctx.bot.guild_lang(ctx.message.guild.id)
         else:
             lang = 'en'
-        hashids = Hashids()
         message = ctx.message
-        if arg_id is None:
+        hashids = Hashids()
+        dm = (arg_id is None)
+        if not dm:
+            dm = (type(arg_id) == discord.Message)
+        if dm:
             text = await self.dm_edit_lfg(ctx, lang, hashids)
             if not text:
                 return
@@ -612,7 +648,15 @@ class Group(commands.Cog):
             if old_lfg is not None and owner is not None:
                 old_lfg = await old_lfg.fetch_message(group_id[0])
                 if owner == message.author.id:
-                    await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang], lang, text)
+                    new_lfg = await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang], lang, text)
+                    buttons = GroupButtons(new_lfg.id, ctx.bot, label_go=ctx.bot.translations[lang]['lfg']['button_want'],
+                                           label_help=ctx.bot.translations[lang]['lfg']['button_help'],
+                                           label_no_go=ctx.bot.translations[lang]['lfg']['button_no_go'],
+                                           label_delete=ctx.bot.translations[lang]['lfg']['button_delete'])
+                    await new_lfg.edit(view=buttons)
+
+                    ctx.bot.persistent_views.pop(ctx.bot.persistent_views.index(buttons))  # This bs is a workaround for a pycord broken persistent view processing
+                    ctx.bot.add_view(GroupButtons(new_lfg.id, ctx.bot))  # This bs is a workaround for a pycord broken persistent view processing
                 else:
                     await ctx.bot.check_ownership(message)
                     if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
@@ -696,14 +740,14 @@ class ConfirmLFG(discord.ui.View):
 
 
 class ActivityType(discord.ui.View):
-    def __init__(self, owner, raid='Raid', pve='pve', gambit='gambit', pvp='pvp'):
+    def __init__(self, owner, raid='Raid', pve='pve', gambit='gambit', pvp='pvp', default='other'):
         super().__init__()
         self.owner = owner
-        self.raid_button = MyButton(type='raid', label='raid', style=discord.ButtonStyle.gray)
-        self.pve_button = MyButton(type='pve', label='pve', style=discord.ButtonStyle.gray)
-        self.gambit_button = MyButton(type='gambit', label='gambit', style=discord.ButtonStyle.gray)
-        self.pvp_button = MyButton(type='pvp', label='pvp', style=discord.ButtonStyle.gray)
-        self.other_button = MyButton(type='default', label='other', style=discord.ButtonStyle.gray)
+        self.raid_button = MyButton(type='raid', label=raid, style=discord.ButtonStyle.gray)
+        self.pve_button = MyButton(type='pve', label=pve, style=discord.ButtonStyle.gray)
+        self.gambit_button = MyButton(type='gambit', label=gambit, style=discord.ButtonStyle.gray)
+        self.pvp_button = MyButton(type='pvp', label=pvp, style=discord.ButtonStyle.gray)
+        self.other_button = MyButton(type='default', label=default, style=discord.ButtonStyle.gray)
         self.add_item(self.raid_button)
         self.add_item(self.pve_button)
         self.add_item(self.pvp_button)
@@ -734,6 +778,97 @@ class RoleLFG(discord.ui.View):
         self.add_item(self.custom_button)
         self.add_item(self.default_button)
         self.value = None
+
+
+class WantButton(discord.ui.Button):
+    def __init__(self, label, style, custom_id, row=1):
+        super().__init__(style=style, label=label, row=row, custom_id=custom_id)
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.bot.raid.add_people(interaction.message.id, interaction.user)
+        lang = self.view.bot.guild_lang(interaction.message.guild.id)
+        await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
+        mode = self.view.bot.raid.get_cell('group_id', interaction.message.id, 'group_mode')
+        owner = self.view.bot.get_user(self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
+        if mode == 'manual' and owner.id != interaction.user.id:
+            if interaction.user.nick is not None:
+                nick = interaction.user.nick
+            else:
+                nick = interaction.user.name
+            await interaction.response.send_message(content=self.view.bot.translations[lang]['lfg']['gotcha'].format(nick), ephemeral=True)
+            await self.view.bot.raid.upd_dm(owner, interaction.message.id, self.view.bot.translations[lang])
+
+
+class MaybeButton(discord.ui.Button):
+    def __init__(self, label, style, custom_id, row=1):
+        super().__init__(style=style, label=label, row=row, custom_id=custom_id)
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.bot.raid.add_mb_goers(interaction.message.id, interaction.user)
+        lang = self.view.bot.guild_lang(interaction.message.guild.id)
+        await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
+
+
+class NoGoButton(discord.ui.Button):
+    def __init__(self, label, style, custom_id, row=1):
+        super().__init__(style=style, label=label, row=row, custom_id=custom_id)
+
+    async def callback(self, interaction: discord.Interaction):
+        was_goer = self.view.bot.raid.is_goer(interaction.message, interaction.user)
+        is_mb_goer = self.view.bot.raid.is_mb_goer(interaction.message, interaction.user)
+        emoji = ''
+        if was_goer:
+            emoji = '👌'
+        elif is_mb_goer:
+            emoji = '❓'
+        self.view.bot.raid.rm_people(interaction.message.id, interaction.user, emoji)
+        lang = self.view.bot.guild_lang(interaction.message.guild.id)
+        await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
+
+
+class DeleteButton(discord.ui.Button):
+    def __init__(self, label, style, custom_id, row=1):
+        super().__init__(style=style, label=label, row=row, custom_id=custom_id)
+
+    async def callback(self, interaction: discord.Interaction):
+        owner = self.view.bot.get_user(self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
+        message = interaction.message
+        if owner.id == interaction.user.id:
+            mode = self.view.bot.raid.get_cell('group_id', message.id, 'group_mode')
+            if mode == 'manual':
+                dm_id = self.view.bot.raid.get_cell('group_id', message.id, 'dm_message')
+                if owner.dm_channel is None:
+                    await owner.create_dm()
+                if dm_id != 0:
+                    dm_message = await owner.dm_channel.fetch_message(dm_id)
+                    await dm_message.delete()
+            if message.guild.me.guild_permissions.manage_roles:
+                role = message.guild.get_role(self.view.bot.raid.get_cell('group_id', message.id, 'group_role'))
+                if role is not None:
+                    await role.delete(reason='LFG deletion')
+            if message.guild.me.guild_permissions.manage_channels:
+                group_ch = message.guild.get_channel(self.view.bot.raid.get_cell('group_id', message.id, 'group_channel'))
+                if group_ch is not None:
+                    if group_ch.permissions_for(message.guild.me).manage_channels:
+                        await group_ch.delete(reason='LFG deletion')
+            self.view.bot.raid.del_entry(message.id)
+            await message.delete()
+
+
+class GroupButtons(discord.ui.View):
+
+    def __init__(self, group_id, bot, label_go='👌', label_help='❓', label_no_go='-', label_delete='❌'):
+        super().__init__(timeout=None)
+        self.bot = bot
+
+        self.want_button = WantButton(label_go, discord.ButtonStyle.green, '{}_go'.format(group_id))
+        self.maybe_button = MaybeButton(label_help, discord.ButtonStyle.gray, '{}_maybe'.format(group_id))
+        self.no_go_button = NoGoButton(label_no_go, discord.ButtonStyle.gray, '{}_no_go'.format(group_id))
+        self.delete_button = DeleteButton(label_delete, discord.ButtonStyle.red, '{}_delete'.format(group_id))
+        self.add_item(self.want_button)
+        self.add_item(self.maybe_button)
+        self.add_item(self.no_go_button)
+        self.add_item(self.delete_button)
 
 
 def setup(bot):

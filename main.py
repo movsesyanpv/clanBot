@@ -21,10 +21,11 @@ from discord.ext import commands
 import raid as lfg
 import destiny2data as d2
 import unauthorized
+from cogs.group import GroupButtons
 
 
 class ClanBot(commands.Bot):
-    version = '3.0a2'
+    version = '3.0a5_pycord'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
@@ -64,6 +65,7 @@ class ClanBot(commands.Bot):
         self.raid = lfg.LFG()
         self.guild_db = sqlite3.connect('guild.db')
         self.guild_cursor = self.guild_db.cursor()
+        self.persistent_views_added = False
 
 
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
@@ -215,7 +217,7 @@ class ClanBot(commands.Bot):
         await self.change_presence(status=discord.Status.dnd, activity=game)
         self.all_commands['update'].enabled = False
         self.all_commands['top'].enabled = False
-        self.all_commands['online'].enabled = False
+        # self.all_commands['online'].enabled = False
         await self.data.token_update()
         await self.update_langs()
         await self.update_prefixes()
@@ -235,6 +237,11 @@ class ClanBot(commands.Bot):
                                    second='10', misfire_grace_time=86300, args=[lang])
             self.sched.start()
         game = discord.Game('v{}'.format(self.version))
+        if not self.persistent_views_added:
+            lfg_list = self.raid.get_all()
+            for lfg in lfg_list:
+                self.add_view(GroupButtons(lfg[0], self))
+            self.persistent_views_added = True
         await self.change_presence(status=discord.Status.online, activity=game)
         self.all_commands['update'].enabled = True
         self.all_commands['top'].enabled = True
@@ -294,44 +301,44 @@ class ClanBot(commands.Bot):
             await message.author.dm_channel.send(msg, embed=e)
         return is_owner or (message.channel.permissions_for(message.author).administrator and admin_check)
 
-    async def on_raw_reaction_remove(self, payload):
-        user = self.get_user(payload.user_id)
-        if user == self.user:
-            return
-
-        try:
-            message = await self.fetch_channel(payload.channel_id)
-            message = await message.fetch_message(payload.message_id)
-        except discord.NotFound:
-            return
-        for guild in self.guilds:
-            if guild.id == payload.guild_id:
-                user = guild.get_member(payload.user_id)
-
-        if self.raid.is_raid(message.id):
-            if str(payload.emoji) not in ['👌', '❓']:
-                return
-            was_goer = self.raid.is_goer(message, user)
-            is_mb_goer = self.raid.is_mb_goer(message, user)
-            self.raid.rm_people(message.id, user, str(payload.emoji))
-            if message.guild.me.guild_permissions.manage_roles:
-                role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
-                if role is not None and was_goer:
-                    await user.remove_roles(role, reason='User removed 👌')
-                    goers = self.raid.get_cell_array('group_id', message.id, 'going')
-                    for goer in goers:
-                        user_goer = await message.guild.fetch_member(int(goer.replace('<@', '').replace('!', '').replace('>', '')))
-                        if role not in user_goer.roles and user_goer is not None:
-                            await user_goer.add_roles(role, reason='Previous participant opted out')
-            if user.dm_channel is None:
-                await user.create_dm()
-            lang = self.guild_lang(payload.guild_id)
-            await self.raid.update_group_msg(message, self.translations[lang], lang)
-            if self.raid.get_cell('group_id', message.id, 'group_mode') == 'manual' and str(payload.emoji) == '👌':
-                await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'].format(user.mention))
-                owner = self.raid.get_cell('group_id', message.id, 'owner')
-                owner = self.get_user(owner)
-                await self.raid.upd_dm(owner, message.id, self.translations[lang])
+    # async def on_raw_reaction_remove(self, payload):
+    #     user = self.get_user(payload.user_id)
+    #     if user == self.user:
+    #         return
+    #
+    #     try:
+    #         message = await self.fetch_channel(payload.channel_id)
+    #         message = await message.fetch_message(payload.message_id)
+    #     except discord.NotFound:
+    #         return
+    #     for guild in self.guilds:
+    #         if guild.id == payload.guild_id:
+    #             user = guild.get_member(payload.user_id)
+    #
+    #     if self.raid.is_raid(message.id):
+    #         if str(payload.emoji) not in ['👌', '❓']:
+    #             return
+    #         was_goer = self.raid.is_goer(message, user)
+    #         is_mb_goer = self.raid.is_mb_goer(message, user)
+    #         self.raid.rm_people(message.id, user, str(payload.emoji))
+    #         if message.guild.me.guild_permissions.manage_roles:
+    #             role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
+    #             if role is not None and was_goer:
+    #                 await user.remove_roles(role, reason='User removed 👌')
+    #                 goers = self.raid.get_cell_array('group_id', message.id, 'going')
+    #                 for goer in goers:
+    #                     user_goer = await message.guild.fetch_member(int(goer.replace('<@', '').replace('!', '').replace('>', '')))
+    #                     if role not in user_goer.roles and user_goer is not None:
+    #                         await user_goer.add_roles(role, reason='Previous participant opted out')
+    #         if user.dm_channel is None:
+    #             await user.create_dm()
+    #         lang = self.guild_lang(payload.guild_id)
+    #         await self.raid.update_group_msg(message, self.translations[lang], lang)
+    #         if self.raid.get_cell('group_id', message.id, 'group_mode') == 'manual' and str(payload.emoji) == '👌':
+    #             await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'].format(user.mention))
+    #             owner = self.raid.get_cell('group_id', message.id, 'owner')
+    #             owner = self.get_user(owner)
+    #             await self.raid.upd_dm(owner, message.id, self.translations[lang])
 
     async def on_raw_reaction_add(self, payload):
         user = payload.member
@@ -349,71 +356,71 @@ class ClanBot(commands.Bot):
             except discord.errors.Forbidden:
                 return
 
-            if self.raid.is_raid(message.id):
-                mode = self.raid.get_cell('group_id', message.id, 'group_mode')
-                owner = self.get_user(self.raid.get_cell('group_id', message.id, 'owner'))
-                if str(payload.emoji) == '❌' and payload.user_id == owner.id:
-                    if mode == 'manual':
-                        dm_id = self.raid.get_cell('group_id', message.id, 'dm_message')
-                        if owner.dm_channel is None:
-                            await owner.create_dm()
-                        if dm_id != 0:
-                            dm_message = await owner.dm_channel.fetch_message(dm_id)
-                            await dm_message.delete()
-                    if message.guild.me.guild_permissions.manage_roles:
-                        role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
-                        if role is not None:
-                            await role.delete(reason='LFG deletion')
-                    if message.guild.me.guild_permissions.manage_channels:
-                        group_ch = message.guild.get_channel(self.raid.get_cell('group_id', message.id, 'group_channel'))
-                        if group_ch is not None:
-                            if group_ch.permissions_for(message.guild.me).manage_channels:
-                                await group_ch.delete(reason='LFG deletion')
-                    self.raid.del_entry(message.id)
-                    await message.delete()
-                    return
-                if str(payload.emoji) not in ['👌', '❓']:
-                    for reaction in message.reactions:
-                        if str(reaction.emoji) == str(payload.emoji):
-                            try:
-                                await reaction.remove(user)
-                            except discord.errors.Forbidden:
-                                pass
-                            return
-                if str(payload.emoji) == '👌':
-                    for reaction in message.reactions:
-                        if str(reaction.emoji) == '❓':
-                            try:
-                                await reaction.remove(user)
-                            except discord.errors.Forbidden:
-                                pass
-                if str(payload.emoji) == '❓':
-                    for reaction in message.reactions:
-                        if str(reaction.emoji) == '👌':
-                            try:
-                                await reaction.remove(user)
-                            except discord.errors.Forbidden:
-                                pass
-                owner = self.raid.get_cell('group_id', message.id, 'owner')
-                owner = self.get_user(owner)
-                if str(payload.emoji) == '👌':
-                    self.raid.add_people(message.id, user)
-                elif str(payload.emoji) == '❓':
-                    self.raid.add_mb_goers(message.id, user)
-                if message.guild.me.guild_permissions.manage_roles:
-                    role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
-                    if role is not None and self.raid.is_goer(message, user):
-                        await user.add_roles(role, reason='User pressed 👌')
-                lang = self.guild_lang(payload.guild_id)
-                if user.dm_channel is None:
-                    await user.create_dm()
-                if mode == 'manual':
-                    if str(payload.emoji) == '👌':
-                        await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'].format(user.mention), delete_after=30)
-                    await self.raid.upd_dm(owner, message.id, self.translations[lang])
-                if mode == 'basic' or str(payload.emoji) == '❓' or user == owner:
-                    await self.raid.update_group_msg(message, self.translations[lang], lang)
-                return
+            # if self.raid.is_raid(message.id):
+            #     mode = self.raid.get_cell('group_id', message.id, 'group_mode')
+            #     owner = self.get_user(self.raid.get_cell('group_id', message.id, 'owner'))
+            #     if str(payload.emoji) == '❌' and payload.user_id == owner.id:
+            #         if mode == 'manual':
+            #             dm_id = self.raid.get_cell('group_id', message.id, 'dm_message')
+            #             if owner.dm_channel is None:
+            #                 await owner.create_dm()
+            #             if dm_id != 0:
+            #                 dm_message = await owner.dm_channel.fetch_message(dm_id)
+            #                 await dm_message.delete()
+            #         if message.guild.me.guild_permissions.manage_roles:
+            #             role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
+            #             if role is not None:
+            #                 await role.delete(reason='LFG deletion')
+            #         if message.guild.me.guild_permissions.manage_channels:
+            #             group_ch = message.guild.get_channel(self.raid.get_cell('group_id', message.id, 'group_channel'))
+            #             if group_ch is not None:
+            #                 if group_ch.permissions_for(message.guild.me).manage_channels:
+            #                     await group_ch.delete(reason='LFG deletion')
+            #         self.raid.del_entry(message.id)
+            #         await message.delete()
+            #         return
+            #     if str(payload.emoji) not in ['👌', '❓']:
+            #         for reaction in message.reactions:
+            #             if str(reaction.emoji) == str(payload.emoji):
+            #                 try:
+            #                     await reaction.remove(user)
+            #                 except discord.errors.Forbidden:
+            #                     pass
+            #                 return
+            #     if str(payload.emoji) == '👌':
+            #         for reaction in message.reactions:
+            #             if str(reaction.emoji) == '❓':
+            #                 try:
+            #                     await reaction.remove(user)
+            #                 except discord.errors.Forbidden:
+            #                     pass
+            #     if str(payload.emoji) == '❓':
+            #         for reaction in message.reactions:
+            #             if str(reaction.emoji) == '👌':
+            #                 try:
+            #                     await reaction.remove(user)
+            #                 except discord.errors.Forbidden:
+            #                     pass
+            #     owner = self.raid.get_cell('group_id', message.id, 'owner')
+            #     owner = self.get_user(owner)
+            #     if str(payload.emoji) == '👌':
+            #         self.raid.add_people(message.id, user)
+            #     elif str(payload.emoji) == '❓':
+            #         self.raid.add_mb_goers(message.id, user)
+            #     if message.guild.me.guild_permissions.manage_roles:
+            #         role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
+            #         if role is not None and self.raid.is_goer(message, user):
+            #             await user.add_roles(role, reason='User pressed 👌')
+            #     lang = self.guild_lang(payload.guild_id)
+            #     if user.dm_channel is None:
+            #         await user.create_dm()
+            #     if mode == 'manual':
+            #         if str(payload.emoji) == '👌':
+            #             await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'].format(user.mention), delete_after=30)
+            #         await self.raid.upd_dm(owner, message.id, self.translations[lang])
+            #     if mode == 'basic' or str(payload.emoji) == '❓' or user == owner:
+            #         await self.raid.update_group_msg(message, self.translations[lang], lang)
+            #     return
 
             raid_dm = self.raid.get_cell('dm_message', message.id, 'dm_message')
 
@@ -534,7 +541,7 @@ class ClanBot(commands.Bot):
             #         #await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
             #         return
             #     raise exception
-            elif isinstance(exception.original, discord.errors.Forbidden):
+            elif isinstance(exception.original, discord.Forbidden):
                 pass
             else:
                 if 'stop' not in message.content.lower() or (
@@ -552,7 +559,7 @@ class ClanBot(commands.Bot):
                         await message.author.create_dm()
                     if message.author != owner:
                         await message.author.dm_channel.send(self.translations['en']['error'])
-        except discord.errors.Forbidden:
+        except discord.Forbidden:
             pass
         except Exception as e:
             if 'stop' not in message.content.lower() or (self.user not in message.mentions and str(message.channel.type) != 'private'):
@@ -1017,4 +1024,16 @@ if __name__ == '__main__':
     intents = discord.Intents.default()
     intents.members = True
     b = ClanBot(command_prefix=get_prefix, intents=intents)
+
+    # @b.message_command(name="Edit LFG")
+    # async def sl_edit_lfg(ctx, message: discord.Message):
+    #     if b.raid.is_raid(message.id):
+    #         owner = ctx.bot.raid.get_cell('group_id', message.id, 'owner')
+    #         if ctx.author.id == owner:
+    #             await b.get_command("edit_lfg").__call__(ctx, message)
+    #         else:
+    #             await ctx.respond("You are not the owner!", ephemeral=True)
+    #     else:
+    #         await ctx.respond("This is not my LFG post!", ephemeral=True)
+
     b.start_up()
