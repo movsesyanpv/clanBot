@@ -127,12 +127,14 @@ class Public(commands.Cog):
         name='top',
         description='Print top players for one of the available metrics.'
     )
-    @commands.guild_only()
     async def top_sl(self, ctx, metric,
                      number: Option(int, "Max number of positions to display", required=False, default=10),
                      is_global: Option(bool, "Make a leaderboard across all tracked clans", required=False, default=False)
                      ):
         await ctx.defer()
+        if ctx.guild is None:
+            await ctx.respond("This command cannot be used in DMs")
+            return
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
         lang = ctx.bot.guild_lang(ctx.guild.id)
@@ -309,9 +311,11 @@ class Public(commands.Cog):
         name="online",
         description="Get the list of online clan members."
     )
-    @commands.guild_only()
     async def online_sl(self, ctx):
         await ctx.defer()
+        if ctx.guild is None:
+            await ctx.respond("This command cannot be used in DMs")
+            return
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
         lang = ctx.bot.guild_lang(ctx.guild.id)
