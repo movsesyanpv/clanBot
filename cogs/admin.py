@@ -397,8 +397,7 @@ class Admin(commands.Cog):
 
     @commands.slash_command(
         name='help',
-        description='The help command!',
-        guild_ids=[173495302823608320]
+        description='The help command!'
     )
     async def help_command_sl(self, ctx, command_name='all', lang=None, additional_arg=None):
         await ctx.defer()

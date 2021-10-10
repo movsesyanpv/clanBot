@@ -153,6 +153,7 @@ class ServerAdmin(commands.Cog):
             if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=True):
                 if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     await ctx.message.delete()
+                await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=60)
                 get = False
                 channels = [ctx.message.channel.id]
                 reg_ch_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?

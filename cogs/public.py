@@ -20,6 +20,7 @@ class Public(commands.Cog):
         clan_id = ctx.bot.guild_cursor.fetchone()
         lang = ctx.bot.guild_lang(ctx.message.guild.id)
         translations = ctx.bot.translations[lang]['top']
+        await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'])
         if ctx.invoked_with in ['gtop', 'globaltop']:
             is_global = True
         else:
@@ -260,6 +261,11 @@ class Public(commands.Cog):
 
     @commands.command()
     async def support(self, ctx):
+        if ctx.guild is None:
+            lang = 0
+        else:
+            lang = ctx.bot.guild_lang(ctx.guild.id)
+        await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'])
         await ctx.channel.send('https://discord.gg/JEbzECp')
 
     @commands.slash_command(
@@ -276,6 +282,7 @@ class Public(commands.Cog):
         clan_id = ctx.bot.guild_cursor.fetchone()
         lang = ctx.bot.guild_lang(ctx.message.guild.id)
         translations = ctx.bot.translations[lang]['top']
+        await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'])
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
