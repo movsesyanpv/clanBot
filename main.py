@@ -60,8 +60,11 @@ class ClanBot(commands.Bot):
         self.get_args()
         self.load_translations()
         self.langs = list(set(self.langs).intersection(set(self.args.lang)))
-        self.data = d2.D2data(self.translations, self.langs, self.args.oauth, self.args.production,
-                              (self.args.cert, self.args.key))
+        try:
+            self.data = d2.D2data(self.translations, self.langs, self.args.oauth, self.args.production,
+                                  (self.args.cert, self.args.key))
+        except RuntimeError:
+            pass
         self.raid = lfg.LFG()
         self.guild_db = sqlite3.connect('guild.db')
         self.guild_cursor = self.guild_db.cursor()
