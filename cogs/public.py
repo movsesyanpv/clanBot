@@ -42,24 +42,25 @@ class Public(commands.Cog):
                                                   password=ctx.bot.api_data['pass'], port=ctx.bot.api_data['db_port'],
                                                   database='metrics')
                     internal_cursor = internal_db.cursor()
-                    internal_cursor.execute('''SELECT hash FROM seasonsmetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM accountmetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM cruciblemetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM destinationmetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM gambitmetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM raidsmetrics WHERE name=?
-                    UNION ALL 
-                    SELECT hash FROM strikesmetrics WHERE name=?
-                    UNION ALL
-                    SELECT hash FROM trialsofosirismetrics WHERE name=? ''', (metric.lower(), metric.lower(),
-                                                                              metric.lower(), metric.lower(),
-                                                                              metric.lower(), metric.lower(),
-                                                                              metric.lower(), metric.lower()))
+                    internal_cursor.execute('''SELECT hash FROM seasonsmetrics WHERE name=? and is_working=1
+                                        UNION ALL
+                                        SELECT hash FROM accountmetrics WHERE name=? and is_working=1
+                                        UNION ALL
+                                        SELECT hash FROM cruciblemetrics WHERE name=? and is_working=1
+                                        UNION ALL
+                                        SELECT hash FROM destinationmetrics WHERE name=? and is_working=1
+                                        UNION ALL
+                                        SELECT hash FROM gambitmetrics WHERE name=? and is_working=1
+                                        UNION ALL
+                                        SELECT hash FROM raidsmetrics WHERE name=? and is_working=1
+                                        UNION ALL 
+                                        SELECT hash FROM strikesmetrics WHERE name=? and is_working=1
+                                        UNION ALL
+                                        SELECT hash FROM trialsofosirismetrics WHERE name=?  and is_working=1''',
+                                            (metric.lower(), metric.lower(),
+                                             metric.lower(), metric.lower(),
+                                             metric.lower(), metric.lower(),
+                                             metric.lower(), metric.lower()))
                     metric_id = internal_cursor.fetchone()
                     if 'kda' in metric.lower():
                         is_kda = True
@@ -162,24 +163,25 @@ class Public(commands.Cog):
                                                   password=ctx.bot.api_data['pass'], port=ctx.bot.api_data['db_port'],
                                                   database='metrics')
                     internal_cursor = internal_db.cursor()
-                    internal_cursor.execute('''SELECT hash FROM seasonsmetrics WHERE name=?
-                        UNION ALL
-                        SELECT hash FROM accountmetrics WHERE name=?
-                        UNION ALL
-                        SELECT hash FROM cruciblemetrics WHERE name=?
-                        UNION ALL
-                        SELECT hash FROM destinationmetrics WHERE name=?
-                        UNION ALL
-                        SELECT hash FROM gambitmetrics WHERE name=?
-                        UNION ALL
-                        SELECT hash FROM raidsmetrics WHERE name=?
-                        UNION ALL 
-                        SELECT hash FROM strikesmetrics WHERE name=?
-                        UNION ALL
-                        SELECT hash FROM trialsofosirismetrics WHERE name=? ''', (metric.lower(), metric.lower(),
-                                                                                  metric.lower(), metric.lower(),
-                                                                                  metric.lower(), metric.lower(),
-                                                                                  metric.lower(), metric.lower()))
+                    internal_cursor.execute('''SELECT hash FROM seasonsmetrics WHERE name=? and is_working=1
+                                            UNION ALL
+                                            SELECT hash FROM accountmetrics WHERE name=? and is_working=1
+                                            UNION ALL
+                                            SELECT hash FROM cruciblemetrics WHERE name=? and is_working=1
+                                            UNION ALL
+                                            SELECT hash FROM destinationmetrics WHERE name=? and is_working=1
+                                            UNION ALL
+                                            SELECT hash FROM gambitmetrics WHERE name=? and is_working=1
+                                            UNION ALL
+                                            SELECT hash FROM raidsmetrics WHERE name=? and is_working=1
+                                            UNION ALL 
+                                            SELECT hash FROM strikesmetrics WHERE name=? and is_working=1
+                                            UNION ALL
+                                            SELECT hash FROM trialsofosirismetrics WHERE name=?  and is_working=1''',
+                                            (metric.lower(), metric.lower(),
+                                             metric.lower(), metric.lower(),
+                                             metric.lower(), metric.lower(),
+                                             metric.lower(), metric.lower()))
                     metric_id = internal_cursor.fetchone()
                     if 'kda' in metric.lower():
                         is_kda = True
@@ -202,7 +204,10 @@ class Public(commands.Cog):
                 except mariadb.Error:
                     await ctx.respond(translations['unknown_metric'].format(metric))
                     if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
-                        await ctx.message.delete()
+                        try:
+                            await ctx.message.delete()
+                        except discord.NotFound:
+                            pass
                     return
             try:
                 top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
