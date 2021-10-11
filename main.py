@@ -479,7 +479,7 @@ class ClanBot(commands.Bot):
                     await lfg_msg.delete()
                     self.raid.del_entry(lfg[0])
                     i = i + 1
-            except discord.errors.NotFound:
+            except discord.NotFound:
                 self.raid.del_entry(lfg[0])
                 i = i + 1
         return i

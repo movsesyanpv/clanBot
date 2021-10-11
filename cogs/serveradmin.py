@@ -28,7 +28,10 @@ class ServerAdmin(commands.Cog):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
                 await ctx.message.channel.send(msg.format(n), delete_after=30)
             if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
-                await ctx.message.delete()
+                try:
+                    await ctx.message.delete()
+                except discord.NotFound:
+                    pass
 
     @commands.command()
     @commands.guild_only()
