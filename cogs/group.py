@@ -305,10 +305,10 @@ class Group(commands.Cog):
                     time = datetime.now().strftime("%d-%m-%Y %H:%M")
         return time
 
-    async def dm_edit_lfg(self, ctx, lang, hashids, group_id=None):
+    async def dm_edit_lfg(self, ctx, lang, hashids, number=None):
 
         def check(ms):
-            return ms.channel == dm and ms.author == ctx.message.author
+            return ms.channel == dm and ms.author == ctx.author
 
         async def get_proper_length_arg(arg_name, max_len):
             dm_content = '{}\n{}'.format(translations[arg_name], translations['dm_noedit'])
@@ -345,64 +345,93 @@ class Group(commands.Cog):
 
         translations = ctx.bot.translations[lang]['lfg']
 
-        if ctx.channel.permissions_for(ctx.guild.me).create_public_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
-            dm = await ctx.message.create_thread(name='LFG', auto_archive_duration=60)
-            await dm.add_user(ctx.message.author)
+        if number is None:
+            is_msg = False
+        else:
+            is_msg = True
 
+        if ctx.channel.permissions_for(ctx.guild.me).create_public_threads and ctx.channel.permissions_for(ctx.guild.me).manage_threads:
             lfg_list = ctx.bot.raid.c.execute(
                 'SELECT group_id, name, time, channel_name, server_name, timezone FROM raid WHERE owner=?',
-                (ctx.message.author.id,))
+                (ctx.author.id,))
             lfg_list = lfg_list.fetchall()
 
-            msg = translations['lfglist_head']
-            i = 1
-            for lfg in lfg_list:
-                msg = translations['lfglist'].format(msg, i, lfg[1], datetime.fromtimestamp(lfg[2]), lfg[5],
-                                                     lfg[3], lfg[4], ctx.bot.raid.hashids.encode(lfg[0]))
-                i = i + 1
-            if len(lfg_list) > 0:
-                await dm.send(msg)
+            if number is None:
+                dm = await ctx.message.create_thread(name='LFG', auto_archive_duration=60)
+                await dm.add_user(ctx.author)
+
+                msg = translations['lfglist_head']
+                i = 1
+                for lfg in lfg_list:
+                    msg = translations['lfglist'].format(msg, i, lfg[1], datetime.fromtimestamp(lfg[2]), lfg[5],
+                                                         lfg[3], lfg[4], ctx.bot.raid.hashids.encode(lfg[0]))
+                    i = i + 1
+                if len(lfg_list) > 0:
+                    await dm.send(msg)
+                else:
+                    await dm.send(translations['lfglist_empty'])
+                    if not lfg_list:
+                        if type(dm) == discord.Thread:
+                            await asyncio.sleep(10)
+                            await dm.delete()
+                        return
+                number = await get_numerical_answer('lfg_choice', len(lfg_list) + 1)
             else:
-                await dm.send(translations['lfglist_empty'])
+                ctx.message = await ctx.channel.send('Continue in the thread')
+                try:
+                    dm = await ctx.message.create_thread(name='LFG', auto_archive_duration=60)
+                    await dm.add_user(ctx.author)
+                except discord.HTTPException:
+                    if ctx.author.dm_channel is None:
+                        await ctx.author.create_dm()
+                    dm = ctx.author.dm_channel
+                    await ctx.respond(translations['dm_start'].format(ctx.author.mention))
+        else:
+            if ctx.author.dm_channel is None:
+                await ctx.author.create_dm()
+            dm = ctx.author.dm_channel
+            response = await ctx.channel.send(translations['dm_start'].format(ctx.author.mention), delete_after=60)
+
+            if number is None:
+                lfg_list = await self.lfglist(ctx, lang)
                 if not lfg_list:
                     if type(dm) == discord.Thread:
                         await asyncio.sleep(10)
                         await dm.delete()
                     return
-            number = await get_numerical_answer('lfg_choice', len(lfg_list) + 1)
-        else:
-            if ctx.author.dm_channel is None:
-                await ctx.author.create_dm()
-            dm = ctx.author.dm_channel
-            response = await ctx.message.channel.send(translations['dm_start'].format(ctx.author.mention))
 
-            lfg_list = await self.lfglist(ctx, lang)
-            if not lfg_list:
+                number = await get_numerical_answer('lfg_choice', len(lfg_list)+1)
+
+                try:
+                    await response.delete()
+                except discord.NotFound:
+                    pass
+            else:
+                lfg_list = ctx.bot.raid.c.execute(
+                    'SELECT group_id, name, time, channel_name, server_name, timezone FROM raid WHERE owner=?',
+                    (ctx.author.id,))
+                lfg_list = lfg_list.fetchall()
+
+        lfg = lfg_list[number]
+        if not is_msg:
+            check_msg = translations['lfglist_choice_check']
+            check_msg = translations['lfglist'].format(check_msg, number+1, lfg[1], datetime.fromtimestamp(lfg[2]), lfg[5],
+                                                       lfg[3], lfg[4], hashids.encode(lfg[0]))
+            await dm.send(check_msg)
+            msg = await self.bot.wait_for('message', check=check)
+            if msg.content.lower() == translations['no']:
+                await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
+                if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+                    try:
+                        await ctx.message.delete()
+                    except discord.NotFound:
+                        pass
+                    except AttributeError:
+                        pass
                 if type(dm) == discord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
-                return
-            number = await get_numerical_answer('lfg_choice', len(lfg_list)+1)
-
-            await response.delete()
-
-        check_msg = translations['lfglist_choice_check']
-        lfg = lfg_list[number]
-        check_msg = translations['lfglist'].format(check_msg, number+1, lfg[1], datetime.fromtimestamp(lfg[2]), lfg[5],
-                                                   lfg[3], lfg[4], hashids.encode(lfg[0]))
-        await dm.send(check_msg)
-        msg = await self.bot.wait_for('message', check=check)
-        if msg.content.lower() == translations['no']:
-            await dm.send(translations['again'].format(translations['edit'], translations['edit'].lower()))
-            if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
-                try:
-                    await ctx.message.delete()
-                except discord.NotFound:
-                    pass
-            if type(dm) == discord.Thread:
-                await asyncio.sleep(10)
-                await dm.delete()
-            return False
+                return False
         text = '{}\n'.format(lfg[0])
 
         name = await get_proper_length_arg('name', 256)
@@ -443,7 +472,7 @@ class Group(commands.Cog):
             text = '{}-l:{}\n'.format(text, length)
 
         q_line = '{}\n{}'.format(translations['type'], translations['dm_noedit'])
-        view = ActivityType(ctx.message.author, raid=translations['raid'], pve=translations['pve'],
+        view = ActivityType(ctx.author, raid=translations['raid'], pve=translations['pve'],
                             gambit=translations['gambit'], pvp=translations['pvp'], default=translations['default'])
         no_change_button = MyButton(type='nochange', label='no change', style=discord.ButtonStyle.red, row=2)
         view.add_item(no_change_button)
@@ -456,6 +485,8 @@ class Group(commands.Cog):
                     await ctx.message.delete()
                 except discord.NotFound:
                     pass
+                except AttributeError:
+                    pass
                 if type(dm) == discord.Thread:
                     await asyncio.sleep(10)
                     await dm.delete()
@@ -466,7 +497,7 @@ class Group(commands.Cog):
             text = '{}-at:{}\n'.format(text, a_type)
 
         q_line = '{}\n{}'.format(translations['mode'].format(translations['basic_mode'], translations['manual_mode']), translations['dm_noedit'])
-        view = ModeLFG(ctx.message.author, basic=translations['basic_mode'], manual=translations['manual_mode'])
+        view = ModeLFG(ctx.author, basic=translations['basic_mode'], manual=translations['manual_mode'])
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
         await view.wait()
@@ -476,6 +507,8 @@ class Group(commands.Cog):
                 try:
                     await ctx.message.delete()
                 except discord.NotFound:
+                    pass
+                except AttributeError:
                     pass
                 if type(dm) == discord.Thread:
                     await asyncio.sleep(10)
@@ -490,7 +523,7 @@ class Group(commands.Cog):
         for role in ctx.guild.roles:
             if role.mentionable and not role.managed:
                 role_list.append(discord.SelectOption(label=role.name, value=role.id))
-        view = RoleLFG(len(role_list), role_list, ctx.message.author, manual=translations['manual_roles'],
+        view = RoleLFG(len(role_list), role_list, ctx.author, manual=translations['manual_roles'],
                        auto=translations['auto_roles'])
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
@@ -501,6 +534,8 @@ class Group(commands.Cog):
                 try:
                     await ctx.message.delete()
                 except discord.NotFound:
+                    pass
+                except AttributeError:
                     pass
                 if type(dm) == discord.Thread:
                     await asyncio.sleep(10)
@@ -526,6 +561,8 @@ class Group(commands.Cog):
                     pass
             if len(role) > 0:
                 role = role[:-1]
+            text = '{}-r:{}\n'.format(text, role)
+            pass
         elif view.value == '--':
             role = view.value
         else:
@@ -539,10 +576,13 @@ class Group(commands.Cog):
 
             if len(role) > 0:
                 role = role[:-1]
-        text = '{}-r:{}\n'.format(text, role)
+            text = '{}-r:{}\n'.format(text, role)
 
         at = ['default', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
-        args = ctx.bot.raid.parse_args(text.splitlines(), ctx.message, False)
+        if is_msg:
+            args = ctx.bot.raid.parse_args(text.splitlines(), lfg[0], False, ctx.guild)
+        else:
+            args = ctx.bot.raid.parse_args(text.splitlines(), ctx.message, False)
         if len(args) > 0:
             if 'length' in args.keys():
                 args['length'] /= 3600
@@ -572,7 +612,7 @@ class Group(commands.Cog):
             check_msg = translations['check'].format(args['name'], args['description'], args['time'], args['size'],
                                                      args['length'], args['is_embed'], args['group_mode'], role)
             view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()),
-                              ctx.message.author, translations['confirm_yes'], translations['confirm_no'])
+                              ctx.author, translations['confirm_yes'], translations['confirm_no'])
             view.add_item(view.confirm_button)
             view.add_item(view.cancel_button)
             if len(check_msg) <= 2000:
@@ -602,11 +642,15 @@ class Group(commands.Cog):
                         await ctx.message.delete()
                     except discord.NotFound:
                         pass
+                    except AttributeError:
+                        pass
             elif not view.value:
                 if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
                     try:
                         await ctx.message.delete()
                     except discord.NotFound:
+                        pass
+                    except AttributeError:
                         pass
                 if type(dm) == discord.Thread:
                     await asyncio.sleep(10)
@@ -615,7 +659,60 @@ class Group(commands.Cog):
 
         if type(dm) == discord.Thread:
             await dm.delete()
+        if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
+            try:
+                await ctx.message.delete()
+            except discord.NotFound:
+                pass
+            except AttributeError:
+                pass
         return text
+
+    @commands.message_command(name="Edit LFG",
+                              guild_ids=[173495302823608320])
+    async def edit_lfg_msg(self, ctx, message: discord.Message):
+        await ctx.defer(ephemeral=True)
+        if ctx.guild is None:
+            lang = 'en'
+        else:
+            lang = ctx.bot.guild_lang(ctx.guild.id)
+        if ctx.bot.raid.is_raid(message.id):
+            owner = ctx.bot.raid.get_cell('group_id', message.id, 'owner')
+            if ctx.author.id == owner:
+                lfg_list = ctx.bot.raid.c.execute(
+                    'SELECT group_id, name, time, channel_name, server_name, timezone FROM raid WHERE owner=?',
+                    (ctx.author.id,))
+                lfg_list = lfg_list.fetchall()
+                for lfg in lfg_list:
+                    if lfg[0] == message.id:
+                        number = lfg_list.index(lfg)
+                hashids = Hashids()
+                text = await self.dm_edit_lfg(ctx, lang, hashids, number)
+                if not text:
+                    return
+                group_id = [int(text.splitlines()[0])]
+                if len(group_id) > 0:
+                    old_lfg = ctx.bot.raid.get_cell('group_id', group_id[0], 'lfg_channel')
+                    old_lfg = ctx.bot.get_channel(old_lfg)
+                    owner = ctx.bot.raid.get_cell('group_id', group_id[0], 'owner')
+                    if old_lfg is not None and owner is not None:
+                        old_lfg = await old_lfg.fetch_message(group_id[0])
+                        if owner == ctx.author.id:
+                            new_lfg = await ctx.bot.raid.edit(message, old_lfg, ctx.bot.translations[lang], lang, text)
+                            buttons = GroupButtons(new_lfg.id, ctx.bot,
+                                                   label_go=ctx.bot.translations[lang]['lfg']['button_want'],
+                                                   label_help=ctx.bot.translations[lang]['lfg']['button_help'],
+                                                   label_no_go=ctx.bot.translations[lang]['lfg']['button_no_go'],
+                                                   label_delete=ctx.bot.translations[lang]['lfg']['button_delete'])
+                            await new_lfg.edit(view=buttons)
+
+                            ctx.bot.persistent_views.pop(ctx.bot.persistent_views.index(buttons))  # This bs is a workaround for a pycord broken persistent view processing
+                            ctx.bot.add_view(GroupButtons(new_lfg.id, ctx.bot))  # This bs is a workaround for a pycord broken persistent view processing
+                await ctx.interaction.edit_original_message(content="Done")
+            else:
+                await ctx.respond("You are not the owner!", ephemeral=True)
+        else:
+            await ctx.respond("This is not my LFG post!", ephemeral=True)
 
     @commands.command(aliases=['editlfg', 'editLfg', 'editLFG'])
     @commands.guild_only()

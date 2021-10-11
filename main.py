@@ -25,7 +25,7 @@ from cogs.group import GroupButtons
 
 
 class ClanBot(commands.Bot):
-    version = '3.0a5_pycord'
+    version = '3.0a6_pycord'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
@@ -243,7 +243,20 @@ class ClanBot(commands.Bot):
         if not self.persistent_views_added:
             lfg_list = self.raid.get_all()
             for lfg in lfg_list:
-                self.add_view(GroupButtons(lfg[0], self))
+                try:
+                    lang = self.guild_lang(lfg[3])
+                    group_msg = await self.fetch_channel(lfg[1])
+                    group_msg = await group_msg.fetch_message(lfg[0])
+                    buttons = GroupButtons(lfg[0], self,
+                                           label_go=self.translations[lang]['lfg']['button_want'],
+                                           label_help=self.translations[lang]['lfg']['button_help'],
+                                           label_no_go=self.translations[lang]['lfg']['button_no_go'],
+                                           label_delete=self.translations[lang]['lfg']['button_delete'])
+                    await group_msg.edit(view=buttons)
+                    self.persistent_views.pop(self.persistent_views.index(buttons))  # This bs is a workaround for a pycord broken persistent view processing
+                    self.add_view(buttons)
+                except discord.NotFound:
+                    self.add_view(GroupButtons(lfg[0], self))
             self.persistent_views_added = True
         await self.change_presence(status=discord.Status.online, activity=game)
         self.all_commands['update'].enabled = True

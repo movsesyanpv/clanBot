@@ -82,7 +82,7 @@ class LFG:
         self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
-    def parse_args(self, content, message, is_init):
+    def parse_args(self, content, message, is_init, guild=None):
         time = datetime.now()
 
         def merge_arg(str_args):
@@ -107,12 +107,15 @@ class LFG:
                 'length': timedelta(seconds=-1)
             }
         else:
-            text = message.content.split()
-            hashids = Hashids()
-            for word in text:
-                group_id = hashids.decode(word)
-                if len(group_id) > 0:
-                    time_start = self.get_cell('group_id', group_id[0], 'time')
+            if type(message) == discord.Message:
+                text = message.content.split()
+                hashids = Hashids()
+                for word in text:
+                    group_id = hashids.decode(word)
+                    if len(group_id) > 0:
+                        time_start = self.get_cell('group_id', group_id[0], 'time')
+            else:
+                time_start = self.get_cell('group_id', message, 'time')
         for string in content:
             str_arg = string.split(':')
             if len(str_arg) < 2:
@@ -200,7 +203,10 @@ class LFG:
             if len(roles) == 0:
                 return args
 
-        args['the_role'] = self.find_roles(is_init, message.guild, roles)
+        if type(message) != discord.Message and guild is not None:
+            args['the_role'] = self.find_roles(is_init, guild, roles)
+        else:
+            args['the_role'] = self.find_roles(is_init, message.guild, roles)
         return args
 
     def find_roles(self, is_init, guild, roles):
@@ -701,7 +707,11 @@ class LFG:
             await old_lfg.delete()
         else:
             new_lfg = old_lfg
-        await message.delete()
+        try:
+            if message.id != new_lfg.id:
+                await message.delete()
+        except discord.NotFound:
+            pass
         await self.update_group_msg(new_lfg, translations, lang)
         self.conn.commit()
         return new_lfg
