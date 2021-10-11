@@ -99,7 +99,10 @@ class Public(commands.Cog):
                 except mariadb.Error:
                     await ctx.channel.send(translations['unknown_metric'].format(metric), delete_after=10)
                     if ctx.guild.me.permissions_in(ctx.message.channel).manage_messages:
-                        await ctx.message.delete()
+                        try:
+                            await ctx.message.delete()
+                        except discord.NotFound:
+                            pass
                     return
             try:
                 top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
