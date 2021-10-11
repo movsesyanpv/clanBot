@@ -63,6 +63,8 @@ class ClanBot(commands.Bot):
         if not upgrade:
             self.data = d2.D2data(self.translations, self.langs, self.args.oauth, self.args.production,
                                   (self.args.cert, self.args.key))
+        else:
+            return
         self.raid = lfg.LFG()
         self.guild_db = sqlite3.connect('guild.db')
         self.guild_cursor = self.guild_db.cursor()
