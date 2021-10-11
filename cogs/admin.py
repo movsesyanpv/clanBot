@@ -55,7 +55,7 @@ class Admin(commands.Cog):
     async def upgrade(self, ctx, lang='en'):
         os.system('git pull')
         importlib.reload(main)
-        b = main.ClanBot(command_prefix='>')
+        b = main.ClanBot(upgrade=True, command_prefix='>')
         strings = ctx.message.content.splitlines()
         if len(strings) > 1:
             content = strings[1]
