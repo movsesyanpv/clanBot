@@ -377,7 +377,7 @@ class Group(commands.Cog):
                         return
                 number = await get_numerical_answer('lfg_choice', len(lfg_list) + 1)
             else:
-                ctx.message = await ctx.channel.send('Continue in the thread')
+                ctx.message = await ctx.channel.send(translations['thread_start'])
                 try:
                     dm = await ctx.message.create_thread(name='LFG', auto_archive_duration=60)
                     await dm.add_user(ctx.author)
@@ -474,7 +474,7 @@ class Group(commands.Cog):
         q_line = '{}\n{}'.format(translations['type'], translations['dm_noedit'])
         view = ActivityType(ctx.author, raid=translations['raid'], pve=translations['pve'],
                             gambit=translations['gambit'], pvp=translations['pvp'], default=translations['default'])
-        no_change_button = MyButton(type='nochange', label='no change', style=discord.ButtonStyle.red, row=2)
+        no_change_button = MyButton(type='nochange', label=translations['button_no_change'], style=discord.ButtonStyle.red, row=2)
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
         await view.wait()
@@ -708,11 +708,11 @@ class Group(commands.Cog):
 
                             ctx.bot.persistent_views.pop(ctx.bot.persistent_views.index(buttons))  # This bs is a workaround for a pycord broken persistent view processing
                             ctx.bot.add_view(GroupButtons(new_lfg.id, ctx.bot))  # This bs is a workaround for a pycord broken persistent view processing
-                await ctx.interaction.edit_original_message(content="Done")
+                await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'])
             else:
-                await ctx.respond("You are not the owner!", ephemeral=True)
+                await ctx.respond(ctx.bot.translations[lang]['lfg']['will_not_delete'], ephemeral=True)
         else:
-            await ctx.respond("This is not my LFG post!", ephemeral=True)
+            await ctx.respond(ctx.bot.translations[lang]['lfg']['not_a_post'], ephemeral=True)
 
     @commands.command(aliases=['editlfg', 'editLfg', 'editLFG'])
     @commands.guild_only()
@@ -921,6 +921,8 @@ class NoGoButton(discord.ui.Button):
         self.view.bot.raid.rm_people(interaction.message.id, interaction.user, emoji)
         lang = self.view.bot.guild_lang(interaction.message.guild.id)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
+        if not was_goer and not is_mb_goer:
+            await interaction.response.send_message(content=self.view.bot.translations[lang]['lfg']['was_not_going'], ephemeral=True)
 
 
 class DeleteButton(discord.ui.Button):
@@ -950,6 +952,9 @@ class DeleteButton(discord.ui.Button):
                         await group_ch.delete(reason='LFG deletion')
             self.view.bot.raid.del_entry(message.id)
             await message.delete()
+        else:
+            lang = self.view.bot.guild_lang(interaction.message.guild.id)
+            await interaction.response.send_message(content=self.view.bot.translations[lang]['lfg']['will_not_delete'], ephemeral=True)
 
 
 class GroupButtons(discord.ui.View):

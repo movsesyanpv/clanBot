@@ -41,7 +41,8 @@
         "osiris": "Trials of Osiris",
         "empire_hunts": "Elective difficulty empire hunt",
         "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
-        "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version."
+        "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version.",
+        "command_is_done": "Done"
     },
     "lfg": {
         "go": "Go",
@@ -89,7 +90,12 @@
         "button_want": "I want to go",
         "button_help": "I'll help/Maybe I'll go",
         "button_no_go": "Remove registration",
-        "button_delete": "Delete the post"
+        "button_delete": "Delete the post",
+        "was_not_going": "You weren't in the group",
+        "will_not_delete": "Only the group's owner can do this",
+        "not_a_post": "This is not my LFG post!",
+        "thread_start": "Please continue in the thread",
+        "button_no_change": "No changes"
     },
     "lfge": {
         "roles": "Roles",
