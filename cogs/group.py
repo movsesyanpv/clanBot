@@ -51,9 +51,6 @@ class Group(commands.Cog):
                                    label_no_go=ctx.bot.translations[lang]['lfg']['button_no_go'],
                                    label_delete=ctx.bot.translations[lang]['lfg']['button_delete'])
             await out.edit(content=None, embed=embed, view=buttons)
-
-            ctx.bot.persistent_views.pop(ctx.bot.persistent_views.index(buttons)) #This bs is a workaround for a pycord broken persistent view processing
-            ctx.bot.add_view(GroupButtons(out.id, ctx.bot)) #This bs is a workaround for a pycord broken persistent view processing
         else:
             out = await message.channel.send(msg)
         ctx.bot.raid.set_id(out.id, message.id)
@@ -704,9 +701,6 @@ class Group(commands.Cog):
                                                    label_no_go=ctx.bot.translations[lang]['lfg']['button_no_go'],
                                                    label_delete=ctx.bot.translations[lang]['lfg']['button_delete'])
                             await new_lfg.edit(view=buttons)
-
-                            ctx.bot.persistent_views.pop(ctx.bot.persistent_views.index(buttons))  # This bs is a workaround for a pycord broken persistent view processing
-                            ctx.bot.add_view(GroupButtons(new_lfg.id, ctx.bot))  # This bs is a workaround for a pycord broken persistent view processing
                 await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'])
             else:
                 await ctx.respond(ctx.bot.translations[lang]['lfg']['will_not_delete'], ephemeral=True)
@@ -750,9 +744,6 @@ class Group(commands.Cog):
                                            label_no_go=ctx.bot.translations[lang]['lfg']['button_no_go'],
                                            label_delete=ctx.bot.translations[lang]['lfg']['button_delete'])
                     await new_lfg.edit(view=buttons)
-
-                    ctx.bot.persistent_views.pop(ctx.bot.persistent_views.index(buttons))  # This bs is a workaround for a pycord broken persistent view processing
-                    ctx.bot.add_view(GroupButtons(new_lfg.id, ctx.bot))  # This bs is a workaround for a pycord broken persistent view processing
                 else:
                     await ctx.bot.check_ownership(message)
                     if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
