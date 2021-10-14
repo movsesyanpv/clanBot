@@ -25,7 +25,7 @@ from cogs.group import GroupButtons
 
 
 class ClanBot(commands.Bot):
-    version = '3.0a6_pycord'
+    version = '3.0a7_pycord'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
@@ -1040,16 +1040,5 @@ if __name__ == '__main__':
     intents = discord.Intents.default()
     intents.members = True
     b = ClanBot(command_prefix=get_prefix, intents=intents)
-
-    # @b.message_command(name="Edit LFG")
-    # async def sl_edit_lfg(ctx, message: discord.Message):
-    #     if b.raid.is_raid(message.id):
-    #         owner = ctx.bot.raid.get_cell('group_id', message.id, 'owner')
-    #         if ctx.author.id == owner:
-    #             await b.get_command("edit_lfg").__call__(ctx, message)
-    #         else:
-    #             await ctx.respond("You are not the owner!", ephemeral=True)
-    #     else:
-    #         await ctx.respond("This is not my LFG post!", ephemeral=True)
 
     b.start_up()
