@@ -423,11 +423,11 @@ class Admin(commands.Cog):
         aliases = ''
         prefix = '/'
         if command_name != 'all':
-            try:
-                for command_id in ctx.bot.application_commands:
-                    if ctx.bot.application_commands[command_id].name == command_name:
-                        command = ctx.bot.application_commands[command_id]
-            except KeyError:
+            command = None
+            for command_id in ctx.bot.application_commands:
+                if ctx.bot.application_commands[command_id].name == command_name:
+                    command = ctx.bot.application_commands[command_id]
+            if command is None:
                 if command_name in metric_tables:
                     for command_id in ctx.bot.application_commands:
                         if ctx.bot.application_commands[command_id].name == 'top':
@@ -449,7 +449,7 @@ class Admin(commands.Cog):
                 else:
                     command_desc = command.description
                 if (not (command.cog.qualified_name == 'Admin' and command.name != 'help') or await ctx.bot.is_owner(
-                        ctx.author)):
+                        ctx.author)) and type(command) == discord.SlashCommand:
                     command_list.append([command.name, command_desc])
 
             help_msg = '{}```\t{}```'.format(help_msg,
