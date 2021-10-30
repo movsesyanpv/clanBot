@@ -665,7 +665,10 @@ class Group(commands.Cog):
                 pass
         return text
 
-    @commands.message_command(name="Edit LFG")
+    @commands.message_command(
+        name="Edit LFG",
+        description="Edit LFG post"
+    )
     async def edit_lfg_msg(self, ctx, message: discord.Message):
         await ctx.defer(ephemeral=True)
         if ctx.guild is None:
