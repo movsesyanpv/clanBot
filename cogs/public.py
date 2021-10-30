@@ -1,9 +1,12 @@
 from discord.ext import commands
-from discord.app import Option
+from discord.commands import Option, option
 import discord
 from tabulate import tabulate
 import mariadb
 import pydest
+
+import cogs.utils.autocomplete
+from cogs.utils.autocomplete import metric_picker
 
 
 class Public(commands.Cog):
@@ -129,7 +132,9 @@ class Public(commands.Cog):
         name='top',
         description='Print top players for one of the available metrics.'
     )
-    async def top_sl(self, ctx, metric,
+    @commands.guild_only()
+    async def top_sl(self, ctx,
+                     metric: Option(str, "Metric to make a leaderboard", required=True, autocomplete=metric_picker),
                      number: Option(int, "Max number of positions to display", required=False, default=10),
                      is_global: Option(bool, "Make a leaderboard across all tracked clans", required=False, default=False)
                      ):
@@ -141,10 +146,6 @@ class Public(commands.Cog):
         clan_id = ctx.bot.guild_cursor.fetchone()
         lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
-        # if ctx.invoked_with in ['gtop', 'globaltop']:
-        #     is_global = True
-        # else:
-        #     is_global = False
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
@@ -323,6 +324,7 @@ class Public(commands.Cog):
         name="online",
         description="Get the list of online clan members."
     )
+    @commands.guild_only()
     async def online_sl(self, ctx):
         await ctx.defer()
         if ctx.guild is None:
