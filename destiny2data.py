@@ -1056,13 +1056,19 @@ class D2data:
                     'value': ''
                 }
 
+                if xur_loc:
+                    self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
+
+                if xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']] != 2961497387:
+                    xur_loc['placeHash'] = xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']]['destinationHash']
+                    self.data[lang]['xur'].pop('footer')
+
                 sales = []
                 if xur_loc:
                     xur_place_name = await self.destiny.decode_hash(xur_loc['placeHash'], 'DestinyPlaceDefinition', language=lang)
                     xur_destination_name = await self.destiny.decode_hash(xur_loc['destinationHash'], 'DestinyDestinationDefinition', language=lang)
                     loc_field['value'] = '{}, {}'.format(xur_place_name['displayProperties']['name'], xur_destination_name['displayProperties']['name'])
                     self.data[lang]['xur']['fields'].append(loc_field)
-                    self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
                     sales = [{'name': '{}, {}'.format(xur_place_name['displayProperties']['name'],
                                                       xur_destination_name['displayProperties']['name']),
                               'items': [], 'template': cat_templates['6']},
