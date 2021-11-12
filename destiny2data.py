@@ -1056,7 +1056,7 @@ class D2data:
                     'value': ''
                 }
 
-                annotations = None
+                annotations = []
 
                 if xur_loc:
                     self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
@@ -1065,7 +1065,7 @@ class D2data:
                 if xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']] != 2961497387:
                     xur_loc['placeHash'] = xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']]['destinationHash']
                     self.data[lang]['xur'].pop('footer')
-                    annotations = None
+                    annotations = []
 
                 sales = []
                 if xur_loc:
