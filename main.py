@@ -513,25 +513,25 @@ class ClanBot(commands.Bot):
             elif isinstance(exception, commands.PrivateMessageOnly):
                 await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a guild channel!",
                                delete_after=60)
-                await ctx.message.delete()
+                # await ctx.message.delete()
 
             elif isinstance(exception, commands.CommandNotFound):
                 await ctx.send("\N{WARNING SIGN} That command doesn't exist!", delete_after=60)
-                await ctx.message.delete()
+                # await ctx.message.delete()
 
             elif isinstance(exception, commands.DisabledCommand):
                 await ctx.send("\N{WARNING SIGN} Sorry, this command is temporarily disabled! Please, try again later.",
                                delete_after=60)
-                await ctx.message.delete()
+                # await ctx.message.delete()
 
             elif isinstance(exception, commands.MissingPermissions):
                 await ctx.send(f"\N{WARNING SIGN} You do not have permissions to use this command.", delete_after=60)
-                await ctx.message.delete()
+                # await ctx.message.delete()
 
             elif isinstance(exception, commands.CommandOnCooldown):
                 await ctx.send(f"{ctx.author.mention} slow down! Try that again in {exception.retry_after:.1f} seconds",
                                delete_after=60)
-                await ctx.message.delete()
+                # await ctx.message.delete()
 
             elif isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.BadArgument):
                 await ctx.send(f"\N{WARNING SIGN} {exception}")
@@ -754,9 +754,10 @@ class ClanBot(commands.Bot):
             await self.post_embed(name, self.data.data, time_to_delete, channels)
 
     async def post_embed_to_channel(self, upd_type, src_dict, time_to_delete, channel_id):
-        delay = random.uniform(0, 180)
-        await asyncio.sleep(delay)
-        self.logger.info('ws limit status for {} in {}: {}'.format(upd_type, channel_id, self.is_ws_ratelimited()))
+        # delay = random.uniform(0, 180)
+        delay = 0
+        # await asyncio.sleep(delay)
+        # self.logger.info('ws limit status for {} in {}: {}'.format(upd_type, channel_id, self.is_ws_ratelimited()))
         try:
             channel = self.get_channel(channel_id)
         except discord.Forbidden:
@@ -936,30 +937,31 @@ class ClanBot(commands.Bot):
     async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
         tasks = []
         for channel_id in channels:
-            task = asyncio.ensure_future(self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
-            tasks.append(task)
+            self.sched.add_job(self.post_embed_to_channel, misfire_grace_time=86400, args=[upd_type, src_dict, time_to_delete, channel_id])
+            # task = asyncio.ensure_future(self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
+            # tasks.append(task)
 
-        responses = await asyncio.gather(*tasks)
+        # responses = await asyncio.gather(*tasks)
 
-        if self.update_status:
-            msg = '{} is posted'.format(upd_type)
-            statuses = tabulate(responses, tablefmt='simple', colalign=('left', 'left'), headers=['channel', 'status'])
-            msg = '{}\n```{}```'.format(msg, statuses)
-            if len(msg) > 2000:
-                msg_strs = msg.splitlines()
-                msg = ''
-                for line in msg_strs:
-                    if len(msg) + len(line) <= 1990:
-                        msg = '{}{}\n'.format(msg, line)
-                    else:
-                        msg = '{}```'.format(msg)
-                        await self.dm_owner(msg)
-                        msg = '```{}\n'.format(line)
-                if len(msg) > 0:
-                    msg = '{}'.format(msg)
-                    await self.dm_owner(msg)
-            else:
-                await self.dm_owner(msg)
+        # if self.update_status:
+        #     msg = '{} is posted'.format(upd_type)
+        #     statuses = tabulate(responses, tablefmt='simple', colalign=('left', 'left'), headers=['channel', 'status'])
+        #     msg = '{}\n```{}```'.format(msg, statuses)
+        #     if len(msg) > 2000:
+        #         msg_strs = msg.splitlines()
+        #         msg = ''
+        #         for line in msg_strs:
+        #             if len(msg) + len(line) <= 1990:
+        #                 msg = '{}{}\n'.format(msg, line)
+        #             else:
+        #                 msg = '{}```'.format(msg)
+        #                 await self.dm_owner(msg)
+        #                 msg = '```{}\n'.format(line)
+        #         if len(msg) > 0:
+        #             msg = '{}'.format(msg)
+        #             await self.dm_owner(msg)
+        #     else:
+        #         await self.dm_owner(msg)
 
     async def post_updates(self, version, content, lang):
         msg = '`{} v{}`\n{}'.format(self.user.name, version, content)
