@@ -936,32 +936,39 @@ class ClanBot(commands.Bot):
 
     async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
         tasks = []
+        responses = []
         for channel_id in channels:
-            self.sched.add_job(self.post_embed_to_channel, misfire_grace_time=86400, args=[upd_type, src_dict, time_to_delete, channel_id])
+            try:
+                responses.append(await self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
+            except discord.HTTPException as e:
+                responses.append([channel_id, "discord.HTTPException"])
+            except:
+                responses.append([channel_id, "Exception"])
+            # self.sched.add_job(self.post_embed_to_channel, misfire_grace_time=86400, args=[upd_type, src_dict, time_to_delete, channel_id])
             # task = asyncio.ensure_future(self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
             # tasks.append(task)
 
         # responses = await asyncio.gather(*tasks)
 
-        # if self.update_status:
-        #     msg = '{} is posted'.format(upd_type)
-        #     statuses = tabulate(responses, tablefmt='simple', colalign=('left', 'left'), headers=['channel', 'status'])
-        #     msg = '{}\n```{}```'.format(msg, statuses)
-        #     if len(msg) > 2000:
-        #         msg_strs = msg.splitlines()
-        #         msg = ''
-        #         for line in msg_strs:
-        #             if len(msg) + len(line) <= 1990:
-        #                 msg = '{}{}\n'.format(msg, line)
-        #             else:
-        #                 msg = '{}```'.format(msg)
-        #                 await self.dm_owner(msg)
-        #                 msg = '```{}\n'.format(line)
-        #         if len(msg) > 0:
-        #             msg = '{}'.format(msg)
-        #             await self.dm_owner(msg)
-        #     else:
-        #         await self.dm_owner(msg)
+        if self.update_status:
+            msg = '{} is posted'.format(upd_type)
+            statuses = tabulate(responses, tablefmt='simple', colalign=('left', 'left'), headers=['channel', 'status'])
+            msg = '{}\n```{}```'.format(msg, statuses)
+            if len(msg) > 2000:
+                msg_strs = msg.splitlines()
+                msg = ''
+                for line in msg_strs:
+                    if len(msg) + len(line) <= 1990:
+                        msg = '{}{}\n'.format(msg, line)
+                    else:
+                        msg = '{}```'.format(msg)
+                        await self.dm_owner(msg)
+                        msg = '```{}\n'.format(line)
+                if len(msg) > 0:
+                    msg = '{}'.format(msg)
+                    await self.dm_owner(msg)
+            else:
+                await self.dm_owner(msg)
 
     async def post_updates(self, version, content, lang):
         msg = '`{} v{}`\n{}'.format(self.user.name, version, content)
