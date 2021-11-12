@@ -1056,12 +1056,16 @@ class D2data:
                     'value': ''
                 }
 
+                annotations = None
+
                 if xur_loc:
                     self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
+                    annotations = [self.translations[lang]['xur']['copyright']]
 
                 if xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']] != 2961497387:
                     xur_loc['placeHash'] = xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']]['destinationHash']
                     self.data[lang]['xur'].pop('footer')
+                    annotations = None
 
                 sales = []
                 if xur_loc:
@@ -1143,7 +1147,7 @@ class D2data:
                           'items': [], 'template': cat_templates['6']}]
             await self.write_to_db(lang, 'xur', sales, template='vendor_items.html', order=7,
                                    name=xur_def['displayProperties']['name'],
-                                   annotations=[self.translations[lang]['xur']['copyright']])
+                                   annotations=annotations)
 
     async def get_heroic_story(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions',
