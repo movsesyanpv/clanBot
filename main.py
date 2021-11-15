@@ -25,7 +25,7 @@ from cogs.group import GroupButtons
 
 
 class ClanBot(commands.Bot):
-    version = '3.0a9_pycord'
+    version = '3.0a10_pycord'
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
@@ -516,25 +516,25 @@ class ClanBot(commands.Bot):
             elif isinstance(exception, commands.PrivateMessageOnly):
                 await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a guild channel!",
                                delete_after=60)
-                await ctx.message.delete()
+                # await ctx.message.delete()
 
             elif isinstance(exception, commands.CommandNotFound):
                 await ctx.send("\N{WARNING SIGN} That command doesn't exist!", delete_after=60)
-                await ctx.message.delete()
+                # await ctx.message.delete()
 
             elif isinstance(exception, commands.DisabledCommand):
                 await ctx.send("\N{WARNING SIGN} Sorry, this command is temporarily disabled! Please, try again later.",
                                delete_after=60)
-                await ctx.message.delete()
+                # await ctx.message.delete()
 
             elif isinstance(exception, commands.MissingPermissions):
                 await ctx.send(f"\N{WARNING SIGN} You do not have permissions to use this command.", delete_after=60)
-                await ctx.message.delete()
+                # await ctx.message.delete()
 
             elif isinstance(exception, commands.CommandOnCooldown):
                 await ctx.send(f"{ctx.author.mention} slow down! Try that again in {exception.retry_after:.1f} seconds",
                                delete_after=60)
-                await ctx.message.delete()
+                # await ctx.message.delete()
 
             elif isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.BadArgument):
                 await ctx.send(f"\N{WARNING SIGN} {exception}")
@@ -757,7 +757,7 @@ class ClanBot(commands.Bot):
             await self.post_embed(name, self.data.data, time_to_delete, channels)
 
     async def post_embed_to_channel(self, upd_type, src_dict, time_to_delete, channel_id):
-        await asyncio.sleep(random.randint(0, 60))
+        # await asyncio.sleep(random.randint(0, 60))
         try:
             channel = self.get_channel(channel_id)
         except discord.Forbidden:
@@ -936,12 +936,14 @@ class ClanBot(commands.Bot):
         return [channel_id, 'posted ({})'.format(frameinfo.lineno + 1)]
 
     async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
-        tasks = []
+        responses = []
         for channel_id in channels:
-            task = asyncio.ensure_future(self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
-            tasks.append(task)
-
-        responses = await asyncio.gather(*tasks)
+            try:
+                responses.append(await self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
+            except discord.HTTPException as e:
+                responses.append([channel_id, "discord.HTTPException"])
+            except:
+                responses.append([channel_id, "Exception"])
 
         if self.update_status:
             msg = '{} is posted'.format(upd_type)
