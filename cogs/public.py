@@ -256,6 +256,8 @@ class Public(commands.Cog):
                     embeds[0].description = msg
                 if len(metric_description) > 1 and not long_desc:
                     embeds[-1].set_footer(text=metric_description[1])
+                if len(embeds) > 10:
+                    embeds = embeds[:10]
                 await ctx.respond(embeds=embeds)
             else:
                 await ctx.respond(translations['no_data'])
