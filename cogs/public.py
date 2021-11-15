@@ -226,24 +226,37 @@ class Public(commands.Cog):
             top_list = await ctx.bot.data.get_clan_leaderboard(clan_ids, metric, number, is_time, is_kda, is_global)
             max_len = min(number, len(top_list))
             if len(top_list) > 0:
-                msg = '{}```{}```'.format(top_name['displayProperties']['description'],
-                                          tabulate(top_list, tablefmt='plain', colalign=('left', 'left')))
-                if len(msg) > 2000:
+                metric_description = top_name['displayProperties']['description'].splitlines()
+                if len(metric_description) > 2:
+                    metric_description.pop(metric_description.index(''))
+                msg = ''
+                long_desc = False
+                if len(metric_description[0]) > 256:
+                    msg = top_name['displayProperties']['description']
+                    long_desc = True
+                    embeds = [discord.Embed()]
+                else:
+                    embeds = [discord.Embed(title=metric_description[0])]
+                msg = '{}```{}```'.format(msg, tabulate(top_list, tablefmt='plain', colalign=('left', 'left')))
+                if len(msg) > 4096:
                     msg_strs = msg.splitlines()
                     msg = ''
                     for line in msg_strs:
-                        if len(msg) + len(line) <= 1990:
+                        if len(msg) + len(line) <= 4090:
                             msg = '{}{}\n'.format(msg, line)
                         else:
                             msg = '{}```'.format(msg)
-                            await ctx.respond(msg)
+                            embeds[-1].description = msg
+                            embeds.append(discord.Embed())
                             msg = '```{}\n'.format(line)
-                            return
                     if len(msg) > 0:
                         msg = '{}'.format(msg)
-                        await ctx.respond(msg)
+                        embeds[-1].description = msg
                 else:
-                    await ctx.respond(msg)
+                    embeds[0].description = msg
+                if len(metric_description) > 1 and not long_desc:
+                    embeds[-1].set_footer(text=metric_description[1])
+                await ctx.respond(embeds=embeds)
             else:
                 await ctx.respond(translations['no_data'])
         else:
