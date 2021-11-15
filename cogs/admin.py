@@ -418,8 +418,9 @@ class Admin(commands.Cog):
         metric_tables = ['seasonsmetrics', 'accountmetrics', 'cruciblemetrics', 'destinationmetrics',
                          'gambitmetrics', 'raidsmetrics', 'strikesmetrics', 'trialsofosirismetrics']
         command_list = []
-        help_msg = '`{} v{}`'.format(name, ctx.bot.version)
-        await ctx.respond(help_msg)
+        help_embed = discord.Embed(title='{} v{}'.format(name, ctx.bot.version))
+        help_msg = '{} v{}'.format(name, ctx.bot.version)
+        # await ctx.respond(help_msg)
         aliases = ''
         prefix = '/'
         if command_name != 'all':
@@ -434,12 +435,15 @@ class Admin(commands.Cog):
                             command = ctx.bot.application_commands[command_id]
                     additional_arg = command_name
                 else:
-                    await ctx.channel.send(help_translations['no_command'].format(command_name))
+                    help_embed.description = help_translations['no_command'].format(command_name)
+                    await ctx.respond(embed=help_embed)
                     return
             command_string = command.name
             for arg in command.options:
                 command_string = '{} {}'.format(command_string, arg.name)
-            await channel.send(help_translations['parameters'].format(command_string))
+            help_msg = help_translations['parameters'].format(command_string)
+            # help_embed.description = help_translations['parameters'].format(command_string)
+            # await ctx.respond(embed=help_embed)
         if command_name == 'all':
             help_msg = '{}\n'.format(help_translations['list'])
             for command_id in ctx.bot.application_commands:
@@ -459,12 +463,13 @@ class Admin(commands.Cog):
             for lang in self.bot.langs:
                 lang_list = '{}`, `{}'.format(lang_list, lang)
             help_msg = '{}{}'.format(help_msg, help_translations['additional_info'].format(prefix, lang_list[4:], prefix))
-            await ctx.channel.send(help_msg)
+            help_embed.description = help_msg
+            await ctx.respond(embed=help_embed)
             pass
         elif command.name == 'top':
             translations = help_translations['commands'][command.name]
-            help_msg = '{}'.format(translations['info'])
-            await channel.send(help_msg)
+            help_msg = '{}\n{}'.format(help_msg, translations['info'])
+            # await channel.send(help_msg)
 
             try:
                 if additional_arg in metric_tables and additional_arg is not None:
@@ -473,7 +478,7 @@ class Admin(commands.Cog):
                                               password=ctx.bot.api_data['pass'], port=ctx.bot.api_data['db_port'],
                                               database='metrics')
                 internal_cursor = internal_db.cursor()
-                help_msg = ''
+                # help_msg = ''
                 if len(metric_tables) == 1:
                     for table in metric_tables:
                         metric_list = []
@@ -508,7 +513,7 @@ class Admin(commands.Cog):
                                             name = metric[0]
                                         metric_list.append(['`{}'.format(name), '{}{}`'.format(top_name['displayProperties']['name'], modifier)])
                             if len(metric_list) > 0:
-                                help_msg = '{}**{}**'.format(help_msg, translations[table])
+                                help_msg = '{}\n**{}**'.format(help_msg, translations[table])
                                 help_msg = '{}\n{}\n'.format(help_msg, tabulate(metric_list, tablefmt='plain',
                                                                                 colalign=('left', 'left')))
                 else:
@@ -522,24 +527,34 @@ class Admin(commands.Cog):
                 internal_db.close()
             except mariadb.Error:
                 pass
-            if len(help_msg) > 2000:
+            help_embeds = [help_embed]
+            if len(help_msg) > 4096:
                 help_lines = help_msg.splitlines()
                 help_msg = help_lines[0]
                 while len(help_lines) > 1:
-                    if len(help_msg) + 1 + len(help_lines[1]) <= 2000:
+                    if len(help_msg) + 1 + len(help_lines[1]) <= 4096:
                         help_msg = '{}\n{}'.format(help_msg, help_lines[1])
                         if len(help_lines) > 1 and help_lines[1] in help_msg:
                             help_lines.pop(1)
                     else:
-                        await channel.send(help_msg)
+                        help_embeds[-1].description = help_msg
+                        help_embeds.append(discord.Embed())
+                        # await channel.send(help_msg)
                         help_msg = ''
                     if len(help_lines) == 0:
                         break
-            await channel.send(help_msg)
+                help_embeds.pop(len(help_embeds) - 1)
+            else:
+                help_embeds[0].description = help_msg
+            if len(help_embeds) > 10:
+                help_embeds = help_embeds[:10]
+
+            await ctx.respond(embeds=help_embeds)
             pass
         elif command.name in ['lfg', 'edit_lfg']:
+            help_embeds = []
             help_translations = help_translations['commands']['lfg']
-            help_msg = '{}\n{}\n'.format(help_translations['info'], help_translations['creation'])
+            help_msg = '{}\n{}\n{}\n'.format(help_msg, help_translations['info'], help_translations['creation'])
             args = [
                 ['[-n:][name:]', help_translations['name']],
                 ['[-t:][time:]', help_translations['time']],
@@ -553,21 +568,28 @@ class Admin(commands.Cog):
             help_msg = '{}```\t{}```'.format(help_msg,
                                              tabulate(args, tablefmt='plain', colalign=('left', 'left')).
                                              replace('\n', '\n\t'))
-            await channel.send(help_msg)
+            # help_embed.description = help_msg
+            # help_embeds.append(help_embed)
+            # await ctx.respond(help_msg)
 
-            help_msg = '{}\n'.format(help_translations['creation_note'])
-            await channel.send(help_msg)
+            help_msg = '{}\n{}\n'.format(help_msg, help_translations['creation_note'])
+            # help_embeds.append(discord.Embed(description=help_msg))
+            # await channel.send(help_msg)
 
-            help_msg = '{}\n'.format(help_translations['example_title'])
+            help_msg = '{}\n{}\n'.format(help_msg, help_translations['example_title'])
             help_msg = '{}```@{} {}```'.format(help_msg, name, help_translations['example_lfg'])
-            await channel.send(help_msg)
+            # help_embeds.append(discord.Embed(description=help_msg))
+            # await channel.send(help_msg)
 
-            help_msg = '{}\n'.format(help_translations['edit_title'])
+            help_msg = '{}\n{}\n'.format(help_msg, help_translations['edit_title'])
             help_msg = '{}{}\n'.format(help_msg, help_translations['manual'])
-            await channel.send(help_msg)
+            # help_embeds.append(discord.Embed(description=help_msg))
+            # await channel.send(help_msg)
 
-            help_msg = '{}\n'.format(help_translations['use_lfg'])
-            await channel.send(help_msg)
+            help_msg = '{}\n{}\n'.format(help_msg, help_translations['use_lfg'])
+            # help_embeds.append(discord.Embed(description=help_msg))
+            help_embed.description = help_msg
+            await ctx.respond(embed=help_embed)
             pass
         else:
             if command.name in help_translations['commands'].keys():
@@ -575,8 +597,9 @@ class Admin(commands.Cog):
                 command_desc = translations['info']
             else:
                 command_desc = command.description
-            help_msg = '{}'.format(command_desc)
-            await channel.send(help_msg)
+            # help_msg = '{}'.format(command_desc)
+            help_embed.description = '{}\n{}'.format(help_msg, command_desc)
+            await ctx.respond(embed=help_embed)
             pass
 
 
