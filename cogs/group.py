@@ -53,6 +53,11 @@ class Group(commands.Cog):
             await out.edit(content=None, embed=embed, view=buttons)
         else:
             out = await message.channel.send(msg)
+            buttons = GroupButtons(out.id, ctx.bot, label_go=ctx.bot.translations[lang]['lfg']['button_want'],
+                                   label_help=ctx.bot.translations[lang]['lfg']['button_help'],
+                                   label_no_go=ctx.bot.translations[lang]['lfg']['button_no_go'],
+                                   label_delete=ctx.bot.translations[lang]['lfg']['button_delete'])
+            await out.edit(content=msg, view=buttons)
         ctx.bot.raid.set_id(out.id, message.id)
         await ctx.bot.raid.update_group_msg(out, ctx.bot.translations[lang], lang)
         if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
@@ -128,7 +133,7 @@ class Group(commands.Cog):
         a_type = view.value
 
         view = ModeLFG(ctx.message.author, basic=translations['basic_mode'], manual=translations['manual_mode'])
-        await dm.send(content=translations['mode'].format(translations['basic_mode'], translations['manual_mode']),
+        await dm.send(content=translations['mode'].format(translations['manual_mode'], translations['basic_mode']),
                       view=view)
         await view.wait()
         if view.value is None:
@@ -493,7 +498,7 @@ class Group(commands.Cog):
         if a_type != '--':
             text = '{}-at:{}\n'.format(text, a_type)
 
-        q_line = '{}\n{}'.format(translations['mode'].format(translations['basic_mode'], translations['manual_mode']), translations['dm_noedit'])
+        q_line = '{}\n{}'.format(translations['mode'].format(translations['manual_mode']), translations['basic_mode'], translations['dm_noedit'])
         view = ModeLFG(ctx.author, basic=translations['basic_mode'], manual=translations['manual_mode'])
         view.add_item(no_change_button)
         await dm.send(content=q_line, view=view)
