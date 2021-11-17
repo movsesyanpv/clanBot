@@ -25,7 +25,7 @@ from cogs.group import GroupButtons
 
 
 class ClanBot(commands.Bot):
-    version = '3.0a11_pycord'
+    version = ''
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
@@ -70,6 +70,8 @@ class ClanBot(commands.Bot):
         self.guild_cursor = self.guild_db.cursor()
         self.persistent_views_added = False
 
+        version_file = open('version.dat', 'r')
+        self.version = version_file.read()
 
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])

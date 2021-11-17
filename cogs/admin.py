@@ -54,18 +54,21 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def upgrade(self, ctx, lang='en'):
         os.system('git pull')
-        importlib.reload(main)
-        b = main.ClanBot(upgrade=True, command_prefix='>')
+        # importlib.reload(main)
+        # b = main.ClanBot(command_prefix='>')
         strings = ctx.message.content.splitlines()
+        version_file = open('version.dat', 'r')
+        version = version_file.read()
         if len(strings) > 1:
             content = strings[1]
             if len(strings) > 2:
                 for string in ctx.message.content.splitlines()[2:]:
                     content = '{}\n{}'.format(content, string)
-            await ctx.bot.post_updates(b.version, content, lang)
+            await ctx.bot.post_updates(version, content, lang)
         importlib.reload(updater)
         updater.go()
-        await self.stop(ctx)
+        await ctx.channel.send('Ok')
+        # await self.stop(ctx)
 
     @commands.command(
         description='Get Bungie JSON for the API path'
