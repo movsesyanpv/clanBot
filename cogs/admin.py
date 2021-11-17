@@ -49,7 +49,7 @@ class Admin(commands.Cog):
         return
 
     @commands.command(
-        description='Pull the latest version from git and restart'
+        description='Pull the latest version from git and post changelog'
     )
     @commands.dm_only()
     @commands.is_owner()
@@ -68,7 +68,8 @@ class Admin(commands.Cog):
             await ctx.bot.post_updates(version, content, lang)
         importlib.reload(updater)
         updater.go()
-        await self.stop(ctx)
+        await ctx.channel.send('Ok')
+        # await self.stop(ctx)
 
     @commands.command(
         description='Get Bungie JSON for the API path'
