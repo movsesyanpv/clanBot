@@ -2386,6 +2386,10 @@ class D2data:
                                                   url, params={'components': 204}, change_msg=False)
         activity_string = ''
         if profile_resp:
+            try:
+                test = profile_resp['Response']['characterActivities']['data']
+            except KeyError:
+                return [member['destinyUserInfo']['LastSeenDisplayName'], '']
             for char in profile_resp['Response']['characterActivities']['data']:
                 char_resp = profile_resp['Response']['characterActivities']['data'][char]
                 if char_resp['currentActivityHash'] != 0:
