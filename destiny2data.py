@@ -1014,6 +1014,12 @@ class D2data:
             '4': 'armor_item.html'
         }
 
+        place_hashes = {
+            '1272484305': 3747705955,
+            '3607432451': 3607432451,
+            '697502628': 3747705955
+        }
+
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         xur_resp = await self.get_cached_json('xur', 'xur', xur_url, self.vendor_params, force=forceget)
@@ -1063,7 +1069,8 @@ class D2data:
                     annotations = [self.translations[lang]['xur']['copyright']]
 
                 if xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']] != 2961497387:
-                    xur_loc['placeHash'] = xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']]['destinationHash']
+                    xur_loc['destinationHash'] = xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']]['destinationHash']
+                    xur_loc['placeHash'] = place_hashes[str(xur_loc['destinationHash'])]
                     self.data[lang]['xur'].pop('footer')
                     annotations = []
 
