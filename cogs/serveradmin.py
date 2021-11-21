@@ -1,4 +1,5 @@
 from discord.ext import commands
+from discord.commands import Option, option
 import importlib
 import discord
 import json
@@ -7,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 import updater
 import os
 import sqlite3
+from cogs.utils.views import UpdateTypes, BotLangs
 
 
 class ServerAdmin(commands.Cog):
@@ -52,6 +54,27 @@ class ServerAdmin(commands.Cog):
             await message.delete()
         return
 
+    @commands.slash_command(name='regnotifier',
+                            description='Register notifier channel')
+    async def sl_regnotifier(self, ctx,
+                             upd_type: Option(str, "The type of notifier", required=False, default='notifiers', choices=['notifiers', 'updates'])):
+        await ctx.defer(ephemeral=True)
+        if ctx.guild is None:
+            await ctx.respond("This command can not be used in DMs")
+            return
+        if not ctx.channel.permissions_for(ctx.author).administrator:
+            await ctx.respond("You lack the administrator permissions to use this command")
+            return
+        notifier_type = upd_type
+        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
+            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
+                                         (ctx.channel.id, ctx.guild.id))
+            ctx.bot.guild_db.commit()
+            ctx.bot.get_channels()
+            msg = 'Got it, {}'.format(ctx.author.mention)
+            await ctx.respond(msg)
+        return
+
     @commands.command()
     @commands.guild_only()
     async def rmnotifier(self, ctx, upd_type='notifiers'):
@@ -70,6 +93,24 @@ class ServerAdmin(commands.Cog):
         if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await message.delete()
         return
+
+    @commands.slash_command(name='rmnotifier',
+                            description='Deregister notifier channel')
+    async def sl_rmnotifier(self, ctx):
+        await ctx.defer(ephemeral=True)
+        if ctx.guild is None:
+            await ctx.respond("This command can not be used in DMs")
+            return
+        if not ctx.channel.permissions_for(ctx.author).administrator:
+            await ctx.respond("You lack the administrator permissions to use this command")
+            return
+        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
+            ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
+            ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
+            ctx.bot.guild_db.commit()
+            ctx.bot.get_channels()
+            msg = 'Got it, {}'.format(ctx.author.mention)
+            await ctx.respond(msg)
 
     @commands.command()
     @commands.guild_only()
@@ -91,6 +132,30 @@ class ServerAdmin(commands.Cog):
         if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await message.delete()
         return
+
+    @commands.slash_command(name='setlang')
+    async def sl_setlang(self, ctx):
+        await ctx.defer(ephemeral=True)
+        if ctx.guild is None:
+            await ctx.respond("This command can not be used in DMs")
+            return
+        if not ctx.channel.permissions_for(ctx.author).administrator:
+            await ctx.respond("You lack the administrator permissions to use this command")
+            return
+        view = BotLangs(ctx.author, self.bot)
+        await ctx.respond('Select language', view=view)
+        await view.wait()
+        args = view.value
+
+        msg = 'Got it, {}'.format(ctx.author.mention)
+        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
+            ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
+                                         (args[0].lower(), ctx.guild.id))
+            ctx.bot.guild_db.commit()
+            if ctx.guild.me.guild_permissions.change_nickname:
+                await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
+        await ctx.interaction.edit_original_message(content=msg, view=None)
+
 
     @commands.command()
     @commands.guild_only()
@@ -279,32 +344,6 @@ class ServerAdmin(commands.Cog):
     @commands.guild_only()
     async def settings(self, ctx):
         pass
-
-
-class UpdateTypes(discord.ui.View):
-    def __init__(self, owner):
-        super().__init__()
-        self.owner = owner
-        self.value = None
-
-    @discord.ui.select(placeholder='Update type', max_values=8, options=[
-        discord.SelectOption(label='Strikes', value='strikes', description='Daily vanguard strike playlist modifiers'),
-        discord.SelectOption(label='Spider', value='spider', description='Spider\'s material exchange'),
-        discord.SelectOption(label='Nightmare hunts', value='nightmares', description='Currently available nightmare hunts'),
-        discord.SelectOption(label='Crucible rotators', value='crucible', description='Currently available crucible rotators'),
-        discord.SelectOption(label='Raid challenges', value='raids', description='Current week\'s raid challenges'),
-        discord.SelectOption(label='Nightfall: The Ordeal', value='ordeal', description='Current nightfall'),
-        discord.SelectOption(label='Empire hunt', value='empire', description='Current empire hunt'),
-        discord.SelectOption(label='Xur', value='xur', description='Xur\'s location and exotics'),
-        discord.SelectOption(label='Trials of osiris', value='osiris', description="Current ToO info")
-    ])
-    async def updates(self, select: discord.ui.Select, interaction: discord.Interaction):
-        self.value = []
-        if self.owner != interaction.user:
-            return
-        for selected in select.values:
-            self.value.append(selected)
-            self.stop()
 
 
 def setup(bot):

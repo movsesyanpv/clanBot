@@ -21,7 +21,7 @@ from discord.ext import commands
 import raid as lfg
 import destiny2data as d2
 import unauthorized
-from cogs.group import GroupButtons
+from cogs.utils.views import GroupButtons
 
 
 class ClanBot(commands.Bot):
