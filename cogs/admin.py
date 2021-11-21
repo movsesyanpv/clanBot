@@ -457,7 +457,14 @@ class Admin(commands.Cog):
                     command_desc = command.description
                 if (not (command.cog.qualified_name == 'Admin' and command.name != 'help') or await ctx.bot.is_owner(
                         ctx.author)) and type(command) == discord.SlashCommand:
-                    command_list.append([command.name, command_desc])
+                    if ctx.guild is None:
+                        if command.guild_ids is None:
+                            command_list.append([command.name, command_desc])
+                    else:
+                        if command.guild_ids is None:
+                            command_list.append([command.name, command_desc])
+                        elif ctx.guild.id in command.guild_ids:
+                            command_list.append([command.name, command_desc])
 
             help_msg = '{}```\t{}```'.format(help_msg,
                                              tabulate(command_list, tablefmt='plain', colalign=('left', 'left'))
