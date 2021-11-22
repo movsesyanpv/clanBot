@@ -20,9 +20,37 @@ class Group(commands.Cog):
         if lang not in ctx.bot.langs:
             lang = 'en'
 
+        await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'])
         translations = ctx.bot.translations[lang]['lfg']
         status = await ctx.bot.raid.dm_lfgs(ctx.author, translations)
         return status
+
+    @commands.slash_command(name='lfglist',
+                            description='Print your LFG list')
+    async def sl_lfglist(self, ctx):
+        await ctx.defer(ephemeral=True)
+        lang = 'en'
+        if ctx.guild is not None:
+            lang = ctx.bot.guild_lang(ctx.guild.id)
+
+        translations = ctx.bot.translations[lang]['lfg']
+
+        lfg_list = ctx.bot.raid.c.execute(
+            'SELECT group_id, name, time, channel_name, server_name, timezone FROM raid WHERE owner=?',
+            (ctx.author.id,))
+        lfg_list = lfg_list.fetchall()
+
+        if len(lfg_list) == 0:
+            await ctx.respond(translations['lfglist_empty'])
+            return
+
+        msg = translations['lfglist_head']
+        i = 1
+        for lfg in lfg_list:
+            msg = translations['lfglist'].format(msg, i, lfg[1], datetime.fromtimestamp(lfg[2]), lfg[5],
+                                                 lfg[3], lfg[4], ctx.bot.raid.hashids.encode(lfg[0]))
+            i = i + 1
+        await ctx.respond(embed=discord.Embed(description=msg))
 
     async def guild_lfg(self, ctx, lang, lfg_str=None):
         message = ctx.message

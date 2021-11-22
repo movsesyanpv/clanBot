@@ -20,12 +20,16 @@ class ServerAdmin(commands.Cog):
         description='Delete groups that are unavailable or inactive'
     )
     async def lfgcleanup(self, ctx, days=0):
+        lang = 'en'
         msg = 'Done, removed {} entries.'
         if ctx.guild is None:
+            await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'])
             if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=False):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
                 await ctx.message.channel.send(msg.format(n))
         else:
+            lang = ctx.bot.guild_lang(ctx.guild.id)
+            await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=60)
             if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=True):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
                 await ctx.message.channel.send(msg.format(n), delete_after=30)
@@ -35,10 +39,31 @@ class ServerAdmin(commands.Cog):
                 except discord.NotFound:
                     pass
 
+    @commands.slash_command(name='lfgcleanup',
+                            description='Delete groups that are unavailable or inactive')
+    async def sl_lfgcleanup(self, ctx,
+                            days: Option(int, "Days since the activity was finished", required=False, default=0)):
+        await ctx.defer(ephemeral=True)
+        msg = 'Done, removed {} entries.'
+        if ctx.guild is None:
+            if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=False):
+                n = await ctx.bot.lfg_cleanup(days, ctx.guild)
+                await ctx.respond(msg.format(n))
+            else:
+                await ctx.respond('You lack the permissions to access this command here.')
+        else:
+            if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
+                n = await ctx.bot.lfg_cleanup(days, ctx.guild)
+                await ctx.respond(msg.format(n))
+            else:
+                await ctx.respond('You lack the permissions to access this command here.')
+
     @commands.command()
     @commands.guild_only()
     async def regnotifier(self, ctx, upd_type='notifiers'):
         message = ctx.message
+        lang = ctx.bot.guild_lang(ctx.guild.id)
+        await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=30)
         available_types = ['notifiers', 'seasonal', 'updates']
         notifier_type = 'notifiers'
         if upd_type in available_types:
@@ -79,6 +104,8 @@ class ServerAdmin(commands.Cog):
     @commands.guild_only()
     async def rmnotifier(self, ctx, upd_type='notifiers'):
         message = ctx.message
+        lang = ctx.bot.guild_lang(ctx.guild.id)
+        await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=30)
         available_types = ['notifiers', 'seasonal', 'updates']
         notifier_type = 'notifiers'
         if upd_type in available_types:
@@ -125,6 +152,7 @@ class ServerAdmin(commands.Cog):
             ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
                                          (lang.lower(), ctx.message.guild.id))
             ctx.bot.guild_db.commit()
+        await ctx.channel.send(ctx.bot.translations[lang.lower()]['msg']['deprecation_warning'], delete_after=30)
         msg = 'Got it, {}'.format(message.author.mention)
         if ctx.guild.me.guild_permissions.change_nickname:
             await ctx.guild.me.edit(nick=ctx.bot.translations[lang.lower()]['nick'], reason='language change')
@@ -156,11 +184,11 @@ class ServerAdmin(commands.Cog):
                 await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
         await ctx.interaction.edit_original_message(content=msg, view=None)
 
-
     @commands.command()
     @commands.guild_only()
     async def setclan(self, ctx, clan_id, *args):
         lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=60)
         try:
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(int(clan_id))
         except ValueError:
@@ -197,6 +225,49 @@ class ServerAdmin(commands.Cog):
             await ctx.channel.send('{}: {}'.format(clan_id, clan_json['Message']), delete_after=60)
         if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
             await ctx.message.delete()
+
+    @commands.slash_command(name='setclan',
+                            description='Set a Destiny 2 clan for the server')
+    async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True)):
+        await ctx.defer(ephemeral=True)
+        if ctx.guild is None:
+            ctx.respond('You can\'t use this command in DMs')
+            return
+        if not ctx.channel.permissions_for(ctx.author).administrator:
+            await ctx.respond("You lack the administrator permissions to use this command")
+            return
+        lang = ctx.bot.guild_lang(ctx.guild.id)
+        try:
+            url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(int(clan_id))
+        except ValueError:
+            url = 'https://www.bungie.net/Platform/GroupV2/Name/{}/1/'.format(clan_id)
+        clan_resp = await ctx.bot.data.get_bungie_json('clan'.format(clan_id), url, string='clan {}'.format(clan_id),
+                                                       change_msg=False)
+        clan_json = clan_resp
+        try:
+            code = clan_json['ErrorCode']
+        except KeyError:
+            code = 0
+        except TypeError:
+            await ctx.respond('{}: {}'.format(clan_id, ctx.bot.translations[lang]['msg']['clan_search_error']))
+            return
+        if code == 1:
+            await ctx.respond('{}\nid: {}'.format(clan_json['Response']['detail']['name'],
+                                                       clan_json['Response']['detail']['groupId']))
+            if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
+                ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
+                                             (clan_json['Response']['detail']['name'],
+                                              clan_json['Response']['detail']['groupId'], ctx.guild.id))
+                ctx.bot.guild_db.commit()
+                if ctx.guild.me.guild_permissions.change_nickname:
+                    try:
+                        await ctx.guild.me.edit(
+                            nick='{}bot'.format(clan_json['Response']['detail']['clanInfo']['clanCallsign']),
+                            reason='clan setup')
+                    except KeyError:
+                        pass
+        else:
+            await ctx.respond('{}: {}'.format(clan_id, clan_json['Message']))
 
     @commands.command()
     async def update(self, ctx, *args):
@@ -266,13 +337,13 @@ class ServerAdmin(commands.Cog):
         name='update',
         description='Get updates from Bungie'
     )
-    @commands.guild_only()
-    async def update_sl(self, ctx):
+    async def sl_update(self, ctx):
         await ctx.defer(ephemeral=True)
         if ctx.guild is not None:
             lang = ctx.bot.guild_lang(ctx.guild.id)
         else:
             lang = 'en'
+            await ctx.respond('This command can\'t be used in DMs')
         if not ctx.channel.permissions_for(ctx.author).administrator:
             await ctx.respond("You lack the administrator permissions to use this command")
             return
@@ -333,13 +404,16 @@ class ServerAdmin(commands.Cog):
             msg = 'Got it, {}'.format(ctx.message.author.mention)
             await ctx.message.channel.send(msg, delete_after=10)
 
-    @commands.command()
-    @commands.guild_only()
+    @commands.slash_command(
+        description='Register the channel as a place for LFG posts',
+        default_permission=False
+    )
     async def reglfg(self, ctx):
         pass
 
-    @commands.command(
-        description="View and change settings for the server"
+    @commands.slash_command(
+        description="View and change settings for the server",
+        default_permission=False
     )
     @commands.guild_only()
     async def settings(self, ctx):
