@@ -351,6 +351,7 @@ class Public(commands.Cog):
         clan_id = ctx.bot.guild_cursor.fetchone()
         lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
+        embeds = [discord.Embed(title=ctx.bot.translations[lang]['online']['title'])]
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
@@ -359,28 +360,12 @@ class Public(commands.Cog):
         if len(clan_id) > 0:
             clan_ids = clan_id[0]
             data = await ctx.bot.data.get_online_clan_members(clan_ids, lang)
-            if len(data) > 1:
-                msg = '```{}```'.format(
-                    tabulate(data, tablefmt='simple', colalign=('left', 'left'), headers='firstrow'))
-            else:
-                msg = '```{}```'.format(
-                    tabulate(data, tablefmt='simple', colalign=('left', 'left')))
-            if len(msg) > 2000:
-                msg_strs = msg.splitlines()
-                msg = ''
-                for line in msg_strs:
-                    if len(msg) + len(line) <= 1990:
-                        msg = '{}{}\n'.format(msg, line)
-                    else:
-                        msg = '{}```'.format(msg)
-                        await ctx.respond(msg)
-                        msg = '```{}\n'.format(line)
-                        break
-                if len(msg) > 0:
-                    msg = '{}'.format(msg)
-                    await ctx.channel.send(msg)
-            else:
-                await ctx.respond(msg)
+            data.pop(0)
+            for member in data:
+                embeds[-1].add_field(name=member[0], value=member[1])
+                if len(embeds[-1].fields) == 25 and data.index(member) != (len(data) - 1):
+                    embeds.append(discord.Embed())
+            await ctx.respond(embeds=embeds)
         else:
             await ctx.respond(translations['no_clan'])
 

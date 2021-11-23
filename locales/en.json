@@ -326,6 +326,7 @@
         "nick": "Nickname",
         "since": "Last activity",
         "error": "Error",
-        "error_t": "Unable to fetch the clan"
+        "error_t": "Unable to fetch the clan",
+        "title": "Online clan members"
     }
 }
