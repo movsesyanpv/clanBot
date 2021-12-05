@@ -205,7 +205,7 @@
             },
             "online": {
                 "info": "Liste des membres du clan en ligne.",
-                "name": "En Ligne"
+                "name": "En_Ligne"
             }
         },
         "prefix": "Affichage des préfixes disponibles",
