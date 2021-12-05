@@ -8,14 +8,14 @@
         "spider": "Vendu par l'araignée",
         "xur": "Vendu par Xur",
         "weapon": "Armes",
-        "heroicstory": "L'histoire des missions heroics",
+        "heroicstory": "L'histoire des missions heroiques",
         "forge": "La forge actuelle",
         "strikesmods": "Modificateurs des assauts",
         "reckoningmods": "Justice",
         "nightfalls820": "Les Nuits Noires 820 disponibles",
         "guidedgamenightfall": "Nuit Noire Guidée actuelle",
         "ordeal": "Nuit Noire actuelle",
-        "nightmares": "Chasses aux cauchemars disponibles ",
+        "nightmares": "Chasses aux cauchemars disponibles",
         "reckoningboss": "Le Boss du jugement est",
         "cruciblerotators": "Les rotations de l’épreuve sont",
         "xurloc": "Emplacement",
@@ -33,11 +33,11 @@
         "prefixes": "Voici les préfixes disponibles possibles pour `@{}`, Ex. Vous pouvez taper `{}prefix` pour afficher cette commande\n",
         "no_prefixes": "Les commandes du bot doivent être précéder de `@{}`",
         "no_notifiers": "Il n'y a aucun canal pour afficher les notifications. Merci de paramétrer un canal pour les notifications avec la commande `regnotifier`",
-        "in_progress": "Getting updates. If the types match with the registered channels, they will be posted. Keep in mind, that this command does not force me to get updates from Bungie.",
-        "invalid_type": "Invalid update type. Please see `help update` for the available update types.",
-        "no_seasonal_reg": "This channel is not registered as a seasonal notifier.",
-        "no_regular_reg": "This channel is not registered as a non-seasonal notifier.",
-        "no_send_messages": "{}, I'm not allowed to respond in that channel.",
+        "in_progress": "Mise a jour. Si les informations correspondent aux canaux enregistrés, ils seront postés. Gardez en mémoire que cette commande ne force pas la mise a jour de Bungie.",
+        "invalid_type": "Mise a jour invalide. Merci de lire `help update` pour les types de mise a jour possibles.",
+        "no_seasonal_reg": "Ce canal ne supporte pas les notifications de saisons.",
+        "no_regular_reg": "Ce canal ne supporte pas les notifications des anciennes saisons.",
+        "no_send_messages": "{}, Je ne suis pas autorisé a répondre dans ce canal.",
         "osiris": "Jugement d'Osiris",
         "empire_hunts": "Choix de la difficulté Chasse à l'empire",
         "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
@@ -57,9 +57,9 @@
         "size": "Quel est le nombre de joueurs ?",
         "length": "Combien de temps prévoyez vous pour cette activité ? Ex : 1h 30m pour une heure et demi.",
         "type": "Quelle est le type d'activité ? (pve, pvp, gambit/reckoning, raid)",
-        "mode": "Quel est le mode pour ce groupe ?  (`manual` si vous désirez verifier tout le monde, `basic` pour accepter automatiquement)",
-        "role": "Nom des rôles a mentionner, séparés par `;`. Tapez `-` pour un choix de rôles automatique",
-        "check": "Les Infos sont correctes ?\nNom: {}\nDescription: {}\nHeure de départ: {}\nTaille du groupe: {}\nDurée: {}\nType d'activité: {}\nMode: {}\nRôles: {}",
+        "mode": "Quel est le mode pour ce groupe ? \n`manual` si vous désirez vérifier tout le monde \n`basic` pour accepter automatiquement",
+        "role": "Nom des rôles a mentionner, séparés par `;`. \nTapez `-` pour un choix de rôles automatique",
+        "check": "Vérifiez les infos et au besoin modifiez les plus tard\nNom: {}\nDescription: {}\nHeure de départ: {}\nTaille du groupe: {}\nDurée: {}\nType d'activité: {}\nMode: {}\nRôles: {}",
         "no": "non",
         "creation": "Création",
         "edit": "Edition",
@@ -67,13 +67,13 @@
         "too_long": "La réponse est trop longue ({} caractères). La longueur maximum est de {} caractères. Vous avez besoin de renouveler votre réponse.\n{}",
         "dm_noedit": "Tapez '--' si vous ne désirez pas changer vos réponses précédentes",
         "lfg_choice": "Tapez le numero du groupe dans la liste ci dessus",
-        "lfg_choice_fail": "Impossible d'enregistrer la réponse ('{}'). Celle ci doit contenir seulement des\nnombres. Ex : '1' pour le premier LFG dans la liste et doit être inférieur a {}.\n{}",
+        "lfg_choice_fail": "Impossible d'enregistrer la réponse ('{}'). \nCelle ci doit contenir seulement des nombres. \nEx : '1' pour le premier LFG dans la liste et doit être inférieur a {}.\n{}",
         "lfglist_head": "Vos LFGs:",
         "lfglist": "{}{}. {} @ {} {} dans #{} de {}, ID: `{}`\n\n",
         "lfglist_empty": "Aucun LFGs a été trouvé",
         "lfglist_choice_check": "Êtes vous sur de votre choix du LFG ? Oui/Non",
         "no_change": "Pas de modifications",
-        "dm_start": "{}, check your DMs"
+        "dm_start": "\n{}, vérifiez vos MP"
     },
     "lfge": {
         "roles": "Roles",
@@ -142,7 +142,7 @@
                 "info": "Définir le clan Destiny 2 sur le server. Vous pouvez utiliser le nom du clan ou son ID. Le nom du clan et son ID seront affichés si tout s'est bien passé."
             },
             "top": {
-                "info": "Print top players for one of the available metrics. Metric's description is available through the link. You can also pass the metric's hash to the command. Use `gtop` or `globaltop` to get lists across all the clans that are known to the bot.",
+                "info": "Afficher le Top des joueurs pour l'un de ces paramètres. La description des paramètres est disponible sur ce lien. Vous pouvez aussi utilisez des raccourcis pour les commandes. Utilisez `gtop` ou `globaltop` pour avoir la liste des clans connus par le bot.",
                 "seasonsmetrics": "Saisons",
                 "accountmetrics": "Compte",
                 "cruciblemetrics": "Epreuve",
@@ -154,7 +154,7 @@
                 "cat_list": "Available categories. To get the category's metric list send `{}help top category`. The categories are listed in the table below (left column), right column contains the descriptions of the aforementioned categories. The categories match in-game ones.",
                 "unavailable": {
                     "displayProperties": {
-                        "name": "La mesure n'est pas disponible"
+                        "name": "Le paramètre n'est pas disponible"
                     }
                 }
             },
@@ -201,11 +201,11 @@
                 "info": "Affichage des préfixes disponibles"
             },
             "setprefix": {
-                "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes. Send `none` as the parameter to disable all prefixes, except bot mention."
+                "info": "Choisissez un préfixe pour ce serveur. Pour utiliser de multiples préfixes, séparez les par des espaces. Ex : `setprefix ? !` vous permet de choisir ? et ! comme préfixe. Choisissez `none` pour désactiver tous les prefixes, excepté la mention du bot."
             },
             "online": {
                 "info": "Liste des membres du clan en ligne.",
-                "name": "en_ligne"
+                "name": "En Ligne"
             }
         },
         "prefix": "Affichage des préfixes disponibles",
@@ -218,7 +218,7 @@
         "datefromstart": "Jours avant le départ"
     },
     "top": {
-        "no_clan": "Il n'y a aucune information sur ce clan. Merci d'utiliser la commande `setclan` pour activer un clan Destiny 2.",
+        "no_clan": "Il n'y a aucune information sur ce clan. \nUtiliser la commande `setclan` pour activer un clan Destiny 2.",
         "unknown_metric": "Mesure inconnue `{}`. Utiliser `help top` pour avoir une liste des mesures disponibles.",
         "in_progress": "Récupération du classement, ca peut être long.",
         "no_data": "Aucune donnée pour la mesure"
@@ -245,7 +245,7 @@
         "gloves": "Gant",
         "chest": "Veste",
         "boots": "Botte",
-        "class": "élément de classe",
+        "class": "Elément de classe",
         "mod": "Mod",
         "random": "Aléatoire"
     },
