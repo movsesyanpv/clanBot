@@ -1067,6 +1067,8 @@ class D2data:
                 if xur_loc:
                     self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
                     annotations = [self.translations[lang]['xur']['copyright']]
+                else:
+                    xur_loc = {}
 
                 if xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']] != 2961497387:
                     xur_loc['destinationHash'] = xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']]['destinationHash']
