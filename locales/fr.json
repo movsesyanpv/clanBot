@@ -5,8 +5,8 @@
         "noapi": "L'API Bungie n'est pas disponible",
         "maintenance": "L'API Bungie est fermée pour maintenance",
         "later": "Cette information sera disponible plus tard",
-        "spider": "Vendu par l'araignée",
-        "xur": "Vendu par Xur",
+        "spider": "Propositions de l'araignée",
+        "xur": "Propositions de Xur",
         "weapon": "Armes",
         "heroicstory": "L'histoire des missions heroiques",
         "forge": "La forge actuelle",
@@ -40,8 +40,8 @@
         "no_send_messages": "{}, Je ne suis pas autorisé a répondre dans ce canal.",
         "osiris": "Jugement d'Osiris",
         "empire_hunts": "Choix de la difficulté Chasse à l'empire",
-        "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
-        "daily_mods": "Ada1 et Banshee44 vendent ces articles"
+        "clan_search_error": "Le clan demandé n'a pas été trouvé. Vous pouvez réessayer avec le nom du clan précisément ( Majuscule - Minuscule - Caractère spécial - etc ). Si cela ne fonctionne toujours pas, essayez d'entrer l'ID de votre clan. L'ID peut être trouvé sur la page bungie.net du clan après la chaîne `groupId=` (vous trouverez les chiffres après cela dans l'adresse http). Si cela ne fonctionne pas, vous pouvez toujours demander de l'aide sur mon serveur de support, dont le lien peut être trouvé avec la commande `support`.",
+        "daily_mods": "Propositions d'Ada-1 et de Banshee-44"
     },
     "lfg": {
         "go": "Go",
@@ -106,14 +106,14 @@
     "Titan": "Titan",
     "Hunter": "Chasseur",
     "rotator": "Rotation",
-    "strikes": "Liste des assauts Heroique",
+    "strikes": "Liste des assauts Heroïque",
     "reckoning": "Justice: Palier III",
     "oryx": "Likeness of Oryx",
     "swords": "Les Epées",
     "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers.",
     "LW": "Dernier vœu",
     "GoS": "Jardin du Salut",
-    "error": "Une erreur est apparue. L'information a été envoyé au développeur.",
+    "error": "Une erreur est apparue. L'information a été transmise au développeur.",
     "classnames": [
         "chasseur",
         "arcaniste",
@@ -151,7 +151,7 @@
                 "raidsmetrics": "Raids",
                 "strikesmetrics": "Assauts",
                 "trialsofosirismetrics": "Jugement d'Osiris",
-                "cat_list": "Available categories. To get the category's metric list send `{}help top category`. The categories are listed in the table below (left column), right column contains the descriptions of the aforementioned categories. The categories match in-game ones.",
+                "cat_list": "Liste des catégories disponibles. Pour avoir la liste des critères de chaque catégorie taper `{}help top category`. Les catégories sont classées dans la table ci dessous (colonne de gauche), la colonne de droite contient la description des catégories mentionnées.Les catégories correspondent à celles du jeu.",
                 "unavailable": {
                     "displayProperties": {
                         "name": "Le paramètre n'est pas disponible"
@@ -162,13 +162,13 @@
                 "info": "Les langues disponibles sont {}. Disponible uniquement pour les admins du serveur."
             },
             "update": {
-                "info": "Get updates from Bungie for the given `args`. The types should be separated with spaces. Available args:\n - `daily` for strike modifiers and spider\n - `weekly` for available empire hunts and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics\nUpdates are posted in the channel, the command was invoked, if the channel was registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the server's admins."
+                "info": "Obtenez des mises à jour de Bungie pour les critères `args` proposés. Les critères doivent être séparés par des espaces. \nCritères possibles :\n - `daily` pour les modificateurs des assaut et l'araignée\n - `weekly` pour les chasses à l'empire et les cauchemars disponibles, l'épreuve actuelle et les rotation de l'épreuve.\n - `spider` pour les prix des matériaux proposés par l'Araignée\n - `xur` pour l'emplacement et les exotiques proposé par Xur\nLes mises à jour sont publiées dans le canal ou la commande a été saisie, si le canal a été enregistré avec `regnotifier`. Tout, à l'exception de « saisonnier », est publié sur les canaux notifier. Disponible uniquement pour les administrateurs du serveur."
             },
             "rmnotifier": {
-                "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
+                "info": "`upd_type` peut être soit 'notifier' pour les mises à jour régulières (quotidiennes, hebdomadaires, etc.) ou 'updates' pour les mises à jour du bot. La valeur par défaut est 'notifier'. Disponible uniquement pour les administrateurs de serveurs."
             },
             "regnotifier": {
-                "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
+                "info": "`upd_type` peut être soit 'notifier' pour les mises à jour régulières (quotidiennes, hebdomadaires, etc.) ou 'updates' pour les mises à jour du bot. La valeur par défaut est 'notifier'. Disponible uniquement pour les administrateurs de serveurs."
             },
             "plan_maintenance": {
                 "info": "Disponible uniquement pour le propriétaire du bot"
@@ -177,12 +177,12 @@
                 "info": "Disponible uniquement pour le propriétaire du Bot"
             },
             "lfglist": {
-                "info": "The command is used to get the list of the groups you've created. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**."
+                "info": "La commande est utilisée pour obtenir la liste des groupes que vous avez créés. Le bot vous enverra la liste de vos groupes avec les informations suivantes : nom, heure de départ, nom du canal, nom du serveur, **ID**"
             },
             "lfg": {
-                "info": "You can set up LFG either with arguments or in direct messages. For the latter, just don't pass any arguments for the command and answer the questions about the group.",
+                "info": "Vous pouvez configurer le LFG soit avec des critères, soit dans des messages directs. Pour ce dernier, il suffit de taper la commande sans critères et de répondre aux questions sur le groupe.",
                 "creation": "__**Création d'un groupe\"*__\nListe des arguments de la commande 'lfg'. Les arguments doivent être sur des lignes distinctes.",
-                "creation_note": "Every parameter should be in **separate lines**\n`%Hh %Mm` - time format, in which one and a half hour activity will be written as `1h 30m` or `1.5h` or `90m`.\n`%d-%m-%Y %H:%M%z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00+0300`.",
+                "creation_note": "Chaque paramètre doit être dans des **lignes séparées**\n`%Hh %Mm` - format d'heure, dans lequel une heure et demie d'activité sera écrite comme `1h 30m` ou `1.5h` ou `90m`.\n`%d-%m-%Y %H:%M%z` - format d'heure, dans lequel minuit à Moscou en Russie le 1er février 2000 est écrit comme `01-02-2000 00:00+0300`.",
                 "name": "Nom du LFG ou de l'activité planifiée",
                 "time": "Heure de départ de l'activité, format %d-%m-%Y %H:%M%z",
                 "description": "Description de l'activité",
@@ -193,9 +193,9 @@
                 "type": "Type d'activité: (pve, pvp, gambit/justice, raid)",
                 "example_title": "__Voici un exemple d'une commande pour la création d'un LFG:__",
                 "example_lfg": "lfg\n-at: pve\n-s: 3\n-n: Nightfall\n-t: 13-02-2020 19:00+0300\n-d: Farm ascendant shards\n-m: basic\n-r: Guardian\n-l: 01h 30m\n",
-                "edit_title": "__**LFG editing**__\nEvery group has it's own ID. To get information about your LFGs message the bot in DM `lfglist`. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**.\nIn order to edit the group send `editlfg` command in the channel you want the updated group announcement be in. The syntax is the same as in `lfg`",
-                "manual": "__**Managing manual groups**__\nWhen someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate along with some information about the group (time, channel, server).\nTo choose a person press the corresponding emote. The list will update. **Don't** press multiple emotes, wait for the list update!!!",
-                "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner)."
+                "edit_title": "__**Édition LFG**__\nChaque groupe a son propre identifiant. Pour obtenir des informations sur vos LFG, envoyez ce message directement au bot (en mp) `lfglist`. Le bot vous enverra la liste de vos groupes avec les informations suivantes : nom, heure de démarrage, nom du canal, nom du serveur, **ID**.\nAfin de modifier le groupe, envoyez la commande `editlfg` dans le canal dans lequel vous voulez que l'annonce de groupe soit mise à jour. La syntaxe est la même que pour la commande `lfg`\n\n",
+                "manual": "__**Gestion des groupes manuels**__\nLorsque quelqu'un clique sur 👌, le propriétaire du groupe recevra un message avec une liste de ceux qui souhaitent participer ainsi que des informations sur le groupe (heure, canal, serveur).\nPour choisir une personne, appuyez sur l'émote correspondante. La liste sera mise à jour. ** N'appuyez pas ** sur plusieurs émoticônes, attendez la mise à jour de la liste !!!",
+                "use_lfg": "__**Participer au Groupe**__\nCliquez sur 👌 pour vous ajouter à la liste des personnes souhaitant participer. Le bot devrait vous le confirmer. Pour vous retirer du groupe, cliquez a nouveau sur 👌.\nUtilisez ❓ pour vous ajouter à la liste de ceux qui sont prêts à aider. Pour vous retirer de la liste de ceux qui sont prêts à aider cliquez a nouveau sur ❓.\nUtilisez ❌ pour supprimer le groupe (ne fonctionne que pour le propriétaire du groupe)."
             },
             "prefix": {
                 "info": "Affichage des préfixes disponibles"
