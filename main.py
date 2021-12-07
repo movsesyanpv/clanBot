@@ -90,7 +90,7 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_featured_bd, 'featured_bd', 604800])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_bd, 'bd', 604800])
-        self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
+        # self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
@@ -181,8 +181,8 @@ class ClanBot(commands.Bot):
         if 'evweekly' in upd_type:
             if channels is None:
                 channels = self.notifiers
-            if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.data.get_weekly_eververse(self.langs)
+            # if (post and list(set(channels).intersection(self.notifiers))) or get:
+            #     await self.data.get_weekly_eververse(self.langs)
         if 'xur' in upd_type:
             if channels is None:
                 channels = self.notifiers
@@ -201,10 +201,10 @@ class ClanBot(commands.Bot):
         if 'tess' in upd_type:
             if channels is None:
                 channels = self.notifiers
-            if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=post, get=False, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=False, channels=channels, forceget=forceget)
-                await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=False, channels=channels, forceget=forceget)
+            # if (post and list(set(channels).intersection(self.notifiers))) or get:
+            #     await self.universal_update(self.data.get_featured_silver, 'silver', 604800, post=post, get=False, channels=channels, forceget=forceget)
+            #     await self.universal_update(self.data.get_featured_bd, 'featured_bd', 604800, post=post, get=False, channels=channels, forceget=forceget)
+            #     await self.universal_update(self.data.get_bd, 'bd', 604800, post=post, get=False, channels=channels, forceget=forceget)
         if 'alerts' in upd_type:
             if channels is None:
                 channels = self.notifiers
