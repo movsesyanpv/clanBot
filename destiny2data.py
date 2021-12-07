@@ -606,8 +606,12 @@ class D2data:
                                                                                   3187955025, 2638689062]:
                     definition = 'DestinyInventoryItemDefinition'
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
-                                                                   language=lang)
+                    if len(item['currencies']) > 0:
+                        currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                       language=lang)
+                    else:
+                        currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
+                        item['currencies'] = [{'quantity': ''}]
                     cat_number = 2
                     if 'screenshot' in item_def.keys():
                         screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
@@ -655,13 +659,17 @@ class D2data:
                     n_items = 0
                     curr_week = []
                     class_items = 0
-                if item['displayCategoryIndex'] == 7 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                if item['displayCategoryIndex'] == 8 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
                                                                                   3187955025, 2638689062]:
                     definition = 'DestinyInventoryItemDefinition'
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
-                                                                   language=lang)
-                    cat_number = 7
+                    if len(item['currencies']) > 0:
+                        currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                       language=lang)
+                    else:
+                        currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
+                        item['currencies'] = [{'quantity': ''}]
+                    cat_number = 8
                     if 'screenshot' in item_def.keys():
                         screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}" ' \
                                      'loading="lazy">'.format(item_def['screenshot'])
@@ -710,8 +718,12 @@ class D2data:
                 if item['displayCategoryIndex'] == 1 and item['categoryIndex'] != 37:
                     definition = 'DestinyInventoryItemDefinition'
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
-                                                                   language=lang)
+                    if len(item['currencies']) > 0:
+                        currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                       language=lang)
+                    else:
+                        currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
+                        item['currencies'] = [{'quantity': ''}]
                     cat_number = 2
                     if 'screenshot' in item_def.keys():
                         screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
@@ -743,7 +755,7 @@ class D2data:
         data = []
         start = await self.get_season_start()
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
-        week_n = int(week_n.days / 7)
+        week_n = int(week_n.days / 7) - 15
         for lang in langs:
             data.clear()
             bd = await self.get_seasonal_bd([lang], start)
