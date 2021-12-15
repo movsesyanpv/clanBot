@@ -2,7 +2,7 @@ import json
 import discord
 import argparse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, time
 import asyncio
 import pydest
 import mariadb
@@ -10,6 +10,8 @@ import gc
 import random
 
 from discord.ext.commands.bot import Bot
+import discord.ext.tasks as tasks
+from discord import ApplicationContext, DiscordException
 import sqlite3
 import logging
 import traceback
@@ -75,30 +77,30 @@ class ClanBot(commands.Bot):
 
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
+        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='50', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
+        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
         self.sched.add_job(self.data.get_banshee, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
         self.sched.add_job(self.data.get_ada, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
 
-        self.sched.add_job(self.data.drop_weekend_info, 'cron', day_of_week='tue', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.langs])
+        # self.sched.add_job(self.data.drop_weekend_info, 'cron', day_of_week='tue', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.langs])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightfall820, 'nightfalls820', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_empire_hunt, 'empire_hunts', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_empire_hunt, 'empire_hunts', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_featured_bd, 'featured_bd', 604800])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_bd, 'bd', 604800])
         self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
 
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
 
-        self.sched.add_job(self.data.token_update, 'interval', hours=1)
-        self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 86400])
+        # self.sched.add_job(self.data.token_update, 'interval', hours=1)
+        # self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 86400])
         # self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_the_lie_progress, 'thelie', 3600])
-        self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
+        # self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
         self.sched.add_job(self.update_metrics, 'cron', hour='10', minute='0', second='0', misfire_grace_time=86300)
 
         logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
@@ -106,6 +108,87 @@ class ClanBot(commands.Bot):
 
         if self.args.production:
             self.load_extension('cogs.dbl')
+
+    @tasks.loop(hours=1)
+    async def update_token(self):
+        self.logger.info('Updating Bungie token')
+        await self.data.token_update()
+
+    @tasks.loop(hours=168)
+    async def lfg_clean(self):
+        self.logger.info('Cleaning up old LFG posts')
+        await self.lfg_cleanup(7)
+
+    @tasks.loop(time=[time(hour=i, tzinfo=timezone.utc) for i in range(0, 24)])
+    async def update_alerts(self):
+        self.logger.info('Updating Bungie alerts')
+        await self.universal_update(self.data.get_global_alerts, 'alerts', 86400)
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
+    async def update_spider(self):
+        self.logger.info('Updating Spider inventory')
+        await self.universal_update(self.data.get_spider, 'spider', 86400)
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
+    async def update_vanguardstrikes(self):
+        self.logger.info('Updating strike modifiers')
+        await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400)
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
+    async def drop_weekend_info(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Dropping Xur and ToO')
+            await self.data.drop_weekend_info(self.langs)
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
+    async def update_ordeal(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Updating Ordeal strike')
+            await self.universal_update(self.data.get_ordeal, 'ordeal', 604800)
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
+    async def update_nightmares(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Updating nightmare hunts')
+            await self.universal_update(self.data.get_nightmares, 'nightmares', 604800)
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
+    async def update_empire_hunts(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Updating empire hunt')
+            await self.universal_update(self.data.get_empire_hunt, 'empire_hunts', 604800)
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
+    async def update_cruciblerotators(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Updating crucible rotator playlists')
+            await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800)
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
+    async def update_raids(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Updating raid challenges')
+            await self.universal_update(self.data.get_raids, 'raids', 604800)
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
+    async def update_xur(self):
+        if datetime.today().weekday() == 4:
+            self.logger.info('Updating Xur')
+            await self.universal_update(self.data.get_xur, 'xur', 345600)
+
+    def start_tasks(self):
+        self.lfg_clean.start()
+        self.update_token.start()
+        self.update_alerts.start()
+        self.update_spider.start()
+        self.update_vanguardstrikes.start()
+        self.drop_weekend_info.start()
+        self.update_ordeal.start()
+        self.update_nightmares.start()
+        self.update_empire_hunts.start()
+        self.update_cruciblerotators.start()
+        self.update_raids.start()
+        self.update_xur.start()
 
     def load_translations(self):
         self.translations = {}
@@ -268,6 +351,8 @@ class ClanBot(commands.Bot):
         char_file = open('data.json', 'w')
         char_file.write(json.dumps(self.data.data))
         char_file.close()
+
+        self.start_tasks()
         return
 
     async def on_guild_join(self, guild):
@@ -591,6 +676,29 @@ class ClanBot(commands.Bot):
                     await message.author.create_dm()
                 if message.author != owner:
                     await message.author.dm_channel.send(self.translations['en']['error'])
+
+    async def on_application_command_error(
+        self, context: ApplicationContext, exception: DiscordException
+    ) -> None:
+        if isinstance(exception, commands.NoPrivateMessage):
+            await context.respond("\N{WARNING SIGN} Sorry, you can't use this command in a private message!", ephemeral=True)
+        else:
+            bot_info = await self.application_info()
+            owner = bot_info.owner
+            if owner.dm_channel is None:
+                await owner.create_dm()
+            traceback_str = ''
+            for line in traceback.format_exception(type(exception), exception, exception.__traceback__):
+                traceback_str = '{}{}'.format(traceback_str, line)
+            await owner.dm_channel.send('`{}`'.format(traceback_str))
+            command_line = '/{}'.format(context.interaction.data['name'])
+            for option in context.interaction.data['options']:
+                command_line = '{} {}:{}'.format(command_line, option['name'], option['value'])
+            await owner.dm_channel.send('{}:\n{}'.format(context.author, command_line))
+            if context.author.dm_channel is None:
+                await context.author.create_dm()
+            if context.author != owner:
+                await context.author.dm_channel.send(self.translations['en']['error'])
 
     async def on_command_completion(self, ctx):
         gc.collect()

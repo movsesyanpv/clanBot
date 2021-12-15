@@ -81,6 +81,7 @@ class ServerAdmin(commands.Cog):
 
     @commands.slash_command(name='regnotifier',
                             description='Register notifier channel')
+    @commands.guild_only()
     async def sl_regnotifier(self, ctx,
                              upd_type: Option(str, "The type of notifier", required=False, default='notifiers', choices=['notifiers', 'updates'])):
         await ctx.defer(ephemeral=True)
@@ -123,6 +124,7 @@ class ServerAdmin(commands.Cog):
 
     @commands.slash_command(name='rmnotifier',
                             description='Deregister notifier channel')
+    @commands.guild_only()
     async def sl_rmnotifier(self, ctx):
         await ctx.defer(ephemeral=True)
         if ctx.guild is None:
@@ -162,6 +164,7 @@ class ServerAdmin(commands.Cog):
         return
 
     @commands.slash_command(name='setlang')
+    @commands.guild_only()
     async def sl_setlang(self, ctx):
         await ctx.defer(ephemeral=True)
         if ctx.guild is None:
@@ -228,6 +231,7 @@ class ServerAdmin(commands.Cog):
 
     @commands.slash_command(name='setclan',
                             description='Set a Destiny 2 clan for the server')
+    @commands.guild_only()
     async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True)):
         await ctx.defer(ephemeral=True)
         if ctx.guild is None:
@@ -337,6 +341,7 @@ class ServerAdmin(commands.Cog):
         name='update',
         description='Get updates from Bungie'
     )
+    @commands.guild_only()
     async def sl_update(self, ctx):
         await ctx.defer(ephemeral=True)
         if ctx.guild is not None:
@@ -408,6 +413,7 @@ class ServerAdmin(commands.Cog):
         description='Register the channel as a place for LFG posts',
         default_permission=False
     )
+    @commands.guild_only()
     async def reglfg(self, ctx):
         pass
 
