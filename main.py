@@ -17,7 +17,7 @@ from inspect import currentframe, getframeinfo
 from tabulate import tabulate
 
 from discord.ext import commands
-from discord_slash import SlashCommand
+# from discord_slash import SlashCommand
 
 import raid as lfg
 import destiny2data as d2
@@ -231,10 +231,10 @@ class ClanBot(commands.Bot):
                 self.load_extension(cog)
             except discord.ext.commands.ExtensionAlreadyLoaded:
                 self.reload_extension(cog)
-        try:
-            await self.slash.sync_all_commands(delete_from_unused_guilds=True)
-        except discord.Forbidden:
-            pass
+        # try:
+        #     await self.slash.sync_all_commands(delete_from_unused_guilds=True)
+        # except discord.Forbidden:
+        #     pass
         self.all_commands['update'].enabled = False
         self.all_commands['top'].enabled = False
         self.all_commands['online'].enabled = False
@@ -1049,5 +1049,5 @@ if __name__ == '__main__':
     intents = discord.Intents.default()
     intents.members = True
     b = ClanBot(command_prefix=get_prefix, intents=intents)
-    slash = SlashCommand(b, sync_commands=True)
+    # slash = SlashCommand(b, sync_commands=True)
     b.start_up()
