@@ -104,9 +104,6 @@ class ClanBot(commands.Bot):
         logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
         logging.getLogger('apscheduler')
 
-        if self.args.production:
-            self.load_extension('cogs.dbl')
-
     def load_translations(self):
         self.translations = {}
         for lang in self.langs:
@@ -226,6 +223,8 @@ class ClanBot(commands.Bot):
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(status=discord.Status.dnd, activity=game)
         self.remove_command('help')
+        if self.args.production:
+            self.load_extension('cogs.dbl')
         for cog in self.cog_list:
             try:
                 self.load_extension(cog)
