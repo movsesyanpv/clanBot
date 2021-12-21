@@ -1,4 +1,4 @@
-from discord.ext import commands
+from discord.ext import commands, pages
 from discord.commands import Option, option
 import discord
 from tabulate import tabulate
@@ -256,9 +256,14 @@ class Public(commands.Cog):
                     embeds[0].description = msg
                 if len(metric_description) > 1 and not long_desc:
                     embeds[-1].set_footer(text=metric_description[1])
-                if len(embeds) > 10:
-                    embeds = embeds[:10]
-                await ctx.respond(embeds=embeds)
+                if len(embeds) > 1:
+                    paginator = pages.Paginator(pages=embeds, show_disabled=False, show_indicator=True)
+                    await paginator.respond(ctx)
+                else:
+                    await ctx.respond(embeds=embeds)
+                # if len(embeds) > 10:
+                #     embeds = embeds[:10]
+                # await ctx.respond(embeds=embeds)
             else:
                 await ctx.respond(translations['no_data'])
         else:
@@ -362,7 +367,7 @@ class Public(commands.Cog):
             data = await ctx.bot.data.get_online_clan_members(clan_ids, lang)
             data.pop(0)
             for member in data:
-                embeds[-1].add_field(name=member[0], value=member[1])
+                embeds[-1].add_field(name=member[0], value=member[1], inline=False)
                 if len(embeds[-1].fields) == 25 and data.index(member) != (len(data) - 1):
                     embeds.append(discord.Embed())
             await ctx.respond(embeds=embeds)

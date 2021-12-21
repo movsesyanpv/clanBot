@@ -10,6 +10,7 @@ async def metric_picker(interaction, value):
     internal_db = mariadb.connect(host=api_data['db_host'], user=api_data['cache_login'],
                                   password=api_data['pass'], port=api_data['db_port'],
                                   database='metrics')
+    search_str = value.value
     internal_cursor = internal_db.cursor()
     internal_cursor.execute('''SELECT name FROM seasonsmetrics WHERE name LIKE ? and is_working=1
                             UNION
@@ -27,9 +28,10 @@ async def metric_picker(interaction, value):
                             UNION
                             SELECT name FROM trialsofosirismetrics WHERE name LIKE ?  and is_working=1
                             ORDER BY NAME asc''',
-                            ('%{}%'.format(value), '%{}%'.format(value), '%{}%'.format(value), '%{}%'.format(value),
-                             '%{}%'.format(value), '%{}%'.format(value), '%{}%'.format(value),
-                             '%{}%'.format(value)))
+                            ('%{}%'.format(search_str), '%{}%'.format(search_str),
+                             '%{}%'.format(search_str), '%{}%'.format(search_str),
+                             '%{}%'.format(search_str), '%{}%'.format(search_str),
+                             '%{}%'.format(search_str), '%{}%'.format(search_str)))
     metric_id = internal_cursor.fetchall()
     metric_list = [metric[0] for metric in metric_id]
     if len(metric_list) > 25:

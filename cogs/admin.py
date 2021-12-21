@@ -429,34 +429,35 @@ class Admin(commands.Cog):
         if command_name != 'all':
             command = None
             for command_id in ctx.bot.application_commands:
-                if ctx.bot.application_commands[command_id].name == command_name:
-                    command = ctx.bot.application_commands[command_id]
+                if command_id.name == command_name:
+                    command = command_id
             if command is None:
                 if command_name in metric_tables:
                     for command_id in ctx.bot.application_commands:
-                        if ctx.bot.application_commands[command_id].name == 'top':
-                            command = ctx.bot.application_commands[command_id]
+                        if command_id.name == 'top':
+                            command = command_id
                     additional_arg = command_name
                 else:
                     help_embed.description = help_translations['no_command'].format(command_name)
                     await ctx.respond(embed=help_embed)
                     return
             command_string = command.name
-            for arg in command.options:
-                command_string = '{} {}'.format(command_string, arg.name)
-            help_msg = help_translations['parameters'].format(command_string)
+            if type(command) != discord.SlashCommandGroup:
+                for arg in command.options:
+                    command_string = '{} {}'.format(command_string, arg.name)
+                help_msg = help_translations['parameters'].format(command_string)
             # help_embed.description = help_translations['parameters'].format(command_string)
             # await ctx.respond(embed=help_embed)
         if command_name == 'all':
             help_msg = '{}\n'.format(help_translations['list'])
             for command_id in ctx.bot.application_commands:
-                command = ctx.bot.application_commands[command_id]
+                command = command_id
                 if command.name in help_translations.keys():
                     command_desc = help_translations[command.name]
                 else:
                     command_desc = command.description
                 if (not (command.cog.qualified_name == 'Admin' and command.name != 'help') or await ctx.bot.is_owner(
-                        ctx.author)) and type(command) == discord.SlashCommand:
+                        ctx.author)) and type(command) in [discord.SlashCommand, discord.SlashCommandGroup]:
                     if ctx.guild is None:
                         if command.guild_ids is None:
                             command_list.append([command.name, command_desc])
@@ -598,6 +599,21 @@ class Admin(commands.Cog):
 
             help_msg = '{}\n{}\n'.format(help_msg, help_translations['use_lfg'])
             # help_embeds.append(discord.Embed(description=help_msg))
+            help_embed.description = help_msg
+            await ctx.respond(embed=help_embed)
+            pass
+        elif type(command) == discord.SlashCommandGroup:
+            help_msg = command.description
+            flat_structure = []
+            for subcommand in command.subcommands:
+                if type(subcommand) == discord.SlashCommandGroup:
+                    for subsubcommand in subcommand.subcommands:
+                        help_embed.add_field(name='{} {} {}'.format(command.name, subcommand.name, subsubcommand.name), value=subsubcommand.description, inline=False)
+                else:
+                    help_embed.add_field(name='{} {}'.format(command.name, subcommand.name), value=subcommand.description, inline=False)
+            # help_msg = '{}```\t{}```'.format(help_msg,
+            #                                  tabulate(flat_structure, tablefmt='plain', colalign=('left', 'left')).
+            #                                  replace('\n', '\n\t'))
             help_embed.description = help_msg
             await ctx.respond(embed=help_embed)
             pass
