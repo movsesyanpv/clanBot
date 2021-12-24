@@ -5,8 +5,8 @@
         "noapi": "L'API Bungie n'est pas disponible",
         "maintenance": "L'API Bungie est fermée pour maintenance",
         "later": "Cette information sera disponible plus tard",
-        "spider": "Propositions de l'araignée",
-        "xur": "Propositions de Xur",
+        "spider": "Offres de l'araignée",
+        "xur": "Offres de Xur",
         "weapon": "Armes",
         "heroicstory": "L'histoire des missions heroiques",
         "forge": "La forge actuelle",
@@ -14,14 +14,14 @@
         "reckoningmods": "Justice",
         "nightfalls820": "Les Nuits Noires 820 disponibles",
         "guidedgamenightfall": "Nuit Noire Guidée actuelle",
-        "ordeal": "Nuit Noire actuelle",
+        "ordeal": "Nuit Noire de la semaine",
         "nightmares": "Chasses aux cauchemars disponibles",
-        "reckoningboss": "Le Boss du jugement est",
+        "reckoningboss": "Le Boss de Justice est",
         "cruciblerotators": "Les rotations de l’épreuve sont",
         "xurloc": "Emplacement",
         "cost": "Coût",
         "xurtitle": "Xur",
-        "raids": "Raids",
+        "raids": "Raids et Défis de Raids",
         "silver": "Objet Argent Proposé",
         "featured_bd": "Objet Poussière Brillante proposé",
         "bd": "Objets Poussière Brillante",
@@ -30,7 +30,7 @@
         "resp_time": "Données mise a jour à",
         "no_embed_links": "Aucune permission pour 'Embed Links', nécessaire pour poster.",
         "complete": "Complétée",
-        "prefixes": "Voici les préfixes disponibles possibles pour `@{}`, Ex. Vous pouvez taper `{}prefix` pour afficher cette commande\n",
+        "prefixes": "Préfixes disponibles possibles pour `@{}`, Ex. Vous pouvez taper `{}prefix` pour afficher cette commande.\n",
         "no_prefixes": "Les commandes du bot doivent être précéder de `@{}`",
         "no_notifiers": "Il n'y a aucun canal pour afficher les notifications. Merci de paramétrer un canal pour les notifications avec la commande `regnotifier`",
         "in_progress": "Mise a jour. Si les informations correspondent aux canaux enregistrés, ils seront postés. Gardez en mémoire que cette commande ne force pas la mise a jour de Bungie.",
@@ -39,9 +39,9 @@
         "no_regular_reg": "Ce canal ne supporte pas les notifications des anciennes saisons.",
         "no_send_messages": "{}, Je ne suis pas autorisé a répondre dans ce canal.",
         "osiris": "Jugement d'Osiris",
-        "empire_hunts": "Choix de la difficulté Chasse à l'empire",
-        "clan_search_error": "Le clan demandé n'a pas été trouvé. Vous pouvez réessayer avec le nom du clan précisément ( Majuscule - Minuscule - Caractère spécial - etc ). Si cela ne fonctionne toujours pas, essayez d'entrer l'ID de votre clan. L'ID peut être trouvé sur la page bungie.net du clan après la chaîne `groupId=` (vous trouverez les chiffres après cela dans l'adresse http). Si cela ne fonctionne pas, vous pouvez toujours demander de l'aide sur mon serveur de support, dont le lien peut être trouvé avec la commande `support`.",
-        "daily_mods": "Propositions d'Ada-1 et de Banshee-44"
+        "empire_hunts": "Chasse à l'empire maitrise de la semaine",
+        "clan_search_error": "Le clan demandé n'a pas été trouvé. Vous pouvez réessayer avec le nom du clan précisément ( Majuscule - Minuscule - Caractère spécial - etc ). Si cela ne fonctionne toujours pas, essayez d'entrer l'ID de votre clan. L'ID peut être trouvé sur la page bungie.net du clan après la chaîne `groupId=` (vous trouverez les chiffres dans l'adresse http). Si cela ne fonctionne pas, vous pouvez toujours demander de l'aide sur mon serveur de support, dont le lien peut être trouvé avec la commande `support`.",
+        "daily_mods": "Offres d'Ada-1 et de Banshee-44"
     },
     "lfg": {
         "go": "Go",
@@ -56,7 +56,7 @@
         "time": "Quand allez vous démarrer l'activité ? (le format est `%d-%m-%Y %H:%M` pour un fuseau horaire UTC+3 et `%d-%m-%Y %H:%M%z`, pour un fuseau horaire personnalisé)\nExemples pour l'heure actuelle: `{}` for UTC+3, `{}` pour un fuseau horaire personnalisé",
         "size": "Quel est le nombre de joueurs ?",
         "length": "Combien de temps prévoyez vous pour cette activité ? Ex : 1h 30m pour une heure et demi.",
-        "type": "Quelle est le type d'activité ? (pve, pvp, gambit/reckoning, raid)",
+        "type": "Quelle est le type d'activité ? (pve, pvp, gambit/justice, raid)",
         "mode": "Quel est le mode pour ce groupe ? \n`manual` si vous désirez vérifier tout le monde \n`basic` pour accepter automatiquement",
         "role": "Nom des rôles a mentionner, séparés par `;`. \nTapez `-` pour un choix de rôles automatique",
         "check": "Vérifiez les infos et au besoin modifiez les plus tard\nNom: {}\nDescription: {}\nHeure de départ: {}\nTaille du groupe: {}\nDurée: {}\nType d'activité: {}\nMode: {}\nRôles: {}",
@@ -95,7 +95,7 @@
         "Nessus": "Nessos",
         "NULL": "Impossible de trouver l'information.",
         "noxur": "Seul les neuf savent",
-        "copyright": "La position est fournie par la paracausal.science."
+        "copyright": "La position est fournie par la science paracausal."
     },
     "forge": "Forge",
     "heroicstory": "Mission d'Histoire Épique du jour: ",
@@ -110,7 +110,7 @@
     "reckoning": "Justice: Palier III",
     "oryx": "Likeness of Oryx",
     "swords": "Les Epées",
-    "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers.",
+    "r_desc": "Aventurez-vous dans le mystérieux cargot que le vagabond remorque derrière son navire pour augmenter votre puissance..",
     "LW": "Dernier vœu",
     "GoS": "Jardin du Salut",
     "error": "Une erreur est apparue. L'information a été transmise au développeur.",
@@ -162,7 +162,7 @@
                 "info": "Les langues disponibles sont {}. Disponible uniquement pour les admins du serveur."
             },
             "update": {
-                "info": "Obtenez des mises à jour de Bungie pour les critères `args` proposés. Les critères doivent être séparés par des espaces. \nCritères possibles :\n - `daily` pour les modificateurs des assaut et l'araignée\n - `weekly` pour les chasses à l'empire et les cauchemars disponibles, l'épreuve actuelle et les rotation de l'épreuve.\n - `spider` pour les prix des matériaux proposés par l'Araignée\n - `xur` pour l'emplacement et les exotiques proposé par Xur\nLes mises à jour sont publiées dans le canal ou la commande a été saisie, si le canal a été enregistré avec `regnotifier`. Tout, à l'exception de « saisonnier », est publié sur les canaux notifier. Disponible uniquement pour les administrateurs du serveur."
+                "info": "Obtenez des mises à jour de Bungie pour les critères `args` proposés. Les critères doivent être séparés par des espaces. \nCritères possibles :\n - `daily` pour les modificateurs des assaut et l'araignée\n - `weekly` pour les chasses à l'empire et les cauchemars disponibles, l'épreuve actuelle et les rotation de l'épreuve.\n - `spider` pour les prix des matériaux proposés par l'Araignée\n - `xur` pour l'emplacement et les exotiques proposés par Xur\nLes mises à jour sont publiées dans le canal ou la commande a été saisie, si le canal a été enregistré avec `regnotifier`. Tout, à l'exception de « saisonnier », est publié sur les canaux notifier. Disponible uniquement pour les administrateurs du serveur."
             },
             "rmnotifier": {
                 "info": "`upd_type` peut être soit 'notifier' pour les mises à jour régulières (quotidiennes, hebdomadaires, etc.) ou 'updates' pour les mises à jour du bot. La valeur par défaut est 'notifier'. Disponible uniquement pour les administrateurs de serveurs."
@@ -183,15 +183,15 @@
                 "info": "Vous pouvez configurer le LFG soit avec des critères, soit dans des messages directs. Pour ce dernier, il suffit de taper la commande sans critères et de répondre aux questions sur le groupe.",
                 "creation": "__**Création d'un groupe\"*__\nListe des arguments de la commande 'lfg'. Les arguments doivent être sur des lignes distinctes.",
                 "creation_note": "Chaque paramètre doit être dans des **lignes séparées**\n`%Hh %Mm` - format d'heure, dans lequel une heure et demie d'activité sera écrite comme `1h 30m` ou `1.5h` ou `90m`.\n`%d-%m-%Y %H:%M%z` - format d'heure, dans lequel minuit à Moscou en Russie le 1er février 2000 est écrit comme `01-02-2000 00:00+0300`.",
-                "name": "Nom du LFG ou de l'activité planifiée",
+                "name": "Nom du LFG ou de l'activité prévue",
                 "time": "Heure de départ de l'activité, format %d-%m-%Y %H:%M%z",
                 "description": "Description de l'activité",
                 "size": "Taille du groupe",
-                "mode": "Format du LFG(basic ou manuel)",
-                "role": "Nom des rôles a mentionnés, séparé par ';'. Defaut pour 'Gardien, Recrue, Destiny'",
+                "mode": "Format du LFG (basic ou manuel)",
+                "role": "Nom des rôles à mentionner, séparé par ';'. Défaut pour 'Guardian, Recruit, Destiny'",
                 "length": "La durée de l'activité, format '%Hh %Mm'",
                 "type": "Type d'activité: (pve, pvp, gambit/justice, raid)",
-                "example_title": "__Voici un exemple d'une commande pour la création d'un LFG:__",
+                "example_title": "__Exemple pour la création d'un LFG:__",
                 "example_lfg": "lfg\n-at: pve\n-s: 3\n-n: Nightfall\n-t: 13-02-2020 19:00+0300\n-d: Farm ascendant shards\n-m: basic\n-r: Guardian\n-l: 01h 30m\n",
                 "edit_title": "__**Édition LFG**__\nChaque groupe a son propre identifiant. Pour obtenir des informations sur vos LFG, envoyez ce message directement au bot (en mp) `lfglist`. Le bot vous enverra la liste de vos groupes avec les informations suivantes : nom, heure de démarrage, nom du canal, nom du serveur, **ID**.\nAfin de modifier le groupe, envoyez la commande `editlfg` dans le canal dans lequel vous voulez que l'annonce de groupe soit mise à jour. La syntaxe est la même que pour la commande `lfg`\n\n",
                 "manual": "__**Gestion des groupes manuels**__\nLorsque quelqu'un clique sur 👌, le propriétaire du groupe recevra un message avec une liste de ceux qui souhaitent participer ainsi que des informations sur le groupe (heure, canal, serveur).\nPour choisir une personne, appuyez sur l'émote correspondante. La liste sera mise à jour. ** N'appuyez pas ** sur plusieurs émoticônes, attendez la mise à jour de la liste !!!",
@@ -210,7 +210,7 @@
         },
         "prefix": "Affichage des préfixes disponibles",
         "setprefix": "Définir les préfixes disponibles",
-        "support": "Voici le lien pour joindre le support",
+        "support": "Lien pour joindre le support",
         "online": "Liste des membres du clan en ligne."
     },
     "graph": {
@@ -221,18 +221,18 @@
         "no_clan": "Il n'y a aucune information sur ce clan. \nUtiliser la commande `setclan` pour activer un clan Destiny 2.",
         "unknown_metric": "Mesure inconnue `{}`. Utiliser `help top` pour avoir une liste des mesures disponibles.",
         "in_progress": "Récupération du classement, ca peut être long.",
-        "no_data": "Aucune donnée pour la mesure"
+        "no_data": "Aucune donnée pour cette mesure"
     },
     "site": {
         "spider": "L'araignée",
         "forge": "la Forge",
         "heroicstory": "Missions d'histoire Héroique",
-        "reckoningboss": "The Reckoning boss",
+        "reckoningboss": "Le boss de Justice",
         "nightfalls820": "Nuits Noires",
         "nightmares": "Chasse aux cauchemards",
         "bd": "Everversum",
         "osiris": "Jugement d'Osiris",
-        "empire_hunts": "Chasse de l'Empire"
+        "empire_hunts": "Chasses de l'Empire"
     },
     "osiris": {
         "map": "Carte",
@@ -252,7 +252,7 @@
     "weapon_types": {
         "2766676737": "Fusil d'assaut",
         "2174985928": "Fusil d'éclaireur",
-        "3263747939": "Fusil impulsion",
+        "3263747939": "Fusil à impulsion",
         "1956740204": "Revolver",
         "2081696512": "Pistolet Mitrailleur",
         "3779085124": "Pistolet",
@@ -271,7 +271,7 @@
     "empire_hunt": "Chasse de l'Empire",
     "online": {
         "nick": "Surnom",
-        "since": "Dernière Activité",
+        "since": "Dernière activité",
         "error": "Erreur",
         "error_t": "Impossible de récupérer le clan"
     }
