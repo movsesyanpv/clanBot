@@ -5,6 +5,7 @@ from hashids import Hashids
 import dateparser
 import asyncio
 from cogs.utils.views import GroupButtons, ActivityType, ModeLFG, RoleLFG, ConfirmLFG, MyButton
+from cogs.utils.converters import locale_2_lang
 
 
 class Group(commands.Cog):
@@ -29,9 +30,10 @@ class Group(commands.Cog):
                             description='Print your LFG list')
     async def sl_lfglist(self, ctx):
         await ctx.defer(ephemeral=True)
-        lang = 'en'
-        if ctx.guild is not None:
-            lang = ctx.bot.guild_lang(ctx.guild.id)
+        lang = await locale_2_lang(ctx)
+        # lang = 'en'
+        # if ctx.guild is not None:
+        #     lang = ctx.bot.guild_lang(ctx.guild.id)
 
         translations = ctx.bot.translations[lang]['lfg']
 

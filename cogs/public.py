@@ -7,6 +7,7 @@ import pydest
 
 import cogs.utils.autocomplete
 from cogs.utils.autocomplete import metric_picker
+from cogs.utils.converters import locale_2_lang
 
 
 class Public(commands.Cog):
@@ -145,7 +146,8 @@ class Public(commands.Cog):
             return
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        lang = ctx.bot.guild_lang(ctx.guild.id)
+        lang = await locale_2_lang(ctx)
+        # lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         if clan_id is None:
             clan_id = [0]
@@ -354,7 +356,8 @@ class Public(commands.Cog):
             return
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        lang = ctx.bot.guild_lang(ctx.guild.id)
+        lang = await locale_2_lang(ctx)
+        # lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         embeds = [discord.Embed(title=ctx.bot.translations[lang]['online']['title'])]
         if clan_id is None:

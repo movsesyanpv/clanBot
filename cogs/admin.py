@@ -13,6 +13,8 @@ import asyncio
 
 import main
 
+from cogs.utils.converters import locale_2_lang
+
 
 class Admin(commands.Cog):
 
@@ -402,16 +404,17 @@ class Admin(commands.Cog):
         name='help',
         description='The help command!'
     )
-    async def help_command_sl(self, ctx, command_name='all', lang=None, additional_arg=None):
+    async def help_command_sl(self, ctx, command_name='all', additional_arg=None):
         await ctx.defer()
         channel = ctx.channel
-        if lang is not None and lang not in ctx.bot.langs:
-            additional_arg = lang
-            lang = None
-        if ctx.guild is not None and lang is None:
-            lang = ctx.bot.guild_lang(ctx.guild.id)
-        if lang not in ctx.bot.langs:
-            lang = 'en'
+        lang = await locale_2_lang(ctx)
+        # if lang is not None and lang not in ctx.bot.langs:
+        #     additional_arg = lang
+        #     lang = None
+        # if ctx.guild is not None and lang is None:
+        #     lang = ctx.bot.guild_lang(ctx.guild.id)
+        # if lang not in ctx.bot.langs:
+        #     lang = 'en'
         if ctx.guild is not None:
             name = ctx.guild.me.display_name
         else:

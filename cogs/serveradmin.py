@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord.commands import Option, option
+from discord.commands import Option, option, SlashCommandGroup
 import importlib
 import discord
 import json
@@ -9,12 +9,31 @@ import updater
 import os
 import sqlite3
 from cogs.utils.views import UpdateTypes, BotLangs
+from cogs.utils.converters import locale_2_lang
 
 
 class ServerAdmin(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    # autopost = SlashCommandGroup("autopost", "Autopost channel settings")
+    #
+    # register = autopost.create_subgroup(
+    #     "start", "Register this channel for automatic posts"
+    # )
+    #
+    # @autopost.command(description='Make the bot stop posting updates in this channel')
+    # async def remove(self, ctx):
+    #     await ctx.respond("Hello, this is a slash subcommand from a cog!")
+    #
+    # @register.command(description='Make the bot start posting rotation updates in this channel')
+    # async def rotations(self, ctx):
+    #     await ctx.respond("Aloha, a Hawaiian greeting")
+    #
+    # @register.command(description='Make the bot start posting changelogs in this channel')
+    # async def changelogs(self, ctx):
+    #     await ctx.respond("Aloha, a Hawaiian greeting")
 
     @commands.command(
         description='Delete groups that are unavailable or inactive'
@@ -240,7 +259,8 @@ class ServerAdmin(commands.Cog):
         if not ctx.channel.permissions_for(ctx.author).administrator:
             await ctx.respond("You lack the administrator permissions to use this command")
             return
-        lang = ctx.bot.guild_lang(ctx.guild.id)
+        lang = await locale_2_lang(ctx)
+        # lang = ctx.bot.guild_lang(ctx.guild.id)
         try:
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(int(clan_id))
         except ValueError:
@@ -349,6 +369,7 @@ class ServerAdmin(commands.Cog):
         else:
             lang = 'en'
             await ctx.respond('This command can\'t be used in DMs')
+        lang = await locale_2_lang(ctx)
         if not ctx.channel.permissions_for(ctx.author).administrator:
             await ctx.respond("You lack the administrator permissions to use this command")
             return
