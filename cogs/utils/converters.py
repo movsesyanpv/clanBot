@@ -13,3 +13,9 @@ async def locale_2_lang(ctx):
         lang = 'en'
 
     return lang
+
+
+class CtxLocale:
+    def __init__(self, bot, locale):
+        self.bot = bot
+        self.locale = locale

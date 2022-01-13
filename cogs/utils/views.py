@@ -1,4 +1,5 @@
 import discord
+from cogs.utils.converters import locale_2_lang, CtxLocale
 
 
 class MyButton(discord.ui.Button):
@@ -129,7 +130,8 @@ class WantButton(discord.ui.Button):
                 nick = interaction.user.nick
             else:
                 nick = interaction.user.name
-            await interaction.response.send_message(content=self.view.bot.translations[lang]['lfg']['gotcha'].format(nick), ephemeral=True)
+            locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
+            await interaction.response.send_message(content=self.view.bot.translations[locale]['lfg']['gotcha'].format(nick), ephemeral=True)
             await self.view.bot.raid.upd_dm(owner, interaction.message.id, self.view.bot.translations[lang])
 
 
@@ -159,7 +161,8 @@ class NoGoButton(discord.ui.Button):
         lang = self.view.bot.guild_lang(interaction.message.guild.id)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
         if not was_goer and not is_mb_goer:
-            await interaction.response.send_message(content=self.view.bot.translations[lang]['lfg']['was_not_going'], ephemeral=True)
+            locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
+            await interaction.response.send_message(content=self.view.bot.translations[locale]['lfg']['was_not_going'], ephemeral=True)
 
 
 class DeleteButton(discord.ui.Button):
@@ -190,7 +193,7 @@ class DeleteButton(discord.ui.Button):
             self.view.bot.raid.del_entry(message.id)
             await message.delete()
         else:
-            lang = self.view.bot.guild_lang(interaction.message.guild.id)
+            lang = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
             await interaction.response.send_message(content=self.view.bot.translations[lang]['lfg']['will_not_delete'], ephemeral=True)
 
 
