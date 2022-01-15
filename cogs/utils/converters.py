@@ -1,4 +1,14 @@
-async def locale_2_lang(ctx):
+from typing import Union
+from discord import ApplicationContext
+
+
+class CtxLocale:
+    def __init__(self, bot, locale):
+        self.bot = bot
+        self.locale = locale
+
+
+async def locale_2_lang(ctx: Union[ApplicationContext, CtxLocale]) -> str:
     locale = ctx.locale
 
     if 'en' in locale:
@@ -13,9 +23,3 @@ async def locale_2_lang(ctx):
         lang = 'en'
 
     return lang
-
-
-class CtxLocale:
-    def __init__(self, bot, locale):
-        self.bot = bot
-        self.locale = locale
