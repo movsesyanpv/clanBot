@@ -17,23 +17,65 @@ class ServerAdmin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # autopost = SlashCommandGroup("autopost", "Autopost channel settings")
-    #
-    # register = autopost.create_subgroup(
-    #     "start", "Register this channel for automatic posts"
-    # )
-    #
-    # @autopost.command(description='Make the bot stop posting updates in this channel')
-    # async def remove(self, ctx):
-    #     await ctx.respond("Hello, this is a slash subcommand from a cog!")
-    #
-    # @register.command(description='Make the bot start posting rotation updates in this channel')
-    # async def rotations(self, ctx):
-    #     await ctx.respond("Aloha, a Hawaiian greeting")
-    #
-    # @register.command(description='Make the bot start posting changelogs in this channel')
-    # async def changelogs(self, ctx):
-    #     await ctx.respond("Aloha, a Hawaiian greeting")
+    autopost = SlashCommandGroup("autopost", "Autopost channel settings")
+
+    register = autopost.create_subgroup(
+        "start", "Register this channel for automatic posts"
+    )
+
+    @autopost.command(description='Make the bot stop posting updates in this channel')
+    async def remove(self, ctx):
+        await ctx.defer(ephemeral=True)
+        if ctx.guild is None:
+            await ctx.respond("This command can not be used in DMs")
+            return
+        if not ctx.channel.permissions_for(ctx.author).administrator:
+            await ctx.respond("You lack the administrator permissions to use this command")
+            return
+        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
+            ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
+            ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
+            ctx.bot.guild_db.commit()
+            ctx.bot.get_channels()
+            msg = 'Got it, {}'.format(ctx.author.mention)
+            await ctx.respond(msg)
+
+    @register.command(description='Make the bot start posting rotation updates in this channel')
+    async def rotations(self, ctx):
+        await ctx.defer(ephemeral=True)
+        if ctx.guild is None:
+            await ctx.respond("This command can not be used in DMs")
+            return
+        if not ctx.channel.permissions_for(ctx.author).administrator:
+            await ctx.respond("You lack the administrator permissions to use this command")
+            return
+        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
+            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
+                                         (ctx.channel.id, ctx.guild.id))
+            ctx.bot.guild_db.commit()
+            ctx.bot.get_channels()
+            msg = 'Got it, {}'.format(ctx.author.mention)
+            await ctx.respond(msg)
+            await ctx.bot.force_update(['daily', 'weekly'], get=False, channels=[ctx.channel.id], forceget=False)
+        return
+
+    @register.command(description='Make the bot start posting changelogs in this channel')
+    async def changelogs(self, ctx):
+        await ctx.defer(ephemeral=True)
+        if ctx.guild is None:
+            await ctx.respond("This command can not be used in DMs")
+            return
+        if not ctx.channel.permissions_for(ctx.author).administrator:
+            await ctx.respond("You lack the administrator permissions to use this command")
+            return
+        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
+            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into updates values (?,?)''',
+                                         (ctx.channel.id, ctx.guild.id))
+            ctx.bot.guild_db.commit()
+            ctx.bot.get_channels()
+            msg = 'Got it, {}'.format(ctx.author.mention)
+            await ctx.respond(msg)
+        return
 
     @commands.command(
         description='Delete groups that are unavailable or inactive'
