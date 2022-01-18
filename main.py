@@ -603,12 +603,22 @@ class ClanBot(commands.Bot):
             await owner.dm_channel.send('`{}`'.format(traceback_str))
             command_line = '/{}'.format(context.interaction.data['name'])
             for option in context.interaction.data['options']:
-                command_line = '{} {}:{}'.format(command_line, option['name'], option['value'])
+                for option in context.interaction.data['options']:
+                    command_line = '{} {}:{}'.format(command_line, option['name'], option['value'])
             await owner.dm_channel.send('{}:\n{}'.format(context.author, command_line))
             if context.author.dm_channel is None:
                 await context.author.create_dm()
             if context.author != owner:
                 await context.author.dm_channel.send(self.translations['en']['error'])
+
+    async def on_interaction(self, interaction):
+        await self.process_application_commands(interaction)
+        if interaction.type == discord.InteractionType.application_command:
+            command_line = '/{}'.format(interaction.data['name'])
+            if 'options' in interaction.data.keys():
+                for option in interaction.data['options']:
+                    command_line = '{} {}:{}'.format(command_line, option['name'], option['value'])
+            self.logger.info(command_line)
 
     async def on_command_completion(self, ctx):
         gc.collect()
