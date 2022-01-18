@@ -133,12 +133,10 @@ class Group(commands.Cog):
             dm = ctx.author.dm_channel
             response = await ctx.message.channel.send(translations['dm_start'].format(ctx.author.mention))
 
-        try:
-            await response.delete()
-        except discord.NotFound:
-            pass
-
-            await response.delete()
+            try:
+                await response.delete()
+            except discord.NotFound:
+                pass
 
         description = await get_proper_length_arg('description', 4096)
 

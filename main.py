@@ -1052,9 +1052,9 @@ class ClanBot(commands.Bot):
         self.get_args()
         token = self.api_data['token']
         print('hmm')
-        # self.remove_command('help')
-        # for cog in self.cog_list:
-        #     self.load_extension(cog)
+        self.remove_command('help')
+        for cog in self.cog_list:
+            self.load_extension(cog)
         self.run(token)
 
 
