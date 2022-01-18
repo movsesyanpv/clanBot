@@ -50,7 +50,7 @@ class Admin(commands.Cog):
         return
 
     @commands.command(
-        description='Pull the latest version from git and restart'
+        description='Pull the latest version from git and post changelog'
     )
     @commands.dm_only()
     @commands.is_owner()
@@ -125,53 +125,21 @@ class Admin(commands.Cog):
     @commands.command(
         description='Set Trials of Osiris info'
     )
-    async def osiris(self, ctx, curr_map, win3, win5, win7, flawless, mod):
+    async def osiris(self, ctx, curr_map, flawless='?'):
         url = 'https://bungie.net/Platform/Destiny2/Armory/Search/{}/{}'
         map_resp = await self.bot.data.get_bungie_json('too map', url.format('DestinyActivityDefinition', curr_map),
                                                        change_msg=False)
         if len(map_resp['Response']['results']['results']) > 0:
             curr_map = map_resp['Response']['results']['results'][0]['hash']
-        if win3 not in self.bot.translations['en']['osiris'].keys():
-            win3_resp = await self.bot.data.get_bungie_json('win 3', url.format('DestinyCollectibleDefinition', win3),
-                                                            change_msg=False)
-            if len(win3_resp['Response']['results']['results']) > 0:
-                if len(win3_resp['Response']['results']['results']) > 1 and '(' in \
-                        win3_resp['Response']['results']['results'][0]['displayProperties']['name']:
-                    win3 = win3_resp['Response']['results']['results'][1]['hash']
-                else:
-                    win3 = win3_resp['Response']['results']['results'][0]['hash']
-        if win5 not in self.bot.translations['en']['osiris'].keys():
-            win5_resp = await self.bot.data.get_bungie_json('win 5', url.format('DestinyCollectibleDefinition', win5),
-                                                            change_msg=False)
-            if len(win5_resp['Response']['results']['results']) > 0:
-                if len(win5_resp['Response']['results']['results']) > 1 and '(' in \
-                        win5_resp['Response']['results']['results'][0]['displayProperties']['name']:
-                    win5 = win5_resp['Response']['results']['results'][1]['hash']
-                else:
-                    win5 = win5_resp['Response']['results']['results'][0]['hash']
-        if win7 not in self.bot.translations['en']['osiris'].keys():
-            win7_resp = await self.bot.data.get_bungie_json('win 7', url.format('DestinyCollectibleDefinition', win7),
-                                                            change_msg=False)
-            if len(win7_resp['Response']['results']['results']) > 0:
-                if len(win7_resp['Response']['results']['results']) > 1 and '(' in \
-                        win7_resp['Response']['results']['results'][0]['displayProperties']['name']:
-                    win7 = win7_resp['Response']['results']['results'][1]['hash']
-                else:
-                    win7 = win7_resp['Response']['results']['results'][0]['hash']
-        if flawless not in self.bot.translations['en']['osiris'].keys():
-            flawless_resp = await self.bot.data.get_bungie_json('flawless', url.format('DestinyCollectibleDefinition', flawless),
+        if flawless not in self.bot.translations['en']['osiris'].keys() and flawless != '?':
+            flawless_resp = await self.bot.data.get_bungie_json('flawless', url.format('DestinyInventoryItemDefinition', flawless),
                                                             change_msg=False)
             if len(flawless_resp['Response']['results']['results']) > 0:
                 if len(flawless_resp['Response']['results']['results']) > 1 and '(' in flawless_resp['Response']['results']['results'][0]['displayProperties']['name']:
                     flawless = flawless_resp['Response']['results']['results'][1]['hash']
                 else:
                     flawless = flawless_resp['Response']['results']['results'][0]['hash']
-        if mod not in self.bot.translations['en']['osiris'].keys():
-            mod_resp = await self.bot.data.get_bungie_json('mod', url.format('DestinySandboxPerkDefinition', mod),
-                                                            change_msg=False)
-            if len(mod_resp['Response']['results']['results']) > 0:
-                mod = mod_resp['Response']['results']['results'][0]['hash']
-        await self.bot.data.get_osiris_predictions(self.bot.langs, force_info=[curr_map, win3, win5, win7, flawless, mod])
+        await self.bot.data.get_osiris_predictions(self.bot.langs, force_info=[curr_map, flawless])
         await ctx.bot.force_update('osiris', get=False, channels=None, forceget=False)
         await ctx.channel.send('done')
 
@@ -388,6 +356,18 @@ class Admin(commands.Cog):
             await channel.send(help_msg)
 
             help_msg = '{}\n'.format(help_translations['use_lfg'])
+            await channel.send(help_msg)
+            pass
+        elif command.name in ['setlang']:
+            if command.name in help_translations['commands'].keys():
+                translations = help_translations['commands'][command.name]
+                command_desc = translations['info']
+            else:
+                command_desc = command.description
+            lang_list = ''
+            for lang in self.bot.langs:
+                lang_list = '{}`, `{}'.format(lang_list, lang)
+            help_msg = '{}'.format(command_desc).format(lang_list[3:]+'`')
             await channel.send(help_msg)
             pass
         else:

@@ -19,6 +19,7 @@ from inspect import currentframe, getframeinfo
 from tabulate import tabulate
 
 from discord.ext import commands
+# from discord_slash import SlashCommand
 
 import raid as lfg
 import destiny2data as d2
@@ -29,9 +30,9 @@ from cogs.utils.views import GroupButtons
 class ClanBot(commands.Bot):
     version = ''
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
-    langs = ['de', 'en', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
-    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'xur', 'osiris', 'alerts', 'events']
-    daily_rotations = ('strikes', 'spider', 'banshee', 'ada')
+    langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
+    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'mods', 'xur', 'osiris', 'alerts', 'events']
+    daily_rotations = ('strikes', 'spider', 'banshee', 'ada', 'mods')
     weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire')
     embeds_with_img = ['thelie']
 
@@ -62,10 +63,10 @@ class ClanBot(commands.Bot):
         self.get_args()
         self.load_translations()
         self.langs = list(set(self.langs).intersection(set(self.args.lang)))
-        if not upgrade:
+        try:
             self.data = d2.D2data(self.translations, self.langs, self.args.oauth, self.args.production,
                                   (self.args.cert, self.args.key))
-        else:
+        except RuntimeError:
             return
         self.raid = lfg.LFG()
         self.guild_db = sqlite3.connect('guild.db')
@@ -77,118 +78,24 @@ class ClanBot(commands.Bot):
 
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
-        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='50', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
-        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
+        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_daily_mods, 'daily_mods', 86400])
         self.sched.add_job(self.data.get_banshee, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
         self.sched.add_job(self.data.get_ada, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
 
-        # self.sched.add_job(self.data.drop_weekend_info, 'cron', day_of_week='tue', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.langs])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightfall820, 'nightfalls820', 604800])
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_empire_hunt, 'empire_hunts', 604800])
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_featured_bd, 'featured_bd', 604800])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_bd, 'bd', 604800])
         self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
 
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
+        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
 
-        # self.sched.add_job(self.data.token_update, 'interval', hours=1)
-        # self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 86400])
         # self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_the_lie_progress, 'thelie', 3600])
-        # self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
         self.sched.add_job(self.update_metrics, 'cron', hour='10', minute='0', second='0', misfire_grace_time=86300)
 
         logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
         logging.getLogger('apscheduler')
 
-        if self.args.production:
-            self.load_extension('cogs.dbl')
-
-    @tasks.loop(hours=1)
-    async def update_token(self):
-        self.logger.info('Updating Bungie token')
-        await self.data.token_update()
-
-    @tasks.loop(hours=168)
-    async def lfg_clean(self):
-        self.logger.info('Cleaning up old LFG posts')
-        await self.lfg_cleanup(7)
-
-    @tasks.loop(time=[time(hour=i, tzinfo=timezone.utc) for i in range(0, 24)])
-    async def update_alerts(self):
-        self.logger.info('Updating Bungie alerts')
-        await self.universal_update(self.data.get_global_alerts, 'alerts', 86400)
-
-    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
-    async def update_spider(self):
-        self.logger.info('Updating Spider inventory')
-        await self.universal_update(self.data.get_spider, 'spider', 86400)
-
-    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
-    async def update_vanguardstrikes(self):
-        self.logger.info('Updating strike modifiers')
-        await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400)
-
-    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
-    async def drop_weekend_info(self):
-        if datetime.today().weekday() == 1:
-            self.logger.info('Dropping Xur and ToO')
-            await self.data.drop_weekend_info(self.langs)
-
-    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
-    async def update_ordeal(self):
-        if datetime.today().weekday() == 1:
-            self.logger.info('Updating Ordeal strike')
-            await self.universal_update(self.data.get_ordeal, 'ordeal', 604800)
-
-    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
-    async def update_nightmares(self):
-        if datetime.today().weekday() == 1:
-            self.logger.info('Updating nightmare hunts')
-            await self.universal_update(self.data.get_nightmares, 'nightmares', 604800)
-
-    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
-    async def update_empire_hunts(self):
-        if datetime.today().weekday() == 1:
-            self.logger.info('Updating empire hunt')
-            await self.universal_update(self.data.get_empire_hunt, 'empire_hunts', 604800)
-
-    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
-    async def update_cruciblerotators(self):
-        if datetime.today().weekday() == 1:
-            self.logger.info('Updating crucible rotator playlists')
-            await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800)
-
-    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
-    async def update_raids(self):
-        if datetime.today().weekday() == 1:
-            self.logger.info('Updating raid challenges')
-            await self.universal_update(self.data.get_raids, 'raids', 604800)
-
-    @tasks.loop(time=time(hour=17, minute=1, second=40, tzinfo=timezone.utc))
-    async def update_xur(self):
-        if datetime.today().weekday() == 4:
-            self.logger.info('Updating Xur')
-            await self.universal_update(self.data.get_xur, 'xur', 345600)
-
-    def start_tasks(self):
-        self.lfg_clean.start()
-        self.update_token.start()
-        self.update_alerts.start()
-        self.update_spider.start()
-        self.update_vanguardstrikes.start()
-        self.drop_weekend_info.start()
-        self.update_ordeal.start()
-        self.update_nightmares.start()
-        self.update_empire_hunts.start()
-        self.update_cruciblerotators.start()
-        self.update_raids.start()
-        self.update_xur.start()
 
     def load_translations(self):
         self.translations = {}
@@ -276,6 +183,11 @@ class ClanBot(commands.Bot):
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 await self.universal_update(self.data.get_osiris_predictions, 'osiris', 345600, post=post, get=get, channels=channels, forceget=forceget)
+        if 'mods' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_daily_mods, 'daily_mods', 345600, post=post, get=get, channels=channels, forceget=forceget)
         if 'tess' in upd_type:
             if channels is None:
                 channels = self.notifiers
@@ -318,7 +230,7 @@ class ClanBot(commands.Bot):
             await self.force_update(self.args.type)
         if not self.sched.running:
             types = self.all_types.copy()
-            types.pop(types.index('osiris'))
+            # types.pop(types.index('osiris'))
             await self.force_update(types, post=False)
             for lang in self.langs:
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
@@ -351,8 +263,6 @@ class ClanBot(commands.Bot):
         char_file = open('data.json', 'w')
         char_file.write(json.dumps(self.data.data))
         char_file.close()
-
-        self.start_tasks()
         return
 
     async def on_guild_join(self, guild):
@@ -867,21 +777,23 @@ class ClanBot(commands.Bot):
             await self.post_embed(name, self.data.data, time_to_delete, channels)
 
     async def post_embed_to_channel(self, upd_type, src_dict, time_to_delete, channel_id):
-        # await asyncio.sleep(random.randint(0, 60))
+        # delay = random.uniform(0, 180)
+        delay = 0
+        # await asyncio.sleep(delay)
+        # self.logger.info('ws limit status for {} in {}: {}'.format(upd_type, channel_id, self.is_ws_ratelimited()))
         try:
             channel = self.get_channel(channel_id)
         except discord.Forbidden:
             frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'unable to fetch the channel ({})'.format(frameinfo.lineno + 1)]
+            return [channel_id, 'unable to fetch the channel ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
         if channel is None:
             frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
+            return [channel_id, 'channel id None ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
         server = channel.guild
         if not channel.permissions_for(server.me).send_messages:
             frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'no permission to send messages ({})'.format(frameinfo.lineno + 1)]
+            return [channel_id, 'no permission to send messages ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
         lang = self.guild_lang(channel.guild.id)
-        delay = 0#random.uniform(0, 0.2)
         # print('delay is {}'.format(delay))
 
         if not self.args.nomessage:
@@ -895,7 +807,7 @@ class ClanBot(commands.Bot):
                                          filename='{}-{}.png'.format(upd_type, lang))
                 if len(src_dict[lang][upd_type]['fields']) == 0:
                     frameinfo = getframeinfo(currentframe())
-                    return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
+                    return [channel_id, 'no need to post ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
                 embed = discord.Embed.from_dict(src_dict[lang][upd_type])
 
         hist = 0
@@ -952,7 +864,7 @@ class ClanBot(commands.Bot):
                                 last.append(message)
                     if len(last) == 0:
                         frameinfo = getframeinfo(currentframe())
-                        return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
+                        return [channel_id, 'no need to post ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
                 else:
                     if hist != "[]":
                         try:
@@ -964,7 +876,7 @@ class ClanBot(commands.Bot):
                         if len(last.embeds) > 0:
                             if last.embeds[0].to_dict()['fields'] == embed.to_dict()['fields']:
                                 frameinfo = getframeinfo(currentframe())
-                                return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
+                                return [channel_id, 'no need to post ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
                 try:
                     if type(hist) == list and channel.type != discord.ChannelType.news:
                         if len(hist) < 100:
@@ -1043,9 +955,10 @@ class ClanBot(commands.Bot):
         self.guild_db.commit()
 
         frameinfo = getframeinfo(currentframe())
-        return [channel_id, 'posted ({})'.format(frameinfo.lineno + 1)]
+        return [channel_id, 'posted ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
 
     async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
+        responses = []
         responses = []
         for channel_id in channels:
             try:
@@ -1054,6 +967,11 @@ class ClanBot(commands.Bot):
                 responses.append([channel_id, "discord.HTTPException"])
             except:
                 responses.append([channel_id, "Exception"])
+            # self.sched.add_job(self.post_embed_to_channel, misfire_grace_time=86400, args=[upd_type, src_dict, time_to_delete, channel_id])
+            # task = asyncio.ensure_future(self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
+            # tasks.append(task)
+
+        # responses = await asyncio.gather(*tasks)
 
         if self.update_status:
             msg = '{} is posted'.format(upd_type)
@@ -1134,9 +1052,9 @@ class ClanBot(commands.Bot):
         self.get_args()
         token = self.api_data['token']
         print('hmm')
-        self.remove_command('help')
-        for cog in self.cog_list:
-            self.load_extension(cog)
+        # self.remove_command('help')
+        # for cog in self.cog_list:
+        #     self.load_extension(cog)
         self.run(token)
 
 

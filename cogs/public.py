@@ -1,6 +1,7 @@
 from discord.ext import commands, pages
 from discord.commands import Option, option
 import discord
+#from discord_slash import cog_ext, SlashContext, manage_commands, error
 from tabulate import tabulate
 import mariadb
 import pydest
@@ -87,7 +88,10 @@ class Public(commands.Cog):
                 except mariadb.Error:
                     await ctx.channel.send(translations['unknown_metric'].format(metric), delete_after=10)
                     if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
-                        await ctx.message.delete()
+                        try:
+                            await ctx.message.delete()
+                        except discord.NotFound:
+                            pass
                     return
             try:
                 top_name = await ctx.bot.data.destiny.decode_hash(metric, 'DestinyMetricDefinition', language=lang)
@@ -128,7 +132,10 @@ class Public(commands.Cog):
         else:
             await ctx.channel.send(translations['no_clan'], delete_after=10)
         if ctx.channel.permissions_for(ctx.guild.me).manage_messages:
-            await ctx.message.delete()
+            try:
+                await ctx.message.delete()
+            except discord.NotFound:
+                pass
 
     @commands.slash_command(
         name='top',
@@ -310,22 +317,27 @@ class Public(commands.Cog):
     async def online(self, ctx):
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'])
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
+            # if type(ctx) == SlashContext:
+            #     return translations['no_clan']
             await ctx.channel.send(translations['no_clan'], delete_after=60)
             return
         if len(clan_id) > 0:
             clan_ids = clan_id[0]
             data = await ctx.bot.data.get_online_clan_members(clan_ids, lang)
             if len(data) > 1:
-                msg = '```{}```'.format(tabulate(data, tablefmt='simple', colalign=('left', 'left'), headers='firstrow'))
+                msg = '```{}```'.format(
+                    tabulate(data, tablefmt='simple', colalign=('left', 'left'), headers='firstrow'))
             else:
                 msg = '```{}```'.format(
                     tabulate(data, tablefmt='simple', colalign=('left', 'left')))
+            # if type(ctx) == SlashContext:
+            #     return msg
             if len(msg) > 2000:
                 msg_strs = msg.splitlines()
                 msg = ''
@@ -342,6 +354,8 @@ class Public(commands.Cog):
             else:
                 await ctx.channel.send(msg)
         else:
+            # if type(ctx) == SlashContext:
+            #     return translations['no_clan']
             await ctx.channel.send(translations['no_clan'], delete_after=10)
 
     @commands.slash_command(

@@ -653,7 +653,7 @@ class D2data:
             class_items = 0
             n_order = 0
             for i, item in enumerate(tess_def['itemList']):
-                if n_items >= 7 and n_items - class_items/3*2 >= 7:
+                if n_items >= 7 and n_items - class_items / 3 * 2 >= 7:
                     i_week = i_week + 1
                     bd.append(list.copy(curr_week))
                     n_items = 0
@@ -676,19 +676,19 @@ class D2data:
                     else:
                         screenshot = ''
                     curr_week.append({
-                            'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
-                            'icon': item_def['displayProperties']['icon'],
-                            'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
-                            'hash': item['itemHash'],
-                            'name': item_def['displayProperties']['name'],
-                            'screenshot': screenshot,
-                            'costs': [
-                                {
-                                    'currency_icon': currency_resp['displayProperties']['icon'],
-                                    'cost': item['currencies'][0]['quantity'],
-                                    'currency_name': currency_resp['displayProperties']['name']
-                                }]
-                        })
+                        'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
+                        'icon': item_def['displayProperties']['icon'],
+                        'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
+                        'hash': item['itemHash'],
+                        'name': item_def['displayProperties']['name'],
+                        'screenshot': screenshot,
+                        'costs': [
+                            {
+                                'currency_icon': currency_resp['displayProperties']['icon'],
+                                'cost': item['currencies'][0]['quantity'],
+                                'currency_name': currency_resp['displayProperties']['name']
+                            }]
+                    })
                     n_order += 1
                     n_items = n_items + 1
                     if item_def['classType'] < 3 or any(
@@ -963,6 +963,54 @@ class D2data:
             await self.write_to_db(locale, 'ada_mods', sales, name=ada_def['displayProperties']['name'], order=5,
                                    template='vendor_items.html', annotations=[], size='tall')
 
+    async def get_daily_mods(self, langs, forceget=False):
+        char_info = self.char_info
+
+        ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/350061650/'.\
+            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
+        banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
+            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
+
+        ada_resp = await self.get_cached_json('ada_{}'.format(char_info['charid'][0]), 'ada', ada_url, self.vendor_params, force=forceget)
+        banshee_resp = await self.get_cached_json('banshee', 'banshee', banshee_url, self.vendor_params, force=forceget)
+
+        if not(ada_resp and banshee_resp):
+            return False
+
+        ada_cats = ada_resp['Response']['categories']['data']['categories']
+        banshee_cats = banshee_resp['Response']['categories']['data']['categories']
+        resp_time = banshee_resp['timestamp']
+
+        for lang in langs:
+            self.data[lang]['daily_mods'] = {
+                'fields': [],
+                'color': 0x4c3461,
+                'type': "rich",
+                'title': self.translations[lang]['msg']['daily_mods'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
+            }
+
+            ada_def = await self.destiny.decode_hash(350061650, 'DestinyVendorDefinition', language=lang)
+            banshee_def = await self.destiny.decode_hash(672118013, 'DestinyVendorDefinition', language=lang)
+
+            mods = []
+            items_to_get = ada_cats[1]['itemIndexes']
+            ada_sales = await self.get_vendor_sales(lang, ada_resp, items_to_get, [1812969468])
+
+            for item in ada_sales[1]:
+                item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
+                if item_def['itemType'] == 19:
+                    mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
+
+            items_to_get = banshee_cats[3]['itemIndexes']
+            banshee_sales = await self.get_vendor_sales(lang, banshee_resp, items_to_get, [1812969468, 2731650749])
+            for item in banshee_sales[1]:
+                item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
+                if item_def['itemType'] == 19:
+                    mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
+            self.data[lang]['daily_mods']['fields'] = mods
+
     async def get_xur_loc(self):
         url = 'https://paracausal.science/xur/current.json'
         r = await self.session.get(url)
@@ -976,6 +1024,12 @@ class D2data:
             '6': 'contract_item.html',
             '0': 'weapon_item.html',
             '4': 'armor_item.html'
+        }
+
+        place_hashes = {
+            '1737926756': 3747705955,
+            '3607432451': 3607432451,
+            '697502628': 3747705955
         }
 
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
@@ -1020,13 +1074,26 @@ class D2data:
                     'value': ''
                 }
 
+                annotations = []
+
+                if xur_loc:
+                    self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
+                    annotations = [self.translations[lang]['xur']['copyright']]
+                else:
+                    xur_loc = {}
+
+                if xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']] != 2961497387:
+                    xur_loc['destinationHash'] = xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']]['destinationHash']
+                    xur_loc['placeHash'] = place_hashes[str(xur_loc['destinationHash'])]
+                    self.data[lang]['xur'].pop('footer')
+                    annotations = []
+
                 sales = []
                 if xur_loc:
                     xur_place_name = await self.destiny.decode_hash(xur_loc['placeHash'], 'DestinyPlaceDefinition', language=lang)
                     xur_destination_name = await self.destiny.decode_hash(xur_loc['destinationHash'], 'DestinyDestinationDefinition', language=lang)
                     loc_field['value'] = '{}, {}'.format(xur_place_name['displayProperties']['name'], xur_destination_name['displayProperties']['name'])
                     self.data[lang]['xur']['fields'].append(loc_field)
-                    self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
                     sales = [{'name': '{}, {}'.format(xur_place_name['displayProperties']['name'],
                                                       xur_destination_name['displayProperties']['name']),
                               'items': [], 'template': cat_templates['6']},
@@ -1058,26 +1125,28 @@ class D2data:
                                     'value': item_name
                                 }
 
-                                if item_resp['classType'] == 0:
-                                    exotic['name'] = self.translations[lang]['Titan']
-                                elif item_resp['classType'] == 1:
-                                    exotic['name'] = self.translations[lang]['Hunter']
-                                elif item_resp['classType'] == 2:
-                                    exotic['name'] = self.translations[lang]['Warlock']
+                                if item_resp['summaryItemHash'] in [715326750, 2673424576]:
+                                    if item_resp['classType'] == 0:
+                                        exotic['name'] = self.translations[lang]['Titan']
+                                    elif item_resp['classType'] == 1:
+                                        exotic['name'] = self.translations[lang]['Hunter']
+                                    elif item_resp['classType'] == 2:
+                                        exotic['name'] = self.translations[lang]['Warlock']
 
-                                self.data[lang]['xur']['fields'].append(exotic)
-                                for item in cat_sales[1]:
-                                    if item['hash'] == item_hash:
-                                        sales[2]['items'].append(item)
+                                    self.data[lang]['xur']['fields'].append(exotic)
+                                    for item in cat_sales[1]:
+                                        if item['hash'] == item_hash:
+                                            sales[2]['items'].append(item)
                             else:
-                                i = 0
-                                for item in self.data[lang]['xur']['fields']:
-                                    if item['name'] == self.translations[lang]['msg']['weapon']:
-                                        self.data[lang]['xur']['fields'][i]['value'] = item_name
-                                    i += 1
-                                for item in cat_sales[1]:
-                                    if item['hash'] == item_hash:
-                                        sales[1]['items'].append(item)
+                                if item_resp['summaryItemHash'] in [715326750, 2673424576]:
+                                    i = 0
+                                    for item in self.data[lang]['xur']['fields']:
+                                        if item['name'] == self.translations[lang]['msg']['weapon']:
+                                            self.data[lang]['xur']['fields'][i]['value'] = item_name
+                                        i += 1
+                                    for item in cat_sales[1]:
+                                        if item['hash'] == item_hash:
+                                            sales[1]['items'].append(item)
 
                 else:
                     loc_field = {
@@ -1099,7 +1168,7 @@ class D2data:
                           'items': [], 'template': cat_templates['6']}]
             await self.write_to_db(lang, 'xur', sales, template='vendor_items.html', order=7,
                                    name=xur_def['displayProperties']['name'],
-                                   annotations=[self.translations[lang]['xur']['copyright']])
+                                   annotations=annotations)
 
     async def get_heroic_story(self, langs, forceget=False):
         activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions',
@@ -1481,55 +1550,55 @@ class D2data:
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 i = 1
-                if str(r_json['hash']) in self.translations[lang]['levi_order'] and \
-                        not r_json['matchmaking']['requiresGuardianOath']:
-                    challenges = await self.get_modifiers(lang, item_hash)
-                    if challenges:
-                        challenge = set(challenges[0]['name'].lower().replace('"', '').split(' '))
-                        challenge.discard('the')
-                        order_strings = self.translations[lang]['levi_order'][str(r_json['hash'])].splitlines()
-                        levi_str = ''
-                        for string in order_strings:
-                            intersection = challenge.intersection(set(string.lower().split(' ')))
-                            if intersection:
-                                levi_str = '{}<b>{}</b>\n'.format(levi_str, string)
-                            else:
-                                levi_str = '{}{}\n'.format(levi_str, string)
-                        levi_str = levi_str[:-1]
-                    else:
-                        levi_str = self.translations[lang]['levi_order'][str(r_json['hash'])]
-                    info = {
-                        'inline': True,
-                        'name': r_json['originalDisplayProperties']['name'],
-                        'value': levi_str.replace('<b>', '**').replace('</b>', '**')
-                    }
-                    db_data.append({
-                        'name': info['name'],
-                        'description': levi_str.replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]["EoW"] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath']:
-                    info = {
-                        'inline': False,
-                        'name': self.translations[lang]['lairs'],
-                        'value': u"\u2063"
-                    }
-                    mods = await self.get_modifiers(lang, r_json['hash'])
-                    resp_time = datetime.utcnow().isoformat()
-                    if mods:
-                        loadout = '{}\n{}\n{}'.format(self.translations[lang]['armsmaster'][eow_loadout*3],
-                                                      self.translations[lang]['armsmaster'][eow_loadout*3+1],
-                                                      self.translations[lang]['armsmaster'][eow_loadout*3+2])
-                        info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'],
-                                                                   mods[1]['name'], loadout)
-                    else:
-                        info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n\n', '<br>').replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
+                # if str(r_json['hash']) in self.translations[lang]['levi_order'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath']:
+                #     challenges = await self.get_modifiers(lang, item_hash)
+                #     if challenges:
+                #         challenge = set(challenges[0]['name'].lower().replace('"', '').split(' '))
+                #         challenge.discard('the')
+                #         order_strings = self.translations[lang]['levi_order'][str(r_json['hash'])].splitlines()
+                #         levi_str = ''
+                #         for string in order_strings:
+                #             intersection = challenge.intersection(set(string.lower().split(' ')))
+                #             if intersection:
+                #                 levi_str = '{}<b>{}</b>\n'.format(levi_str, string)
+                #             else:
+                #                 levi_str = '{}{}\n'.format(levi_str, string)
+                #         levi_str = levi_str[:-1]
+                #     else:
+                #         levi_str = self.translations[lang]['levi_order'][str(r_json['hash'])]
+                #     info = {
+                #         'inline': True,
+                #         'name': r_json['originalDisplayProperties']['name'],
+                #         'value': levi_str.replace('<b>', '**').replace('</b>', '**')
+                #     }
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': levi_str.replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
+                # if self.translations[lang]["EoW"] in r_json['displayProperties']['name'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath']:
+                #     info = {
+                #         'inline': False,
+                #         'name': self.translations[lang]['lairs'],
+                #         'value': u"\u2063"
+                #     }
+                #     mods = await self.get_modifiers(lang, r_json['hash'])
+                #     resp_time = datetime.utcnow().isoformat()
+                #     if mods:
+                #         loadout = '{}\n{}\n{}'.format(self.translations[lang]['armsmaster'][eow_loadout*3],
+                #                                       self.translations[lang]['armsmaster'][eow_loadout*3+1],
+                #                                       self.translations[lang]['armsmaster'][eow_loadout*3+2])
+                #         info['value'] = '{}: {}\n\n{}:\n{}'.format(mods[0]['name'], mods[0]['description'],
+                #                                                    mods[1]['name'], loadout)
+                #     else:
+                #         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': info['value'].replace('\n\n', '<br>').replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
                         not r_json['matchmaking']['requiresGuardianOath'] and lw_ch != 0 and hawthorne_resp:
                     info = {
@@ -1546,38 +1615,38 @@ class D2data:
                         'description': info['value'].replace('\n', '<br>')
                     })
                     self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and sotp_ch != 0 and hawthorne_resp:
-                    info = {
-                        'inline': True,
-                        'name': r_json['originalDisplayProperties']['name'],
-                        'value': u"\u2063"
-                    }
-                    curr_challenge = sotp_ch
-                    curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
-                                                                    language=lang)
-                    info['value'] = curr_challenge['displayProperties']['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]['CoS'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and cos_ch != 0 and hawthorne_resp:
-                    info = {
-                        'inline': True,
-                        'name': r_json['originalDisplayProperties']['name'],
-                        'value': u"\u2063"
-                    }
-                    curr_challenge = cos_ch
-                    curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
-                                                                    language=lang)
-                    info['value'] = curr_challenge['displayProperties']['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
+                # if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath'] and sotp_ch != 0 and hawthorne_resp:
+                #     info = {
+                #         'inline': True,
+                #         'name': r_json['originalDisplayProperties']['name'],
+                #         'value': u"\u2063"
+                #     }
+                #     curr_challenge = sotp_ch
+                #     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                #                                                     language=lang)
+                #     info['value'] = curr_challenge['displayProperties']['name']
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': info['value'].replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
+                # if self.translations[lang]['CoS'] in r_json['displayProperties']['name'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath'] and cos_ch != 0 and hawthorne_resp:
+                #     info = {
+                #         'inline': True,
+                #         'name': r_json['originalDisplayProperties']['name'],
+                #         'value': u"\u2063"
+                #     }
+                #     curr_challenge = cos_ch
+                #     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                #                                                     language=lang)
+                #     info['value'] = curr_challenge['displayProperties']['name']
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': info['value'].replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
                 if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
                         not r_json['matchmaking']['requiresGuardianOath'] and 'modifierHashes' in key.keys():
                     info = {
@@ -2026,10 +2095,14 @@ class D2data:
     async def get_member_metric_wrapper(self, member, metric, is_global=False, tag=''):
         member_id = member['destinyUserInfo']['membershipId']
         member_type = member['destinyUserInfo']['membershipType']
-        if is_global:
-            player = '{} [{}]'.format(member['destinyUserInfo']['LastSeenDisplayName'], tag)
+        if member['destinyUserInfo']['bungieGlobalDisplayName'] != '' and False:
+            name = '{}#{}'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], member['destinyUserInfo']['bungieGlobalDisplayNameCode'])
         else:
-            player = member['destinyUserInfo']['LastSeenDisplayName']
+            name = member['destinyUserInfo']['LastSeenDisplayName']
+        if is_global:
+            player = '{} [{}]'.format(name, tag)
+        else:
+            player = name
         return [player, await self.get_player_metric(member_type, member_id, metric, is_global)]
 
     async def get_osiris_predictions(self, langs, forceget=False, force_info = None):
@@ -2043,8 +2116,28 @@ class D2data:
         flawless_rotation = ['?', '?', '?']
         mod_rotation = ['?', '?', '?']
 
+        def find_adept(saint_resp):
+            flawless = '?'
+            for item in saint_resp['Response']['sales']['data']:
+                for cost in saint_resp['Response']['sales']['data'][item]['costs']:
+                    if cost['quantity'] == 50000:
+                        flawless = saint_resp['Response']['sales']['data'][item]['itemHash']
+            return flawless
+
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
         week_n = int(week_n.days / 7)
+
+        saint_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/765357505/'.\
+            format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
+        saint_resp = await self.get_cached_json('saint', 'saint', saint_url, self.vendor_params, force=forceget)
+
+        if force_info is not None:
+            if force_info[1] != '?':
+                flawless = force_info[1]
+            else:
+                flawless = find_adept(saint_resp)
+        else:
+            flawless = find_adept(saint_resp)
 
         for lang in langs:
             db_data = []
@@ -2061,6 +2154,13 @@ class D2data:
                 'timestamp': datetime.utcnow().isoformat()
             }
             locale = self.translations[lang]['osiris']
+            if flawless != '?':
+                flawless_def = await self.destiny.decode_hash(flawless, 'DestinyInventoryItemDefinition', language=lang)
+            else:
+                flawless_def = {
+                    'displayProperties': {'name': '?'},
+                    'itemTypeDisplayName': '?'
+                }
             if force_info is None:
                 self.data[lang]['osiris']['fields'] = [
                     {
@@ -2069,7 +2169,7 @@ class D2data:
                     },
                     {
                         'name': locale['flawless'],
-                        'value': '{}?'.format(locale[flawless_rotation[int(week_n % len(flawless_rotation))]])
+                        'value': '{} ({})'.format(flawless_def['displayProperties']['name'], flawless_def['itemTypeDisplayName'])
                     }
                 ]
             else:
@@ -2085,13 +2185,10 @@ class D2data:
                                                                             lang)
                                 info.append(definition['displayProperties']['name'])
                             except pydest.PydestException:
-                                definition = await self.destiny.decode_hash(parameter, 'DestinyCollectibleDefinition',
+                                definition = await self.destiny.decode_hash(parameter, 'DestinyInventoryItemDefinition',
                                                                             lang)
-                                for parent in definition['parentNodeHashes']:
-                                    if str(parent) in self.translations[lang]['weapon_types'].keys():
-                                        info.append('{} ({})'.format(definition['displayProperties']['name'],
-                                                                     self.translations[lang]['weapon_types'][
-                                                                         str(parent)]))
+                                info.append('{} ({})'.format(definition['displayProperties']['name'],
+                                                             definition['itemTypeDisplayName']))
                     elif parameter in locale.keys():
                         info.append(locale[parameter])
                     else:
@@ -2103,7 +2200,7 @@ class D2data:
                     },
                     {
                         'name': locale['flawless'],
-                        'value': info[1]
+                        'value': '{} ({})'.format(flawless_def['displayProperties']['name'], flawless_def['itemTypeDisplayName'])
                     }
                 ]
             for field in self.data[lang]['osiris']['fields']:

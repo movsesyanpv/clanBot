@@ -416,10 +416,13 @@ class LFG:
         group_mode = self.get_cell('group_id', message.id, 'group_mode')
         owner = self.get_cell('group_id', message.id, 'owner')
         owner = message.guild.get_member(owner)
-        if owner.nick is None:
-            nick = owner.name
+        if owner is None:
+            nick = 'None'
         else:
-            nick = owner.nick
+            if owner.nick is None:
+                nick = owner.name
+            else:
+                nick = owner.nick
 
         if is_embed == 1:
             self.lfg_categories[self.lfg_i[is_embed]] = {
