@@ -1011,14 +1011,14 @@ class ClanBot(commands.Bot):
     async def post_updates(self, version, content, lang):
         msg = '`{} v{}`\n{}'.format(self.user.name, version, content)
         for server in self.guilds:
-            if lang == self.guild_lang(server.id):
+            if (lang == self.guild_lang(server.id) and lang == 'ru') or (lang != 'ru' and self.guild_lang(server.id) != 'ru'):
                 for channel in server.channels:
                     if channel.id in self.update_ch:
                         message = await channel.send(msg)
                         if channel.type == discord.ChannelType.news:
                             try:
                                 await message.publish()
-                            except discord.errors.Forbidden:
+                            except discord.Forbidden:
                                 pass
 
     async def update_metrics(self):
