@@ -974,14 +974,21 @@ class ClanBot(commands.Bot):
 
     async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
         responses = []
-        responses = []
         for channel_id in channels:
             try:
                 responses.append(await self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
             except discord.HTTPException as e:
                 responses.append([channel_id, "discord.HTTPException"])
-            except:
+            except Exception as e:
                 responses.append([channel_id, "Exception"])
+                traceback_str = ''
+                for line in traceback.format_exception(type(e), e, e.__traceback__):
+                    traceback_str = '{}{}'.format(traceback_str, line)
+                bot_info = await self.application_info()
+                owner = bot_info.owner
+                if owner.dm_channel is None:
+                    await owner.create_dm()
+                await owner.dm_channel.send('`{}`'.format(traceback_str))
             # self.sched.add_job(self.post_embed_to_channel, misfire_grace_time=86400, args=[upd_type, src_dict, time_to_delete, channel_id])
             # task = asyncio.ensure_future(self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
             # tasks.append(task)
