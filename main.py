@@ -367,11 +367,11 @@ class ClanBot(commands.Bot):
             try:
                 message = await self.fetch_channel(payload.channel_id)
                 message = await message.fetch_message(payload.message_id)
-            except discord.errors.NotFound:
+            except discord.NotFound:
                 if self.raid.is_raid(payload.message_id):
                     self.raid.del_entry(payload.message_id)
                 return
-            except discord.errors.Forbidden:
+            except discord.Forbidden:
                 return
 
             # if self.raid.is_raid(message.id):
@@ -885,7 +885,7 @@ class ClanBot(commands.Bot):
                         try:
                             # await asyncio.sleep(delay)
                             last = await channel.fetch_message(hist)
-                        except discord.errors.HTTPException:
+                        except discord.HTTPException:
                             # await asyncio.sleep(delay)
                             last = await channel.fetch_message(0)
                         if len(last.embeds) > 0:
@@ -902,11 +902,11 @@ class ClanBot(commands.Bot):
                         if type(last) != tuple and channel.type != discord.ChannelType.news:
                             # await asyncio.sleep(delay)
                             await last.delete()
-                except discord.errors.Forbidden:
+                except discord.Forbidden:
                     pass
                 except discord.NotFound:
                     pass
-                except discord.errors.HTTPException as e:
+                except discord.HTTPException as e:
                     bot_info = await self.application_info()
                     await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
                     pass
