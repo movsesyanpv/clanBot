@@ -152,8 +152,9 @@ class NoGoButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         was_goer = self.view.bot.raid.is_goer(interaction.message, interaction.user)
         is_mb_goer = self.view.bot.raid.is_mb_goer(interaction.message, interaction.user)
+        was_wanter = self.view.bot.raid.is_wanter(interaction.message, interaction.user)
         emoji = ''
-        if was_goer:
+        if was_goer or was_wanter:
             emoji = '👌'
         elif is_mb_goer:
             emoji = '❓'
@@ -162,7 +163,12 @@ class NoGoButton(discord.ui.Button):
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
         if not was_goer and not is_mb_goer:
             locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
-            await interaction.response.send_message(content=self.view.bot.translations[locale]['lfg']['was_not_going'], ephemeral=True)
+            if was_wanter:
+                await interaction.response.send_message(content=self.view.bot.translations[locale]['lfg']['will_not_go'], ephemeral=True)
+                owner = self.view.bot.get_user(self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
+                await self.view.bot.raid.upd_dm(owner, interaction.message.id, self.view.bot.translations[locale])
+            else:
+                await interaction.response.send_message(content=self.view.bot.translations[locale]['lfg']['was_not_going'], ephemeral=True)
 
 
 class DeleteButton(discord.ui.Button):

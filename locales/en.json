@@ -96,7 +96,8 @@
         "will_not_delete": "Only the group's owner can do this",
         "not_a_post": "This is not my LFG post!",
         "thread_start": "Please continue in the thread",
-        "button_no_change": "No changes"
+        "button_no_change": "No changes",
+        "will_not_go": "Ok"
     },
     "lfge": {
         "roles": "Roles",

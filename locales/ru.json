@@ -96,7 +96,8 @@
         "will_not_delete": "Удаление сбора доступно только его создателю",
         "not_a_post": "Это не мой сбор!",
         "thread_start": "Продолжайте в ветке",
-        "button_no_change": "Без изменений"
+        "button_no_change": "Без изменений",
+        "will_not_go": "Ок"
     },
     "lfge": {
         "roles": "Роли",

@@ -739,6 +739,12 @@ class LFG:
 
         return user.mention in goers
 
+    def is_wanter(self, message: discord.Message, user: discord.Member) -> bool:
+        wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
+        wanters = eval(wanters.fetchone()[0])
+
+        return user.mention in wanters
+
     def is_mb_goer(self, message: discord.Message, user: discord.Member) -> bool:
         goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (message.id,))
         goers = eval(goers.fetchone()[0])
