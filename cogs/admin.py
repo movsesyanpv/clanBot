@@ -374,7 +374,10 @@ class Admin(commands.Cog):
                 translations = help_translations['commands'][command.name]
                 command_desc = translations['info']
             else:
-                command_desc = command.description
+                if command.name in help_translations.keys():
+                    command_desc = help_translations[command.name]
+                else:
+                    command_desc = command.description
             help_msg = '{}'.format(command_desc)
             await channel.send(help_msg)
             pass
