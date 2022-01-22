@@ -6,6 +6,8 @@ from hashids import Hashids
 from babel.dates import format_datetime, get_timezone_name, get_timezone, get_timezone_gmt
 from babel import Locale
 
+from typing import List, Union
+
 
 class LFG:
     conn = ''
@@ -38,7 +40,7 @@ class LFG:
         self.conn = sqlite3.connect('lfg.db')
         self.c = self.conn.cursor()
 
-    def add(self, message: discord.Message, lfg_string=None):
+    def add(self, message: discord.Message, lfg_string: str = None) -> None:
         if lfg_string is None:
             content = message.content.splitlines()
         else:
@@ -82,7 +84,8 @@ class LFG:
         self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         self.conn.commit()
 
-    def parse_args(self, content, message, is_init, guild=None):
+    def parse_args(self, content: List[str], message: Union[discord.Message, int], is_init: bool,
+                   guild: discord.Guild = None) -> dict:
         time = datetime.now()
 
         def merge_arg(str_args):
@@ -209,7 +212,7 @@ class LFG:
             args['the_role'] = self.find_roles(is_init, message.guild, roles)
         return args
 
-    def find_roles(self, is_init, guild, roles):
+    def find_roles(self, is_init: bool, guild: discord.Guild, roles: List[str]) -> str:
         roles = [i.lower() for i in roles]
         for i in [0, 1]:
             the_role = []
@@ -228,23 +231,23 @@ class LFG:
                 the_role_str = "{}, {}".format(the_role_str, i.mention)
         return the_role_str
 
-    def del_entry(self, group_id):
+    def del_entry(self, group_id: int) -> None:
         self.c.executemany('''DELETE FROM raid WHERE group_id LIKE (?)''', [(group_id,)])
         self.conn.commit()
 
-    def set_id(self, new_id, group_id):
+    def set_id(self, new_id: int, group_id: int) -> None:
         self.c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_id, group_id))
         self.conn.commit()
 
-    def set_owner(self, new_owner, group_id):
+    def set_owner(self, new_owner: int, group_id: int) -> None:
         self.c.execute('''UPDATE raid SET owner=? WHERE group_id=?''', (new_owner, group_id))
         self.conn.commit()
 
-    def set_group_space(self, group_id, group_role, group_channel):
+    def set_group_space(self, group_id: int, group_role: int, group_channel: int) -> None:
         self.c.execute('''UPDATE raid SET group_role=?, group_channel=? WHERE group_id=?''', (group_role, group_channel, group_id))
         self.conn.commit()
 
-    def is_raid(self, message_id):
+    def is_raid(self, message_id: int) -> bool:
         try:
             cell = self.c.execute('SELECT group_id FROM raid WHERE group_id=?', (message_id,))
         except sqlite3.OperationalError:
@@ -256,7 +259,7 @@ class LFG:
             cell = cell[0]
             return message_id == cell[0]
 
-    def get_cell(self, search_field, group_id, field):
+    def get_cell(self, search_field: str, group_id: int, field: str) -> Union[str, int, None]:
         try:
             cell = self.c.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,)).fetchone()
         except sqlite3.OperationalError:
@@ -267,7 +270,7 @@ class LFG:
             else:
                 return None
 
-    def get_cell_array(self, search_field, group_id, field):
+    def get_cell_array(self, search_field: str, group_id: int, field: str) -> List:
         try:
             arr = self.c.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,))
             arr = eval(arr.fetchone()[0])
@@ -278,7 +281,7 @@ class LFG:
 
         return arr
 
-    def add_mb_goers(self, group_id, user):
+    def add_mb_goers(self, group_id: int, user: discord.Member) -> None:
         mb_goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
         mb_goers = mb_goers.fetchone()[0]
 
@@ -311,7 +314,7 @@ class LFG:
         self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
         self.conn.commit()
 
-    def add_people(self, group_id, user):
+    def add_people(self, group_id: int, user: discord.Member) -> None:
         mb_goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
         mb_goers = mb_goers.fetchone()[0]
 
@@ -355,7 +358,7 @@ class LFG:
         self.c.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
         self.conn.commit()
 
-    def rm_people(self, group_id, user, emoji=''):
+    def rm_people(self, group_id: int, user: discord.Member, emoji: str = '') -> None:
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
         goers = eval(goers.fetchone()[0])
 
@@ -391,7 +394,7 @@ class LFG:
         self.c.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
         self.conn.commit()
 
-    def make_embed(self, message, translations, lang):
+    def make_embed(self, message: discord.Message, translations: dict, lang: str) -> discord.Embed:
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
         name = self.get_cell('group_id', message.id, 'name')
         tz = self.get_cell('group_id', message.id, 'timezone')
@@ -545,13 +548,13 @@ class LFG:
             embed['fields'] = embed['fields'][:-1]
 
         embed = discord.Embed.from_dict(embed)
-        # embed.timestamp = time
+        embed.timestamp = time
 
         print(embed_length)
 
         return embed
 
-    async def update_group_msg(self, message, translations, lang):
+    async def update_group_msg(self, message: discord.Message, translations: dict, lang: str) -> None:
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
 
         if is_embed and message.channel.permissions_for(message.guild.me).embed_links:
@@ -594,7 +597,7 @@ class LFG:
                 msg = '{}.'.format(msg[:-1])
         await message.edit(content=msg)
 
-    async def upd_dm(self, owner, group_id, translations):
+    async def upd_dm(self, owner: Union[discord.User, discord.Member], group_id: int, translations: dict) -> None:
         wanters = self.c.execute('SELECT want_dm FROM raid WHERE owner=? AND group_id=?', (owner.id, group_id))
         wanters = eval(wanters.fetchone()[0])
 
@@ -636,7 +639,7 @@ class LFG:
         self.c.execute('''UPDATE raid SET dm_message=? WHERE owner=? AND group_id=?''', (dm_id, owner.id, group_id))
         self.conn.commit()
 
-    async def add_going(self, group_id, number):
+    async def add_going(self, group_id: int, number: int) -> None:
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,)).fetchone()
 
         if len(goers) > 0:
@@ -665,7 +668,7 @@ class LFG:
         self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
         self.conn.commit()
 
-    async def dm_lfgs(self, user, translations):
+    async def dm_lfgs(self, user: Union[discord.Member, discord.User], translations: dict) -> Union[List, bool]:
         lfg_list = self.c.execute('SELECT group_id, name, time, channel_name, server_name, timezone FROM raid WHERE owner=?',
                                   (user.id,))
         lfg_list = lfg_list.fetchall()
@@ -685,7 +688,8 @@ class LFG:
             await user.dm_channel.send(translations['lfglist_empty'])
             return False
 
-    async def edit(self, message, old_lfg, translations, lang, param_str=None):
+    async def edit(self, message: discord.Message, old_lfg: discord.Message, translations: dict, lang: str,
+                   param_str: str = None) -> discord.Message:
         if param_str is not None:
             text = param_str.splitlines()
         else:
@@ -719,23 +723,23 @@ class LFG:
         self.conn.commit()
         return new_lfg
 
-    def purge_guild(self, guild_id):
+    def purge_guild(self, guild_id: int) -> None:
         self.c.executemany('''DELETE FROM raid WHERE server_id LIKE (?)''', [(guild_id,)])
         self.conn.commit()
 
-    def get_all(self):
+    def get_all(self) -> List:
         lfg_list = self.c.execute('SELECT group_id, lfg_channel, time, server_id, length FROM raid')
         lfg_list = lfg_list.fetchall()
 
         return lfg_list
 
-    def is_goer(self, message, user):
+    def is_goer(self, message: discord.Message, user: discord.Member) -> bool:
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
         goers = eval(goers.fetchone()[0])
 
         return user.mention in goers
 
-    def is_mb_goer(self, message, user):
+    def is_mb_goer(self, message: discord.Message, user: discord.Member) -> bool:
         goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (message.id,))
         goers = eval(goers.fetchone()[0])
 
