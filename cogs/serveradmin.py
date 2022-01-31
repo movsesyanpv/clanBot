@@ -105,19 +105,20 @@ class ServerAdmin(commands.Cog):
     async def sl_lfgcleanup(self, ctx,
                             days: Option(int, "Days since the activity was finished", required=False, default=0)):
         await ctx.defer(ephemeral=True)
-        msg = 'Done, removed {} entries.'
+        lang = await locale_2_lang(ctx)
+        msg = ctx.bot.translations[lang]['msg']['lfg_cleanup']
         if ctx.guild is None:
             if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=False):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
                 await ctx.respond(msg.format(n))
             else:
-                await ctx.respond('You lack the permissions to access this command here.')
+                await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
         else:
             if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
                 await ctx.respond(msg.format(n))
             else:
-                await ctx.respond('You lack the permissions to access this command here.')
+                await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
 
     @commands.command()
     @commands.guild_only()
@@ -146,11 +147,9 @@ class ServerAdmin(commands.Cog):
     async def sl_regnotifier(self, ctx,
                              upd_type: Option(str, "The type of notifier", required=False, default='notifiers', choices=['notifiers', 'updates'])):
         await ctx.defer(ephemeral=True)
-        if ctx.guild is None:
-            await ctx.respond("This command can not be used in DMs")
-            return
+        lang = await locale_2_lang(ctx)
         if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond("You lack the administrator permissions to use this command")
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
             return
         notifier_type = upd_type
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
@@ -158,8 +157,7 @@ class ServerAdmin(commands.Cog):
                                          (ctx.channel.id, ctx.guild.id))
             ctx.bot.guild_db.commit()
             ctx.bot.get_channels()
-            msg = 'Got it, {}'.format(ctx.author.mention)
-            await ctx.respond(msg)
+            await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
         return
 
     @commands.command()
@@ -188,19 +186,16 @@ class ServerAdmin(commands.Cog):
     @commands.guild_only()
     async def sl_rmnotifier(self, ctx):
         await ctx.defer(ephemeral=True)
-        if ctx.guild is None:
-            await ctx.respond("This command can not be used in DMs")
-            return
+        lang = await locale_2_lang(ctx)
         if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond("You lack the administrator permissions to use this command")
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
             return
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
             ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
             ctx.bot.guild_db.commit()
             ctx.bot.get_channels()
-            msg = 'Got it, {}'.format(ctx.author.mention)
-            await ctx.respond(msg)
+            await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
 
     @commands.command()
     @commands.guild_only()
@@ -228,18 +223,16 @@ class ServerAdmin(commands.Cog):
     @commands.guild_only()
     async def sl_setlang(self, ctx):
         await ctx.defer(ephemeral=True)
-        if ctx.guild is None:
-            await ctx.respond("This command can not be used in DMs")
-            return
+        lang = await locale_2_lang(ctx)
         if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond("You lack the administrator permissions to use this command")
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
             return
         view = BotLangs(ctx.author, self.bot)
-        await ctx.respond('Select language', view=view)
+        await ctx.respond(ctx.bot.translations[lang]['msg']['language_select'], view=view)
         await view.wait()
         args = view.value
 
-        msg = 'Got it, {}'.format(ctx.author.mention)
+        msg = ctx.bot.translations[lang]['msg']['command_is_done']
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
                                          (args[0].lower(), ctx.guild.id))
@@ -295,13 +288,10 @@ class ServerAdmin(commands.Cog):
     @commands.guild_only()
     async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True)):
         await ctx.defer(ephemeral=True)
-        if ctx.guild is None:
-            ctx.respond('You can\'t use this command in DMs')
-            return
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond("You lack the administrator permissions to use this command")
-            return
         lang = await locale_2_lang(ctx)
+        if not ctx.channel.permissions_for(ctx.author).administrator:
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
+            return
         # lang = ctx.bot.guild_lang(ctx.guild.id)
         try:
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(int(clan_id))
@@ -406,14 +396,9 @@ class ServerAdmin(commands.Cog):
     @commands.guild_only()
     async def sl_update(self, ctx):
         await ctx.defer(ephemeral=True)
-        if ctx.guild is not None:
-            lang = ctx.bot.guild_lang(ctx.guild.id)
-        else:
-            lang = 'en'
-            await ctx.respond('This command can\'t be used in DMs')
         lang = await locale_2_lang(ctx)
         if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond("You lack the administrator permissions to use this command")
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
             return
         get = True
         channels = None
@@ -432,8 +417,8 @@ class ServerAdmin(commands.Cog):
             await ctx.respond(ctx.bot.translations[lang]['msg']['no_notifiers'])
             return
         else:
-            view = UpdateTypes(ctx.author)
-            await ctx.respond('Select update types', view=view)
+            view = UpdateTypes(ctx, lang)
+            await ctx.respond(ctx.bot.translations[lang]['msg']['update_types'], view=view)
             await view.wait()
             args = view.value
 
@@ -454,7 +439,7 @@ class ServerAdmin(commands.Cog):
                 if list(set(regular_types).intersection(args)):
                     correct_ch = True
         await ctx.bot.force_update(args, get=get, channels=channels, forceget=get)
-        await ctx.interaction.edit_original_message(content="Done", view=None)
+        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
         return
 
     @commands.command()

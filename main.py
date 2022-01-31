@@ -19,12 +19,14 @@ from inspect import currentframe, getframeinfo
 from tabulate import tabulate
 
 from discord.ext import commands
-# from discord_slash import SlashCommand
 
 import raid as lfg
 import destiny2data as d2
 import unauthorized
 from cogs.utils.views import GroupButtons
+from cogs.utils.converters import locale_2_lang
+
+from typing import List, Union, Callable
 
 
 class ClanBot(commands.Bot):
@@ -101,15 +103,14 @@ class ClanBot(commands.Bot):
         logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
         logging.getLogger('apscheduler')
 
-
-    def load_translations(self):
+    def load_translations(self) -> None:
         self.translations = {}
         for lang in self.langs:
             translations_file = open('locales/{}.json'.format(lang), 'r', encoding='utf-8')
             self.translations[lang] = json.loads(translations_file.read())
             translations_file.close()
 
-    def get_args(self):
+    def get_args(self) -> None:
         parser = argparse.ArgumentParser()
         parser.add_argument('-nc', '--noclear', help='Don\'t clear last message of the type', action='store_true')
         parser.add_argument('-p', '--production', help='Use to launch in production mode', action='store_true')
@@ -123,7 +124,8 @@ class ClanBot(commands.Bot):
         parser.add_argument('-c', '--cert', help='SSL certificate', type=str, default='')
         self.args = parser.parse_args()
 
-    async def force_update(self, upd_type, post=True, get=True, channels=None, forceget=False):
+    async def force_update(self, upd_type: List[str], post: bool = True, get: bool = True,channels: List[int] = None,
+                           forceget: bool = False) -> None:
         if 'daily' in upd_type and post:
             upd_type = (tuple(upd_type) + self.daily_rotations)
         if 'weekly' in upd_type and post:
@@ -216,7 +218,7 @@ class ClanBot(commands.Bot):
             await self.logout()
             await self.close()
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         await self.dm_owner('on_ready fired')
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(status=discord.Status.dnd, activity=game)
@@ -270,7 +272,7 @@ class ClanBot(commands.Bot):
         char_file.close()
         return
 
-    async def on_guild_join(self, guild):
+    async def on_guild_join(self, guild: discord.Guild) -> None:
         self.logger.info('added to {}'.format(guild.name))
         if guild.owner.dm_channel is None:
             await guild.owner.create_dm()
@@ -292,7 +294,7 @@ class ClanBot(commands.Bot):
         await self.update_prefixes()
         await self.update_langs()
 
-    async def on_guild_remove(self, guild):
+    async def on_guild_remove(self, guild: discord.Guild) -> None:
         self.guild_cursor.execute('''DELETE FROM clans WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM language WHERE server_id=?''', (guild.id,))
@@ -302,13 +304,14 @@ class ClanBot(commands.Bot):
         self.guild_db.commit()
         self.raid.purge_guild(guild.id)
 
-    async def dm_owner(self, text):
+    async def dm_owner(self, text: str) -> None:
         bot_info = await self.application_info()
         if bot_info.owner.dm_channel is None:
             await bot_info.owner.create_dm()
         await bot_info.owner.dm_channel.send(text)
 
-    async def check_ownership(self, message, is_silent=False, admin_check=False):
+    async def check_ownership(self, message: discord.Message, is_silent: bool = False,
+                              admin_check: bool = False) -> bool:
         bot_info = await self.application_info()
         is_owner = bot_info.owner == message.author
         if not is_owner and not is_silent:
@@ -358,7 +361,7 @@ class ClanBot(commands.Bot):
     #             owner = self.get_user(owner)
     #             await self.raid.upd_dm(owner, message.id, self.translations[lang])
 
-    async def on_raw_reaction_add(self, payload):
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
         user = payload.member
         if payload.user_id == self.user.id:
             return
@@ -463,7 +466,7 @@ class ClanBot(commands.Bot):
                 await owner.create_dm()
             await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
 
-    async def lfg_cleanup(self, days, guild=None):
+    async def lfg_cleanup(self, days: Union[int, float], guild: discord.Guild = None) -> int:
         lfg_list = self.raid.get_all()
         if guild is None:
             guild_id = 0
@@ -486,14 +489,14 @@ class ClanBot(commands.Bot):
                 i = i + 1
         return i
 
-    async def pause_for(self, message, delta):
+    async def pause_for(self, message: discord.Message, delta: timedelta) -> None:
         self.sched.pause()
         await asyncio.sleep(delta.total_seconds())
         self.sched.resume()
         await message.channel.send('should be after delay finish {}'.format(str(datetime.now())))
         return
 
-    async def on_raw_message_delete(self, payload):
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
         if self.raid.is_raid(payload.message_id):
             owner = self.raid.get_cell('group_id', payload.message_id, 'owner')
             owner = self.get_user(owner)
@@ -595,8 +598,9 @@ class ClanBot(commands.Bot):
     async def on_application_command_error(
         self, context: ApplicationContext, exception: DiscordException
     ) -> None:
+        locale = await locale_2_lang(context)
         if isinstance(exception, commands.NoPrivateMessage):
-            await context.respond("\N{WARNING SIGN} Sorry, you can't use this command in a private message!", ephemeral=True)
+            await context.respond(self.translations[locale]['msg']['no_dm'], ephemeral=True)
         else:
             bot_info = await self.application_info()
             owner = bot_info.owner
@@ -607,16 +611,16 @@ class ClanBot(commands.Bot):
                 traceback_str = '{}{}'.format(traceback_str, line)
             await owner.dm_channel.send('`{}`'.format(traceback_str))
             command_line = '/{}'.format(context.interaction.data['name'])
-            for option in context.interaction.data['options']:
+            if 'optons' in context.interaction.data.keys():
                 for option in context.interaction.data['options']:
                     command_line = '{} {}:{}'.format(command_line, option['name'], option['value'])
             await owner.dm_channel.send('{}:\n{}'.format(context.author, command_line))
             if context.author.dm_channel is None:
                 await context.author.create_dm()
             if context.author != owner:
-                await context.author.dm_channel.send(self.translations['en']['error'])
+                await context.author.dm_channel.send(self.translations[locale]['error'])
 
-    async def on_interaction(self, interaction):
+    async def on_interaction(self, interaction: discord.Interaction):
         await self.process_application_commands(interaction)
         if interaction.type == discord.InteractionType.application_command:
             command_line = '/{}'.format(interaction.data['name'])
@@ -629,7 +633,7 @@ class ClanBot(commands.Bot):
         gc.collect()
         self.logger.info(ctx.message.content)
 
-    def get_channel_type(self, ch_type):
+    def get_channel_type(self, ch_type: str):
         channel_list = []
         try:
             self.guild_cursor.execute('''CREATE TABLE {} (channel_id integer, server_id integer)'''.format(ch_type))
@@ -645,7 +649,7 @@ class ClanBot(commands.Bot):
                 pass
         return channel_list
 
-    def get_channels(self):
+    def get_channels(self) -> None:
         self.notifiers.clear()
         self.seasonal_ch.clear()
         self.update_ch.clear()
@@ -654,7 +658,7 @@ class ClanBot(commands.Bot):
         self.seasonal_ch = self.get_channel_type('seasonal')
         self.update_ch = self.get_channel_type('updates')
 
-    def guild_lang(self, guild_id):
+    def guild_lang(self, guild_id: int) -> str:
         try:
             self.guild_cursor.execute('''SELECT lang FROM language WHERE server_id=?''', (guild_id, ))
             lang = self.guild_cursor.fetchone()
@@ -668,7 +672,7 @@ class ClanBot(commands.Bot):
         except:
             return 'en'
 
-    def guild_prefix(self, guild_id):
+    def guild_prefix(self, guild_id: int) -> list:
         try:
             self.guild_cursor.execute('''SELECT prefix FROM prefixes WHERE server_id=?''', (guild_id, ))
             prefix = self.guild_cursor.fetchone()
@@ -679,7 +683,7 @@ class ClanBot(commands.Bot):
         except:
             return []
 
-    def update_clans(self):
+    def update_clans(self) -> None:
         for server in self.guilds:
             try:
                 self.guild_cursor.execute('''CREATE TABLE clans (server_name text, server_id integer, clan_name text, clan_id integer)''')
@@ -693,7 +697,7 @@ class ClanBot(commands.Bot):
 
         self.guild_db.commit()
 
-    async def update_langs(self):
+    async def update_langs(self) -> None:
         for server in self.guilds:
             try:
                 self.guild_cursor.execute('''CREATE TABLE language (server_id integer, lang text, server_name text)''')
@@ -718,7 +722,7 @@ class ClanBot(commands.Bot):
 
         self.update_clans()
 
-    async def update_prefixes(self):
+    async def update_prefixes(self) -> None:
         for server in self.guilds:
             try:
                 self.guild_cursor.execute('''CREATE TABLE prefixes (server_id integer, prefix text, server_name text)''')
@@ -740,7 +744,7 @@ class ClanBot(commands.Bot):
 
         self.update_clans()
 
-    async def update_history(self):
+    async def update_history(self) -> None:
         try:
             self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer, channel_id integer)''')
             self.guild_cursor.execute('''CREATE UNIQUE INDEX hist ON history(channel_id)''')
@@ -756,7 +760,9 @@ class ClanBot(commands.Bot):
             except sqlite3.OperationalError:
                 pass
 
-    async def universal_update(self, getter, name, time_to_delete=None, channels=None, post=True, get=True, forceget=False):
+    async def universal_update(self, getter: Callable, name: str, time_to_delete: float = None,
+                               channels: List[int] = None, post: bool = True, get: bool = True,
+                               forceget: bool = False) -> None:
         await self.wait_until_ready()
 
         lang = self.langs
@@ -791,7 +797,8 @@ class ClanBot(commands.Bot):
         if post:
             await self.post_embed(name, self.data.data, time_to_delete, channels)
 
-    async def post_embed_to_channel(self, upd_type, src_dict, time_to_delete, channel_id):
+    async def post_embed_to_channel(self, upd_type: str, src_dict: dict, time_to_delete: float,
+                                    channel_id: int) -> list:
         # delay = random.uniform(0, 180)
         delay = 0
         # await asyncio.sleep(delay)
@@ -972,7 +979,7 @@ class ClanBot(commands.Bot):
         frameinfo = getframeinfo(currentframe())
         return [channel_id, 'posted ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
 
-    async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
+    async def post_embed(self, upd_type: str, src_dict: dict, time_to_delete: float, channels: List[int]) -> None:
         responses = []
         for channel_id in channels:
             try:
@@ -1015,7 +1022,7 @@ class ClanBot(commands.Bot):
             else:
                 await self.dm_owner(msg)
 
-    async def post_updates(self, version, content, lang):
+    async def post_updates(self, version: str, content: str, lang: str) -> None:
         msg = '`{} v{}`\n{}'.format(self.user.name, version, content)
         for server in self.guilds:
             if (lang == self.guild_lang(server.id) and lang == 'ru') or (lang != 'ru' and self.guild_lang(server.id) != 'ru'):
@@ -1028,7 +1035,7 @@ class ClanBot(commands.Bot):
                             except discord.Forbidden:
                                 pass
 
-    async def update_metrics(self):
+    async def update_metrics(self) -> None:
         clan_ids_c = self.guild_cursor.execute('''SELECT clan_id FROM clans''')
         clan_ids_c = clan_ids_c.fetchall()
         clan_ids = []
@@ -1036,7 +1043,7 @@ class ClanBot(commands.Bot):
             clan_ids.append(clan_id[0])
         await self.data.get_clan_leaderboard(clan_ids, 1572939289, 10)
 
-    async def update_metric_list(self):
+    async def update_metric_list(self) -> None:
         internal_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                       password=self.api_data['pass'], port=self.api_data['db_port'],
                                       database='metrics')
@@ -1070,7 +1077,7 @@ class ClanBot(commands.Bot):
         internal_db.commit()
         internal_db.close()
 
-    def start_up(self):
+    def start_up(self) -> None:
         self.get_args()
         token = self.api_data['token']
         print('hmm')

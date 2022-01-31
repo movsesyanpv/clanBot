@@ -220,29 +220,36 @@ class GroupButtons(discord.ui.View):
 
 
 class UpdateTypes(discord.ui.View):
-    def __init__(self, owner):
+    def __init__(self, ctx, lang):
         super().__init__()
-        self.owner = owner
+        self.owner = ctx.author
         self.value = None
+        translations = ctx.bot.translations[lang]
+        variants = set(translations['update_types']).intersection(set(ctx.bot.all_types))
+        types = translations['update_types']
+        options = [discord.SelectOption(label=translations['update_types'][option]['label'], value=option,
+                                        description=translations['update_types'][option]['description']) for option in types]
+        self.select = MySelect(min_values=0, max_values=1, options=options, row=1)
+        self.add_item(self.select)
 
-    @discord.ui.select(placeholder='Update type', max_values=8, options=[
-        discord.SelectOption(label='Strikes', value='strikes', description='Daily vanguard strike playlist modifiers'),
-        discord.SelectOption(label='Spider', value='spider', description='Spider\'s material exchange'),
-        discord.SelectOption(label='Nightmare hunts', value='nightmares', description='Currently available nightmare hunts'),
-        discord.SelectOption(label='Crucible rotators', value='crucible', description='Currently available crucible rotators'),
-        discord.SelectOption(label='Raid challenges', value='raids', description='Current week\'s raid challenges'),
-        discord.SelectOption(label='Nightfall: The Ordeal', value='ordeal', description='Current nightfall'),
-        discord.SelectOption(label='Empire hunt', value='empire', description='Current empire hunt'),
-        discord.SelectOption(label='Xur', value='xur', description='Xur\'s location and exotics'),
-        discord.SelectOption(label='Trials of osiris', value='osiris', description="Current ToO info")
-    ])
-    async def updates(self, select: discord.ui.Select, interaction: discord.Interaction):
-        self.value = []
-        if self.owner != interaction.user:
-            return
-        for selected in select.values:
-            self.value.append(selected)
-            self.stop()
+    # @discord.ui.select(placeholder='Update type', max_values=8, options=[
+    #     discord.SelectOption(label='Strikes', value='strikes', description='Daily vanguard strike playlist modifiers'),
+    #     discord.SelectOption(label='Spider', value='spider', description='Spider\'s material exchange'),
+    #     discord.SelectOption(label='Nightmare hunts', value='nightmares', description='Currently available nightmare hunts'),
+    #     discord.SelectOption(label='Crucible rotators', value='crucible', description='Currently available crucible rotators'),
+    #     discord.SelectOption(label='Raid challenges', value='raids', description='Current week\'s raid challenges'),
+    #     discord.SelectOption(label='Nightfall: The Ordeal', value='ordeal', description='Current nightfall'),
+    #     discord.SelectOption(label='Empire hunt', value='empire', description='Current empire hunt'),
+    #     discord.SelectOption(label='Xur', value='xur', description='Xur\'s location and exotics'),
+    #     discord.SelectOption(label='Trials of osiris', value='osiris', description="Current ToO info")
+    # ])
+    # async def updates(self, select: discord.ui.Select, interaction: discord.Interaction):
+    #     self.value = []
+    #     if self.owner != interaction.user:
+    #         return
+    #     for selected in select.values:
+    #         self.value.append(selected)
+    #         self.stop()
 
 
 class BotLangs(discord.ui.View):

@@ -43,7 +43,12 @@
         "daily_mods": "Ada-1 and Banshee-44 sell these",
         "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
         "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version.",
-        "command_is_done": "Done"
+        "command_is_done": "Done",
+        "update_types": "Select update types",
+        "no_dm": "This command can't be used in DMs",
+        "no_admin": "You lack the administrator permissions to use this command",
+        "language_select": "Select language",
+        "lfg_cleanup": "Done, removed {} entries."
     },
     "lfg": {
         "go": "Go",
@@ -299,5 +304,47 @@
         "error": "Error",
         "error_t": "Unable to fetch the clan",
         "title": "Online clan members"
+    },
+    "update_types": {
+        "nightmares": {
+            "label": "Nightmare hunts",
+            "description": "Currently available nightmare hunts"
+        },
+        "crucible": {
+            "label": "Crucible rotators",
+            "description": "Currently available crucible rotators"
+        },
+        "raids": {
+            "label": "Raid challenges",
+            "description": "Current week's raid challenges"
+        },
+        "ordeal": {
+            "label": "Nightfall: The Ordeal",
+            "description": "Current nightfall"
+        },
+        "empire": {
+            "label": "Empire hunt",
+            "description": "Current empire hunt"
+        },
+        "strikes": {
+            "label": "Strikes",
+            "description": "Daily vanguard strike playlist modifiers"
+        },
+        "spider": {
+            "label": "Spider",
+            "description": "Spider's material exchange"
+        },
+        "mods": {
+            "label": "Ada's and Banshee's mods",
+            "description": "Currently available mods that Ada and Banshee sell"
+        },
+        "xur": {
+            "label": "Xur",
+            "description": "Xur's location and exotics"
+        },
+        "osiris": {
+            "label": "Trials of Osiris",
+            "description": "Current ToO info"
+        }
     }
 }

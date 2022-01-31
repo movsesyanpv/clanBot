@@ -148,12 +148,12 @@ class Public(commands.Cog):
                      is_global: Option(bool, "Make a leaderboard across all tracked clans", required=False, default=False)
                      ):
         await ctx.defer()
+        lang = await locale_2_lang(ctx)
         if ctx.guild is None:
-            await ctx.respond("This command cannot be used in DMs")
+            await ctx.respond(ctx.bot.translations[lang]['no_dm'])
             return
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        lang = await locale_2_lang(ctx)
         # lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         if clan_id is None:
@@ -365,12 +365,12 @@ class Public(commands.Cog):
     @commands.guild_only()
     async def online_sl(self, ctx):
         await ctx.defer()
+        lang = await locale_2_lang(ctx)
         if ctx.guild is None:
-            await ctx.respond("This command cannot be used in DMs")
+            await ctx.respond(ctx.bot.translations[lang]['no_dm'])
             return
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        lang = await locale_2_lang(ctx)
         # lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         embeds = [discord.Embed(title=ctx.bot.translations[lang]['online']['title'])]

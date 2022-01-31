@@ -3,7 +3,7 @@ import sqlite3
 import json
 
 
-def get_unauth_response():
+def get_unauth_response() -> discord.Embed:
     try:
         conn = sqlite3.connect('internal.db')
         c = conn.cursor()
