@@ -457,21 +457,21 @@ class ServerAdmin(commands.Cog):
             msg = 'Got it, {}'.format(ctx.message.author.mention)
             await ctx.message.channel.send(msg, delete_after=10)
 
-    @commands.slash_command(
-        description='Register the channel as a place for LFG posts',
-        default_permission=False
-    )
-    @commands.guild_only()
-    async def reglfg(self, ctx):
-        pass
-
-    @commands.slash_command(
-        description="View and change settings for the server",
-        default_permission=False
-    )
-    @commands.guild_only()
-    async def settings(self, ctx):
-        pass
+    # @commands.slash_command(
+    #     description='Register the channel as a place for LFG posts',
+    #     default_permission=False
+    # )
+    # @commands.guild_only()
+    # async def reglfg(self, ctx):
+    #     pass
+    #
+    # @commands.slash_command(
+    #     description="View and change settings for the server",
+    #     default_permission=False
+    # )
+    # @commands.guild_only()
+    # async def settings(self, ctx):
+    #     pass
 
 
 def setup(bot):
