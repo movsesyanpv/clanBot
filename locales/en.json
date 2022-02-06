@@ -240,6 +240,19 @@
                 "name": "online"
             }
         },
+        "groups": {
+            "autopost": {
+                "subcommands": {
+                    "remove": "Make the bot stop posting updates in this channel"
+                },
+                "subgroups": {
+                    "start": {
+                        "rotations": "Make the bot start posting rotation updates in this channel",
+                        "changelogs": "Make the bot start posting changelogs in this channel"
+                    }
+                }
+            }
+        },
         "prefix": "Print available prefixes",
         "setprefix": "Set available prefixes",
         "support": "Get the link to the support server",

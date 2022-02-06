@@ -586,14 +586,41 @@ class Admin(commands.Cog):
             await ctx.respond(embed=help_embed)
             pass
         elif type(command) == discord.SlashCommandGroup:
-            help_msg = command.description
+            if command.name in help_translations['commands'].keys():
+                translations = help_translations['commands'][command.name]
+                help_msg = translations['info']
+            elif command.name in help_translations.keys():
+                help_msg = help_translations[command.name]
+            else:
+                help_msg = command.description
             flat_structure = []
+            if 'groups' in help_translations.keys():
+                if command.name in help_translations['groups'].keys():
+                    group_translations = help_translations['groups'][command.name]
+                else:
+                    group_translations = {}
+            else:
+                group_translations = {}
             for subcommand in command.subcommands:
                 if type(subcommand) == discord.SlashCommandGroup:
                     for subsubcommand in subcommand.subcommands:
-                        help_embed.add_field(name='{} {} {}'.format(command.name, subcommand.name, subsubcommand.name), value=subsubcommand.description, inline=False)
+                        if 'subgroups' in group_translations.keys():
+                            if subsubcommand.name in group_translations['subgroups'][subcommand.name].keys():
+                                description = group_translations['subgroups'][subcommand.name][subsubcommand.name]
+                            else:
+                                description = subsubcommand.description
+                        else:
+                            description = subsubcommand.description
+                        help_embed.add_field(name='{} {} {}'.format(command.name, subcommand.name, subsubcommand.name), value=description, inline=False)
                 else:
-                    help_embed.add_field(name='{} {}'.format(command.name, subcommand.name), value=subcommand.description, inline=False)
+                    if 'subcommands' in group_translations.keys():
+                        if subcommand.name in group_translations['subcommands'].keys():
+                            description = group_translations['subcommands'][subcommand.name]
+                        else:
+                            description = subcommand.description
+                    else:
+                        description = subcommand.description
+                    help_embed.add_field(name='{} {}'.format(command.name, subcommand.name), value=description, inline=False)
             # help_msg = '{}```\t{}```'.format(help_msg,
             #                                  tabulate(flat_structure, tablefmt='plain', colalign=('left', 'left')).
             #                                  replace('\n', '\n\t'))
@@ -604,6 +631,8 @@ class Admin(commands.Cog):
             if command.name in help_translations['commands'].keys():
                 translations = help_translations['commands'][command.name]
                 command_desc = translations['info']
+            elif command.name in help_translations.keys():
+                command_desc = help_translations[command.name]
             else:
                 command_desc = command.description
             # help_msg = '{}'.format(command_desc)
