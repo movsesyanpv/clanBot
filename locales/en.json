@@ -107,7 +107,8 @@
         "not_a_post": "This is not my LFG post!",
         "thread_start": "Please continue in the thread",
         "button_no_change": "No changes",
-        "will_not_go": "Ok"
+        "will_not_go": "Ok",
+        "processing": "Processing, please wait"
     },
     "lfge": {
         "roles": "Roles",

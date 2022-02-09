@@ -941,7 +941,7 @@ class LFGModal(discord.ui.Modal):
 
         at = ['default', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
         values = self.children
-        await interaction.edit_original_message(content='Processing, please wait', view=None)
+        await interaction.edit_original_message(content=translations['processing'], view=None)
         args = self.bot_loc.bot.raid.parse_args_sl(values[0].value, values[1].value, values[2].value, values[3].value, values[4].value, a_type, mode, roles)
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
@@ -962,6 +962,7 @@ class LFGModal(discord.ui.Modal):
             return
 
         channel = await self.bot_loc.bot.fetch_channel(interaction.channel.id)
+        lang = self.bot_loc.bot.guild_lang(interaction.guild.id)
         group = await self.send_initial_lfg(lang, args, channel)
         self.bot_loc.bot.raid.add(group, args=args)
         self.bot_loc.bot.raid.set_owner(interaction.user.id, group.id)
