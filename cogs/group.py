@@ -6,6 +6,8 @@ import dateparser
 import asyncio
 from cogs.utils.views import GroupButtons, ActivityType, ModeLFG, RoleLFG, ConfirmLFG, MyButton
 from cogs.utils.converters import locale_2_lang, CtxLocale
+from babel.dates import format_datetime
+from babel import Locale
 
 
 class Group(commands.Cog):
@@ -945,14 +947,22 @@ class LFGModal(discord.ui.Modal):
         args = self.bot_loc.bot.raid.parse_args_sl(values[0].value, values[1].value, values[2].value, values[3].value, values[4].value, a_type, mode, roles)
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
-        check_msg = translations['check'].format(args['name'], args['description'], ts, args['size'],
+        check_msg = translations['check'].format('-', '-', '-', args['size'],
                                                  args['length'] / 3600, at[args['is_embed']], args['group_mode'], role)
         view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()),
                           interaction.user, translations['confirm_yes'], translations['confirm_no'])
         view.add_item(view.confirm_button)
         view.add_item(view.cancel_button)
+        check_embed = discord.Embed()
+        check_embed.description = args['description']
+        check_embed.title = args['name']
+        check_embed.add_field(
+            name=self.bot_loc.bot.translations[lang]['lfge']['date'],
+            value='{} {}'.format(format_datetime(ts, 'medium', tzinfo=ts.tzinfo, locale=Locale.parse(lang, sep='-')),
+                                 args['timezone'])
+        )
 
-        await interaction.edit_original_message(content=check_msg, view=view)
+        await interaction.edit_original_message(content=check_msg, embed=check_embed, view=view)
 
         await view.wait()
         if view.value is None:
