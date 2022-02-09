@@ -1,6 +1,7 @@
 import discord
 import sqlite3
 import os
+import dateparser
 from datetime import datetime, timezone, timedelta
 from hashids import Hashids
 from babel.dates import format_datetime, get_timezone_name, get_timezone, get_timezone_gmt
@@ -40,13 +41,14 @@ class LFG:
         self.conn = sqlite3.connect('lfg.db')
         self.c = self.conn.cursor()
 
-    def add(self, message: discord.Message, lfg_string: str = None) -> None:
+    def add(self, message: discord.Message, lfg_string: str = None, args: dict = None) -> None:
         if lfg_string is None:
             content = message.content.splitlines()
         else:
             content = lfg_string.splitlines()
 
-        args = self.parse_args(content, message, is_init=True)
+        if args is None:
+            args = self.parse_args(content, message, is_init=True)
         group_id = message.id
         owner = message.author.id
 
@@ -210,6 +212,74 @@ class LFG:
             args['the_role'] = self.find_roles(is_init, guild, roles)
         else:
             args['the_role'] = self.find_roles(is_init, message.guild, roles)
+        return args
+
+    def parse_date(self, time):
+        try:
+            time_t = datetime.strptime(time, "%d-%m-%Y %H:%M%z")
+        except ValueError:
+            try:
+                time_t = datetime.strptime(time, "%d-%m-%Y %H:%M")
+            except ValueError:
+                try:
+                    ts = dateparser.parse(time)
+                    time = ts.strftime('%d-%m-%Y %H:%M%z')
+                except AttributeError:
+                    time = datetime.now().strftime("%d-%m-%Y %H:%M")
+        return time
+
+    def parse_args_sl(self, name: str, description: str, time: str, size: str=None, length: str=None, a_type: str=None, mode: str='basic', roles=None) -> dict:
+        args = {
+            'group_mode': mode,
+            'name': name,
+            'size': 1,
+            'time': self.parse_date(time),
+            'timezone': 'UTC+03:00',
+            'description': description,
+            'the_role': '',
+            'is_embed': self.lfg_i.index(a_type),
+            'length': timedelta(seconds=0)
+        }
+        try:
+            args['time'] = datetime.strptime(args['time'].lstrip(), "%d-%m-%Y %H:%M%z")
+            args['timezone'] = str(args['time'].tzinfo)
+        except ValueError:
+            try:
+                args['time'] = datetime.strptime(args['time'].lstrip(), "%d-%m-%Y %H:%M")
+            except ValueError:
+                time = datetime.now().strftime("%d-%m-%Y %H:%M")
+                args['time'] = datetime.strptime(time, "%d-%m-%Y %H:%M")
+
+        args['time'] = datetime.timestamp(args['time'])
+
+        try:
+            args['size'] = int(size)
+        except ValueError:
+            args['size'] = 3
+
+        if length is not None:
+            try:
+                td_str = length.replace(',', '.').split(' ')
+                td_arr = [0, 0]
+                for td_part in td_str:
+                    if 'h' in td_part.lower() or 'ч' in td_part.lower():
+                        td_arr[0] = float(td_part[:-1])
+                    if 'm' in td_part.lower() or 'м' in td_part.lower():
+                        td_arr[1] = int(td_part[:-1])
+                args['length'] = timedelta(hours=td_arr[0], minutes=td_arr[1])
+            except ValueError:
+                pass
+
+        try:
+            if type(args['length']) is datetime:
+                args['length'] = timedelta(seconds=(args['length'].timestamp() - args['time']))
+            args['length'] = args['length'].total_seconds()
+        except KeyError:
+            pass
+
+        args['the_role'] = roles[0].mention
+        for role in roles[1:]:
+            args['the_role'] = '{}, {}'.format(args['the_role'], role.mention)
         return args
 
     def find_roles(self, is_init: bool, guild: discord.Guild, roles: List[str]) -> str:

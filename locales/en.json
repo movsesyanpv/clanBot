@@ -51,6 +51,7 @@
         "lfg_cleanup": "Done, removed {} entries."
     },
     "lfg": {
+        "modal_title": "LFG creation",
         "go": "Go",
         "at": "@",
         "participants": "Participants:",
@@ -60,8 +61,12 @@
         "server": "of",
         "name": "Provide the name of the activity",
         "description": "Describe, what are you going to do there",
+        "time_modal": "When are you going to start?",
+        "time_placeholder": "Format is `%d-%m-%Y %H:%M%z`.",
         "time": "When are you going to start? (format is `%d-%m-%Y %H:%M` for UTC+3 timezone and `%d-%m-%Y %H:%M%z`, for custom timezone)\nExamples of the current time: `{}` for UTC+3, `{}` for custom timezone.",
         "size": "What is the group size?",
+        "length_modal": "How long are you planning to do this?",
+        "length_placeholder": "Example: 1h 30m for one and a half hour group.",
         "length": "How long are you planning to do this? Example: 1h 30m for one and a half hour group.",
         "type": "What is the type of the activity?",
         "mode": "What is the mode for this group? ({} if you want to approve everyone, {} for automatic approvals)",
@@ -227,7 +232,8 @@
                 "example_lfg": "lfg\n-at: pve\n-s: 3\n-n: Nightfall\n-t: 13-02-2020 19:00+0300\n-d: Farm ascendant shards\n-m: basic\n-r: Guardian\n-l: 01h 30m",
                 "edit_title": "__**LFG editing**__\nEvery group has it's own ID. To get information about your LFGs message the bot in DM `lfglist`. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**.\nIn order to edit the group send `editlfg` command in the channel you want the updated group announcement be in. The syntax is the same as in `lfg`",
                 "manual": "__**Managing manual groups**__\nWhen someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate along with some information about the group (time, channel, server).\nTo choose a person press the corresponding emote. The list will update. **Don't** press multiple emotes, wait for the list update!!!",
-                "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner)."
+                "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner).",
+                "slash_info": "__**Creating a group**__\nThe bot will send you a form you'll need to fill. After that the bot will ask a couple of questions, that you can answer by clicking a button or by selecting options in a dropdown menu. After that the bot will process the data and ask you to confirm the information.\n__**Participating and managing LFG**__\nClick `I want to go` to add yourself to the list of wishing to participate. The bot should confirm that by responding to the button or by adding you to the list.\nClick `I'll help/Maybe I'll go` to add yourself to the list of those, who are ready to help.\nTo remove yourself from the group click `Remove registration`\nTo delete the group click `Delete the post`"
             },
             "prefix": {
                 "info": "Print available prefixes."

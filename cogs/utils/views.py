@@ -103,14 +103,17 @@ class ModeLFG(discord.ui.View):
 
 
 class RoleLFG(discord.ui.View):
-    def __init__(self, max_val, options, owner, manual='Enter manually', auto='Automatic', response_line='Enter names of the roles'):
+    def __init__(self, max_val, options, owner, manual='Enter manually', auto='Automatic',
+                 response_line='Enter names of the roles', has_custom=True):
         super().__init__()
         self.owner = owner
         self.select = MySelect(min_values=0, max_values=max_val, options=options, row=1)
-        self.custom_button = MyButton(type='custom', label=manual, style=discord.ButtonStyle.gray, row=2, response_line=response_line)
+        if has_custom:
+            self.custom_button = MyButton(type='custom', label=manual, style=discord.ButtonStyle.gray, row=2,
+                                          response_line=response_line)
+            self.add_item(self.custom_button)
         self.default_button = MyButton(type='default', label=auto, style=discord.ButtonStyle.gray, row=2)
         self.add_item(self.select)
-        self.add_item(self.custom_button)
         self.add_item(self.default_button)
         self.value = None
 
