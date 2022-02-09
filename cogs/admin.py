@@ -409,14 +409,18 @@ class Admin(commands.Cog):
         # await ctx.respond(help_msg)
         aliases = ''
         prefix = '/'
+        if ctx.bot.application_commands[0] == ctx.bot.application_commands[-1]: #fix for Pycord's duplicate commands
+            commands = ctx.bot.application_commands[:-1]
+        else:
+            commands = ctx.bot.application_commands
         if command_name != 'all':
             command = None
-            for command_id in ctx.bot.application_commands:
+            for command_id in commands:
                 if command_id.name == command_name:
                     command = command_id
             if command is None:
                 if command_name in metric_tables:
-                    for command_id in ctx.bot.application_commands:
+                    for command_id in commands:
                         if command_id.name == 'top':
                             command = command_id
                     additional_arg = command_name
@@ -433,7 +437,7 @@ class Admin(commands.Cog):
             # await ctx.respond(embed=help_embed)
         if command_name == 'all':
             help_msg = '{}\n'.format(help_translations['list'])
-            for command_id in ctx.bot.application_commands:
+            for command_id in commands:
                 command = command_id
                 if command.name in help_translations.keys():
                     command_desc = help_translations[command.name]
