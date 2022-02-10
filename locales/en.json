@@ -52,6 +52,7 @@
     },
     "lfg": {
         "modal_title": "LFG creation",
+        "edit_modal_title": "LFG editing",
         "go": "Go",
         "at": "@",
         "participants": "Participants:",
@@ -80,6 +81,7 @@
         "too_long": "The answer is too long ({} symbols). Maximum length is {} symbols. You will need to answer again.\n{}",
         "dm_noedit": "Send '--' if you don't want to change your previous answer.",
         "lfg_choice": "Send the number of the group from the list above.",
+        "lfg_select": "Select the group you want to edit.",
         "lfg_choice_fail": "Unable to process the answer ('{}'). The answer should contain only numbers, i.e. '1' for the first LFG in the list and should be less, than {}.\n{}",
         "lfglist_head": "Your LFGs:\n",
         "lfglist": "{}{}. {} @ {} {} in #{} of {}, ID: `{}`\n",

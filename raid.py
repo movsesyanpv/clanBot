@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 from hashids import Hashids
 from babel.dates import format_datetime, get_timezone_name, get_timezone, get_timezone_gmt
 from babel import Locale
+from cogs.utils.views import LFGModal
 
 from typing import List, Union
 
@@ -15,6 +16,7 @@ class LFG:
     c = ''
     hashids = Hashids()
     lfg_i = ['null', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
+    at = ['default', 'default', 'pve', 'raid', 'pvp', 'gambit']
     lfg_categories = {
         'null': {},
         'default': {},
@@ -228,7 +230,8 @@ class LFG:
                     time = datetime.now().strftime("%d-%m-%Y %H:%M")
         return time
 
-    def parse_args_sl(self, name: str, description: str, time: str, size: str=None, length: str=None, a_type: str=None, mode: str='basic', roles=None) -> dict:
+    def parse_args_sl(self, name: str, description: str, time: str, size: str = None, length: str = None,
+                      a_type: str = None, mode: str = 'basic', roles: List[discord.Role] = None) -> dict:
         args = {
             'group_mode': mode,
             'name': name,
@@ -237,7 +240,7 @@ class LFG:
             'timezone': 'UTC+03:00',
             'description': description,
             'the_role': '',
-            'is_embed': self.lfg_i.index(a_type),
+            'is_embed': self.at.index(a_type),
             'length': timedelta(seconds=0)
         }
         try:
@@ -775,9 +778,6 @@ class LFG:
 
         if message.channel.id != old_lfg.channel.id or role_changed:
             new_lfg = await message.channel.send(self.get_cell('group_id', old_lfg.id, 'the_role'))
-            # await new_lfg.add_reaction('👌')
-            # await new_lfg.add_reaction('❓')
-            # await new_lfg.add_reaction('❌')
 
             self.c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_lfg.id, old_lfg.id))
             self.c.execute('''UPDATE raid SET lfg_channel=? WHERE group_id=?''', (message.channel.id, new_lfg.id))
@@ -792,6 +792,41 @@ class LFG:
         await self.update_group_msg(new_lfg, translations, lang)
         self.conn.commit()
         return new_lfg
+
+    async def edit_info(self, old_lfg: discord.Message, args: dict, new_lfg: discord.Message = None) -> None:
+        self.c.execute(
+            '''UPDATE raid 
+            SET size=?, name=?, time=?, description=?, the_role=?, group_mode=?, is_embed=?, length=?, timezone=? 
+            WHERE group_id=?''', (args['size'], args['name'], args['time'], args['description'], args['the_role'],
+                                  args['group_mode'], args['is_embed'], args['length'], args['timezone'], old_lfg.id))
+        if new_lfg is not None:
+            self.c.execute(
+                '''UPDATE raid 
+                SET group_id=?, lfg_channel=?, channel_name=?, server_name=?, server_id=? 
+                WHERE group_id=?''', (new_lfg.id, new_lfg.channel.id, new_lfg.channel.name, new_lfg.guild.name,
+                                      new_lfg.guild.id, old_lfg.id)
+            )
+        self.conn.commit()
+
+    async def make_edits(self, bot, interaction, message, translations):
+        tz = self.get_cell('group_id', message.id, 'timezone')
+        if tz is None:
+            tz = 'UTC+03:00'
+        if tz == 'UTC':
+            tz_elements = [0, 0]
+        else:
+            tz_elements = tz.strip('UTC+').split(':')
+        ts = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
+        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
+        data = {
+            'name': self.get_cell('group_id', message.id, 'name'),
+            'description': self.get_cell('group_id', message.id, 'description'),
+            'time': time.astimezone(ts).strftime('%d-%m-%Y %H:%M%z'),
+            'size': str(self.get_cell('group_id', message.id, 'size')),
+            'length': '{}m'.format(int(self.get_cell('group_id', message.id, 'length') / 60))
+        }
+        modal = LFGModal(bot, interaction.locale, translations, is_edit=True, data=data, message=message)
+        await interaction.response.send_modal(modal)
 
     def purge_guild(self, guild_id: int) -> None:
         self.c.executemany('''DELETE FROM raid WHERE server_id LIKE (?)''', [(guild_id,)])

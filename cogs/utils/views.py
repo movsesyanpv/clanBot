@@ -1,5 +1,8 @@
 import discord
 from cogs.utils.converters import locale_2_lang, CtxLocale
+from datetime import datetime, timedelta, timezone
+from babel.dates import format_datetime
+from babel import Locale
 
 
 class MyButton(discord.ui.Button):
@@ -75,7 +78,7 @@ class ConfirmLFG(discord.ui.View):
 
 
 class ActivityType(discord.ui.View):
-    def __init__(self, owner, raid='Raid', pve='pve', gambit='gambit', pvp='pvp', default='other'):
+    def __init__(self, owner, is_edit=False, raid='Raid', pve='pve', gambit='gambit', pvp='pvp', default='other', no_change='nochange'):
         super().__init__()
         self.owner = owner
         self.raid_button = MyButton(type='raid', label=raid, style=discord.ButtonStyle.gray)
@@ -88,23 +91,29 @@ class ActivityType(discord.ui.View):
         self.add_item(self.pvp_button)
         self.add_item(self.gambit_button)
         self.add_item(self.other_button)
+        if is_edit:
+            self.no_change = MyButton(type='nochange', label=no_change, style=discord.ButtonStyle.red, row=2)
+            self.add_item(self.no_change)
         self.value = None
 
 
 class ModeLFG(discord.ui.View):
-    def __init__(self, owner, basic='Basic', manual='Manual'):
+    def __init__(self, owner, is_edit=False, basic='Basic', manual='Manual', no_change='nochange'):
         super().__init__()
         self.owner = owner
         self.basic_button = MyButton(type='basic', label=basic, style=discord.ButtonStyle.green)
         self.manual_button = MyButton(type='manual', label=manual, style=discord.ButtonStyle.red)
         self.add_item(self.basic_button)
         self.add_item(self.manual_button)
+        if is_edit:
+            self.no_change = MyButton(type='nochange', label=no_change, style=discord.ButtonStyle.red, row=2)
+            self.add_item(self.no_change)
         self.value = None
 
 
 class RoleLFG(discord.ui.View):
-    def __init__(self, max_val, options, owner, manual='Enter manually', auto='Automatic',
-                 response_line='Enter names of the roles', has_custom=True):
+    def __init__(self, max_val, options, owner, is_edit=False, manual='Enter manually', auto='Automatic',
+                 no_change='nochange', response_line='Enter names of the roles', has_custom=True):
         super().__init__()
         self.owner = owner
         self.select = MySelect(min_values=0, max_values=max_val, options=options, row=1)
@@ -115,6 +124,9 @@ class RoleLFG(discord.ui.View):
         self.default_button = MyButton(type='default', label=auto, style=discord.ButtonStyle.gray, row=2)
         self.add_item(self.select)
         self.add_item(self.default_button)
+        if is_edit:
+            self.no_change = MyButton(type='nochange', label=no_change, style=discord.ButtonStyle.red, row=2)
+            self.add_item(self.no_change)
         self.value = None
 
 
@@ -235,25 +247,6 @@ class UpdateTypes(discord.ui.View):
         self.select = MySelect(min_values=0, max_values=1, options=options, row=1)
         self.add_item(self.select)
 
-    # @discord.ui.select(placeholder='Update type', max_values=8, options=[
-    #     discord.SelectOption(label='Strikes', value='strikes', description='Daily vanguard strike playlist modifiers'),
-    #     discord.SelectOption(label='Spider', value='spider', description='Spider\'s material exchange'),
-    #     discord.SelectOption(label='Nightmare hunts', value='nightmares', description='Currently available nightmare hunts'),
-    #     discord.SelectOption(label='Crucible rotators', value='crucible', description='Currently available crucible rotators'),
-    #     discord.SelectOption(label='Raid challenges', value='raids', description='Current week\'s raid challenges'),
-    #     discord.SelectOption(label='Nightfall: The Ordeal', value='ordeal', description='Current nightfall'),
-    #     discord.SelectOption(label='Empire hunt', value='empire', description='Current empire hunt'),
-    #     discord.SelectOption(label='Xur', value='xur', description='Xur\'s location and exotics'),
-    #     discord.SelectOption(label='Trials of osiris', value='osiris', description="Current ToO info")
-    # ])
-    # async def updates(self, select: discord.ui.Select, interaction: discord.Interaction):
-    #     self.value = []
-    #     if self.owner != interaction.user:
-    #         return
-    #     for selected in select.values:
-    #         self.value.append(selected)
-    #         self.stop()
-
 
 class BotLangs(discord.ui.View):
     def __init__(self, owner, bot):
@@ -263,3 +256,244 @@ class BotLangs(discord.ui.View):
         options = [discord.SelectOption(label=option, value=option) for option in bot.langs]
         self.select = MySelect(min_values=0, max_values=1, options=options, row=1)
         self.add_item(self.select)
+
+
+class SelectLFG(discord.ui.Select):
+    def __init__(self, min_values, max_values, options, ctx, translations, row=1):
+        super().__init__(min_values=min_values, max_values=max_values, options=options, row=row)
+        self.bot = ctx.bot
+        self.ctx = ctx
+        self.translations = translations
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user != self.view.owner:
+            return
+        group = self.view.groups[int(self.values[0])]
+        old_channel = await self.bot.fetch_channel(group[6])
+        message = await old_channel.fetch_message(group[0])
+        await self.bot.raid.make_edits(self.bot, interaction, message, self.translations)
+
+
+class ViewLFG(discord.ui.View):
+    def __init__(self, options, owner, lfg_list, ctx, translations):
+        super().__init__()
+        self.owner = owner
+        self.select = SelectLFG(min_values=1, max_values=1, options=options, row=1, ctx=ctx, translations=translations)
+        self.add_item(self.select)
+        self.groups = lfg_list
+
+
+class LFGModal(discord.ui.Modal):
+
+    def __init__(self, bot, locale, translations, is_edit=False, data=None, message=None) -> None:
+        if is_edit:
+            title = translations['edit_modal_title']
+        else:
+            title = translations['modal_title']
+        super().__init__(title)
+        self.bot_loc = CtxLocale(bot, locale)
+        self.is_edit = is_edit
+        self.old_group = message
+        if data is None:
+            data = {
+                'name': '',
+                'description': '',
+                'time': '',
+                'size': '',
+                'length': ''
+            }
+        self.add_item(discord.ui.InputText(
+            label=translations['name'],
+            value=data['name'],
+            max_length=256,
+            required=True))
+        self.add_item(
+            discord.ui.InputText(
+                label=translations['description'],
+                value=data['description'],
+                style=discord.InputTextStyle.long,
+                required=True
+            )
+        )
+        self.add_item(
+            discord.ui.InputText(
+                label=translations['time_modal'],
+                value=data['time'],
+                placeholder=translations['time_placeholder'],
+                style=discord.InputTextStyle.short,
+                required=True
+            )
+        )
+        self.add_item(
+            discord.ui.InputText(
+                label=translations['size'],
+                value=data['size'],
+                style=discord.InputTextStyle.short,
+                required=True
+            )
+        )
+        self.add_item(
+            discord.ui.InputText(
+                label=translations['length_modal'],
+                value=data['length'],
+                placeholder=translations['length_placeholder'],
+                style=discord.InputTextStyle.short,
+                required=False
+            )
+        )
+
+    async def send_initial_lfg(self, lang, args, channel) -> discord.Message:
+        role = args['the_role']
+        name = args['name']
+        time = datetime.fromtimestamp(args['time'])
+        description = args['description']
+
+        lang_overrides = ['pt-br']
+        if lang not in lang_overrides:
+            msg = "{}, {} {}\n{} {}\n{}".format(role, self.bot_loc.bot.translations[lang]['lfg']['go'], name,
+                                                self.bot_loc.bot.translations[lang]['lfg']['at'], time, description)
+        else:
+            msg = "{}, {} {}\n{} {}\n{}".format(role, name, self.bot_loc.bot.translations[lang]['lfg']['go'],
+                                                self.bot_loc.bot.translations[lang]['lfg']['at'], time, description)
+        if len(msg) > 2000:
+            if lang not in lang_overrides:
+                msg = "{}, {} {}".format(role, self.bot_loc.bot.translations[lang]['lfg']['go'], name)
+            else:
+                msg = "{} {} {}".format(role, name, self.bot_loc.bot.translations[lang]['lfg']['go'])
+            if len(msg) > 2000:
+                msg = role
+                if len(msg) > 2000:
+                    parts = msg.split(', ')
+                    msg = ''
+                    while len(msg) < 1900:
+                        msg = '{} {},'.format(msg, parts[0])
+                        parts.pop(0)
+        return await channel.send(msg)
+
+    async def callback(self, interaction: discord.Interaction):
+        lang = await locale_2_lang(self.bot_loc)
+        translations = self.bot_loc.bot.translations[lang]['lfg']
+        view = ActivityType(interaction.user, self.is_edit, raid=translations['raid'], pve=translations['pve'],
+                            gambit=translations['gambit'], pvp=translations['pvp'], default=translations['default'],
+                            no_change=translations['button_no_change'])
+        await interaction.response.send_message(content=translations['type'], view=view, ephemeral=True)
+        await view.wait()
+        if view.value is None:
+            await interaction.edit_original_message(content='Timed out')
+            return
+        a_type = view.value
+
+        view = ModeLFG(interaction.user, self.is_edit, basic=translations['basic_mode'],
+                       manual=translations['manual_mode'], no_change=translations['button_no_change'])
+        await interaction.edit_original_message(
+            content=translations['mode'].format(translations['manual_mode'], translations['basic_mode']),
+            view=view)
+        await view.wait()
+        if view.value is None:
+            await interaction.edit_original_message(content='Timed out')
+            return
+        mode = view.value
+
+        role_list = []
+        for role in interaction.guild.roles:
+            if role.mentionable and not role.managed:
+                role_list.append(discord.SelectOption(label=role.name, value=str(role.id)))
+        view = RoleLFG(len(role_list), role_list, interaction.user, self.is_edit, manual=translations['manual_roles'],
+                       auto=translations['auto_roles'], has_custom=False, no_change=translations['button_no_change'])
+        await interaction.edit_original_message(content=translations['role'], view=view)
+        await view.wait()
+        if view.value is None:
+            await interaction.edit_original_message(content='Timed out')
+            return False
+        elif view.value in ['-']:
+            role = '-'
+            role_raw = '-'
+
+            role_str = self.bot_loc.bot.raid.find_roles(True, interaction.guild, [r.strip() for r in role.split(';')])
+            role = ''
+            roles = []
+            for role_mention in role_str.split(', '):
+                try:
+                    role_obj = interaction.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
+                    roles.append(role_obj)
+                    role = '{} {};'.format(role, role_obj.name)
+                except ValueError:
+                    pass
+        else:
+            role = ''
+            roles = []
+            for role_id in view.value:
+                try:
+                    role_obj = interaction.guild.get_role(int(role_id))
+                    roles.append(role_obj)
+                    role = '{} {};'.format(role, role_obj.name)
+                except ValueError:
+                    pass
+            role_raw = role[:-1]
+
+        if len(role) > 0:
+            role = role[:-1]
+
+        at = ['default', 'default', 'pve', 'raid', 'pvp', 'gambit']
+        values = self.children
+        await interaction.edit_original_message(content=translations['processing'], view=None)
+        args = self.bot_loc.bot.raid.parse_args_sl(values[0].value, values[1].value, values[2].value, values[3].value, values[4].value, a_type, mode, roles)
+        ts = datetime.now(timezone(timedelta(0))).astimezone()
+        ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
+        check_msg = translations['check'].format('-', '-', '-', args['size'],
+                                                 args['length'] / 3600, at[args['is_embed']], args['group_mode'], role)
+        view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()),
+                          interaction.user, translations['confirm_yes'], translations['confirm_no'])
+        view.add_item(view.confirm_button)
+        view.add_item(view.cancel_button)
+        check_embed = discord.Embed()
+        check_embed.description = args['description']
+        check_embed.title = args['name']
+        check_embed.add_field(
+            name=self.bot_loc.bot.translations[lang]['lfge']['date'],
+            value='{} {}'.format(format_datetime(ts, 'medium', tzinfo=ts.tzinfo, locale=Locale.parse(lang, sep='-')),
+                                 args['timezone'])
+        )
+
+        await interaction.edit_original_message(content=check_msg, embed=check_embed, view=view)
+
+        await view.wait()
+        if view.value is None:
+            await interaction.edit_original_message(content='Timed out')
+            return
+        elif not view.value:
+            return
+
+        channel = await self.bot_loc.bot.fetch_channel(interaction.channel.id)
+        lang = self.bot_loc.bot.guild_lang(interaction.guild.id)
+        if not self.is_edit:
+            group = await self.send_initial_lfg(lang, args, channel)
+            self.bot_loc.bot.raid.add(group, args=args)
+            self.bot_loc.bot.raid.set_owner(interaction.user.id, group.id)
+        else:
+            old_channel = self.bot_loc.bot.raid.get_cell('group_id', self.old_group.id, 'lfg_channel')
+            old_channel = await self.bot_loc.bot.fetch_channel(old_channel)
+            old_roles = self.bot_loc.bot.raid.get_cell('group_id', self.old_group.id, 'the_role')
+            if channel.id == old_channel.id and old_roles == args['the_role']:
+                await self.bot_loc.bot.raid.edit_info(self.old_group, args)
+                group = self.old_group
+            else:
+                group = await self.send_initial_lfg(lang, args, channel)
+                await self.bot_loc.bot.raid.edit_info(self.old_group, args, group)
+                await self.old_group.delete()
+        if channel.permissions_for(interaction.guild.me).embed_links:
+            embed = self.bot_loc.bot.raid.make_embed(group, self.bot_loc.bot.translations[lang], lang)
+            buttons = GroupButtons(group.id, self.bot_loc.bot,
+                                   label_go=self.bot_loc.bot.translations[lang]['lfg']['button_want'],
+                                   label_help=self.bot_loc.bot.translations[lang]['lfg']['button_help'],
+                                   label_no_go=self.bot_loc.bot.translations[lang]['lfg']['button_no_go'],
+                                   label_delete=self.bot_loc.bot.translations[lang]['lfg']['button_delete'])
+            await group.edit(content=None, embed=embed, view=buttons)
+        else:
+            buttons = GroupButtons(group.id, self.bot_loc.bot,
+                                   label_go=self.bot_loc.bot.translations[lang]['lfg']['button_want'],
+                                   label_help=self.bot_loc.bot.translations[lang]['lfg']['button_help'],
+                                   label_no_go=self.bot_loc.bot.translations[lang]['lfg']['button_no_go'],
+                                   label_delete=self.bot_loc.bot.translations[lang]['lfg']['button_delete'])
+            await group.edit(content=group.content, view=buttons)
+        return
