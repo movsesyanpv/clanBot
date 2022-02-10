@@ -136,3 +136,6 @@ dmypy.json
 /databack.json
 
 .idea
+/*.db
+/*.content
+/data.json
