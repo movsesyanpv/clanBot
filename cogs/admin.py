@@ -409,8 +409,8 @@ class Admin(commands.Cog):
         # await ctx.respond(help_msg)
         aliases = ''
         prefix = '/'
-        if ctx.bot.application_commands[0] == ctx.bot.application_commands[-1]: #fix for Pycord's duplicate commands
-            commands = ctx.bot.application_commands[:-1]
+        if ctx.bot.application_commands[0] in ctx.bot.application_commands[1:]: #fix for Pycord's duplicate commands
+            commands = ctx.bot.application_commands[1:]
         else:
             commands = ctx.bot.application_commands
         if command_name != 'all':
