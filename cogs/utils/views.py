@@ -294,6 +294,7 @@ class LFGModal(discord.ui.Modal):
         self.bot_loc = CtxLocale(bot, locale)
         self.is_edit = is_edit
         self.old_group = message
+        self.at = ['default', 'default', 'pve', 'raid', 'pvp', 'gambit']
         if data is None:
             data = {
                 'name': '',
@@ -370,6 +371,27 @@ class LFGModal(discord.ui.Modal):
                         parts.pop(0)
         return await channel.send(msg)
 
+    def validate_edits(self, a_type, mode, roles, role_str):
+        group_data = self.bot_loc.bot.raid.c.execute('''SELECT is_embed, group_mode, the_role FROM raid WHERE group_id=?''', (self.old_group.id,))
+        group_data = group_data.fetchone()
+        edits = [a_type, mode, roles, role_str]
+        if a_type == '--':
+            edits[0] = self.at[group_data[0]]
+        if mode == '--':
+            edits[1] = group_data[1]
+        if not roles:
+            edits[2] = []
+            for role_mention in group_data[2].split(', '):
+                try:
+                    role_obj = self.old_group.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
+                    edits[2].append(role_obj)
+                    edits[3] = '{} {};'.format(edits[3], role_obj.name)
+                except ValueError:
+                    pass
+            if len(edits[3]) > 0:
+                edits[3] = edits[3][:-1]
+        return edits
+
     async def callback(self, interaction: discord.Interaction):
         lang = await locale_2_lang(self.bot_loc)
         translations = self.bot_loc.bot.translations[lang]['lfg']
@@ -434,14 +456,18 @@ class LFGModal(discord.ui.Modal):
         if len(role) > 0:
             role = role[:-1]
 
-        at = ['default', 'default', 'pve', 'raid', 'pvp', 'gambit']
         values = self.children
         await interaction.edit_original_message(content=translations['processing'], view=None)
-        args = self.bot_loc.bot.raid.parse_args_sl(values[0].value, values[1].value, values[2].value, values[3].value, values[4].value, a_type, mode, roles)
+        if self.is_edit:
+            button_inputs = self.validate_edits(a_type, mode, roles, role)
+        else:
+            button_inputs = [a_type, mode, roles, role]
+        args = self.bot_loc.bot.raid.parse_args_sl(values[0].value, values[1].value, values[2].value, values[3].value, values[4].value, button_inputs[0], button_inputs[1], button_inputs[2])
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
         check_msg = translations['check'].format('-', '-', '-', args['size'],
-                                                 args['length'] / 3600, at[args['is_embed']], args['group_mode'], role)
+                                                 args['length'] / 3600, self.at[args['is_embed']], args['group_mode'],
+                                                 button_inputs[3])
         view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()),
                           interaction.user, translations['confirm_yes'], translations['confirm_no'])
         view.add_item(view.confirm_button)

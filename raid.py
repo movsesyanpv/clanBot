@@ -16,7 +16,7 @@ class LFG:
     c = ''
     hashids = Hashids()
     lfg_i = ['null', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
-    at = ['default', 'default', 'pve', 'raid', 'pvp', 'gambit']
+    at = ['null', 'default', 'pve', 'raid', 'pvp', 'gambit']
     lfg_categories = {
         'null': {},
         'default': {},
@@ -500,24 +500,25 @@ class LFG:
             else:
                 nick = owner.nick
 
-        if is_embed == 1:
-            self.lfg_categories[self.lfg_i[is_embed]] = {
-                'thumbnail': message.guild.icon.url.split('?')[0],
-                'color': 0x000000
-            }
-
         embed = {
             'thumbnail': {
-                'url': self.lfg_categories[self.lfg_i[is_embed]]['thumbnail']
+                'url': ''
             },
             'fields': [],
-            'color': self.lfg_categories[self.lfg_i[is_embed]]['color'],
+            'color': '',
             'type': 'rich',
             'title': name,
             'footer': {
                 'text': translations['lfge']['footer'].format(self.hashids.encode(message.id), nick)
             }
         }
+
+        if is_embed == 1:
+            embed['thumbnail']['url'] = message.guild.icon.url.split('?')[0]
+            embed['color'] = 0x000000
+        else:
+            embed['thumbnail']['url'] = self.lfg_categories[self.lfg_i[is_embed]]['thumbnail']
+            embed['color'] = self.lfg_categories[self.lfg_i[is_embed]]['color']
 
         embed_length = len(name) + len(embed['footer']['text'])
         if len(description) > 0:

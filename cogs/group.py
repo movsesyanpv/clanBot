@@ -724,6 +724,7 @@ class Group(commands.Cog):
             lang = ctx.bot.guild_lang(ctx.message.guild.id)
         else:
             lang = 'en'
+        await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=60)
         message = ctx.message
         hashids = Hashids()
         dm = (arg_id is None)
