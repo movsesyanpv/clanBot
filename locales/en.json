@@ -42,13 +42,14 @@
         "empire_hunts": "Elective difficulty empire hunt",
         "daily_mods": "Ada-1 and Banshee-44 sell these",
         "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
-        "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version.",
+        "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version. If you don't see any slash commands, run `noslash` command to get instructions on how to fix this.",
         "command_is_done": "Done",
         "update_types": "Select update types",
         "no_dm": "This command can't be used in DMs",
         "no_admin": "You lack the administrator permissions to use this command",
         "language_select": "Select language",
-        "lfg_cleanup": "Done, removed {} entries."
+        "lfg_cleanup": "Done, removed {} entries.",
+        "noslash": "Try adding the bot to this server again by clicking 'Add to Server' in the bot's profile. **DO NOT** kick the bot, this will delete all the settings for the server. If you need more help, feel free to ask at the support server. You can find the link to the support server by running the `support` command."
     },
     "lfg": {
         "modal_title": "LFG creation",
@@ -164,7 +165,7 @@
         "setlang": "Set server language",
         "plan_maintenance": "Prevent updates at given time frame",
         "lfg": "Create an LFG message",
-        "edit_lfg": "Edit LFG message",
+        "editlfg": "Edit LFG message",
         "regnotifier": "Register notifier channel",
         "rmnotifier": "Deregister notifier channel",
         "update": "Get updates from Bungie for the selected types",
@@ -177,6 +178,7 @@
         "aliases": "Can be called with the following names:```{}```",
         "parameters": "Usage:```{}```",
         "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
+        "noslash": "Help with missing slash commands",
         "commands": {
             "setclan": {
                 "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
@@ -237,6 +239,9 @@
                 "manual": "__**Managing manual groups**__\nWhen someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate along with some information about the group (time, channel, server).\nTo choose a person press the corresponding emote. The list will update. **Don't** press multiple emotes, wait for the list update!!!",
                 "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner).",
                 "slash_info": "__**Creating a group**__\nThe bot will send you a form you'll need to fill. After that the bot will ask a couple of questions, that you can answer by clicking a button or by selecting options in a dropdown menu. After that the bot will process the data and ask you to confirm the information.\n__**Participating and managing LFG**__\nClick `I want to go` to add yourself to the list of wishing to participate. The bot should confirm that by responding to the button or by adding you to the list.\nClick `I'll help/Maybe I'll go` to add yourself to the list of those, who are ready to help.\nTo remove yourself from the group click `Remove registration`\nTo delete the group click `Delete the post`"
+            },
+            "editlfg": {
+                "info": "__**Editing a group**__\nYou can either call this command from a group message context menu, or by running `/editlfg`. In the second case the bot will ask you to choose the group you want to edit. After that the bot will send you a form filled with that group info you'll need to edit. After that the bot will ask a couple of questions, that you can answer by clicking a button or by selecting options in a dropdown menu. After that the bot will process the data and ask you to confirm the information.\n__**Participating and managing LFG**__\nClick `I want to go` to add yourself to the list of wishing to participate. The bot should confirm that by responding to the button or by adding you to the list.\nClick `I'll help/Maybe I'll go` to add yourself to the list of those, who are ready to help.\nTo remove yourself from the group click `Remove registration`\nTo delete the group click `Delete the post`"
             },
             "prefix": {
                 "info": "Print available prefixes."

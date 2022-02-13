@@ -299,11 +299,19 @@ class Public(commands.Cog):
     @commands.command()
     async def support(self, ctx):
         if ctx.guild is None:
-            lang = 0
+            lang = 'en'
         else:
             lang = ctx.bot.guild_lang(ctx.guild.id)
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'])
         await ctx.channel.send('https://discord.gg/JEbzECp')
+
+    @commands.command()
+    async def noslash(self, ctx: discord.ext.commands.Context):
+        if ctx.guild is None:
+            lang = 'en'
+        else:
+            lang = ctx.bot.guild_lang(ctx.guild.id)
+        await ctx.message.reply(ctx.bot.translations[lang]['msg']['noslash'])
 
     @commands.slash_command(
         name="support",

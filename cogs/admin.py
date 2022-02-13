@@ -234,7 +234,10 @@ class Admin(commands.Cog):
                 if command.name in help_translations.keys():
                     command_desc = help_translations[command.name]
                 else:
-                    command_desc = command.description
+                    if command.name == 'edit_lfg':
+                        command_desc = help_translations['editlfg']
+                    else:
+                        command_desc = command.description
                 if (not (command.cog_name == 'Admin' and command.name != 'help') or await ctx.bot.is_owner(
                         ctx.author)) and (not (
                         command.cog_name == 'ServerAdmin' and command.name != 'help') or await ctx.bot.check_ownership(
@@ -409,7 +412,7 @@ class Admin(commands.Cog):
         # await ctx.respond(help_msg)
         aliases = ''
         prefix = '/'
-        if ctx.bot.application_commands[0] in ctx.bot.application_commands[1:]: #fix for Pycord's duplicate commands
+        if ctx.bot.application_commands[0] in ctx.bot.application_commands[1:]:  # fix for Pycord's duplicate commands
             commands = ctx.bot.application_commands[1:]
         else:
             commands = ctx.bot.application_commands
@@ -549,46 +552,46 @@ class Admin(commands.Cog):
 
             await ctx.respond(embeds=help_embeds)
             pass
-        elif command.name in ['lfg', 'edit_lfg']:
-            help_embeds = []
-            help_translations = help_translations['commands']['lfg']
-            help_msg = '{}\n{}\n'.format(help_msg, help_translations['slash_info'])
-            # args = [
-            #     ['[-n:][name:]', help_translations['name']],
-            #     ['[-t:][time:]', help_translations['time']],
-            #     ['[-d:][description:]', help_translations['description']],
-            #     ['[-s:][size:]', help_translations['size']],
-            #     ['[-m:][mode:]', help_translations['mode']],
-            #     ['[-r:][role:]', help_translations['role']],
-            #     ['[-l:][length:]', help_translations['length']],
-            #     ['[-at:][type:]', help_translations['type']]
-            # ]
-            # help_msg = '{}```\t{}```'.format(help_msg,
-            #                                  tabulate(args, tablefmt='plain', colalign=('left', 'left')).
-            #                                  replace('\n', '\n\t'))
-            # # help_embed.description = help_msg
-            # # help_embeds.append(help_embed)
-            # # await ctx.respond(help_msg)
-            #
-            # help_msg = '{}\n{}\n'.format(help_msg, help_translations['creation_note'])
-            # # help_embeds.append(discord.Embed(description=help_msg))
-            # # await channel.send(help_msg)
-            #
-            # help_msg = '{}\n{}\n'.format(help_msg, help_translations['example_title'])
-            # help_msg = '{}```@{} {}```'.format(help_msg, name, help_translations['example_lfg'])
-            # # help_embeds.append(discord.Embed(description=help_msg))
-            # # await channel.send(help_msg)
-            #
-            # help_msg = '{}\n{}\n'.format(help_msg, help_translations['edit_title'])
-            # help_msg = '{}{}\n'.format(help_msg, help_translations['manual'])
-            # # help_embeds.append(discord.Embed(description=help_msg))
-            # # await channel.send(help_msg)
-            #
-            # help_msg = '{}\n{}\n'.format(help_msg, help_translations['use_lfg'])
-            # # help_embeds.append(discord.Embed(description=help_msg))
-            help_embed.description = help_msg
-            await ctx.respond(embed=help_embed)
-            pass
+        # elif command.name in ['lfg', 'edit_lfg']:
+        #     help_embeds = []
+        #     help_translations = help_translations['commands']['lfg']
+        #     help_msg = '{}\n{}\n'.format(help_msg, help_translations['slash_info'])
+        #     # args = [
+        #     #     ['[-n:][name:]', help_translations['name']],
+        #     #     ['[-t:][time:]', help_translations['time']],
+        #     #     ['[-d:][description:]', help_translations['description']],
+        #     #     ['[-s:][size:]', help_translations['size']],
+        #     #     ['[-m:][mode:]', help_translations['mode']],
+        #     #     ['[-r:][role:]', help_translations['role']],
+        #     #     ['[-l:][length:]', help_translations['length']],
+        #     #     ['[-at:][type:]', help_translations['type']]
+        #     # ]
+        #     # help_msg = '{}```\t{}```'.format(help_msg,
+        #     #                                  tabulate(args, tablefmt='plain', colalign=('left', 'left')).
+        #     #                                  replace('\n', '\n\t'))
+        #     # # help_embed.description = help_msg
+        #     # # help_embeds.append(help_embed)
+        #     # # await ctx.respond(help_msg)
+        #     #
+        #     # help_msg = '{}\n{}\n'.format(help_msg, help_translations['creation_note'])
+        #     # # help_embeds.append(discord.Embed(description=help_msg))
+        #     # # await channel.send(help_msg)
+        #     #
+        #     # help_msg = '{}\n{}\n'.format(help_msg, help_translations['example_title'])
+        #     # help_msg = '{}```@{} {}```'.format(help_msg, name, help_translations['example_lfg'])
+        #     # # help_embeds.append(discord.Embed(description=help_msg))
+        #     # # await channel.send(help_msg)
+        #     #
+        #     # help_msg = '{}\n{}\n'.format(help_msg, help_translations['edit_title'])
+        #     # help_msg = '{}{}\n'.format(help_msg, help_translations['manual'])
+        #     # # help_embeds.append(discord.Embed(description=help_msg))
+        #     # # await channel.send(help_msg)
+        #     #
+        #     # help_msg = '{}\n{}\n'.format(help_msg, help_translations['use_lfg'])
+        #     # # help_embeds.append(discord.Embed(description=help_msg))
+        #     help_embed.description = help_msg
+        #     await ctx.respond(embed=help_embed)
+        #     pass
         elif type(command) == discord.SlashCommandGroup:
             if command.name in help_translations['commands'].keys():
                 translations = help_translations['commands'][command.name]
@@ -634,7 +637,10 @@ class Admin(commands.Cog):
         else:
             if command.name in help_translations['commands'].keys():
                 translations = help_translations['commands'][command.name]
-                command_desc = translations['info']
+                if 'slash_info' in translations.keys():
+                    command_desc = translations['slash_info']
+                else:
+                    command_desc = translations['info']
             elif command.name in help_translations.keys():
                 command_desc = help_translations[command.name]
             else:
