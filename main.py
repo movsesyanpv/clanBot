@@ -282,13 +282,14 @@ class ClanBot(commands.Bot):
         for i in prefixes:
             if '@' not in i:
                 prefix = i
-        await guild.owner.dm_channel.send('The `{}help` command will get you the command list.\n'
+        await guild.owner.dm_channel.send('The `/help` command will get you the command list.\n'
                                           'To set up automatic Destiny 2 information updates use `regnotifier` command.\n'
-                                          'Please set my language for the guild with `@{} setlang LANG`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.\n'
+                                          'Please set my language for the guild with `/setlang`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.\n'
                                           'To set up automatic updates for Destiny 2, use `regnotifier` command in the channel you want me to post to.\n'
                                           'To use `top` command you\'ll have to set up a D2 clan with the `setclan` command.\n'
-                                          'Feel free to ask for help at my Discord Server: https://discord.gg/JEbzECp'.
-                                          format(prefix, self.user.name, str(self.langs).replace('[', '').replace(']', '').replace('\'', '')))
+                                          'Feel free to ask for help at my Discord Server: https://discord.gg/JEbzECp\n'
+                                          'P.S. There are legacy commands available, you can use `@{} help` to get that list, but they are deprecated.'.
+                                          format(str(self.langs).replace('[', '').replace(']', '').replace('\'', ''), self.user.name))
         await self.update_history()
         self.update_clans()
         await self.update_prefixes()
@@ -508,7 +509,7 @@ class ClanBot(commands.Bot):
                 await dm_message.delete()
             self.raid.del_entry(payload.message_id)
 
-    async def on_command_error(self, ctx, exception):
+    async def on_command_error(self, ctx: discord.ext.commands.Context, exception):
         message = ctx.message
         if message.guild is None:
             lang = 'en'
@@ -629,7 +630,7 @@ class ClanBot(commands.Bot):
                     command_line = '{} {}:{}'.format(command_line, option['name'], option['value'])
             self.logger.info(command_line)
 
-    async def on_command_completion(self, ctx):
+    async def on_command_completion(self, ctx: discord.ext.commands.Context) -> None:
         gc.collect()
         self.logger.info(ctx.message.content)
 
@@ -731,7 +732,7 @@ class ClanBot(commands.Bot):
             except sqlite3.OperationalError:
                 try:
                     self.guild_cursor.execute('''INSERT or IGNORE INTO prefixes VALUES (?,?,?)''',
-                                              [server.id, '[\'?\']', server.name])
+                                              [server.id, '[]', server.name])
                 except:
                     pass
             try:

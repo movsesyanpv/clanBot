@@ -33,9 +33,6 @@ class Group(commands.Cog):
     async def sl_lfglist(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        # lang = 'en'
-        # if ctx.guild is not None:
-        #     lang = ctx.bot.guild_lang(ctx.guild.id)
 
         translations = ctx.bot.translations[lang]['lfg']
 
