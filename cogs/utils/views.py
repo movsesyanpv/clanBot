@@ -242,8 +242,8 @@ class UpdateTypes(discord.ui.View):
         translations = ctx.bot.translations[lang]
         variants = set(translations['update_types']).intersection(set(ctx.bot.all_types))
         types = translations['update_types']
-        options = [discord.SelectOption(label=translations['update_types'][option]['label'], value=option,
-                                        description=translations['update_types'][option]['description']) for option in types]
+        options = [discord.SelectOption(label=types[option]['label'], value=option,
+                                        description=types[option]['description']) for option in variants]
         self.select = MySelect(min_values=0, max_values=1, options=options, row=1)
         self.add_item(self.select)
 
