@@ -112,7 +112,8 @@
         "thread_start": "Please continue in the thread",
         "button_no_change": "No changes",
         "will_not_go": "Ok",
-        "processing": "Processing, please wait"
+        "processing": "Processing, please wait",
+        "check_embed": "Check the embed below"
     },
     "lfge": {
         "roles": "Rollen",
