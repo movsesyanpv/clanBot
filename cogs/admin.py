@@ -1,6 +1,7 @@
 from discord.ext import commands
 import importlib
 import discord
+from discord.commands import Option
 import json
 from tabulate import tabulate
 from datetime import datetime, timedelta, timezone
@@ -387,17 +388,12 @@ class Admin(commands.Cog):
         name='help',
         description='The help command!'
     )
-    async def help_command_sl(self, ctx, command_name='all', additional_arg=None):
+    async def help_command_sl(self, ctx,
+                              command_name: Option(str, 'Command name', required=False, default='all'),
+                              additional_arg: Option(str, 'Additional argument (can be a metric table name)',
+                                                     required=False, default=None)):
         await ctx.defer()
-        channel = ctx.channel
         lang = await locale_2_lang(ctx)
-        # if lang is not None and lang not in ctx.bot.langs:
-        #     additional_arg = lang
-        #     lang = None
-        # if ctx.guild is not None and lang is None:
-        #     lang = ctx.bot.guild_lang(ctx.guild.id)
-        # if lang not in ctx.bot.langs:
-        #     lang = 'en'
         if ctx.guild is not None:
             name = ctx.guild.me.display_name
         else:
@@ -409,8 +405,6 @@ class Admin(commands.Cog):
         command_list = []
         help_embed = discord.Embed(title='{} v{}'.format(name, ctx.bot.version))
         help_msg = '{} v{}'.format(name, ctx.bot.version)
-        # await ctx.respond(help_msg)
-        aliases = ''
         prefix = '/'
         if ctx.bot.application_commands[0] in ctx.bot.application_commands[1:]:  # fix for Pycord's duplicate commands
             commands = ctx.bot.application_commands[1:]
@@ -436,8 +430,6 @@ class Admin(commands.Cog):
                 for arg in command.options:
                     command_string = '{} {}'.format(command_string, arg.name)
                 help_msg = help_translations['parameters'].format(command_string)
-            # help_embed.description = help_translations['parameters'].format(command_string)
-            # await ctx.respond(embed=help_embed)
         if command_name == 'all':
             help_msg = '{}\n'.format(help_translations['list'])
             for command_id in commands:
@@ -470,7 +462,6 @@ class Admin(commands.Cog):
         elif command.name == 'top':
             translations = help_translations['commands'][command.name]
             help_msg = '{}\n{}'.format(help_msg, translations['info'])
-            # await channel.send(help_msg)
 
             try:
                 if additional_arg in metric_tables and additional_arg is not None:
@@ -552,46 +543,6 @@ class Admin(commands.Cog):
 
             await ctx.respond(embeds=help_embeds)
             pass
-        # elif command.name in ['lfg', 'edit_lfg']:
-        #     help_embeds = []
-        #     help_translations = help_translations['commands']['lfg']
-        #     help_msg = '{}\n{}\n'.format(help_msg, help_translations['slash_info'])
-        #     # args = [
-        #     #     ['[-n:][name:]', help_translations['name']],
-        #     #     ['[-t:][time:]', help_translations['time']],
-        #     #     ['[-d:][description:]', help_translations['description']],
-        #     #     ['[-s:][size:]', help_translations['size']],
-        #     #     ['[-m:][mode:]', help_translations['mode']],
-        #     #     ['[-r:][role:]', help_translations['role']],
-        #     #     ['[-l:][length:]', help_translations['length']],
-        #     #     ['[-at:][type:]', help_translations['type']]
-        #     # ]
-        #     # help_msg = '{}```\t{}```'.format(help_msg,
-        #     #                                  tabulate(args, tablefmt='plain', colalign=('left', 'left')).
-        #     #                                  replace('\n', '\n\t'))
-        #     # # help_embed.description = help_msg
-        #     # # help_embeds.append(help_embed)
-        #     # # await ctx.respond(help_msg)
-        #     #
-        #     # help_msg = '{}\n{}\n'.format(help_msg, help_translations['creation_note'])
-        #     # # help_embeds.append(discord.Embed(description=help_msg))
-        #     # # await channel.send(help_msg)
-        #     #
-        #     # help_msg = '{}\n{}\n'.format(help_msg, help_translations['example_title'])
-        #     # help_msg = '{}```@{} {}```'.format(help_msg, name, help_translations['example_lfg'])
-        #     # # help_embeds.append(discord.Embed(description=help_msg))
-        #     # # await channel.send(help_msg)
-        #     #
-        #     # help_msg = '{}\n{}\n'.format(help_msg, help_translations['edit_title'])
-        #     # help_msg = '{}{}\n'.format(help_msg, help_translations['manual'])
-        #     # # help_embeds.append(discord.Embed(description=help_msg))
-        #     # # await channel.send(help_msg)
-        #     #
-        #     # help_msg = '{}\n{}\n'.format(help_msg, help_translations['use_lfg'])
-        #     # # help_embeds.append(discord.Embed(description=help_msg))
-        #     help_embed.description = help_msg
-        #     await ctx.respond(embed=help_embed)
-        #     pass
         elif type(command) == discord.SlashCommandGroup:
             if command.name in help_translations['commands'].keys():
                 translations = help_translations['commands'][command.name]
@@ -600,7 +551,6 @@ class Admin(commands.Cog):
                 help_msg = help_translations[command.name]
             else:
                 help_msg = command.description
-            flat_structure = []
             if 'groups' in help_translations.keys():
                 if command.name in help_translations['groups'].keys():
                     group_translations = help_translations['groups'][command.name]
@@ -628,9 +578,6 @@ class Admin(commands.Cog):
                     else:
                         description = subcommand.description
                     help_embed.add_field(name='{} {}'.format(command.name, subcommand.name), value=description, inline=False)
-            # help_msg = '{}```\t{}```'.format(help_msg,
-            #                                  tabulate(flat_structure, tablefmt='plain', colalign=('left', 'left')).
-            #                                  replace('\n', '\n\t'))
             help_embed.description = help_msg
             await ctx.respond(embed=help_embed)
             pass
@@ -645,7 +592,6 @@ class Admin(commands.Cog):
                 command_desc = help_translations[command.name]
             else:
                 command_desc = command.description
-            # help_msg = '{}'.format(command_desc)
             help_embed.description = '{}\n{}'.format(help_msg, command_desc)
             await ctx.respond(embed=help_embed)
             pass
