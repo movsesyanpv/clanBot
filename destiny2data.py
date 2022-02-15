@@ -15,6 +15,8 @@ import mariadb
 import asyncio
 import tracemalloc
 
+from typing import Optional, Union, List
+
 
 class D2data:
     api_data_file = open('api.json', 'r')
@@ -110,7 +112,7 @@ class D2data:
             pass
         # self.data_db.auto_reconnect = True
 
-    async def set_up_cache(self):
+    async def set_up_cache(self) -> None:
         self.cache_db = await aiosqlite.connect('cache.db')
         cache_cursor = await self.cache_db.cursor()
         try:
@@ -122,7 +124,7 @@ class D2data:
         except aiosqlite.OperationalError:
             pass
 
-    async def get_chars(self):
+    async def get_chars(self) -> None:
         platform = 0
         membership_id = ''
         try:
@@ -154,7 +156,7 @@ class D2data:
             char_file = open('char.json', 'w')
             char_file.write(json.dumps(self.char_info))
 
-    async def refresh_token(self, re_token):
+    async def refresh_token(self, re_token: str) -> None:
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
@@ -196,7 +198,10 @@ class D2data:
             pass
         self.destiny = pydest.Pydest(self.api_data['key'])
 
-    async def get_bungie_json(self, name, url, params=None, lang=None, string=None, change_msg=True, is_get=True, body=None):
+    async def get_bungie_json(self, name: str, url: str, params: Optional[dict] = None, lang: Optional[str] = None,
+                              string: Optional[str] = None, change_msg: bool = True, is_get: bool = True,
+                              body: Optional[dict] = None) -> Union[dict, None]:
+
         if lang is None:
             lang = list(self.data.keys())
             lang_str = ''
@@ -303,7 +308,7 @@ class D2data:
         resp.close()
         return resp_json
 
-    async def get_vendor_sales(self, lang, vendor_resp, cats, exceptions=[]):
+    async def get_vendor_sales(self, lang: str, vendor_resp: dict, cats: List[int], exceptions: list = []) -> list:
         embed_sales = []
         data_sales = []
 
@@ -421,7 +426,7 @@ class D2data:
                 n_order += 1
         return [embed_sales, data_sales]
 
-    async def get_featured_bd(self, langs, forceget=False):
+    async def get_featured_bd(self, langs: List[str], forceget: bool = False) -> None:
         tess_resp = []
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
@@ -462,7 +467,7 @@ class D2data:
                     self.data[lang]['featured_bd']['fields'].append(tmp_fields[i])
             self.data[lang]['featured_bd']['timestamp'] = resp_time
 
-    async def get_bd(self, langs, forceget=False):
+    async def get_bd(self, langs: List[str], forceget: bool = False) -> None:
         tess_resp = []
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
@@ -503,7 +508,7 @@ class D2data:
                     self.data[lang]['bd']['fields'].append(tmp_fields[i])
             self.data[lang]['bd']['timestamp'] = resp_time
 
-    async def get_featured_silver(self, langs, forceget=False):
+    async def get_featured_silver(self, langs: List[str], forceget: bool = False) -> None:
         tess_resp = []
         for char in self.char_info['charid']:
             tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
@@ -542,7 +547,7 @@ class D2data:
                     self.data[lang]['silver']['fields'].append(tmp_fields[i])
             self.data[lang]['silver']['timestamp'] = resp_time
 
-    async def get_global_alerts(self, langs, forceget=False):
+    async def get_global_alerts(self, langs: List[str], forceget: bool = False) -> None:
         alert_url = 'https://www.bungie.net/Platform/GlobalAlerts/'
         alert_json = await self.get_bungie_json('alerts', alert_url, {}, '')
         if not alert_json:
@@ -564,7 +569,7 @@ class D2data:
                 }
                 self.data[lang]['alerts'].append(alert_embed)
 
-    async def get_season_start(self):
+    async def get_season_start(self) -> datetime:
         manifest_url = 'https://www.bungie.net/Platform/Destiny2/Manifest/'
         manifest_json = await self.get_bungie_json('default', manifest_url, {}, '')
         season_url = 'https://www.bungie.net{}'.format(
@@ -583,7 +588,7 @@ class D2data:
                     return isoparse(season_json[season]['startDate'])
                 pass
 
-    async def get_seasonal_featured_bd(self, langs, start):
+    async def get_seasonal_featured_bd(self, langs: List[str], start: datetime) -> list:
         tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         bd = []
@@ -639,7 +644,7 @@ class D2data:
                         class_items = class_items + 1
         return bd
 
-    async def get_seasonal_bd(self, langs, start):
+    async def get_seasonal_bd(self, langs: List[str], start: datetime) -> list:
         tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         bd = []
@@ -696,7 +701,7 @@ class D2data:
                         class_items = class_items + 1
         return bd
 
-    async def get_seasonal_featured_silver(self, langs, start):
+    async def get_seasonal_featured_silver(self, langs: List[str], start: datetime) -> list:
         tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
         bd = []
@@ -751,7 +756,7 @@ class D2data:
                         class_items = class_items + 1
         return bd
 
-    async def get_weekly_eververse(self, langs):
+    async def get_weekly_eververse(self, langs: List[str]) -> None:
         data = []
         start = await self.get_season_start()
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
@@ -777,8 +782,9 @@ class D2data:
                                    name=self.translations[lang]['site']['bd'],
                                    template='hover_items.html', order=0, type='weekly', size='tall')
 
-    async def write_to_db(self, lang, id, response, size='', name='', template='table_items.html', order=0,
-                          type='daily', annotations=[]):
+    async def write_to_db(self, lang: str, id: str, response: list, size: str = '', name: str = '',
+                          template: str = 'table_items.html', order: int = 0, type: str = 'daily',
+                          annotations: list = []) -> None:
         while True:
             try:
                 data_db = self.data_pool.get_connection()
@@ -816,7 +822,7 @@ class D2data:
         data_cursor.close()
         data_db.close()
 
-    async def get_spider(self, lang, forceget=False):
+    async def get_spider(self, lang: List[str], forceget: bool = False) -> Union[bool, None]:
         char_info = self.char_info
 
         spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'. \
@@ -857,7 +863,7 @@ class D2data:
             await self.write_to_db(locale, 'spider_mats', data, name=self.translations[locale]['site']['spider'],
                                    order=0, size='tall')
 
-    async def get_banshee(self, lang, forceget=False):
+    async def get_banshee(self, lang: List[str], forceget: bool = False) -> Union[bool, None]:
         char_info = self.char_info
         cat_templates = {
             '6': 'contract_item.html',
@@ -908,7 +914,7 @@ class D2data:
                                    template='vendor_items.html', annotations=[])
                              # size='tall')
 
-    async def get_ada(self, lang, forceget=False):
+    async def get_ada(self, lang: List[str], forceget: bool = False) -> Union[bool, None]:
         char_info = self.char_info
         cat_templates = {
             '6': 'contract_item.html',
@@ -963,7 +969,7 @@ class D2data:
             await self.write_to_db(locale, 'ada_mods', sales, name=ada_def['displayProperties']['name'], order=5,
                                    template='vendor_items.html', annotations=[], size='tall')
 
-    async def get_daily_mods(self, langs, forceget=False):
+    async def get_daily_mods(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         char_info = self.char_info
 
         ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/350061650/'.\
@@ -1011,14 +1017,14 @@ class D2data:
                     mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
             self.data[lang]['daily_mods']['fields'] = mods
 
-    async def get_xur_loc(self):
+    async def get_xur_loc(self) -> dict:
         url = 'https://paracausal.science/xur/current.json'
         r = await self.session.get(url)
         r_json = await r.json()
 
         return r_json
 
-    async def get_xur(self, langs, forceget=False):
+    async def get_xur(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         char_info = self.char_info
         cat_templates = {
             '6': 'contract_item.html',
@@ -1170,7 +1176,7 @@ class D2data:
                                    name=xur_def['displayProperties']['name'],
                                    annotations=annotations)
 
-    async def get_heroic_story(self, langs, forceget=False):
+    async def get_heroic_story(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions',
                                                              force=forceget)
         if not activities_resp:
@@ -1219,7 +1225,7 @@ class D2data:
             await self.write_to_db(lang, 'heroic_story_missions', db_data, name=self.translations[lang]['site']['heroicstory'],
                                    size='tall', order=3)
 
-    async def get_forge(self, langs, forceget=False):
+    async def get_forge(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('forge', force=forceget)
         if not activities_resp:
             for lang in langs:
@@ -1272,7 +1278,7 @@ class D2data:
             await self.write_to_db(lang, 'forge', db_data, name=self.translations[lang]['site']['forge'],
                                    template='table_items.html', order=4)
 
-    async def get_strike_modifiers(self, langs, forceget=False):
+    async def get_strike_modifiers(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('vanguardstrikes', string='strike modifiers',
                                                              force=forceget)
         if not activities_resp:
@@ -1318,7 +1324,7 @@ class D2data:
             await self.write_to_db(lang, 'strike_modifiers', db_data, size='wide',
                                    name=self.translations[lang]['msg']['strikesmods'], order=1)
 
-    async def get_reckoning_boss(self, lang):
+    async def get_reckoning_boss(self, lang: str) -> None:
         first_reset_time = 1539709200
         seconds_since_first = time.time() - first_reset_time
         weeks_since_first = seconds_since_first // 604800
@@ -1341,7 +1347,7 @@ class D2data:
             "title": self.translations[lang]['msg']['reckoningboss'],
         }
 
-    def add_reckoning_boss(self, lang):
+    def add_reckoning_boss(self, lang: str) -> list:
         first_reset_time = 1539709200
         seconds_since_first = time.time() - first_reset_time
         weeks_since_first = seconds_since_first // 604800
@@ -1360,7 +1366,7 @@ class D2data:
 
         return [data, db_data]
 
-    async def get_reckoning_modifiers(self, langs, forceget=False):
+    async def get_reckoning_modifiers(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('reckoning', string='reckoning modifiers', force=forceget)
         if not activities_resp:
             for lang in langs:
@@ -1404,7 +1410,7 @@ class D2data:
             await self.write_to_db(lang, 'reckoning', db_data, 'wide', self.translations[lang]['msg']['reckoningmods'],
                                    order=2)
 
-    async def get_nightfall820(self, langs, forceget=False):
+    async def get_nightfall820(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('nightfalls820', string='820 nightfalls', force=forceget)
         if not activities_resp:
             for lang in langs:
@@ -1468,7 +1474,7 @@ class D2data:
             await self.write_to_db(lang, '820_nightfalls', db_data,
                                    name=self.translations[lang]['site']['nightfalls820'], order=0, type='weekly')
 
-    async def get_modifiers(self, lang, act_hash):
+    async def get_modifiers(self, lang: str, act_hash: int) -> Union[bool, list]:
         url = 'https://www.bungie.net/{}/Explore/Detail/DestinyActivityDefinition/{}'.format(lang, act_hash)
         r = await self.session.get(url)
         r = await r.text()
@@ -1489,7 +1495,7 @@ class D2data:
         else:
             return False
 
-    async def get_raids(self, langs, forceget=False):
+    async def get_raids(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('raids', force=forceget)
         if not activities_resp:
             for lang in langs:
@@ -1687,7 +1693,7 @@ class D2data:
             await self.write_to_db(lang, 'raid_challenges', db_data, '',
                                    self.translations[lang]['msg']['raids'], order=1, type='weekly')
 
-    async def get_ordeal(self, langs, forceget=False):
+    async def get_ordeal(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('ordeal', force=forceget)
         if not activities_resp:
             for lang in langs:
@@ -1748,7 +1754,7 @@ class D2data:
             await self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'], order=3,
                                    type='weekly')
 
-    async def get_nightmares(self, langs, forceget=False):
+    async def get_nightmares(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('nightmares', force=forceget)
         if not activities_resp:
             for lang in langs:
@@ -1797,7 +1803,7 @@ class D2data:
             await self.write_to_db(lang, 'nightmare_hunts', db_data, name=self.translations[lang]['site']['nightmares'],
                                    order=2, type='weekly')
 
-    async def get_empire_hunt(self, langs, forceget=False):
+    async def get_empire_hunt(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('empire_hunts', force=forceget)
         if not activities_resp:
             for lang in langs:
@@ -1846,7 +1852,7 @@ class D2data:
             await self.write_to_db(lang, 'empire_hunts', db_data, name=self.translations[lang]['site']['empire_hunts'],
                                    order=5, type='weekly')
 
-    async def get_crucible_rotators(self, langs, forceget=False):
+    async def get_crucible_rotators(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators',
                                                              force=forceget)
         if not activities_resp:
@@ -1921,7 +1927,7 @@ class D2data:
                                    name=self.translations[lang]['msg']['cruciblerotators'], size=style, order=4,
                                    type='weekly')
 
-    async def get_the_lie_progress(self, langs, forceget=True):
+    async def get_the_lie_progress(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'],
                                                                                             self.char_info[
                                                                                                 'membershipid'],
@@ -2029,7 +2035,7 @@ class D2data:
                     'url': 'attachment://thelie-{}.png'.format(lang)
                 }
 
-    async def decode_modifiers(self, key, lang):
+    async def decode_modifiers(self, key: dict, lang: str) -> list:
         data = []
         db_data = []
         for mod_key in key['modifierHashes']:
@@ -2049,7 +2055,8 @@ class D2data:
 
         return [data, db_data]
 
-    async def get_activities_response(self, name, lang=None, string=None, force=False):
+    async def get_activities_response(self, name: str, lang: Optional[str] = None, string: Optional[str] = None,
+                                      force: bool = False) -> Union[bool, dict]:
         char_info = self.char_info
         activities = []
         hashes = set()
@@ -2077,7 +2084,8 @@ class D2data:
                             hashes.add(activity['activityHash'])
             return activities_json
 
-    async def get_player_metric(self, membership_type, membership_id, metric, is_global=False):
+    async def get_player_metric(self, membership_type: int, membership_id: int, metric: int,
+                                is_global: bool = False) -> Union[int, dict]:
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
         metric_resp = await self.get_cached_json('playermetrics_{}'.format(membership_id),
                                                  'metric {} for {}'.format(metric, membership_id), url,
@@ -2092,7 +2100,7 @@ class D2data:
         else:
             return -1
 
-    async def get_member_metric_wrapper(self, member, metric, is_global=False, tag=''):
+    async def get_member_metric_wrapper(self, member: dict, metric: int, is_global: bool = False, tag: str = '') -> list:
         member_id = member['destinyUserInfo']['membershipId']
         member_type = member['destinyUserInfo']['membershipType']
         if member['destinyUserInfo']['bungieGlobalDisplayName'] != '' and False:
@@ -2105,7 +2113,7 @@ class D2data:
             player = name
         return [player, await self.get_player_metric(member_type, member_id, metric, is_global)]
 
-    async def get_osiris_predictions(self, langs, forceget=False, force_info = None):
+    async def get_osiris_predictions(self, langs: List[str], forceget: bool = False, force_info: Optional[list] = None):
         win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
         # win3_rotation = ['?', '?', '?']
         win5_rotation = ['?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class', '?']
@@ -2211,7 +2219,7 @@ class D2data:
             await self.write_to_db(lang, 'trials_of_osiris', db_data, order=6,
                                    name=self.translations[lang]['site']['osiris'])
 
-    async def drop_weekend_info(self, langs):
+    async def drop_weekend_info(self, langs: List[str]) -> None:
         while True:
             try:
                 data_db = self.data_pool.get_connection()
@@ -2232,8 +2240,9 @@ class D2data:
         data_cursor.close()
         data_db.close()
 
-    async def get_cached_json(self, cache_id, name, url, params=None, lang=None, string=None, change_msg=True,
-                              force=False, cache_only=False, expires_in=1800):
+    async def get_cached_json(self, cache_id: str, name: str, url: str, params: Optional[dict] = None,
+                              lang: Optional[str] = None, string: Optional[str] = None, change_msg: bool = True,
+                              force: bool = False, cache_only: bool = False, expires_in: int = 1800) -> Union[bool, dict]:
         # while True:
         #     try:
         #         cache_connection = self.cache_pool.get_connection()
@@ -2272,7 +2281,7 @@ class D2data:
                 try:
                     await cache_cursor.execute(
                         '''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
-                    await cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id(256))''')
+                    await cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id)''')
                     await cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
                                          (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                           timestamp))
@@ -2316,7 +2325,8 @@ class D2data:
         response_json['timestamp'] = timestamp
         return response_json
 
-    async def get_clan_leaderboard(self, clan_ids, metric, number, is_time=False, is_kda=False, is_global=False):
+    async def get_clan_leaderboard(self, clan_ids: list, metric: int, number: int, is_time: bool = False,
+                                   is_kda: bool = False, is_global: bool = False) -> list:
         metric_list = []
         for clan_id in clan_ids:
             url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
@@ -2395,7 +2405,7 @@ class D2data:
         else:
             return metric_list
 
-    async def get_last_activity(self, member, lang):
+    async def get_last_activity(self, member: dict, lang: str):
         status_change = datetime.fromtimestamp(float(member['lastOnlineStatusChange']))
         now = datetime.utcnow()
 
@@ -2448,7 +2458,7 @@ class D2data:
             activity_string = '{} ({})'.format(activity_string, str(timedelta(seconds=length.seconds)))
         return [member['destinyUserInfo']['LastSeenDisplayName'], activity_string]
 
-    async def get_online_clan_members(self, clan_id, lang):
+    async def get_online_clan_members(self, clan_id: Union[str, int], lang: str) -> list:
         url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
 
         clan_members_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url,
@@ -2467,7 +2477,7 @@ class D2data:
             online_members = [[self.translations[lang]['online']['error'], self.translations[lang]['online']['error_t']]]
         return online_members
 
-    async def iterate_clans(self, max_id):
+    async def iterate_clans(self, max_id: int) -> Union[int, str]:
         while True:
             try:
                 cache_connection = self.cache_pool.get_connection()
@@ -2524,7 +2534,7 @@ class D2data:
         cache_connection.close()
         return 'Finished'
 
-    async def iterate_clans_new(self, max_id):
+    async def iterate_clans_new(self, max_id: int) -> Union[int, str]:
         # tracemalloc.start()
         # snapshot1 = tracemalloc.take_snapshot()
         # while True:
@@ -2604,7 +2614,7 @@ class D2data:
         # print(top_stats)
         return 'Finished'
 
-    async def fetch_players(self):
+    async def fetch_players(self) -> str:
         clan_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                   password=self.api_data['pass'], port=self.api_data['db_port'],
                                   database=self.api_data['cache_name'])
@@ -2637,7 +2647,7 @@ class D2data:
         clan_db.close()
         return 'Finished'
 
-    async def token_update(self):
+    async def token_update(self) -> Union[bool, None]:
         # check to see if token.json exists, if not we have to start with oauth
         try:
             f = open('token.json', 'r')

@@ -134,3 +134,8 @@ dmypy.json
 /api.json
 /char.json
 /databack.json
+
+.idea
+/*.db
+/*.content
+/data.json

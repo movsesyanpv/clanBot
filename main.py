@@ -2,7 +2,7 @@ import json
 import discord
 import argparse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, time
 import asyncio
 import pydest
 import mariadb
@@ -10,6 +10,8 @@ import gc
 import random
 
 from discord.ext.commands.bot import Bot
+import discord.ext.tasks as tasks
+from discord import ApplicationContext, DiscordException
 import sqlite3
 import logging
 import traceback
@@ -17,11 +19,14 @@ from inspect import currentframe, getframeinfo
 from tabulate import tabulate
 
 from discord.ext import commands
-# from discord_slash import SlashCommand
 
 import raid as lfg
 import destiny2data as d2
 import unauthorized
+from cogs.utils.views import GroupButtons
+from cogs.utils.converters import locale_2_lang
+
+from typing import List, Union, Callable
 
 
 class ClanBot(commands.Bot):
@@ -55,7 +60,7 @@ class ClanBot(commands.Bot):
 
     translations = {}
 
-    def __init__(self, **options):
+    def __init__(self, upgrade=False, **options):
         super().__init__(**options)
         self.get_args()
         self.load_translations()
@@ -68,28 +73,23 @@ class ClanBot(commands.Bot):
         self.raid = lfg.LFG()
         self.guild_db = sqlite3.connect('guild.db')
         self.guild_cursor = self.guild_db.cursor()
+        self.persistent_views_added = False
 
         version_file = open('version.dat', 'r')
         self.version = version_file.read()
 
-        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='35', misfire_grace_time=86300, args=[self.data.get_heroic_story, 'heroicstory', 86400])
-        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='30', misfire_grace_time=86300, args=[self.data.get_forge, 'forge', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
-        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='0', second='50', misfire_grace_time=86300, args=[self.data.get_reckoning_modifiers, 'reckoning', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
         self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_daily_mods, 'daily_mods', 86400])
         self.sched.add_job(self.data.get_banshee, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
         self.sched.add_job(self.data.get_ada, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
 
         self.sched.add_job(self.data.drop_weekend_info, 'cron', day_of_week='tue', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.langs])
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='0', second='40', misfire_grace_time=86300, args=[self.data.get_nightfall820, 'nightfalls820', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_empire_hunt, 'empire_hunts', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
         self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_featured_bd, 'featured_bd', 604800])
-        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_bd, 'bd', 604800])
         self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
 
         self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
@@ -97,21 +97,20 @@ class ClanBot(commands.Bot):
 
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
         self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 86400])
-        # self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_the_lie_progress, 'thelie', 3600])
         self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
         self.sched.add_job(self.update_metrics, 'cron', hour='10', minute='0', second='0', misfire_grace_time=86300)
 
         logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
         logging.getLogger('apscheduler')
 
-    def load_translations(self):
+    def load_translations(self) -> None:
         self.translations = {}
         for lang in self.langs:
             translations_file = open('locales/{}.json'.format(lang), 'r', encoding='utf-8')
             self.translations[lang] = json.loads(translations_file.read())
             translations_file.close()
 
-    def get_args(self):
+    def get_args(self) -> None:
         parser = argparse.ArgumentParser()
         parser.add_argument('-nc', '--noclear', help='Don\'t clear last message of the type', action='store_true')
         parser.add_argument('-p', '--production', help='Use to launch in production mode', action='store_true')
@@ -125,7 +124,8 @@ class ClanBot(commands.Bot):
         parser.add_argument('-c', '--cert', help='SSL certificate', type=str, default='')
         self.args = parser.parse_args()
 
-    async def force_update(self, upd_type, post=True, get=True, channels=None, forceget=False):
+    async def force_update(self, upd_type: List[str], post: bool = True, get: bool = True,channels: List[int] = None,
+                           forceget: bool = False) -> None:
         if 'daily' in upd_type and post:
             upd_type = (tuple(upd_type) + self.daily_rotations)
         if 'weekly' in upd_type and post:
@@ -218,25 +218,13 @@ class ClanBot(commands.Bot):
             await self.logout()
             await self.close()
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         await self.dm_owner('on_ready fired')
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(status=discord.Status.dnd, activity=game)
-        self.remove_command('help')
-        if self.args.production:
-            self.load_extension('cogs.dbl')
-        for cog in self.cog_list:
-            try:
-                self.load_extension(cog)
-            except discord.ext.commands.ExtensionAlreadyLoaded:
-                self.reload_extension(cog)
-        # try:
-        #     await self.slash.sync_all_commands(delete_from_unused_guilds=True)
-        # except discord.Forbidden:
-        #     pass
         self.all_commands['update'].enabled = False
         self.all_commands['top'].enabled = False
-        self.all_commands['online'].enabled = False
+        # self.all_commands['online'].enabled = False
         await self.data.token_update()
         await self.update_langs()
         await self.update_prefixes()
@@ -256,6 +244,24 @@ class ClanBot(commands.Bot):
                                    second='10', misfire_grace_time=86300, args=[lang])
             self.sched.start()
         game = discord.Game('v{}'.format(self.version))
+        if not self.persistent_views_added:
+            lfg_list = self.raid.get_all()
+            for lfg in lfg_list:
+                try:
+                    lang = self.guild_lang(lfg[3])
+                    group_msg = await self.fetch_channel(lfg[1])
+                    group_msg = await group_msg.fetch_message(lfg[0])
+                    buttons = GroupButtons(lfg[0], self,
+                                           label_go=self.translations[lang]['lfg']['button_want'],
+                                           label_help=self.translations[lang]['lfg']['button_help'],
+                                           label_no_go=self.translations[lang]['lfg']['button_no_go'],
+                                           label_delete=self.translations[lang]['lfg']['button_delete'])
+                    await group_msg.edit(view=buttons)
+                    self.persistent_views.pop(self.persistent_views.index(buttons))  # This bs is a workaround for a pycord broken persistent view processing
+                    self.add_view(buttons)
+                except discord.NotFound:
+                    self.add_view(GroupButtons(lfg[0], self))
+            self.persistent_views_added = True
         await self.change_presence(status=discord.Status.online, activity=game)
         self.all_commands['update'].enabled = True
         self.all_commands['top'].enabled = True
@@ -266,7 +272,7 @@ class ClanBot(commands.Bot):
         char_file.close()
         return
 
-    async def on_guild_join(self, guild):
+    async def on_guild_join(self, guild: discord.Guild) -> None:
         self.logger.info('added to {}'.format(guild.name))
         if guild.owner.dm_channel is None:
             await guild.owner.create_dm()
@@ -276,19 +282,19 @@ class ClanBot(commands.Bot):
         for i in prefixes:
             if '@' not in i:
                 prefix = i
-        await guild.owner.dm_channel.send('The `{}help` command will get you the command list.\n'
-                                          'To set up automatic Destiny 2 information updates use `regnotifier` command.\n'
-                                          'Please set my language for the guild with `@{} setlang LANG`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.\n'
-                                          'To set up automatic updates for Destiny 2, use `regnotifier` command in the channel you want me to post to.\n'
-                                          'To use `top` command you\'ll have to set up a D2 clan with the `setclan` command.\n'
-                                          'Feel free to ask for help at my Discord Server: https://discord.gg/JEbzECp'.
-                                          format(prefix, self.user.name, str(self.langs).replace('[', '').replace(']', '').replace('\'', '')))
+        await guild.owner.dm_channel.send('The `/help` command will get you the command list.\n'
+                                          'To set up automatic Destiny 2 information updates use `/regnotifier` or `/autopost start` command in the channel you want me to post to.\n'
+                                          'Please set my language for the guild with `/setlang`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.\n'
+                                          'To use `/top` command you\'ll have to set up a D2 clan with the `/setclan` command.\n'
+                                          'Feel free to ask for help at my Discord Server: https://discord.gg/JEbzECp\n'
+                                          'P.S. There are legacy commands available, you can use `@{} help` to get that list, but they are deprecated.'.
+                                          format(str(self.langs).replace('[', '').replace(']', '').replace('\'', ''), self.user.name))
         await self.update_history()
         self.update_clans()
         await self.update_prefixes()
         await self.update_langs()
 
-    async def on_guild_remove(self, guild):
+    async def on_guild_remove(self, guild: discord.Guild) -> None:
         self.guild_cursor.execute('''DELETE FROM clans WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
         self.guild_cursor.execute('''DELETE FROM language WHERE server_id=?''', (guild.id,))
@@ -298,13 +304,14 @@ class ClanBot(commands.Bot):
         self.guild_db.commit()
         self.raid.purge_guild(guild.id)
 
-    async def dm_owner(self, text):
+    async def dm_owner(self, text: str) -> None:
         bot_info = await self.application_info()
         if bot_info.owner.dm_channel is None:
             await bot_info.owner.create_dm()
         await bot_info.owner.dm_channel.send(text)
 
-    async def check_ownership(self, message, is_silent=False, admin_check=False):
+    async def check_ownership(self, message: discord.Message, is_silent: bool = False,
+                              admin_check: bool = False) -> bool:
         bot_info = await self.application_info()
         is_owner = bot_info.owner == message.author
         if not is_owner and not is_silent:
@@ -315,46 +322,46 @@ class ClanBot(commands.Bot):
             await message.author.dm_channel.send(msg, embed=e)
         return is_owner or (message.channel.permissions_for(message.author).administrator and admin_check)
 
-    async def on_raw_reaction_remove(self, payload):
-        user = self.get_user(payload.user_id)
-        if user == self.user:
-            return
+    # async def on_raw_reaction_remove(self, payload):
+    #     user = self.get_user(payload.user_id)
+    #     if user == self.user:
+    #         return
+    #
+    #     try:
+    #         message = await self.fetch_channel(payload.channel_id)
+    #         message = await message.fetch_message(payload.message_id)
+    #     except discord.NotFound:
+    #         return
+    #     for guild in self.guilds:
+    #         if guild.id == payload.guild_id:
+    #             user = guild.get_member(payload.user_id)
+    #
+    #     if self.raid.is_raid(message.id):
+    #         if str(payload.emoji) not in ['👌', '❓']:
+    #             return
+    #         was_goer = self.raid.is_goer(message, user)
+    #         is_mb_goer = self.raid.is_mb_goer(message, user)
+    #         self.raid.rm_people(message.id, user, str(payload.emoji))
+    #         if message.guild.me.guild_permissions.manage_roles:
+    #             role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
+    #             if role is not None and was_goer:
+    #                 await user.remove_roles(role, reason='User removed 👌')
+    #                 goers = self.raid.get_cell_array('group_id', message.id, 'going')
+    #                 for goer in goers:
+    #                     user_goer = await message.guild.fetch_member(int(goer.replace('<@', '').replace('!', '').replace('>', '')))
+    #                     if role not in user_goer.roles and user_goer is not None:
+    #                         await user_goer.add_roles(role, reason='Previous participant opted out')
+    #         if user.dm_channel is None:
+    #             await user.create_dm()
+    #         lang = self.guild_lang(payload.guild_id)
+    #         await self.raid.update_group_msg(message, self.translations[lang], lang)
+    #         if self.raid.get_cell('group_id', message.id, 'group_mode') == 'manual' and str(payload.emoji) == '👌':
+    #             await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'].format(user.mention))
+    #             owner = self.raid.get_cell('group_id', message.id, 'owner')
+    #             owner = self.get_user(owner)
+    #             await self.raid.upd_dm(owner, message.id, self.translations[lang])
 
-        try:
-            message = await self.fetch_channel(payload.channel_id)
-            message = await message.fetch_message(payload.message_id)
-        except discord.NotFound:
-            return
-        for guild in self.guilds:
-            if guild.id == payload.guild_id:
-                user = guild.get_member(payload.user_id)
-
-        if self.raid.is_raid(message.id):
-            if str(payload.emoji) not in ['👌', '❓']:
-                return
-            was_goer = self.raid.is_goer(message, user)
-            is_mb_goer = self.raid.is_mb_goer(message, user)
-            self.raid.rm_people(message.id, user, str(payload.emoji))
-            if message.guild.me.guild_permissions.manage_roles:
-                role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
-                if role is not None and was_goer:
-                    await user.remove_roles(role, reason='User removed 👌')
-                    goers = self.raid.get_cell_array('group_id', message.id, 'going')
-                    for goer in goers:
-                        user_goer = await message.guild.fetch_member(int(goer.replace('<@', '').replace('!', '').replace('>', '')))
-                        if role not in user_goer.roles and user_goer is not None:
-                            await user_goer.add_roles(role, reason='Previous participant opted out')
-            if user.dm_channel is None:
-                await user.create_dm()
-            lang = self.guild_lang(payload.guild_id)
-            await self.raid.update_group_msg(message, self.translations[lang], lang)
-            if self.raid.get_cell('group_id', message.id, 'group_mode') == 'manual' and str(payload.emoji) == '👌':
-                await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'].format(user.mention))
-                owner = self.raid.get_cell('group_id', message.id, 'owner')
-                owner = self.get_user(owner)
-                await self.raid.upd_dm(owner, message.id, self.translations[lang])
-
-    async def on_raw_reaction_add(self, payload):
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
         user = payload.member
         if payload.user_id == self.user.id:
             return
@@ -363,78 +370,78 @@ class ClanBot(commands.Bot):
             try:
                 message = await self.fetch_channel(payload.channel_id)
                 message = await message.fetch_message(payload.message_id)
-            except discord.errors.NotFound:
+            except discord.NotFound:
                 if self.raid.is_raid(payload.message_id):
                     self.raid.del_entry(payload.message_id)
                 return
-            except discord.errors.Forbidden:
+            except discord.Forbidden:
                 return
 
-            if self.raid.is_raid(message.id):
-                mode = self.raid.get_cell('group_id', message.id, 'group_mode')
-                owner = self.get_user(self.raid.get_cell('group_id', message.id, 'owner'))
-                if str(payload.emoji) == '❌' and payload.user_id == owner.id:
-                    if mode == 'manual':
-                        dm_id = self.raid.get_cell('group_id', message.id, 'dm_message')
-                        if owner.dm_channel is None:
-                            await owner.create_dm()
-                        if dm_id != 0:
-                            dm_message = await owner.dm_channel.fetch_message(dm_id)
-                            await dm_message.delete()
-                    if message.guild.me.guild_permissions.manage_roles:
-                        role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
-                        if role is not None:
-                            await role.delete(reason='LFG deletion')
-                    if message.guild.me.guild_permissions.manage_channels:
-                        group_ch = message.guild.get_channel(self.raid.get_cell('group_id', message.id, 'group_channel'))
-                        if group_ch is not None:
-                            if group_ch.permissions_for(message.guild.me).manage_channels:
-                                await group_ch.delete(reason='LFG deletion')
-                    self.raid.del_entry(message.id)
-                    await message.delete()
-                    return
-                if str(payload.emoji) not in ['👌', '❓']:
-                    for reaction in message.reactions:
-                        if str(reaction.emoji) == str(payload.emoji):
-                            try:
-                                await reaction.remove(user)
-                            except discord.errors.Forbidden:
-                                pass
-                            return
-                if str(payload.emoji) == '👌':
-                    for reaction in message.reactions:
-                        if str(reaction.emoji) == '❓':
-                            try:
-                                await reaction.remove(user)
-                            except discord.errors.Forbidden:
-                                pass
-                if str(payload.emoji) == '❓':
-                    for reaction in message.reactions:
-                        if str(reaction.emoji) == '👌':
-                            try:
-                                await reaction.remove(user)
-                            except discord.errors.Forbidden:
-                                pass
-                owner = self.raid.get_cell('group_id', message.id, 'owner')
-                owner = self.get_user(owner)
-                if str(payload.emoji) == '👌':
-                    self.raid.add_people(message.id, user)
-                elif str(payload.emoji) == '❓':
-                    self.raid.add_mb_goers(message.id, user)
-                if message.guild.me.guild_permissions.manage_roles:
-                    role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
-                    if role is not None and self.raid.is_goer(message, user):
-                        await user.add_roles(role, reason='User pressed 👌')
-                lang = self.guild_lang(payload.guild_id)
-                if user.dm_channel is None:
-                    await user.create_dm()
-                if mode == 'manual':
-                    if str(payload.emoji) == '👌':
-                        await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'].format(user.mention), delete_after=30)
-                    await self.raid.upd_dm(owner, message.id, self.translations[lang])
-                if mode == 'basic' or str(payload.emoji) == '❓' or user == owner:
-                    await self.raid.update_group_msg(message, self.translations[lang], lang)
-                return
+            # if self.raid.is_raid(message.id):
+            #     mode = self.raid.get_cell('group_id', message.id, 'group_mode')
+            #     owner = self.get_user(self.raid.get_cell('group_id', message.id, 'owner'))
+            #     if str(payload.emoji) == '❌' and payload.user_id == owner.id:
+            #         if mode == 'manual':
+            #             dm_id = self.raid.get_cell('group_id', message.id, 'dm_message')
+            #             if owner.dm_channel is None:
+            #                 await owner.create_dm()
+            #             if dm_id != 0:
+            #                 dm_message = await owner.dm_channel.fetch_message(dm_id)
+            #                 await dm_message.delete()
+            #         if message.guild.me.guild_permissions.manage_roles:
+            #             role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
+            #             if role is not None:
+            #                 await role.delete(reason='LFG deletion')
+            #         if message.guild.me.guild_permissions.manage_channels:
+            #             group_ch = message.guild.get_channel(self.raid.get_cell('group_id', message.id, 'group_channel'))
+            #             if group_ch is not None:
+            #                 if group_ch.permissions_for(message.guild.me).manage_channels:
+            #                     await group_ch.delete(reason='LFG deletion')
+            #         self.raid.del_entry(message.id)
+            #         await message.delete()
+            #         return
+            #     if str(payload.emoji) not in ['👌', '❓']:
+            #         for reaction in message.reactions:
+            #             if str(reaction.emoji) == str(payload.emoji):
+            #                 try:
+            #                     await reaction.remove(user)
+            #                 except discord.errors.Forbidden:
+            #                     pass
+            #                 return
+            #     if str(payload.emoji) == '👌':
+            #         for reaction in message.reactions:
+            #             if str(reaction.emoji) == '❓':
+            #                 try:
+            #                     await reaction.remove(user)
+            #                 except discord.errors.Forbidden:
+            #                     pass
+            #     if str(payload.emoji) == '❓':
+            #         for reaction in message.reactions:
+            #             if str(reaction.emoji) == '👌':
+            #                 try:
+            #                     await reaction.remove(user)
+            #                 except discord.errors.Forbidden:
+            #                     pass
+            #     owner = self.raid.get_cell('group_id', message.id, 'owner')
+            #     owner = self.get_user(owner)
+            #     if str(payload.emoji) == '👌':
+            #         self.raid.add_people(message.id, user)
+            #     elif str(payload.emoji) == '❓':
+            #         self.raid.add_mb_goers(message.id, user)
+            #     if message.guild.me.guild_permissions.manage_roles:
+            #         role = message.guild.get_role(self.raid.get_cell('group_id', message.id, 'group_role'))
+            #         if role is not None and self.raid.is_goer(message, user):
+            #             await user.add_roles(role, reason='User pressed 👌')
+            #     lang = self.guild_lang(payload.guild_id)
+            #     if user.dm_channel is None:
+            #         await user.create_dm()
+            #     if mode == 'manual':
+            #         if str(payload.emoji) == '👌':
+            #             await user.dm_channel.send(self.translations[lang]['lfg']['gotcha'].format(user.mention), delete_after=30)
+            #         await self.raid.upd_dm(owner, message.id, self.translations[lang])
+            #     if mode == 'basic' or str(payload.emoji) == '❓' or user == owner:
+            #         await self.raid.update_group_msg(message, self.translations[lang], lang)
+            #     return
 
             raid_dm = self.raid.get_cell('dm_message', message.id, 'dm_message')
 
@@ -459,7 +466,7 @@ class ClanBot(commands.Bot):
                 await owner.create_dm()
             await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
 
-    async def lfg_cleanup(self, days, guild=None):
+    async def lfg_cleanup(self, days: Union[int, float], guild: discord.Guild = None) -> int:
         lfg_list = self.raid.get_all()
         if guild is None:
             guild_id = 0
@@ -477,19 +484,19 @@ class ClanBot(commands.Bot):
                     await lfg_msg.delete()
                     self.raid.del_entry(lfg[0])
                     i = i + 1
-            except discord.errors.NotFound:
+            except discord.NotFound:
                 self.raid.del_entry(lfg[0])
                 i = i + 1
         return i
 
-    async def pause_for(self, message, delta):
+    async def pause_for(self, message: discord.Message, delta: timedelta) -> None:
         self.sched.pause()
         await asyncio.sleep(delta.total_seconds())
         self.sched.resume()
         await message.channel.send('should be after delay finish {}'.format(str(datetime.now())))
         return
 
-    async def on_raw_message_delete(self, payload):
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
         if self.raid.is_raid(payload.message_id):
             owner = self.raid.get_cell('group_id', payload.message_id, 'owner')
             owner = self.get_user(owner)
@@ -501,7 +508,7 @@ class ClanBot(commands.Bot):
                 await dm_message.delete()
             self.raid.del_entry(payload.message_id)
 
-    async def on_command_error(self, ctx, exception):
+    async def on_command_error(self, ctx: discord.ext.commands.Context, exception):
         message = ctx.message
         if message.guild is None:
             lang = 'en'
@@ -555,7 +562,7 @@ class ClanBot(commands.Bot):
             #         #await message.author.dm_channel.send(self.translations[lang]['msg']['no_send_messages'].format(message.author.mention))
             #         return
             #     raise exception
-            elif isinstance(exception.original, discord.errors.Forbidden):
+            elif isinstance(exception.original, discord.Forbidden):
                 pass
             else:
                 if 'stop' not in message.content.lower() or (
@@ -573,7 +580,7 @@ class ClanBot(commands.Bot):
                         await message.author.create_dm()
                     if message.author != owner:
                         await message.author.dm_channel.send(self.translations['en']['error'])
-        except discord.errors.Forbidden:
+        except discord.Forbidden:
             pass
         except Exception as e:
             if 'stop' not in message.content.lower() or (self.user not in message.mentions and str(message.channel.type) != 'private'):
@@ -588,11 +595,45 @@ class ClanBot(commands.Bot):
                 if message.author != owner:
                     await message.author.dm_channel.send(self.translations['en']['error'])
 
-    async def on_command_completion(self, ctx):
+    async def on_application_command_error(
+        self, context: ApplicationContext, exception: DiscordException
+    ) -> None:
+        locale = await locale_2_lang(context)
+        if isinstance(exception, commands.NoPrivateMessage):
+            await context.respond(self.translations[locale]['msg']['no_dm'], ephemeral=True)
+        else:
+            bot_info = await self.application_info()
+            owner = bot_info.owner
+            if owner.dm_channel is None:
+                await owner.create_dm()
+            traceback_str = ''
+            for line in traceback.format_exception(type(exception), exception, exception.__traceback__):
+                traceback_str = '{}{}'.format(traceback_str, line)
+            await owner.dm_channel.send('`{}`'.format(traceback_str))
+            command_line = '/{}'.format(context.interaction.data['name'])
+            if 'optons' in context.interaction.data.keys():
+                for option in context.interaction.data['options']:
+                    command_line = '{} {}:{}'.format(command_line, option['name'], option['value'])
+            await owner.dm_channel.send('{}:\n{}'.format(context.author, command_line))
+            if context.author.dm_channel is None:
+                await context.author.create_dm()
+            if context.author != owner:
+                await context.author.dm_channel.send(self.translations[locale]['error'])
+
+    async def on_interaction(self, interaction: discord.Interaction):
+        await self.process_application_commands(interaction)
+        if interaction.type == discord.InteractionType.application_command:
+            command_line = '/{}'.format(interaction.data['name'])
+            if 'options' in interaction.data.keys():
+                for option in interaction.data['options']:
+                    command_line = '{} {}:{}'.format(command_line, option['name'], option['value'])
+            self.logger.info(command_line)
+
+    async def on_command_completion(self, ctx: discord.ext.commands.Context) -> None:
         gc.collect()
         self.logger.info(ctx.message.content)
 
-    def get_channel_type(self, ch_type):
+    def get_channel_type(self, ch_type: str):
         channel_list = []
         try:
             self.guild_cursor.execute('''CREATE TABLE {} (channel_id integer, server_id integer)'''.format(ch_type))
@@ -608,7 +649,7 @@ class ClanBot(commands.Bot):
                 pass
         return channel_list
 
-    def get_channels(self):
+    def get_channels(self) -> None:
         self.notifiers.clear()
         self.seasonal_ch.clear()
         self.update_ch.clear()
@@ -617,7 +658,7 @@ class ClanBot(commands.Bot):
         self.seasonal_ch = self.get_channel_type('seasonal')
         self.update_ch = self.get_channel_type('updates')
 
-    def guild_lang(self, guild_id):
+    def guild_lang(self, guild_id: int) -> str:
         try:
             self.guild_cursor.execute('''SELECT lang FROM language WHERE server_id=?''', (guild_id, ))
             lang = self.guild_cursor.fetchone()
@@ -631,7 +672,7 @@ class ClanBot(commands.Bot):
         except:
             return 'en'
 
-    def guild_prefix(self, guild_id):
+    def guild_prefix(self, guild_id: int) -> list:
         try:
             self.guild_cursor.execute('''SELECT prefix FROM prefixes WHERE server_id=?''', (guild_id, ))
             prefix = self.guild_cursor.fetchone()
@@ -642,7 +683,7 @@ class ClanBot(commands.Bot):
         except:
             return []
 
-    def update_clans(self):
+    def update_clans(self) -> None:
         for server in self.guilds:
             try:
                 self.guild_cursor.execute('''CREATE TABLE clans (server_name text, server_id integer, clan_name text, clan_id integer)''')
@@ -656,7 +697,7 @@ class ClanBot(commands.Bot):
 
         self.guild_db.commit()
 
-    async def update_langs(self):
+    async def update_langs(self) -> None:
         for server in self.guilds:
             try:
                 self.guild_cursor.execute('''CREATE TABLE language (server_id integer, lang text, server_name text)''')
@@ -681,7 +722,7 @@ class ClanBot(commands.Bot):
 
         self.update_clans()
 
-    async def update_prefixes(self):
+    async def update_prefixes(self) -> None:
         for server in self.guilds:
             try:
                 self.guild_cursor.execute('''CREATE TABLE prefixes (server_id integer, prefix text, server_name text)''')
@@ -690,7 +731,7 @@ class ClanBot(commands.Bot):
             except sqlite3.OperationalError:
                 try:
                     self.guild_cursor.execute('''INSERT or IGNORE INTO prefixes VALUES (?,?,?)''',
-                                              [server.id, '[\'?\']', server.name])
+                                              [server.id, '[]', server.name])
                 except:
                     pass
             try:
@@ -703,7 +744,7 @@ class ClanBot(commands.Bot):
 
         self.update_clans()
 
-    async def update_history(self):
+    async def update_history(self) -> None:
         try:
             self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer, channel_id integer)''')
             self.guild_cursor.execute('''CREATE UNIQUE INDEX hist ON history(channel_id)''')
@@ -719,7 +760,9 @@ class ClanBot(commands.Bot):
             except sqlite3.OperationalError:
                 pass
 
-    async def universal_update(self, getter, name, time_to_delete=None, channels=None, post=True, get=True, forceget=False):
+    async def universal_update(self, getter: Callable, name: str, time_to_delete: float = None,
+                               channels: List[int] = None, post: bool = True, get: bool = True,
+                               forceget: bool = False) -> None:
         await self.wait_until_ready()
 
         lang = self.langs
@@ -754,7 +797,8 @@ class ClanBot(commands.Bot):
         if post:
             await self.post_embed(name, self.data.data, time_to_delete, channels)
 
-    async def post_embed_to_channel(self, upd_type, src_dict, time_to_delete, channel_id):
+    async def post_embed_to_channel(self, upd_type: str, src_dict: dict, time_to_delete: float,
+                                    channel_id: int) -> list:
         # delay = random.uniform(0, 180)
         delay = 0
         # await asyncio.sleep(delay)
@@ -768,7 +812,7 @@ class ClanBot(commands.Bot):
             frameinfo = getframeinfo(currentframe())
             return [channel_id, 'channel id None ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
         server = channel.guild
-        if not server.me.permissions_in(channel).send_messages:
+        if not channel.permissions_for(server.me).send_messages:
             frameinfo = getframeinfo(currentframe())
             return [channel_id, 'no permission to send messages ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
         lang = self.guild_lang(channel.guild.id)
@@ -848,7 +892,7 @@ class ClanBot(commands.Bot):
                         try:
                             # await asyncio.sleep(delay)
                             last = await channel.fetch_message(hist)
-                        except discord.errors.HTTPException:
+                        except discord.HTTPException:
                             # await asyncio.sleep(delay)
                             last = await channel.fetch_message(0)
                         if len(last.embeds) > 0:
@@ -865,11 +909,11 @@ class ClanBot(commands.Bot):
                         if type(last) != tuple and channel.type != discord.ChannelType.news:
                             # await asyncio.sleep(delay)
                             await last.delete()
-                except discord.errors.Forbidden:
+                except discord.Forbidden:
                     pass
                 except discord.NotFound:
                     pass
-                except discord.errors.HTTPException as e:
+                except discord.HTTPException as e:
                     bot_info = await self.application_info()
                     await bot_info.owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
                     pass
@@ -883,7 +927,7 @@ class ClanBot(commands.Bot):
         if type(embed) == list:
             hist = []
             for e in embed:
-                if server.me.permissions_in(channel).embed_links:
+                if channel.permissions_for(server.me).embed_links:
                     if channel.type != discord.ChannelType.news:
                         # await asyncio.sleep(delay)
                         message = await channel.send(embed=e, delete_after=time_to_delete)
@@ -902,7 +946,7 @@ class ClanBot(commands.Bot):
                         pass
             hist = str(hist)
         else:
-            if server.me.permissions_in(channel).embed_links:
+            if channel.permissions_for(server.me).embed_links:
                 if upd_type in self.embeds_with_img:
                     if channel.type != discord.ChannelType.news:
                         # await asyncio.sleep(delay)
@@ -935,16 +979,23 @@ class ClanBot(commands.Bot):
         frameinfo = getframeinfo(currentframe())
         return [channel_id, 'posted ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
 
-    async def post_embed(self, upd_type, src_dict, time_to_delete, channels):
-        tasks = []
+    async def post_embed(self, upd_type: str, src_dict: dict, time_to_delete: float, channels: List[int]) -> None:
         responses = []
         for channel_id in channels:
             try:
                 responses.append(await self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
             except discord.HTTPException as e:
                 responses.append([channel_id, "discord.HTTPException"])
-            except:
+            except Exception as e:
                 responses.append([channel_id, "Exception"])
+                traceback_str = ''
+                for line in traceback.format_exception(type(e), e, e.__traceback__):
+                    traceback_str = '{}{}'.format(traceback_str, line)
+                bot_info = await self.application_info()
+                owner = bot_info.owner
+                if owner.dm_channel is None:
+                    await owner.create_dm()
+                await owner.dm_channel.send('`{}`'.format(traceback_str))
             # self.sched.add_job(self.post_embed_to_channel, misfire_grace_time=86400, args=[upd_type, src_dict, time_to_delete, channel_id])
             # task = asyncio.ensure_future(self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
             # tasks.append(task)
@@ -971,20 +1022,20 @@ class ClanBot(commands.Bot):
             else:
                 await self.dm_owner(msg)
 
-    async def post_updates(self, version, content, lang):
+    async def post_updates(self, version: str, content: str, lang: str) -> None:
         msg = '`{} v{}`\n{}'.format(self.user.name, version, content)
         for server in self.guilds:
-            if lang == self.guild_lang(server.id):
+            if (lang == self.guild_lang(server.id) and lang == 'ru') or (lang != 'ru' and self.guild_lang(server.id) != 'ru'):
                 for channel in server.channels:
                     if channel.id in self.update_ch:
                         message = await channel.send(msg)
                         if channel.type == discord.ChannelType.news:
                             try:
                                 await message.publish()
-                            except discord.errors.Forbidden:
+                            except discord.Forbidden:
                                 pass
 
-    async def update_metrics(self):
+    async def update_metrics(self) -> None:
         clan_ids_c = self.guild_cursor.execute('''SELECT clan_id FROM clans''')
         clan_ids_c = clan_ids_c.fetchall()
         clan_ids = []
@@ -992,7 +1043,7 @@ class ClanBot(commands.Bot):
             clan_ids.append(clan_id[0])
         await self.data.get_clan_leaderboard(clan_ids, 1572939289, 10)
 
-    async def update_metric_list(self):
+    async def update_metric_list(self) -> None:
         internal_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
                                       password=self.api_data['pass'], port=self.api_data['db_port'],
                                       database='metrics')
@@ -1026,13 +1077,13 @@ class ClanBot(commands.Bot):
         internal_db.commit()
         internal_db.close()
 
-    def start_up(self):
+    def start_up(self) -> None:
         self.get_args()
         token = self.api_data['token']
         print('hmm')
-        # self.remove_command('help')
-        # for cog in self.cog_list:
-        #     self.load_extension(cog)
+        self.remove_command('help')
+        for cog in self.cog_list:
+            self.load_extension(cog)
         self.run(token)
 
 
@@ -1048,5 +1099,5 @@ if __name__ == '__main__':
     intents = discord.Intents.default()
     intents.members = True
     b = ClanBot(command_prefix=get_prefix, intents=intents)
-    # slash = SlashCommand(b, sync_commands=True)
+
     b.start_up()
