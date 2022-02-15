@@ -465,9 +465,9 @@ class LFGModal(discord.ui.Modal):
         args = self.bot_loc.bot.raid.parse_args_sl(values[0].value, values[1].value, values[2].value, values[3].value, values[4].value, button_inputs[0], button_inputs[1], button_inputs[2])
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
-        check_msg = translations['check'].format('-', '-', '-', args['size'],
-                                                 args['length'] / 3600, self.at[args['is_embed']], args['group_mode'],
-                                                 button_inputs[3])
+        check_msg = translations['check'].format(translations['check_embed'], translations['check_embed'],
+                                                 translations['check_embed'], args['size'], args['length'] / 3600,
+                                                 self.at[args['is_embed']], args['group_mode'], button_inputs[3])
         view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()),
                           interaction.user, translations['confirm_yes'], translations['confirm_no'])
         view.add_item(view.confirm_button)

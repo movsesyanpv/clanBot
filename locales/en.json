@@ -76,6 +76,7 @@
         "role": "Choose the roles to mention",
         "role_manual": "Name the roles to mention, separated by `;`. Send `-` for automatic role choice.",
         "check": "Is the info correct?\nName: {}\nDescription: {}\nTime of start: {}\nGroup size: {}\nLength: {}\nActivity type: {}\nMode: {}\nRoles: {}",
+        "check_embed": "Check the embed below",
         "no": "no",
         "creation": "Creation",
         "edit": "Edit",
