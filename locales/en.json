@@ -61,6 +61,7 @@
         "newBlood": "There are new guys for:",
         "gotcha": "Ok, please wait for the group's owner to add you to the participants",
         "server": "of",
+        "lfg_choice_select": "#{} of {} @ {}",
         "name": "Provide the name of the activity",
         "description": "Describe, what are you going to do there",
         "time_modal": "When are you going to start?",

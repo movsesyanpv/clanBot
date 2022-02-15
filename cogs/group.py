@@ -803,7 +803,8 @@ class Group(commands.Cog):
         lfg_options = []
         i = 0
         for lfg in lfg_list:
-            lfg_options.append(discord.SelectOption(label=lfg[1], value=str(i), description='#{} of {} @ {}'.format(lfg[3], lfg[4], datetime.fromtimestamp(lfg[2]))))
+            label = ' ' if not lfg[1] else lfg[1]
+            lfg_options.append(discord.SelectOption(label=label, value=str(i), description=translations['lfg_choice_select'].format(lfg[3], lfg[4], datetime.fromtimestamp(lfg[2]))))
             i += 1
         view = ViewLFG(lfg_options, ctx.author, lfg_list, ctx, translations)
         await ctx.respond(content=translations['lfg_select'], view=view, ephemeral=True)
