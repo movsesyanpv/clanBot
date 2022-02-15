@@ -154,7 +154,6 @@ class Public(commands.Cog):
             return
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        # lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         if clan_id is None:
             clan_id = [0]
@@ -270,9 +269,6 @@ class Public(commands.Cog):
                     await paginator.respond(ctx)
                 else:
                     await ctx.respond(embeds=embeds)
-                # if len(embeds) > 10:
-                #     embeds = embeds[:10]
-                # await ctx.respond(embeds=embeds)
             else:
                 await ctx.respond(translations['no_data'])
         else:
@@ -331,8 +327,6 @@ class Public(commands.Cog):
         if clan_id is None:
             clan_id = [0]
         if clan_id[0] == 0:
-            # if type(ctx) == SlashContext:
-            #     return translations['no_clan']
             await ctx.channel.send(translations['no_clan'], delete_after=60)
             return
         if len(clan_id) > 0:
@@ -344,8 +338,6 @@ class Public(commands.Cog):
             else:
                 msg = '```{}```'.format(
                     tabulate(data, tablefmt='simple', colalign=('left', 'left')))
-            # if type(ctx) == SlashContext:
-            #     return msg
             if len(msg) > 2000:
                 msg_strs = msg.splitlines()
                 msg = ''
@@ -362,8 +354,6 @@ class Public(commands.Cog):
             else:
                 await ctx.channel.send(msg)
         else:
-            # if type(ctx) == SlashContext:
-            #     return translations['no_clan']
             await ctx.channel.send(translations['no_clan'], delete_after=10)
 
     @commands.slash_command(
@@ -379,7 +369,6 @@ class Public(commands.Cog):
             return
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        # lang = ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         embeds = [discord.Embed(title=ctx.bot.translations[lang]['online']['title'])]
         if clan_id is None:
