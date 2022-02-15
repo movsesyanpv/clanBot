@@ -283,10 +283,9 @@ class ClanBot(commands.Bot):
             if '@' not in i:
                 prefix = i
         await guild.owner.dm_channel.send('The `/help` command will get you the command list.\n'
-                                          'To set up automatic Destiny 2 information updates use `regnotifier` command.\n'
+                                          'To set up automatic Destiny 2 information updates use `/regnotifier` or `/autopost start` command in the channel you want me to post to.\n'
                                           'Please set my language for the guild with `/setlang`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.\n'
-                                          'To set up automatic updates for Destiny 2, use `regnotifier` command in the channel you want me to post to.\n'
-                                          'To use `top` command you\'ll have to set up a D2 clan with the `setclan` command.\n'
+                                          'To use `/top` command you\'ll have to set up a D2 clan with the `/setclan` command.\n'
                                           'Feel free to ask for help at my Discord Server: https://discord.gg/JEbzECp\n'
                                           'P.S. There are legacy commands available, you can use `@{} help` to get that list, but they are deprecated.'.
                                           format(str(self.langs).replace('[', '').replace(']', '').replace('\'', ''), self.user.name))
