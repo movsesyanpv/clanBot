@@ -32,7 +32,7 @@
         "complete": "Completado",
         "prefixes": "Here are the available prefixes aside from `@{}`, i.e. you can send `{}prefix` to call this command.",
         "no_prefixes": "The bot's commands can be invoked only with `@{}`",
-        "no_notifiers": "There are no notifier channels here. Please set up a notifier channel with `regnotifier` command.",
+        "no_notifiers": "This channel is not set up for the posts. Please set it up with `/autopost` command.",
         "in_progress": "Getting updates. If the types match with the registered channels, they will be posted. Keep in mind, that this command does not force me to get updates from Bungie.",
         "invalid_type": "Invalid update type. Please see `help update` for the available update types.",
         "no_seasonal_reg": "This channel is not registered as a seasonal notifier.",
@@ -41,7 +41,15 @@
         "osiris": "Trials of Osiris",
         "empire_hunts": "Elective difficulty empire hunt",
         "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
-        "daily_mods": "Ada-1 and Banshee-44 sell these"
+        "daily_mods": "Ada-1 and Banshee-44 sell these",
+        "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version. If you don't see any slash commands, run `noslash` command to get instructions on how to fix this.",
+        "command_is_done": "Done",
+        "update_types": "Select update types",
+        "no_dm": "This command can't be used in DMs",
+        "no_admin": "You lack the administrator permissions to use this command",
+        "language_select": "Select language",
+        "lfg_cleanup": "Done, removed {} entries.",
+        "noslash": "Try adding the bot to this server again by clicking 'Add to Server' in the bot's profile. **DO NOT** kick the bot, this will delete all the settings for the server. If you need more help, feel free to ask at the support server. You can find the link to the support server by running the `support` command."
     },
     "lfg": {
         "go": "Vai",
@@ -73,7 +81,38 @@
         "lfglist_empty": "Nenhum LFG foi encontrado",
         "lfglist_choice_check": "A escolha de LFG está correta? sim/não",
         "no_change": "Não alterado",
-        "dm_start": "{}, check your DMs"
+        "dm_start": "{}, check your DMs",
+        "modal_title": "LFG creation",
+        "edit_modal_title": "LFG editing",
+        "lfg_choice_select": "#{} of {} @ {}",
+        "time_modal": "When are you going to start?",
+        "time_placeholder": "Format is `%d-%m-%Y %H:%M%z`.",
+        "length_modal": "How long are you planning to do this?",
+        "length_placeholder": "Example: 1h 30m for one and a half hour group.",
+        "role_manual": "Name the roles to mention, separated by `;`. Send `-` for automatic role choice.",
+        "lfg_select": "Select the group you want to edit.",
+        "raid": "Raid",
+        "pve": "PvE",
+        "gambit": "Gambit",
+        "pvp": "PvP",
+        "default": "Other",
+        "basic_mode": "Basic",
+        "manual_mode": "Manual",
+        "manual_roles": "Enter manually",
+        "auto_roles": "Automatic",
+        "confirm_yes": "Yes",
+        "confirm_no": "No",
+        "button_want": "I want to go",
+        "button_help": "I'll help/Maybe I'll go",
+        "button_no_go": "Remove registration",
+        "button_delete": "Delete the post",
+        "was_not_going": "You weren't in the group",
+        "will_not_delete": "Only the group's owner can do this",
+        "not_a_post": "This is not my LFG post!",
+        "thread_start": "Please continue in the thread",
+        "button_no_change": "No changes",
+        "will_not_go": "Ok",
+        "processing": "Processing, please wait"
     },
     "lfge": {
         "roles": "Cargos",
@@ -130,10 +169,10 @@
         "edit_lfg": "Edit LFG message",
         "regnotifier": "Register notifier channel",
         "rmnotifier": "Deregister notifier channel",
-        "update": "Get updates from Bungie for the given TYPE",
+        "update": "Get updates from Bungie for the selected types",
         "setclan": "Set Destiny 2 clan for the server.",
         "top": "Print top players for one of the available metrics.",
-        "additional_info": "Type `{}help command language` for more info on a `command` in `language`. Available languages are `{}` (Some lines might be untranslated).\nType `{}ruhelp command` for more info on a `command` in russian.",
+        "additional_info": "Type `{}help command` for more info on a `command`. Available languages are `{}` (Some lines might be untranslated).",
         "aliases": "Can be called with the following names:```{}```",
         "parameters": "Usage:```{}```",
         "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
@@ -195,7 +234,8 @@
                 "example_lfg": "lfg\n-at: pve\n-s: 3\n-n: Nightfall\n-t: 13-02-2020 19:00+0300\n-d: Farm ascendant shards\n-m: basic\n-r: Guardian\n-l: 01h 30m",
                 "edit_title": "__**LFG editing**__\nEvery group has it's own ID. To get information about your LFGs message the bot in DM `lfglist`. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**.\nIn order to edit the group send `editlfg` command in the channel you want the updated group announcement be in. The syntax is the same as in `lfg`",
                 "manual": "__**Managing manual groups**__\nWhen someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate along with some information about the group (time, channel, server).\nTo choose a person press the corresponding emote. The list will update. **Don't** press multiple emotes, wait for the list update!!!",
-                "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner)."
+                "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner).",
+                "slash_info": "__**Creating a group**__\nThe bot will send you a form you'll need to fill. After that the bot will ask a couple of questions, that you can answer by clicking a button or by selecting options in a dropdown menu. After that the bot will process the data and ask you to confirm the information.\n__**Participating and managing LFG**__\nClick `I want to go` to add yourself to the list of wishing to participate. The bot should confirm that by responding to the button or by adding you to the list.\nClick `I'll help/Maybe I'll go` to add yourself to the list of those, who are ready to help.\nTo remove yourself from the group click `Remove registration`\nTo delete the group click `Delete the post`"
             },
             "prefix": {
                 "info": "Print available prefixes."
@@ -206,12 +246,33 @@
             "online": {
                 "info": "Get the list of online clan members.",
                 "name": "online"
+            },
+            "editlfg": {
+                "info": "__**Editing a group**__\nYou can either call this command from a group message context menu, or by running `/editlfg`. In the second case the bot will ask you to choose the group you want to edit. After that the bot will send you a form filled with that group info you'll need to edit. After that the bot will ask a couple of questions, that you can answer by clicking a button or by selecting options in a dropdown menu. After that the bot will process the data and ask you to confirm the information.\n__**Participating and managing LFG**__\nClick `I want to go` to add yourself to the list of wishing to participate. The bot should confirm that by responding to the button or by adding you to the list.\nClick `I'll help/Maybe I'll go` to add yourself to the list of those, who are ready to help.\nTo remove yourself from the group click `Remove registration`\nTo delete the group click `Delete the post`"
             }
         },
         "prefix": "Print available prefixes",
         "setprefix": "Set available prefixes",
         "support": "Get the link to the support server",
-        "online": "Get the list of online clan members."
+        "online": "Get the list of online clan members.",
+        "editlfg": "Edit LFG message",
+        "autopost": "Autopost channel settings",
+        "lfgcleanup": "Delete expired LFG posts",
+        "reglfg": "Register the channel as a place for LFG posts",
+        "noslash": "Help with missing slash commands",
+        "groups": {
+            "autopost": {
+                "subcommands": {
+                    "remove": "Make the bot stop posting updates in this channel"
+                },
+                "subgroups": {
+                    "start": {
+                        "rotations": "Make the bot start posting rotation updates in this channel",
+                        "changelogs": "Make the bot start posting changelogs in this channel"
+                    }
+                }
+            }
+        }
     },
     "graph": {
         "percentage": "Completion percentage",
@@ -273,6 +334,49 @@
         "nick": "Nickname",
         "since": "Last activity",
         "error": "Error",
-        "error_t": "Unable to fetch the clan"
+        "error_t": "Unable to fetch the clan",
+        "title": "Online clan members"
+    },
+    "update_types": {
+        "nightmares": {
+            "label": "Nightmare hunts",
+            "description": "Currently available nightmare hunts"
+        },
+        "crucible": {
+            "label": "Crucible rotators",
+            "description": "Currently available crucible rotators"
+        },
+        "raids": {
+            "label": "Raid challenges",
+            "description": "Current week's raid challenges"
+        },
+        "ordeal": {
+            "label": "Nightfall: The Ordeal",
+            "description": "Current nightfall"
+        },
+        "empire": {
+            "label": "Empire hunt",
+            "description": "Current empire hunt"
+        },
+        "strikes": {
+            "label": "Strikes",
+            "description": "Daily vanguard strike playlist modifiers"
+        },
+        "spider": {
+            "label": "Spider",
+            "description": "Spider's material exchange"
+        },
+        "mods": {
+            "label": "Ada's and Banshee's mods",
+            "description": "Currently available mods that Ada and Banshee sell"
+        },
+        "xur": {
+            "label": "Xur",
+            "description": "Xur's location and exotics"
+        },
+        "osiris": {
+            "label": "Trials of Osiris",
+            "description": "Current ToO info"
+        }
     }
 }
