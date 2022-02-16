@@ -246,11 +246,11 @@ class Public(commands.Cog):
                 else:
                     embeds = [discord.Embed(title=metric_description[0])]
                 msg = '{}```{}```'.format(msg, tabulate(top_list, tablefmt='plain', colalign=('left', 'left')))
-                if len(msg) > 4096:
+                if len(msg) > 100:
                     msg_strs = msg.splitlines()
                     msg = ''
                     for line in msg_strs:
-                        if len(msg) + len(line) <= 4090:
+                        if len(msg) + len(line) <= 100:
                             msg = '{}{}\n'.format(msg, line)
                         else:
                             msg = '{}```'.format(msg)
@@ -266,7 +266,7 @@ class Public(commands.Cog):
                     embeds[-1].set_footer(text=metric_description[1])
                 if len(embeds) > 1:
                     paginator = pages.Paginator(pages=embeds, show_disabled=False, show_indicator=True)
-                    await paginator.respond(ctx)
+                    await paginator.respond(ctx.interaction)
                 else:
                     await ctx.respond(embeds=embeds)
             else:
