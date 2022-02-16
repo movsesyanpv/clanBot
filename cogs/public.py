@@ -246,11 +246,11 @@ class Public(commands.Cog):
                 else:
                     embeds = [discord.Embed(title=metric_description[0])]
                 msg = '{}```{}```'.format(msg, tabulate(top_list, tablefmt='plain', colalign=('left', 'left')))
-                if len(msg) > 100:
+                if len(msg) > 4096:
                     msg_strs = msg.splitlines()
                     msg = ''
                     for line in msg_strs:
-                        if len(msg) + len(line) <= 100:
+                        if len(msg) + len(line) <= 4090:
                             msg = '{}{}\n'.format(msg, line)
                         else:
                             msg = '{}```'.format(msg)
