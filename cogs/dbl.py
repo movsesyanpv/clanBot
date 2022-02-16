@@ -8,11 +8,8 @@ class TopGG(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.token = self.bot.api_data['dbl_token'] # set this to your DBL token
-        self.dblpy = topgg.DBLClient(self.bot, self.token, autopost=True) # Autopost will post your guild count every 30 minutes
-
-    async def on_autopost_success():
-        self.bot.logger.info("Server count posted successfully")
+        self.token = self.bot.api_data['dbl_token']  # set this to your DBL token
+        self.dblpy = topgg.DBLClient(self.bot, self.token, autopost=True)  # Autopost will post your guild count every 30 minutes
 
 
 def setup(bot):

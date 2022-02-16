@@ -422,8 +422,11 @@ class LFGModal(discord.ui.Modal):
                 role_list.append(discord.SelectOption(label=role.name, value=str(role.id)))
         view = RoleLFG(len(role_list), role_list, interaction.user, self.is_edit, manual=translations['manual_roles'],
                        auto=translations['auto_roles'], has_custom=False, no_change=translations['button_no_change'])
-        await interaction.edit_original_message(content=translations['role'], view=view)
-        await view.wait()
+        if len(role_list) == 0:
+            view.value = '-'
+        else:
+            await interaction.edit_original_message(content=translations['role'], view=view)
+            await view.wait()
         if view.value is None:
             await interaction.edit_original_message(content='Timed out')
             return False
