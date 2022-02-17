@@ -1085,7 +1085,7 @@ class ClanBot(commands.Bot):
         for cog in self.cog_list:
             self.load_extension(cog)
         if self.args.production:
-            self.load_extension('dbl')
+            self.load_extension('cogs.dbl')
         self.run(token)
 
 
