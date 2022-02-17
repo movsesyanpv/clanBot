@@ -243,6 +243,8 @@ class ClanBot(commands.Bot):
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
                                    second='10', misfire_grace_time=86300, args=[lang])
             self.sched.start()
+            if self.args.production:
+                self.load_extension('cogs.dbl')
         game = discord.Game('v{}'.format(self.version))
         if not self.persistent_views_added:
             lfg_list = self.raid.get_all()
@@ -1084,8 +1086,6 @@ class ClanBot(commands.Bot):
         self.remove_command('help')
         for cog in self.cog_list:
             self.load_extension(cog)
-        if self.args.production:
-            self.load_extension('cogs.dbl')
         self.run(token)
 
 
