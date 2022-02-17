@@ -1084,6 +1084,8 @@ class ClanBot(commands.Bot):
         self.remove_command('help')
         for cog in self.cog_list:
             self.load_extension(cog)
+        if self.args.production:
+            self.load_extension('dbl')
         self.run(token)
 
 
