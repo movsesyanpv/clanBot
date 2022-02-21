@@ -62,7 +62,7 @@ class MySelect(discord.ui.Select):
         self.view.value = []
         for selected in self.values:
             self.view.value.append(selected)
-            self.view.stop()
+        self.view.stop()
 
 
 class ConfirmLFG(discord.ui.View):
@@ -244,7 +244,7 @@ class UpdateTypes(discord.ui.View):
         types = translations['update_types']
         options = [discord.SelectOption(label=types[option]['label'], value=option,
                                         description=types[option]['description']) for option in variants]
-        self.select = MySelect(min_values=0, max_values=1, options=options, row=1)
+        self.select = MySelect(min_values=0, max_values=len(options), options=options, row=1)
         self.add_item(self.select)
 
 
