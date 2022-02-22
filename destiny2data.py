@@ -825,7 +825,7 @@ class D2data:
     async def get_spider(self, lang: List[str], forceget: bool = False) -> Union[bool, None]:
         char_info = self.char_info
 
-        spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/863940356/'. \
+        spider_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2255782930/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         spider_resp = await self.get_cached_json('spider', 'spider', spider_url, self.vendor_params, force=forceget)
         if not spider_resp:
@@ -841,7 +841,7 @@ class D2data:
         spider_cats = spider_json['Response']['categories']['data']['categories']
         resp_time = spider_json['timestamp']
         for locale in lang:
-            spider_def = await self.destiny.decode_hash(863940356, 'DestinyVendorDefinition', language=locale)
+            spider_def = await self.destiny.decode_hash(2255782930, 'DestinyVendorDefinition', language=locale)
 
             self.data[locale]['spider'] = {
                 'thumbnail': {
@@ -857,9 +857,14 @@ class D2data:
 
             items_to_get = spider_cats[0]['itemIndexes']
 
-            spider_sales = await self.get_vendor_sales(locale, spider_resp, items_to_get, [1812969468])
+            spider_sales = await self.get_vendor_sales(locale, spider_resp, items_to_get, [1812969468, 2979281381])
             self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + spider_sales[0]
             data = spider_sales[1]
+
+            items_to_get = spider_cats[1]['itemIndexes']
+            spider_sales = await self.get_vendor_sales(locale, spider_resp, items_to_get, [1812969468, 2979281381])
+            self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + spider_sales[0]
+            #data = spider_sales[1]
             await self.write_to_db(locale, 'spider_mats', data, name=self.translations[locale]['site']['spider'],
                                    order=0, size='tall')
 
@@ -889,25 +894,13 @@ class D2data:
         for locale in lang:
             banshee_def = await self.destiny.decode_hash(672118013, 'DestinyVendorDefinition', language=locale)
 
-            # self.data[locale]['spider'] = {
-            #     'thumbnail': {
-            #         'url': self.icon_prefix + banshee_def['displayProperties']['smallTransparentIcon']
-            #     },
-            #     'fields': [],
-            #     'color': 7102001,
-            #     'type': "rich",
-            #     'title': self.translations[locale]['msg']['spider'],
-            #     'footer': {'text': self.translations[locale]['msg']['resp_time']},
-            #     'timestamp': resp_time
-            # }
-
-            items_to_get = banshee_cats[3]['itemIndexes']
+            items_to_get = banshee_cats[2]['itemIndexes']
 
             sales = []
-            banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468])
+            banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468, 2979281381])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
             sales.append({'name': "", "items": banshee_sales[1], "template": cat_templates['6']})
-            items_to_get = banshee_cats[4]['itemIndexes']
+            items_to_get = banshee_cats[3]['itemIndexes']
             banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468])
             sales.append({'name': "", "items": banshee_sales[1], "template": cat_templates['0']})
             await self.write_to_db(locale, 'banshee_mods', sales, name=banshee_def['displayProperties']['name'], order=5,
@@ -943,22 +936,10 @@ class D2data:
         for locale in lang:
             ada_def = await self.destiny.decode_hash(350061650, 'DestinyVendorDefinition', language=locale)
 
-            # self.data[locale]['spider'] = {
-            #     'thumbnail': {
-            #         'url': self.icon_prefix + banshee_def['displayProperties']['smallTransparentIcon']
-            #     },
-            #     'fields': [],
-            #     'color': 7102001,
-            #     'type': "rich",
-            #     'title': self.translations[locale]['msg']['spider'],
-            #     'footer': {'text': self.translations[locale]['msg']['resp_time']},
-            #     'timestamp': resp_time
-            # }
-
             items_to_get = ada_cats[1]['itemIndexes']
 
             sales = []
-            ada_sales = await self.get_vendor_sales(locale, ada_resps[0], items_to_get, [1812969468])
+            ada_sales = await self.get_vendor_sales(locale, ada_resps[0], items_to_get, [1812969468, 2979281381])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
             sales.append({'name': "", "items": ada_sales[1], "template": cat_templates['6']})
             items_to_get = ada_cats[2]['itemIndexes']
@@ -1009,7 +990,7 @@ class D2data:
                 if item_def['itemType'] == 19:
                     mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
 
-            items_to_get = banshee_cats[3]['itemIndexes']
+            items_to_get = banshee_cats[2]['itemIndexes']
             banshee_sales = await self.get_vendor_sales(lang, banshee_resp, items_to_get, [1812969468, 2731650749])
             for item in banshee_sales[1]:
                 item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
