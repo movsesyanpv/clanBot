@@ -5,7 +5,7 @@
         "noapi": "L'API Bungie n'est pas disponible",
         "maintenance": "L'API Bungie est fermée pour maintenance",
         "later": "Cette information sera disponible plus tard",
-        "spider": "Offres de l'araignée",
+        "spider": "Material exchange",
         "xur": "Offres de Xur",
         "weapon": "Armes",
         "heroicstory": "L'histoire des missions heroiques",
@@ -286,7 +286,7 @@
         "no_data": "Aucune donnée pour cette mesure"
     },
     "site": {
-        "spider": "L'araignée",
+        "spider": "Material exchange",
         "forge": "la Forge",
         "heroicstory": "Missions d'histoire Héroique",
         "reckoningboss": "Le boss de Justice",
@@ -364,8 +364,8 @@
             "description": "Daily vanguard strike playlist modifiers"
         },
         "spider": {
-            "label": "Spider",
-            "description": "Spider's material exchange"
+            "label": "Resources",
+            "description": "Rahools's material exchange"
         },
         "mods": {
             "label": "Ada's and Banshee's mods",
