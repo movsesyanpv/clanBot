@@ -286,7 +286,7 @@
         "no_data": "No data for the metric."
     },
     "site": {
-        "spider": "Spider",
+        "spider": "Material exchange",
         "forge": "Forge",
         "heroicstory": "Heroic story missions",
         "reckoningboss": "The Reckoning boss",
@@ -364,8 +364,8 @@
             "description": "Daily vanguard strike playlist modifiers"
         },
         "spider": {
-            "label": "Spider",
-            "description": "Spider's material exchange"
+            "label": "Resources",
+            "description": "Rahools's material exchange"
         },
         "mods": {
             "label": "Ada's and Banshee's mods",
