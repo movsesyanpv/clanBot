@@ -5,7 +5,7 @@
         "noapi": "Bungie-API ist nicht verfügbar",
         "maintenance": "Bungie API wird wegen Wartungsarbeiten heruntergefahren",
         "later": "Die Informationen werden später aktualisiert",
-        "spider": "Spider verkauft es",
+        "spider": "Material exchange",
         "xur": "Xur verkauft es",
         "weapon": "Waffe",
         "heroicstory": "Aktuelle heroische Story-Missionen sind",
@@ -286,7 +286,7 @@
         "no_data": "Keine Daten für die Meta."
     },
     "site": {
-        "spider": "Spider",
+        "spider": "Material exchange",
         "forge": "Schmiede",
         "heroicstory": "Heroische Story Mission",
         "reckoningboss": "Der Albtraum Boss",
@@ -364,8 +364,8 @@
             "description": "Daily vanguard strike playlist modifiers"
         },
         "spider": {
-            "label": "Spider",
-            "description": "Spider's material exchange"
+            "label": "Resources",
+            "description": "Rahools's material exchange"
         },
         "mods": {
             "label": "Ada's and Banshee's mods",
