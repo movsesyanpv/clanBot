@@ -760,7 +760,7 @@ class D2data:
         data = []
         start = await self.get_season_start()
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
-        week_n = int(week_n.days / 7) - 15
+        week_n = int(week_n.days / 7)
         for lang in langs:
             data.clear()
             bd = await self.get_seasonal_bd([lang], start)
