@@ -334,7 +334,7 @@ class ServerAdmin(commands.Cog):
         get = True
         channels = None
         if len(args) == 0:
-            view = UpdateTypes(ctx.message.author)
+            view = UpdateTypes(ctx.message.author, lang=lang)
             await ctx.channel.send('Select update types', view=view)
             await view.wait()
             args = view.value
