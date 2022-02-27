@@ -944,7 +944,7 @@ class ClanBot(commands.Bot):
                     try:
                         # await asyncio.sleep(delay)
                         await message.publish()
-                    except discord.errors.Forbidden:
+                    except discord.Forbidden:
                         pass
             hist = str(hist)
         else:
@@ -971,7 +971,7 @@ class ClanBot(commands.Bot):
                 try:
                     # await asyncio.sleep(delay)
                     await message.publish()
-                except discord.errors.Forbidden:
+                except discord.Forbidden:
                     pass
 
         self.guild_cursor.execute('''UPDATE history SET {}=? WHERE channel_id=?'''.format(upd_type),
@@ -1030,12 +1030,15 @@ class ClanBot(commands.Bot):
             if (lang == self.guild_lang(server.id) and lang == 'ru') or (lang != 'ru' and self.guild_lang(server.id) != 'ru'):
                 for channel in server.channels:
                     if channel.id in self.update_ch:
-                        message = await channel.send(msg)
-                        if channel.type == discord.ChannelType.news:
-                            try:
-                                await message.publish()
-                            except discord.Forbidden:
-                                pass
+                        try:
+                            message = await channel.send(msg)
+                            if channel.type == discord.ChannelType.news:
+                                try:
+                                    await message.publish()
+                                except discord.Forbidden:
+                                    pass
+                        except discord.Forbidden:
+                            pass
 
     async def update_metrics(self) -> None:
         clan_ids_c = self.guild_cursor.execute('''SELECT clan_id FROM clans''')

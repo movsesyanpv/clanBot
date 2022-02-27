@@ -1091,6 +1091,9 @@ class D2data:
                     cat_sales = await self.get_vendor_sales(lang, xur_resp, xur_cats[0]['itemIndexes'], [3875551374])
                     xur_sales = xur_json['Response']['sales']['data']
 
+                    weapons = await self.get_vendor_sales(lang, xur_resp, xur_cats[1]['itemIndexes'], [3875551374])
+                    cat_sales[0] = [*cat_sales[0], *weapons[0]]
+                    cat_sales[1] = [*cat_sales[1], *weapons[1]]
                     self.data[lang]['xur']['fields'].append(weapon)
 
                     for key in sorted(xur_sales.keys()):

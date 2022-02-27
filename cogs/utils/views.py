@@ -464,6 +464,8 @@ class LFGModal(discord.ui.Modal):
         if self.is_edit:
             button_inputs = self.validate_edits(a_type, mode, roles, role)
         else:
+            if a_type == '-':
+                a_type = 'default'
             button_inputs = [a_type, mode, roles, role]
         args = self.bot_loc.bot.raid.parse_args_sl(values[0].value, values[1].value, values[2].value, values[3].value, values[4].value, button_inputs[0], button_inputs[1], button_inputs[2])
         ts = datetime.now(timezone(timedelta(0))).astimezone()
