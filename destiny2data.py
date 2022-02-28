@@ -202,6 +202,13 @@ class D2data:
                               string: Optional[str] = None, change_msg: bool = True, is_get: bool = True,
                               body: Optional[dict] = None) -> Union[dict, None]:
 
+        async def request(url, params, headers, is_get, json=None):
+            if is_get:
+                resp = await self.session.get(url, params=params, headers=headers)
+            else:
+                resp = await self.session.post(url, params=params, headers=headers, json=json)
+            return resp
+
         if lang is None:
             lang = list(self.data.keys())
             lang_str = ''
@@ -210,10 +217,7 @@ class D2data:
         if string is None:
             string = str(name)
         try:
-            if is_get:
-                resp = await self.session.get(url, params=params, headers=self.headers)
-            else:
-                resp = await self.session.post(url, params=params, headers=self.headers, json=body)
+            resp = await request(url, params, self.headers, is_get, body)
         except:
             if change_msg:
                 for locale in lang:
@@ -240,7 +244,7 @@ class D2data:
         curr_try = 2
         while resp_code in self.wait_codes and curr_try <= self.max_retries:
             print('{}, attempt {}'.format(resp_code, curr_try))
-            resp = await self.session.get(url, params=params, headers=self.headers)
+            resp = await request(url, params, self.headers, is_get, body)
             try:
                 resp_code = await resp.json()
                 resp_code = resp_code['ErrorCode']
