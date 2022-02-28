@@ -378,5 +378,12 @@
             "label": "Trials of Osiris",
             "description": "Current ToO info"
         }
+    },
+    "clan_info": {
+        "motto": "Motto",
+        "member_count": "Member count",
+        "creation_date": "Creation date",
+        "founder": "Founder",
+        "id": "ID"
     }
 }

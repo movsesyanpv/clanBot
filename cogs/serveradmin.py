@@ -10,6 +10,7 @@ import os
 import sqlite3
 from cogs.utils.views import UpdateTypes, BotLangs
 from cogs.utils.converters import locale_2_lang
+import dateparser
 
 
 class ServerAdmin(commands.Cog):
@@ -308,8 +309,15 @@ class ServerAdmin(commands.Cog):
             await ctx.respond('{}: {}'.format(clan_id, ctx.bot.translations[lang]['msg']['clan_search_error']))
             return
         if code == 1:
-            await ctx.respond('{}\nid: {}'.format(clan_json['Response']['detail']['name'],
-                                                       clan_json['Response']['detail']['groupId']))
+            translations = ctx.bot.translations[lang]['clan_info']
+            clan_embed = discord.Embed(title='{} [{}]'.format(clan_json['Response']['detail']['name'], clan_json['Response']['detail']['clanInfo']['clanCallsign']),
+                                       description=clan_json['Response']['detail']['about'])
+            clan_embed.add_field(name=translations['motto'], value=clan_json['Response']['detail']['motto'])
+            clan_embed.add_field(name=translations['member_count'], value=clan_json['Response']['detail']['memberCount'])
+            clan_embed.add_field(name=translations['creation_date'], value=discord.utils.format_dt(dateparser.parse(clan_json['Response']['detail']['creationDate']), style='D'))
+            clan_embed.add_field(name=translations['id'], value=clan_json['Response']['detail']['groupId'])
+            clan_embed.add_field(name=translations['founder'], value=clan_json['Response']['founder']['destinyUserInfo']['LastSeenDisplayName'])
+            await ctx.respond(embed=clan_embed)
             if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
                 ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
                                              (clan_json['Response']['detail']['name'],
