@@ -87,7 +87,7 @@
         "lfg_choice_select": "#{} de {} @ {}",
         "time_modal": "Quand allez vous démarrez ?",
         "time_placeholder": "Le format est : `%d-%m-%Y %H:%M%z`.",
-        "length_modal": "How long are you planning to do this?",
+        "length_modal": "Durée prévue vous pour cette activité ?",
         "length_placeholder": "Exemple: 1h 30m pour 1 heure et 30 minutes.",
         "role_manual": "Nom des rôles à mentionner, séparé par `;`.\nTapez `-` pour un choix automatique des rôles.",
         "lfg_select": "Sélectionnez le groupe que vous désirez mettre à jour.",
@@ -344,7 +344,7 @@
             "description": "Chasse(s) aux cauchemars disponible(s)"
         },
         "crucible": {
-            "label": "Les modes de l’épreuve sont\n",
+            "label": "Les modes de l’épreuve sont",
             "description": "Mode(s) de l'épreuve disponible(s)"
         },
         "raids": {
