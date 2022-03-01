@@ -5,7 +5,7 @@
         "noapi": "L'API Bungie n'est pas disponible",
         "maintenance": "L'API Bungie est fermée pour maintenance",
         "later": "Cette information sera disponible plus tard",
-        "spider": "Material exchange",
+        "spider": "Échange de consommables",
         "xur": "Offres de Xur",
         "weapon": "Armes",
         "heroicstory": "L'histoire des missions heroiques",
@@ -42,14 +42,14 @@
         "empire_hunts": "Chasse de l'Empire maitrise de la semaine",
         "clan_search_error": "Le clan demandé n'a pas été trouvé. Vous pouvez réessayer avec le nom du clan précisément ( Majuscule - Minuscule - Caractère spécial - etc ). Si cela ne fonctionne toujours pas, essayez d'entrer l'ID de votre clan. L'ID peut être trouvé sur la page bungie.net du clan après la chaîne `groupId=` (vous trouverez les chiffres dans l'adresse http). Si cela ne fonctionne pas, vous pouvez toujours demander de l'aide, le lien peut être trouvé avec la commande `support`.",
         "daily_mods": "Offres d'Ada-1 et de Banshee-44",
-        "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version. If you don't see any slash commands, run `noslash` command to get instructions on how to fix this.",
-        "command_is_done": "Done",
-        "update_types": "Select update types",
-        "no_dm": "This command can't be used in DMs",
-        "no_admin": "You lack the administrator permissions to use this command",
-        "language_select": "Select language",
-        "lfg_cleanup": "Done, removed {} entries.",
-        "noslash": "Try adding the bot to this server again by clicking 'Add to Server' in the bot's profile. **DO NOT** kick the bot, this will delete all the settings for the server. If you need more help, feel free to ask at the support server. You can find the link to the support server by running the `support` command."
+        "deprecation_warning": "Cette commande est obsolète et ne fonctionne plus <t:1650574800:D>. \nMerci d'utiliser la version avec le slash (/). Si vous ne voyez aucunes commandes avec le slash, tapez la commande `noslash` pour avoir des informations afin de résoudre le problème.",
+        "command_is_done": "Terminé.",
+        "update_types": "Choisissez le type de mise a jour.",
+        "no_dm": "Cette commande ne peut pas être utilisée sur des messages directs.",
+        "no_admin": "Vous n'avez pas les autorisations d'administrateur pour utiliser cette commande",
+        "language_select": "Choisir la langue à utiliser.",
+        "lfg_cleanup": "Terminé, {} entrées supprimées.",
+        "noslash": "Essayez d'ajouter à nouveau le bot à ce serveur en cliquant sur \"Ajouter au serveur\" dans le profil du bot. **NE PAS** kicker le bot, cela supprimera tous les paramètres du serveur. Si vous avez besoin de plus d'aide, n'hésitez pas à demander au support. Vous pouvez trouver le lien vers le serveur de support en tapant la commande `support`."
     },
     "lfg": {
         "go": "Go",
@@ -82,38 +82,38 @@
         "lfglist_choice_check": "Êtes vous sur de votre choix du LFG ?\n",
         "no_change": "Pas de modifications",
         "dm_start": "\n{}, vérifiez vos MP",
-        "modal_title": "LFG creation",
-        "edit_modal_title": "LFG editing",
-        "lfg_choice_select": "#{} of {} @ {}",
-        "time_modal": "When are you going to start?",
-        "time_placeholder": "Format is `%d-%m-%Y %H:%M%z`.",
-        "length_modal": "How long are you planning to do this?",
-        "length_placeholder": "Example: 1h 30m for one and a half hour group.",
-        "role_manual": "Name the roles to mention, separated by `;`. Send `-` for automatic role choice.",
-        "lfg_select": "Select the group you want to edit.",
+        "modal_title": "Création d'un LFG",
+        "edit_modal_title": "Édition d'un LFG",
+        "lfg_choice_select": "#{} de {} @ {}",
+        "time_modal": "Quand allez vous démarrez ?",
+        "time_placeholder": "Le format est : `%d-%m-%Y %H:%M%z`.",
+        "length_modal": "Combien de temps prévoyez vous pour cette activité ?",
+        "length_placeholder": "Exemple: 1h 30m pour 1 heure et 30 minutes.",
+        "role_manual": "Nom des rôles à mentionner, séparé par `;`.\nTapez `-` pour un choix automatique des rôles.",
+        "lfg_select": "Sélectionnez le groupe que vous désirez mettre à jour.",
         "raid": "Raid",
-        "pve": "PvE",
+        "pve": "PvE\n",
         "gambit": "Gambit",
         "pvp": "PvP",
-        "default": "Other",
-        "basic_mode": "Basic",
-        "manual_mode": "Manual",
-        "manual_roles": "Enter manually",
-        "auto_roles": "Automatic",
-        "confirm_yes": "Yes",
-        "confirm_no": "No",
-        "button_want": "I want to go",
-        "button_help": "I'll help/Maybe I'll go",
-        "button_no_go": "Remove registration",
-        "button_delete": "Delete the post",
-        "was_not_going": "You weren't in the group",
-        "will_not_delete": "Only the group's owner can do this",
-        "not_a_post": "This is not my LFG post!",
-        "thread_start": "Please continue in the thread",
-        "button_no_change": "No changes",
+        "default": "Autre",
+        "basic_mode": "Basique",
+        "manual_mode": "Manuel",
+        "manual_roles": "Entrer manuellement",
+        "auto_roles": "Automatique",
+        "confirm_yes": "Oui",
+        "confirm_no": "Non",
+        "button_want": "Je participe",
+        "button_help": "Peut-être",
+        "button_no_go": "Supprimer l'inscription",
+        "button_delete": "Effacer le message",
+        "was_not_going": "Vous n'êtes pas dans le groupe",
+        "will_not_delete": "Seul le créateur du groupe peut utiliser cette fonction.",
+        "not_a_post": "Ce n'est pas mon message LFG !",
+        "thread_start": "Merci de continuer dans le \"Thread\"",
+        "button_no_change": "Pas de changements",
         "will_not_go": "Ok",
-        "processing": "Processing, please wait",
-        "check_embed": "Check the embed below"
+        "processing": "Traitement en cours, veuillez patienter",
+        "check_embed": "Vérifiez l'intégration ci-dessous"
     },
     "lfge": {
         "roles": "Roles",
@@ -236,7 +236,7 @@
                 "edit_title": "__**Édition LFG**__\nChaque groupe a son propre identifiant. Pour obtenir des informations sur vos LFG, envoyez ce message directement au bot (en mp) `lfglist`. Le bot vous enverra la liste de vos groupes avec les informations suivantes : nom, heure de démarrage, nom du canal, nom du serveur, **ID**.\nAfin de modifier le groupe, envoyez la commande `editlfg` dans le canal dans lequel vous voulez que l'annonce de groupe soit mise à jour. La syntaxe est la même que pour la commande `lfg`\n\n",
                 "manual": "__**Gestion des groupes manuels**__\nLorsque quelqu'un clique sur 👌, le propriétaire du groupe recevra un message avec une liste de ceux qui souhaitent participer ainsi que des informations sur le groupe (heure, canal, serveur).\nPour choisir une personne, appuyez sur l'émote correspondante. La liste sera mise à jour. ** N'appuyez pas ** sur plusieurs émoticônes, attendez la mise à jour de la liste !!!",
                 "use_lfg": "__**Participer au Groupe**__\nCliquez sur 👌 pour vous ajouter à la liste des personnes souhaitant participer. Le bot devrait vous le confirmer. Pour vous retirer du groupe, cliquez a nouveau sur 👌.\nUtilisez ❓ pour vous ajouter à la liste de ceux qui sont prêts à aider. Pour vous retirer de la liste de ceux qui sont prêts à aider cliquez a nouveau sur ❓.\nUtilisez ❌ pour supprimer le groupe (ne fonctionne que pour le propriétaire du groupe).",
-                "slash_info": "__**Creating a group**__\nThe bot will send you a form you'll need to fill. After that the bot will ask a couple of questions, that you can answer by clicking a button or by selecting options in a dropdown menu. After that the bot will process the data and ask you to confirm the information.\n__**Participating and managing LFG**__\nClick `I want to go` to add yourself to the list of wishing to participate. The bot should confirm that by responding to the button or by adding you to the list.\nClick `I'll help/Maybe I'll go` to add yourself to the list of those, who are ready to help.\nTo remove yourself from the group click `Remove registration`\nTo delete the group click `Delete the post`"
+                "slash_info": "__**Création d'un groupe**__\nLe bot vous enverra un formulaire que vous devrez remplir. \nAprès ça, le bot posera quelques questions auxquelles vous devrez répondre \nen cliquant sur un bouton ou en sélectionnant des options dans un menu déroulant. \nPour terminer, le bot traitera les données et vous demandera de confirmer les informations.\n__**Participer et gérer les groupes**__\nCliquez sur `Je participe` pour vous ajouter à la liste des personnes souhaitant participer. \nLe bot devrait le confirmer en répondant au bouton ou en vous ajoutant à la liste.\nCliquez sur \"Peut-être\" pour vous ajouter à la liste de ceux qui seront peut être disponibles.\nPour vous retirer du groupe, cliquez sur \"Supprimer l'inscription\"\nPour supprimer le groupe, cliquez sur \"Effacer le message\"\n\n"
             },
             "prefix": {
                 "info": "Affichage des préfixes disponibles"
@@ -249,27 +249,27 @@
                 "name": "En_Ligne"
             },
             "editlfg": {
-                "info": "__**Editing a group**__\nYou can either call this command from a group message context menu, or by running `/editlfg`. In the second case the bot will ask you to choose the group you want to edit. After that the bot will send you a form filled with that group info you'll need to edit. After that the bot will ask a couple of questions, that you can answer by clicking a button or by selecting options in a dropdown menu. After that the bot will process the data and ask you to confirm the information.\n__**Participating and managing LFG**__\nClick `I want to go` to add yourself to the list of wishing to participate. The bot should confirm that by responding to the button or by adding you to the list.\nClick `I'll help/Maybe I'll go` to add yourself to the list of those, who are ready to help.\nTo remove yourself from the group click `Remove registration`\nTo delete the group click `Delete the post`"
+                "info": "_** Modification d'un groupe ******\nVous pouvez appeler cette commande à partir d'un menu contextuel de message de groupe, \nou en tapant `/editlfg`. Dans le second cas, le bot vous demandera de choisir le \ngroupe que vous souhaitez modifier. Après ça, le bot vous enverra un formulaire rempli\navec les informations du groupe que vous souhaitez modifier. \nPuis le bot posera quelques questions auxquelles vous pourrez répondre en cliquant \nsur un bouton ou en sélectionnant des options dans un menu déroulant. \nPour terminer, le bot traitera les données et vous demandera de confirmer les informations.\n__**Participer et gérer des groupes**__\nCliquez sur `Je participe` pour vous ajouter à la liste des personnes souhaitant participer. \nLe bot devrait le confirmer en répondant au bouton ou en vous ajoutant à la liste.\nCliquez sur \"Peut-être\" pour vous ajouter à la liste de ceux qui seront peut être disponibles.\nPour vous retirer du groupe, cliquez sur \"Supprimer l'inscription\"\nPour supprimer le groupe, cliquez sur \"Effacer le message\"\n"
             }
         },
         "prefix": "Affichage des préfixes disponibles",
         "setprefix": "Définir les préfixes disponibles",
         "support": "Lien pour joindre le support",
         "online": "Liste des membres du clan en ligne.",
-        "editlfg": "Edit LFG message",
-        "autopost": "Autopost channel settings",
-        "lfgcleanup": "Delete expired LFG posts",
-        "reglfg": "Register the channel as a place for LFG posts",
-        "noslash": "Help with missing slash commands",
+        "editlfg": "Édition du message LFG",
+        "autopost": "Paramètres du canal de publication automatique",
+        "lfgcleanup": "Supprimer les messages LFG expirés",
+        "reglfg": "Enregistrer le canal ou le bot doit poster les messages LFG",
+        "noslash": "Aide pour les commandes slash (/) manquantes",
         "groups": {
             "autopost": {
                 "subcommands": {
-                    "remove": "Make the bot stop posting updates in this channel"
+                    "remove": "Autoriser le bot a poster les mises a jour dans ce canal"
                 },
                 "subgroups": {
                     "start": {
-                        "rotations": "Make the bot start posting rotation updates in this channel",
-                        "changelogs": "Make the bot start posting changelogs in this channel"
+                        "rotations": "Autorisez le bot à poster la mise a jour des rotations dans ce canal.",
+                        "changelogs": "Autorisez le bot à poster les changelogs dans ce canal."
                     }
                 }
             }
@@ -286,7 +286,7 @@
         "no_data": "Aucune donnée pour cette mesure"
     },
     "site": {
-        "spider": "Material exchange",
+        "spider": "Échange de consommables",
         "forge": "la Forge",
         "heroicstory": "Missions d'histoire Héroique",
         "reckoningboss": "Le boss de Justice",
@@ -336,55 +336,55 @@
         "since": "Dernière activité",
         "error": "Erreur",
         "error_t": "Impossible de récupérer le clan",
-        "title": "Online clan members"
+        "title": "Membres du clan en ligne"
     },
     "update_types": {
         "nightmares": {
-            "label": "Nightmare hunts",
-            "description": "Currently available nightmare hunts"
+            "label": "Chasse aux Cauchemars",
+            "description": "Chasse(s) aux cauchemars disponible(s)"
         },
         "crucible": {
-            "label": "Crucible rotators",
-            "description": "Currently available crucible rotators"
+            "label": "Les modes de l’épreuve sont\n",
+            "description": "Mode(s) de l'épreuve disponible(s)"
         },
         "raids": {
-            "label": "Raid challenges",
-            "description": "Current week's raid challenges"
+            "label": "Les challenges de Raids",
+            "description": "Les challenges de Raids disponibles"
         },
         "ordeal": {
-            "label": "Nightfall: The Ordeal",
-            "description": "Current nightfall"
+            "label": "Nuit Noire",
+            "description": "La Nuit Noire de la semaine"
         },
         "empire": {
-            "label": "Empire hunt",
-            "description": "Current empire hunt"
+            "label": "Chasse de l'empire",
+            "description": "La chasse de l'empire disponible"
         },
         "strikes": {
-            "label": "Strikes",
-            "description": "Daily vanguard strike playlist modifiers"
+            "label": "Assaut",
+            "description": "Modificateurs des assauts de la semaine."
         },
         "spider": {
-            "label": "Resources",
-            "description": "Rahools's material exchange"
+            "label": "Ressources",
+            "description": "Échange de consommables chez Rahol "
         },
         "mods": {
-            "label": "Ada's and Banshee's mods",
-            "description": "Currently available mods that Ada and Banshee sell"
+            "label": "Mods proposés par Ada et Banshee",
+            "description": "Mods disponibles chez Ada et Banshee"
         },
         "xur": {
             "label": "Xur",
-            "description": "Xur's location and exotics"
+            "description": "Emplacement de Xur"
         },
         "osiris": {
-            "label": "Trials of Osiris",
-            "description": "Current ToO info"
+            "label": "Jugement d'Osiris",
+            "description": "Information sur le jugement d'Osiris en cours"
         }
     },
     "clan_info": {
-        "motto": "Motto",
-        "member_count": "Member count",
-        "creation_date": "Creation date",
-        "founder": "Founder",
+        "motto": "Devise du clan",
+        "member_count": "Nombre de membres",
+        "creation_date": "Date de création",
+        "founder": "Créateur",
         "id": "ID"
     }
 }
