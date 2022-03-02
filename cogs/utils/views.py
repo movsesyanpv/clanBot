@@ -136,7 +136,7 @@ class WantButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         self.view.bot.raid.add_people(interaction.message.id, interaction.user)
-        lang = self.view.bot.guild_lang(interaction.message.guild.id)
+        lang = await self.view.bot.guild_lang(interaction.message.guild.id)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
         mode = self.view.bot.raid.get_cell('group_id', interaction.message.id, 'group_mode')
         owner = self.view.bot.get_user(self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
@@ -156,7 +156,7 @@ class MaybeButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         self.view.bot.raid.add_mb_goers(interaction.message.id, interaction.user)
-        lang = self.view.bot.guild_lang(interaction.message.guild.id)
+        lang = await self.view.bot.guild_lang(interaction.message.guild.id)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
 
 
@@ -174,7 +174,7 @@ class NoGoButton(discord.ui.Button):
         elif is_mb_goer:
             emoji = '❓'
         self.view.bot.raid.rm_people(interaction.message.id, interaction.user, emoji)
-        lang = self.view.bot.guild_lang(interaction.message.guild.id)
+        lang = await self.view.bot.guild_lang(interaction.message.guild.id)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
         if not was_goer and not is_mb_goer:
             locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
@@ -496,7 +496,7 @@ class LFGModal(discord.ui.Modal):
             return
 
         channel = await self.bot_loc.bot.fetch_channel(interaction.channel.id)
-        lang = self.bot_loc.bot.guild_lang(interaction.guild.id)
+        lang = await self.bot_loc.bot.guild_lang(interaction.guild.id)
         if not self.is_edit:
             group = await self.send_initial_lfg(lang, args, channel)
             self.bot_loc.bot.raid.add(group, args=args)

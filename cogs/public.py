@@ -23,7 +23,7 @@ class Public(commands.Cog):
     async def top(self, ctx, metric, number=10):
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        lang = await ctx.bot.guild_lang(ctx.message.guild.id)
         translations = ctx.bot.translations[lang]['top']
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'])
         if ctx.invoked_with in ['gtop', 'globaltop']:
@@ -277,7 +277,7 @@ class Public(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def prefix(self, ctx):
-        lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        lang = await ctx.bot.guild_lang(ctx.message.guild.id)
         prefixes = ctx.bot.guild_prefix(ctx.guild.id)
         if len(prefixes) > 0:
             msg = '{}\n'.format(ctx.bot.translations[lang]['msg']['prefixes'].format(ctx.message.guild.me.display_name, prefixes[0]))
@@ -297,7 +297,7 @@ class Public(commands.Cog):
         if ctx.guild is None:
             lang = 'en'
         else:
-            lang = ctx.bot.guild_lang(ctx.guild.id)
+            lang = await ctx.bot.guild_lang(ctx.guild.id)
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'])
         await ctx.channel.send('https://discord.gg/JEbzECp')
 
@@ -306,7 +306,7 @@ class Public(commands.Cog):
         if ctx.guild is None:
             lang = 'en'
         else:
-            lang = ctx.bot.guild_lang(ctx.guild.id)
+            lang = await ctx.bot.guild_lang(ctx.guild.id)
         await ctx.message.reply(ctx.bot.translations[lang]['msg']['noslash'])
 
     @commands.slash_command(
@@ -321,7 +321,7 @@ class Public(commands.Cog):
     async def online(self, ctx):
         ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans WHERE server_id=?''', (ctx.guild.id,))
         clan_id = ctx.bot.guild_cursor.fetchone()
-        lang = ctx.bot.guild_lang(ctx.guild.id)
+        lang = await ctx.bot.guild_lang(ctx.guild.id)
         translations = ctx.bot.translations[lang]['top']
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'])
         if clan_id is None:

@@ -36,7 +36,7 @@ class ServerAdmin(commands.Cog):
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
             ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
-            ctx.bot.guild_db.commit()
+            ctx.bot.guild_db_sync.commit()
             ctx.bot.get_channels()
             msg = 'Got it, {}'.format(ctx.author.mention)
             await ctx.respond(msg)
@@ -53,7 +53,7 @@ class ServerAdmin(commands.Cog):
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
                                          (ctx.channel.id, ctx.guild.id))
-            ctx.bot.guild_db.commit()
+            ctx.bot.guild_db_sync.commit()
             ctx.bot.get_channels()
             msg = 'Got it, {}'.format(ctx.author.mention)
             await ctx.respond(msg)
@@ -72,7 +72,7 @@ class ServerAdmin(commands.Cog):
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''INSERT or IGNORE into updates values (?,?)''',
                                          (ctx.channel.id, ctx.guild.id))
-            ctx.bot.guild_db.commit()
+            ctx.bot.guild_db_sync.commit()
             ctx.bot.get_channels()
             msg = 'Got it, {}'.format(ctx.author.mention)
             await ctx.respond(msg)
@@ -90,7 +90,7 @@ class ServerAdmin(commands.Cog):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
                 await ctx.message.channel.send(msg.format(n))
         else:
-            lang = ctx.bot.guild_lang(ctx.guild.id)
+            lang = await ctx.bot.guild_lang(ctx.guild.id)
             await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=60)
             if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=True):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
@@ -125,7 +125,7 @@ class ServerAdmin(commands.Cog):
     @commands.guild_only()
     async def regnotifier(self, ctx, upd_type='notifiers'):
         message = ctx.message
-        lang = ctx.bot.guild_lang(ctx.guild.id)
+        lang = await ctx.bot.guild_lang(ctx.guild.id)
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=30)
         available_types = ['notifiers', 'seasonal', 'updates']
         notifier_type = 'notifiers'
@@ -134,7 +134,7 @@ class ServerAdmin(commands.Cog):
         if await ctx.bot.check_ownership(message, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
                                         (message.channel.id, message.guild.id))
-            ctx.bot.guild_db.commit()
+            ctx.bot.guild_db_sync.commit()
             ctx.bot.get_channels()
             msg = 'Got it, {}'.format(message.author.mention)
             await message.channel.send(msg, delete_after=10)
@@ -156,7 +156,7 @@ class ServerAdmin(commands.Cog):
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
                                          (ctx.channel.id, ctx.guild.id))
-            ctx.bot.guild_db.commit()
+            ctx.bot.guild_db_sync.commit()
             ctx.bot.get_channels()
             await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
         return
@@ -165,7 +165,7 @@ class ServerAdmin(commands.Cog):
     @commands.guild_only()
     async def rmnotifier(self, ctx, upd_type='notifiers'):
         message = ctx.message
-        lang = ctx.bot.guild_lang(ctx.guild.id)
+        lang = await ctx.bot.guild_lang(ctx.guild.id)
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=30)
         available_types = ['notifiers', 'seasonal', 'updates']
         notifier_type = 'notifiers'
@@ -174,7 +174,7 @@ class ServerAdmin(commands.Cog):
         if await ctx.bot.check_ownership(message, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''DELETE FROM {} WHERE channel_id=?'''.format(notifier_type),
                                          (message.channel.id,))
-            ctx.bot.guild_db.commit()
+            ctx.bot.guild_db_sync.commit()
             ctx.bot.get_channels()
             msg = 'Got it, {}'.format(message.author.mention)
             await message.channel.send(msg, delete_after=10)
@@ -194,7 +194,7 @@ class ServerAdmin(commands.Cog):
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
             ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
-            ctx.bot.guild_db.commit()
+            ctx.bot.guild_db_sync.commit()
             ctx.bot.get_channels()
             await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
 
@@ -210,7 +210,7 @@ class ServerAdmin(commands.Cog):
         if await ctx.bot.check_ownership(message, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
                                          (lang.lower(), ctx.message.guild.id))
-            ctx.bot.guild_db.commit()
+            ctx.bot.guild_db_sync.commit()
         await ctx.channel.send(ctx.bot.translations[lang.lower()]['msg']['deprecation_warning'], delete_after=30)
         msg = 'Got it, {}'.format(message.author.mention)
         if ctx.guild.me.guild_permissions.change_nickname:
@@ -237,7 +237,7 @@ class ServerAdmin(commands.Cog):
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
                                          (args[0].lower(), ctx.guild.id))
-            ctx.bot.guild_db.commit()
+            ctx.bot.guild_db_sync.commit()
             if ctx.guild.me.guild_permissions.change_nickname:
                 await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
         await ctx.interaction.edit_original_message(content=msg, view=None)
@@ -245,7 +245,7 @@ class ServerAdmin(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def setclan(self, ctx, clan_id, *args):
-        lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        lang = await ctx.bot.guild_lang(ctx.message.guild.id)
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=60)
         try:
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(int(clan_id))
@@ -271,7 +271,7 @@ class ServerAdmin(commands.Cog):
                 ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
                                              (clan_json['Response']['detail']['name'],
                                               clan_json['Response']['detail']['groupId'], ctx.guild.id))
-                ctx.bot.guild_db.commit()
+                ctx.bot.guild_db_sync.commit()
                 if ctx.guild.me.guild_permissions.change_nickname:
                     try:
                         await ctx.guild.me.edit(
@@ -322,7 +322,7 @@ class ServerAdmin(commands.Cog):
                 ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
                                              (clan_json['Response']['detail']['name'],
                                               clan_json['Response']['detail']['groupId'], ctx.guild.id))
-                ctx.bot.guild_db.commit()
+                ctx.bot.guild_db_sync.commit()
                 if ctx.guild.me.guild_permissions.change_nickname:
                     try:
                         await ctx.guild.me.edit(
@@ -336,7 +336,7 @@ class ServerAdmin(commands.Cog):
     @commands.command()
     async def update(self, ctx, *args):
         if ctx.message.guild is not None:
-            lang = ctx.bot.guild_lang(ctx.message.guild.id)
+            lang = await ctx.bot.guild_lang(ctx.message.guild.id)
         else:
             lang = 'en'
         get = True
@@ -461,7 +461,7 @@ class ServerAdmin(commands.Cog):
                 prefix = []
             ctx.bot.guild_cursor.execute('''UPDATE prefixes SET prefix=? WHERE server_id=?''',
                                          (str(list(prefix)), ctx.message.guild.id))
-            ctx.bot.guild_db.commit()
+            ctx.bot.guild_db_sync.commit()
             msg = 'Got it, {}'.format(ctx.message.author.mention)
             await ctx.message.channel.send(msg, delete_after=10)
 

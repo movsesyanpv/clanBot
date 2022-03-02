@@ -12,6 +12,7 @@ import random
 from discord.ext.commands.bot import Bot
 import discord.ext.tasks as tasks
 from discord import ApplicationContext, DiscordException
+import aiosqlite
 import sqlite3
 import logging
 import traceback
@@ -71,8 +72,10 @@ class ClanBot(commands.Bot):
         except RuntimeError:
             return
         self.raid = lfg.LFG()
-        self.guild_db = sqlite3.connect('guild.db')
-        self.guild_cursor = self.guild_db.cursor()
+        asyncio.run(self.set_up_guild_db())
+
+        self.guild_db_sync = sqlite3.connect('guild.db')
+        self.guild_cursor = self.guild_db_sync.cursor()
         self.persistent_views_added = False
 
         version_file = open('version.dat', 'r')
@@ -102,6 +105,18 @@ class ClanBot(commands.Bot):
 
         logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
         logging.getLogger('apscheduler')
+
+    async def set_up_guild_db(self):
+        self.guild_db = await aiosqlite.connect('guild.db')
+        # cache_cursor = await self.cache_db.cursor()
+        # try:
+        #     await cache_cursor.execute(
+        #         '''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
+        #     await cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id)''')
+        #     await self.cache_db.commit()
+        #     await cache_cursor.close()
+        # except aiosqlite.OperationalError:
+        #     pass
 
     def load_translations(self) -> None:
         self.translations = {}
@@ -292,19 +307,21 @@ class ClanBot(commands.Bot):
                                           'P.S. There are legacy commands available, you can use `@{} help` to get that list, but they are deprecated.'.
                                           format(str(self.langs).replace('[', '').replace(']', '').replace('\'', ''), self.user.name))
         await self.update_history()
-        self.update_clans()
+        await self.update_clans()
         await self.update_prefixes()
         await self.update_langs()
 
     async def on_guild_remove(self, guild: discord.Guild) -> None:
-        self.guild_cursor.execute('''DELETE FROM clans WHERE server_id=?''', (guild.id,))
-        self.guild_cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
-        self.guild_cursor.execute('''DELETE FROM language WHERE server_id=?''', (guild.id,))
-        self.guild_cursor.execute('''DELETE FROM seasonal WHERE server_id=?''', (guild.id,))
-        self.guild_cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
-        self.guild_cursor.execute('''DELETE FROM prefixes WHERE server_id=?''', (guild.id,))
-        self.guild_db.commit()
+        cursor = await self.guild_db.cursor()
+        await cursor.execute('''DELETE FROM clans WHERE server_id=?''', (guild.id,))
+        await cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
+        await cursor.execute('''DELETE FROM language WHERE server_id=?''', (guild.id,))
+        await cursor.execute('''DELETE FROM seasonal WHERE server_id=?''', (guild.id,))
+        await cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
+        await cursor.execute('''DELETE FROM prefixes WHERE server_id=?''', (guild.id,))
+        await self.guild_db.commit()
         self.raid.purge_guild(guild.id)
+        await cursor.close()
 
     async def dm_owner(self, text: str) -> None:
         bot_info = await self.application_info()
@@ -637,17 +654,18 @@ class ClanBot(commands.Bot):
 
     def get_channel_type(self, ch_type: str):
         channel_list = []
+        cursor = self.guild_cursor
         try:
-            self.guild_cursor.execute('''CREATE TABLE {} (channel_id integer, server_id integer)'''.format(ch_type))
-            self.guild_cursor.execute('''CREATE UNIQUE INDEX {}_id ON {}(channel_id)'''.format(ch_type, ch_type))
-            self.guild_db.commit()
-        except sqlite3.OperationalError:
+            cursor.execute('''CREATE TABLE {} (channel_id integer, server_id integer)'''.format(ch_type))
+            cursor.execute('''CREATE UNIQUE INDEX {}_id ON {}(channel_id)'''.format(ch_type, ch_type))
+            self.guild_db_sync.commit()
+        except aiosqlite.OperationalError:
             try:
-                channels = self.guild_cursor.execute('''SELECT channel_id FROM {}'''.format(ch_type))
+                channels = cursor.execute('''SELECT channel_id FROM {}'''.format(ch_type))
                 channels = channels.fetchall()
                 for entry in channels:
                     channel_list.append(entry[0])
-            except sqlite3.OperationalError:
+            except aiosqlite.OperationalError:
                 pass
         return channel_list
 
@@ -661,9 +679,10 @@ class ClanBot(commands.Bot):
         self.update_ch = self.get_channel_type('updates')
 
     def guild_lang(self, guild_id: int) -> str:
+        cursor = self.guild_cursor
         try:
-            self.guild_cursor.execute('''SELECT lang FROM language WHERE server_id=?''', (guild_id, ))
-            lang = self.guild_cursor.fetchone()
+            cursor.execute('''SELECT lang FROM language WHERE server_id=?''', (guild_id, ))
+            lang = cursor.fetchone()
             if len(lang) > 0:
                 if lang[0] in self.langs:
                     return lang[0]
@@ -675,9 +694,10 @@ class ClanBot(commands.Bot):
             return 'en'
 
     def guild_prefix(self, guild_id: int) -> list:
+        cursor = self.guild_cursor
         try:
-            self.guild_cursor.execute('''SELECT prefix FROM prefixes WHERE server_id=?''', (guild_id, ))
-            prefix = self.guild_cursor.fetchone()
+            cursor.execute('''SELECT prefix FROM prefixes WHERE server_id=?''', (guild_id, ))
+            prefix = cursor.fetchone()
             if len(prefix) > 0:
                 return eval(prefix[0])
             else:
@@ -685,82 +705,90 @@ class ClanBot(commands.Bot):
         except:
             return []
 
-    def update_clans(self) -> None:
+    async def update_clans(self) -> None:
+        cursor = await self.guild_db.cursor()
         for server in self.guilds:
             try:
-                self.guild_cursor.execute('''CREATE TABLE clans (server_name text, server_id integer, clan_name text, clan_id integer)''')
-                self.guild_cursor.execute('''CREATE UNIQUE INDEX clan ON clans(server_id)''')
-                self.guild_cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?,?,?)''', [server.name, server.id, '', 0])
-            except sqlite3.OperationalError:
+                await cursor.execute('''CREATE TABLE clans (server_name text, server_id integer, clan_name text, clan_id integer)''')
+                await cursor.execute('''CREATE UNIQUE INDEX clan ON clans(server_id)''')
+                await cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?,?,?)''', [server.name, server.id, '', 0])
+            except aiosqlite.OperationalError:
                 try:
-                    self.guild_cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?,?,?)''', [server.name, server.id, '', 0])
+                    await cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?,?,?)''', [server.name, server.id, '', 0])
                 except:
                     pass
 
-        self.guild_db.commit()
+        await self.guild_db.commit()
+        await cursor.close()
 
     async def update_langs(self) -> None:
+        cursor = await self.guild_db.cursor()
         for server in self.guilds:
             try:
-                self.guild_cursor.execute('''CREATE TABLE language (server_id integer, lang text, server_name text)''')
-                self.guild_cursor.execute('''CREATE UNIQUE INDEX lang ON language(server_id)''')
-                self.guild_cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?,?)''', [server.id, 'en', server.name])
-            except sqlite3.OperationalError:
+                await cursor.execute('''CREATE TABLE language (server_id integer, lang text, server_name text)''')
+                await cursor.execute('''CREATE UNIQUE INDEX lang ON language(server_id)''')
+                await cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?,?)''', [server.id, 'en', server.name])
+            except aiosqlite.OperationalError:
                 try:
-                    self.guild_cursor.execute('''ALTER TABLE language ADD COLUMN server_name text''')
-                except sqlite3.OperationalError:
+                    await cursor.execute('''ALTER TABLE language ADD COLUMN server_name text''')
+                except aiosqlite.OperationalError:
                     try:
-                        self.guild_cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?,?)''',
+                        await cursor.execute('''INSERT or IGNORE INTO language VALUES (?,?,?)''',
                                                   [server.id, 'en', server.name])
                     except:
                         pass
             try:
-                self.guild_cursor.execute('''UPDATE language SET server_name=? WHERE server_id=?''',
+                await cursor.execute('''UPDATE language SET server_name=? WHERE server_id=?''',
                                           (server.name, server.id))
             except:
                 pass
 
-        self.guild_db.commit()
+        await self.guild_db.commit()
+        await cursor.close()
 
-        self.update_clans()
+        await self.update_clans()
 
     async def update_prefixes(self) -> None:
+        cursor = await self.guild_db.cursor()
         for server in self.guilds:
             try:
-                self.guild_cursor.execute('''CREATE TABLE prefixes (server_id integer, prefix text, server_name text)''')
-                self.guild_cursor.execute('''CREATE UNIQUE INDEX prefix ON prefixes(server_id)''')
-                self.guild_cursor.execute('''INSERT or IGNORE INTO prefixes VALUES (?,?,?)''', [server.id, '[\'?\']', server.name])
-            except sqlite3.OperationalError:
+                await cursor.execute('''CREATE TABLE prefixes (server_id integer, prefix text, server_name text)''')
+                await cursor.execute('''CREATE UNIQUE INDEX prefix ON prefixes(server_id)''')
+                await cursor.execute('''INSERT or IGNORE INTO prefixes VALUES (?,?,?)''', [server.id, '[\'?\']', server.name])
+            except aiosqlite.OperationalError:
                 try:
-                    self.guild_cursor.execute('''INSERT or IGNORE INTO prefixes VALUES (?,?,?)''',
+                    await cursor.execute('''INSERT or IGNORE INTO prefixes VALUES (?,?,?)''',
                                               [server.id, '[]', server.name])
                 except:
                     pass
             try:
-                self.guild_cursor.execute('''UPDATE prefixes SET server_name=? WHERE server_id=?''',
+                await cursor.execute('''UPDATE prefixes SET server_name=? WHERE server_id=?''',
                                           (server.name, server.id))
             except:
                 pass
 
-        self.guild_db.commit()
+        await self.guild_db.commit()
+        await cursor.close()
 
-        self.update_clans()
+        await self.update_clans()
 
     async def update_history(self) -> None:
+        cursor = await self.guild_db.cursor()
         try:
-            self.guild_cursor.execute('''CREATE TABLE history ( server_name text, server_id integer, channel_id integer)''')
-            self.guild_cursor.execute('''CREATE UNIQUE INDEX hist ON history(channel_id)''')
-        except sqlite3.OperationalError:
+            await cursor.execute('''CREATE TABLE history ( server_name text, server_id integer, channel_id integer)''')
+            await cursor.execute('''CREATE UNIQUE INDEX hist ON history(channel_id)''')
+        except aiosqlite.OperationalError:
             pass
         for channel_id in self.notifiers:
             try:
                 channel = self.get_channel(channel_id)
                 if channel is not None:
                     init_values = [channel.guild.name, channel.guild.id, channel_id]
-                    self.guild_cursor.execute("INSERT or IGNORE INTO history (server_name, server_id, channel_id) VALUES (?,?,?)", init_values)
-                    self.guild_db.commit()
-            except sqlite3.OperationalError:
+                    await cursor.execute("INSERT or IGNORE INTO history (server_name, server_id, channel_id) VALUES (?,?,?)", init_values)
+                    await self.guild_db.commit()
+            except aiosqlite.OperationalError:
                 pass
+        await cursor.close()
 
     async def universal_update(self, getter: Callable, name: str, time_to_delete: float = None,
                                channels: List[int] = None, post: bool = True, get: bool = True,
@@ -805,6 +833,7 @@ class ClanBot(commands.Bot):
         delay = 0
         # await asyncio.sleep(delay)
         # self.logger.info('ws limit status for {} in {}: {}'.format(upd_type, channel_id, self.is_ws_ratelimited()))
+        cursor = await self.guild_db.cursor()
         try:
             channel = self.get_channel(channel_id)
         except discord.Forbidden:
@@ -836,9 +865,9 @@ class ClanBot(commands.Bot):
 
         hist = 0
         try:
-            last = self.guild_cursor.execute('''SELECT {} FROM history WHERE channel_id=?'''.format(upd_type),
+            last = await cursor.execute('''SELECT {} FROM history WHERE channel_id=?'''.format(upd_type),
                                              (channel_id,))
-            last = last.fetchone()
+            last = await last.fetchone()
             if last is not None:
                 if type(src_dict[lang][upd_type]) == list:
                     hist = [0]
@@ -854,21 +883,21 @@ class ClanBot(commands.Bot):
             else:
                 try:
                     init_values = [channel.guild.name, channel.guild.id, channel_id]
-                    self.guild_cursor.execute(
+                    await cursor.execute(
                         "INSERT or IGNORE INTO history (server_name, server_id, channel_id) VALUES (?,?,?)", init_values)
                     # self.guild_db.commit()
-                except sqlite3.OperationalError:
+                except aiosqlite.OperationalError:
                     pass
 
-        except sqlite3.OperationalError:
+        except aiosqlite.OperationalError:
             try:
                 if type(src_dict[lang][upd_type]) == list:
-                    self.guild_cursor.execute(
+                    await cursor.execute(
                         '''ALTER TABLE history ADD COLUMN {} text'''.format(upd_type))
                 else:
-                    self.guild_cursor.execute('''ALTER TABLE history ADD COLUMN {} INTEGER'''.format(upd_type))
+                    await cursor.execute('''ALTER TABLE history ADD COLUMN {} INTEGER'''.format(upd_type))
                 # self.guild_db.commit()
-            except sqlite3.OperationalError:
+            except aiosqlite.OperationalError:
                 await self.update_history()
 
         if hist and not self.args.noclear:
@@ -974,9 +1003,11 @@ class ClanBot(commands.Bot):
                 except discord.Forbidden:
                     pass
 
-        self.guild_cursor.execute('''UPDATE history SET {}=? WHERE channel_id=?'''.format(upd_type),
+        await cursor.execute('''UPDATE history SET {}=? WHERE channel_id=?'''.format(upd_type),
                                   (str(hist), channel_id))
-        self.guild_db.commit()
+        await self.guild_db.commit()
+
+        await cursor.close()
 
         frameinfo = getframeinfo(currentframe())
         return [channel_id, 'posted ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
@@ -1041,12 +1072,14 @@ class ClanBot(commands.Bot):
                             pass
 
     async def update_metrics(self) -> None:
-        clan_ids_c = self.guild_cursor.execute('''SELECT clan_id FROM clans''')
+        cursor = await self.guild_db.cursor()
+        clan_ids_c = await cursor.execute('''SELECT clan_id FROM clans''')
         clan_ids_c = clan_ids_c.fetchall()
         clan_ids = []
         for clan_id in clan_ids_c:
             clan_ids.append(clan_id[0])
         await self.data.get_clan_leaderboard(clan_ids, 1572939289, 10)
+        await cursor.close()
 
     async def update_metric_list(self) -> None:
         internal_db = mariadb.connect(host=self.api_data['db_host'], user=self.api_data['cache_login'],
