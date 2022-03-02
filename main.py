@@ -613,7 +613,7 @@ class ClanBot(commands.Bot):
                 traceback_str = '{}{}'.format(traceback_str, line)
             await owner.dm_channel.send('`{}`'.format(traceback_str))
             command_line = '/{}'.format(context.interaction.data['name'])
-            if 'optons' in context.interaction.data.keys():
+            if 'options' in context.interaction.data.keys():
                 for option in context.interaction.data['options']:
                     command_line = '{} {}:{}'.format(command_line, option['name'], option['value'])
             await owner.dm_channel.send('{}:\n{}'.format(context.author, command_line))
