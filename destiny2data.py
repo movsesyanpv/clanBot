@@ -2408,7 +2408,7 @@ class D2data:
             try:
                 test = profile_resp['Response']['characterActivities']['data']
             except KeyError:
-                return [member['destinyUserInfo']['LastSeenDisplayName'], '']
+                return [member['destinyUserInfo']['LastSeenDisplayName'], '-']
             for char in profile_resp['Response']['characterActivities']['data']:
                 char_resp = profile_resp['Response']['characterActivities']['data'][char]
                 if char_resp['currentActivityHash'] != 0:
@@ -2444,6 +2444,8 @@ class D2data:
                     break
             length = now - datetime.fromisoformat(char_resp['dateActivityStarted'].replace('Z', ''))
             activity_string = '{} ({})'.format(activity_string, str(timedelta(seconds=length.seconds)))
+        else:
+            activity_string = '-'
         return [member['destinyUserInfo']['LastSeenDisplayName'], activity_string]
 
     async def get_online_clan_members(self, clan_id: Union[str, int], lang: str) -> list:
