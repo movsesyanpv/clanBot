@@ -27,6 +27,8 @@ class D2data:
 
     data_db = ''
 
+    bot_data_db = ''
+
     icon_prefix = "https://www.bungie.net"
 
     token = {}
@@ -34,6 +36,8 @@ class D2data:
     headers = {}
 
     data = {}
+
+    data_ready = False
 
     wait_codes = [1672]
     max_retries = 10
@@ -92,7 +96,8 @@ class D2data:
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
-        asyncio.run(self.set_up_cache())
+        asyncio.run(self.set_up_cache(lang))
+        asyncio.run(self.load_data(lang))
         try:
             self.cache_pool = mariadb.ConnectionPool(pool_name='cache', pool_size=10, pool_reset_connection=False,
                                                      host=self.api_data['db_host'], user=self.api_data['cache_login'],
@@ -112,7 +117,7 @@ class D2data:
             pass
         # self.data_db.auto_reconnect = True
 
-    async def set_up_cache(self) -> None:
+    async def set_up_cache(self, lang: List[str]) -> None:
         self.cache_db = await aiosqlite.connect('cache.db')
         cache_cursor = await self.cache_db.cursor()
         try:
@@ -123,6 +128,18 @@ class D2data:
             await cache_cursor.close()
         except aiosqlite.OperationalError:
             pass
+        await cache_cursor.close()
+
+        self.bot_data_db = await aiosqlite.connect('data.db')
+        data_cursor = await self.bot_data_db.cursor()
+        for locale in lang:
+            try:
+                await data_cursor.execute('''CREATE TABLE `{}` (id text, json text, timestamp text)'''.format(locale))
+                await data_cursor.execute('''CREATE UNIQUE INDEX data_id_{} on `{}`(id)'''.format(locale.replace('-', '_'), locale))
+                await self.bot_data_db.commit()
+            except aiosqlite.OperationalError:
+                pass
+        await data_cursor.close()
 
     async def get_chars(self) -> None:
         platform = 0
@@ -155,6 +172,21 @@ class D2data:
 
             char_file = open('char.json', 'w')
             char_file.write(json.dumps(self.char_info))
+
+    async def load_data(self, lang):
+        cursor = await self.bot_data_db.cursor()
+
+        try:
+            for locale in lang:
+                data = await cursor.execute('''SELECT * from `{}`'''.format(locale))
+                data = await data.fetchall()
+                for entry in data:
+                    self.data[locale][entry[0]] = json.loads(entry[1])
+            self.data_ready = True
+        except:
+            pass
+
+        await cursor.close()
 
     async def refresh_token(self, re_token: str) -> None:
         headers = {
@@ -787,8 +819,8 @@ class D2data:
                                    template='hover_items.html', order=0, type='weekly', size='tall')
 
     async def write_to_db(self, lang: str, id: str, response: list, size: str = '', name: str = '',
-                          template: str = 'table_items.html', order: int = 0, type: str = 'daily',
-                          annotations: list = []) -> None:
+                            template: str = 'table_items.html', order: int = 0, type: str = 'daily',
+                            annotations: list = []) -> None:
         while True:
             try:
                 data_db = self.data_pool.get_connection()
@@ -826,6 +858,19 @@ class D2data:
         data_cursor.close()
         data_db.close()
 
+    async def write_bot_data(self, id: str, langs: List[str]) -> None:
+        cursor = await self.bot_data_db.cursor()
+        timestamp = datetime.utcnow().isoformat()
+        for lang in langs:
+            try:
+                await cursor.execute('''INSERT INTO `{}` VALUES(?,?,?)'''.format(lang),
+                                     (id, json.dumps(self.data[lang][id]), timestamp))
+            except aiosqlite.IntegrityError:
+                await cursor.execute('''UPDATE `{}` SET json=?, timestamp=? WHERE id=?'''.format(lang),
+                                     (json.dumps(self.data[lang][id]), timestamp, id))
+        await self.bot_data_db.commit()
+        await cursor.close()
+
     async def get_spider(self, lang: List[str], forceget: bool = False) -> Union[bool, None]:
         char_info = self.char_info
 
@@ -840,6 +885,7 @@ class D2data:
                 }
                 await self.write_to_db(locale, 'spider_mats', [db_data],
                                        name=self.translations[locale]['site']['spider'])
+            await self.write_bot_data('spider', lang)
             return False
         spider_json = spider_resp
         spider_cats = spider_json['Response']['categories']['data']['categories']
@@ -871,6 +917,7 @@ class D2data:
             #data = spider_sales[1]
             await self.write_to_db(locale, 'spider_mats', data, name=self.translations[locale]['site']['spider'],
                                    order=0, size='tall')
+        await self.write_bot_data('spider', lang)
 
     async def get_banshee(self, lang: List[str], forceget: bool = False) -> Union[bool, None]:
         char_info = self.char_info
@@ -1001,6 +1048,7 @@ class D2data:
                 if item_def['itemType'] == 19:
                     mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
             self.data[lang]['daily_mods']['fields'] = mods
+        await self.write_bot_data('daily_mods', langs)
 
     async def get_xur_loc(self) -> dict:
         url = 'https://paracausal.science/xur/current.json'
@@ -1034,6 +1082,7 @@ class D2data:
                 }
                 await self.write_to_db(lang, 'xur', [db_data],
                                        name=self.translations[lang]['msg']['xur'])
+            await self.write_bot_data('xur', langs)
             return False
         resp_time = xur_resp['timestamp']
         xur_loc = await self.get_xur_loc()
@@ -1163,6 +1212,7 @@ class D2data:
             await self.write_to_db(lang, 'xur', sales, template='vendor_items.html', order=7,
                                    name=xur_def['displayProperties']['name'],
                                    annotations=annotations)
+        await self.write_bot_data('xur', langs)
 
     async def get_heroic_story(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('heroicstory', string='heroic story missions',
@@ -1277,6 +1327,7 @@ class D2data:
                 }
                 await self.write_to_db(lang, 'strike_modifiers', [db_data],
                                        name=self.translations[lang]['msg']['strikesmods'])
+            await self.write_bot_data('vanguardstrikes', langs)
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1311,6 +1362,7 @@ class D2data:
                                                                              r_json['displayProperties']['icon']
             await self.write_to_db(lang, 'strike_modifiers', db_data, size='wide',
                                    name=self.translations[lang]['msg']['strikesmods'], order=1)
+        await self.write_bot_data('vanguardstrikes', langs)
 
     async def get_reckoning_boss(self, lang: str) -> None:
         first_reset_time = 1539709200
@@ -1493,6 +1545,7 @@ class D2data:
                 }
                 await self.write_to_db(lang, 'raid_challenges', [db_data], self.translations[lang]['msg']['raids'],
                                        type='weekly')
+            await self.write_bot_data('raids', langs)
             return False
         resp_time = activities_resp['timestamp']
 
@@ -1680,6 +1733,7 @@ class D2data:
             self.data[lang]['raids']['timestamp'] = resp_time
             await self.write_to_db(lang, 'raid_challenges', db_data, '',
                                    self.translations[lang]['msg']['raids'], order=1, type='weekly')
+        await self.write_bot_data('raids', langs)
 
     async def get_ordeal(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('ordeal', force=forceget)
@@ -1691,6 +1745,7 @@ class D2data:
                 }
                 await self.write_to_db(lang, 'ordeal', [db_data], name=self.translations[lang]['msg']['ordeal'],
                                        type='weekly')
+            await self.write_bot_data('ordeal', langs)
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1741,6 +1796,7 @@ class D2data:
                         break
             await self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'], order=3,
                                    type='weekly')
+        await self.write_bot_data('ordeal', langs)
 
     async def get_nightmares(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('nightmares', force=forceget)
@@ -1752,6 +1808,7 @@ class D2data:
                 }
                 await self.write_to_db(lang, 'nightmare_hunts', [db_data],
                                        name=self.translations[lang]['site']['nightmares'], type='weekly')
+            await self.write_bot_data('nightmares', langs)
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1790,6 +1847,7 @@ class D2data:
                     self.data[lang]['nightmares']['fields'].append(info)
             await self.write_to_db(lang, 'nightmare_hunts', db_data, name=self.translations[lang]['site']['nightmares'],
                                    order=2, type='weekly')
+        await self.write_bot_data('nightmares', langs)
 
     async def get_empire_hunt(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('empire_hunts', force=forceget)
@@ -1801,6 +1859,7 @@ class D2data:
                 }
                 await self.write_to_db(lang, 'empire_hunts', [db_data],
                                        name=self.translations[lang]['site']['empire_hunts'], type='weekly')
+            await self.write_bot_data('empire_hunts', langs)
             return False
         resp_time = activities_resp['timestamp']
 
@@ -1839,6 +1898,7 @@ class D2data:
                     self.data[lang]['empire_hunts']['fields'].append(info)
             await self.write_to_db(lang, 'empire_hunts', db_data, name=self.translations[lang]['site']['empire_hunts'],
                                    order=5, type='weekly')
+        await self.write_bot_data('empire_hunts', langs)
 
     async def get_crucible_rotators(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators',
@@ -1853,6 +1913,7 @@ class D2data:
                 await self.write_to_db(lang, 'crucible_rotators', [db_data],
                                        name=self.translations[lang]['msg']['cruciblerotators'],
                                        template='table_items.html', type='weekly')
+            await self.write_bot_data('cruciblerotators', langs)
             return False
         resp_time = activities_resp['timestamp']
         for lang in langs:
@@ -1914,6 +1975,7 @@ class D2data:
             await self.write_to_db(lang, 'crucible_rotators', db_data,
                                    name=self.translations[lang]['msg']['cruciblerotators'], size=style, order=4,
                                    type='weekly')
+        await self.write_bot_data('cruciblerotators', langs)
 
     async def get_the_lie_progress(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'],
@@ -2206,6 +2268,7 @@ class D2data:
                 })
             await self.write_to_db(lang, 'trials_of_osiris', db_data, order=6,
                                    name=self.translations[lang]['site']['osiris'])
+        await self.write_bot_data('osiris', langs)
 
     async def drop_weekend_info(self, langs: List[str]) -> None:
         while True:

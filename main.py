@@ -237,7 +237,7 @@ class ClanBot(commands.Bot):
         await self.dm_owner('on_ready fired')
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(status=discord.Status.dnd, activity=game)
-        self.all_commands['update'].enabled = False
+        # self.all_commands['update'].enabled = False
         self.all_commands['top'].enabled = False
         # self.all_commands['online'].enabled = False
         await self.data.token_update()
@@ -253,7 +253,8 @@ class ClanBot(commands.Bot):
         if not self.sched.running:
             types = self.all_types.copy()
             # types.pop(types.index('osiris'))
-            await self.force_update(types, post=False)
+            if not self.data.data_ready:
+                await self.force_update(types, post=False)
             for lang in self.langs:
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
                                    second='10', misfire_grace_time=86300, args=[lang])
@@ -280,13 +281,10 @@ class ClanBot(commands.Bot):
                     self.add_view(GroupButtons(lfg[0], self))
             self.persistent_views_added = True
         await self.change_presence(status=discord.Status.online, activity=game)
-        self.all_commands['update'].enabled = True
+        # self.all_commands['update'].enabled = True
         self.all_commands['top'].enabled = True
-        self.all_commands['online'].enabled = True
+        # self.all_commands['online'].enabled = True
         await self.dm_owner('on_ready tasks finished')
-        char_file = open('data.json', 'w')
-        char_file.write(json.dumps(self.data.data))
-        char_file.close()
         return
 
     async def on_guild_join(self, guild: discord.Guild) -> None:
