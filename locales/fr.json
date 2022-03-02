@@ -87,7 +87,7 @@
         "lfg_choice_select": "#{} de {} @ {}",
         "time_modal": "Quand allez vous démarrez ?",
         "time_placeholder": "Le format est : `%d-%m-%Y %H:%M%z`.",
-        "length_modal": "Durée prévue vous pour cette activité ?",
+        "length_modal": "Durée prévue pour cette activité ?",
         "length_placeholder": "Exemple: 1h 30m pour 1 heure et 30 minutes.",
         "role_manual": "Nom des rôles à mentionner, séparé par `;`.\nTapez `-` pour un choix automatique des rôles.",
         "lfg_select": "Sélectionnez le groupe que vous désirez mettre à jour.",
