@@ -19,7 +19,7 @@ class Group(commands.Cog):
     @commands.dm_only()
     async def lfglist(self, ctx, lang=None):
         if ctx.message.guild is not None and lang is None:
-            lang = await ctx.bot.guild_lang(ctx.message.guild.id)
+            lang = ctx.bot.guild_lang(ctx.message.guild.id)
         if lang not in ctx.bot.langs:
             lang = 'en'
 
@@ -303,7 +303,7 @@ class Group(commands.Cog):
     @commands.command(aliases=['сбор', 'лфг'])
     @commands.guild_only()
     async def lfg(self, ctx):
-        lang = await ctx.bot.guild_lang(ctx.message.guild.id)
+        lang = ctx.bot.guild_lang(ctx.message.guild.id)
         if len(ctx.message.content.splitlines()) > 1:
             group_id = await self.guild_lfg(ctx, lang)
         else:
@@ -718,7 +718,7 @@ class Group(commands.Cog):
             if type(arg_id) == discord.Message:
                 ctx.message = arg_id
         if ctx.message.guild is not None:
-            lang = await ctx.bot.guild_lang(ctx.message.guild.id)
+            lang = ctx.bot.guild_lang(ctx.message.guild.id)
         else:
             lang = 'en'
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=60)

@@ -90,7 +90,7 @@ class ServerAdmin(commands.Cog):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
                 await ctx.message.channel.send(msg.format(n))
         else:
-            lang = await ctx.bot.guild_lang(ctx.guild.id)
+            lang = ctx.bot.guild_lang(ctx.guild.id)
             await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=60)
             if await ctx.bot.check_ownership(ctx.message, is_silent=False, admin_check=True):
                 n = await ctx.bot.lfg_cleanup(days, ctx.guild)
@@ -125,7 +125,7 @@ class ServerAdmin(commands.Cog):
     @commands.guild_only()
     async def regnotifier(self, ctx, upd_type='notifiers'):
         message = ctx.message
-        lang = await ctx.bot.guild_lang(ctx.guild.id)
+        lang = ctx.bot.guild_lang(ctx.guild.id)
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=30)
         available_types = ['notifiers', 'seasonal', 'updates']
         notifier_type = 'notifiers'
@@ -165,7 +165,7 @@ class ServerAdmin(commands.Cog):
     @commands.guild_only()
     async def rmnotifier(self, ctx, upd_type='notifiers'):
         message = ctx.message
-        lang = await ctx.bot.guild_lang(ctx.guild.id)
+        lang = ctx.bot.guild_lang(ctx.guild.id)
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=30)
         available_types = ['notifiers', 'seasonal', 'updates']
         notifier_type = 'notifiers'
@@ -245,7 +245,7 @@ class ServerAdmin(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def setclan(self, ctx, clan_id, *args):
-        lang = await ctx.bot.guild_lang(ctx.message.guild.id)
+        lang = ctx.bot.guild_lang(ctx.message.guild.id)
         await ctx.channel.send(ctx.bot.translations[lang]['msg']['deprecation_warning'], delete_after=60)
         try:
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(int(clan_id))
@@ -336,7 +336,7 @@ class ServerAdmin(commands.Cog):
     @commands.command()
     async def update(self, ctx, *args):
         if ctx.message.guild is not None:
-            lang = await ctx.bot.guild_lang(ctx.message.guild.id)
+            lang = ctx.bot.guild_lang(ctx.message.guild.id)
         else:
             lang = 'en'
         get = True

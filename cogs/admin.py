@@ -184,7 +184,7 @@ class Admin(commands.Cog):
             additional_arg = lang
             lang = None
         if ctx.message.guild is not None and lang is None:
-            lang = await ctx.bot.guild_lang(ctx.message.guild.id)
+            lang = ctx.bot.guild_lang(ctx.message.guild.id)
         if lang not in ctx.bot.langs:
             lang = 'en'
         if ctx.invoked_with in ['чотут', 'ман', 'инструкция', 'ruhelp', 'helpru']:
