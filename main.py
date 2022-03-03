@@ -1073,7 +1073,7 @@ class ClanBot(commands.Bot):
     async def update_metrics(self) -> None:
         cursor = await self.guild_db.cursor()
         clan_ids_c = await cursor.execute('''SELECT clan_id FROM clans''')
-        clan_ids_c = clan_ids_c.fetchall()
+        clan_ids_c = await clan_ids_c.fetchall()
         clan_ids = []
         for clan_id in clan_ids_c:
             clan_ids.append(clan_id[0])
@@ -1117,10 +1117,10 @@ class ClanBot(commands.Bot):
     def start_up(self) -> None:
         self.get_args()
         token = self.api_data['token']
-        print('hmm')
         self.remove_command('help')
         for cog in self.cog_list:
             self.load_extension(cog)
+        print('Ready to run')
         self.run(token)
 
 
