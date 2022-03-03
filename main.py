@@ -248,7 +248,7 @@ class ClanBot(commands.Bot):
         self.get_channels()
         await self.update_history()
         await self.data.get_chars()
-        await self.update_metrics()
+        # await self.update_metrics()
         if self.args.forceupdate:
             await self.force_update(self.args.type)
         if not self.sched.running:
