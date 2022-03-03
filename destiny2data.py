@@ -139,6 +139,12 @@ class D2data:
                 await self.bot_data_db.commit()
             except aiosqlite.OperationalError:
                 pass
+        try:
+            await data_cursor.execute('''CREATE TABLE playermetrics (membershipId text, name text, timestamp text)''')
+            await data_cursor.execute('''CREATE UNIQUE INDEX player_id on playermetrics(membershipId)''')
+            await self.bot_data_db.commit()
+        except aiosqlite.OperationalError:
+            pass
         await data_cursor.close()
 
     async def get_chars(self) -> None:
@@ -2163,6 +2169,85 @@ class D2data:
             player = name
         return [player, await self.get_player_metric(member_type, member_id, metric, is_global)]
 
+    async def update_clan_metrics(self, clan_ids: list) -> None:
+        for clan_id in clan_ids:
+            url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
+
+            clan_members_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url, change_msg=False)
+
+            url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
+            clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), 'clan info', url)
+            clan_json = clan_resp
+            try:
+                code = clan_json['ErrorCode']
+            except KeyError:
+                code = 0
+            except TypeError:
+                code = 0
+            if code == 1:
+                tag = clan_json['Response']['detail']['clanInfo']['clanCallsign']
+            else:
+                tag = ''
+
+            if clan_members_resp and type(clan_json) == dict:
+                clan_json = clan_members_resp
+                try:
+                    tasks = []
+                    # member = clan_json['Response']['results'][0]
+                    # name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
+                    # await self.update_player_metrics(member['destinyUserInfo']['membershipType'],
+                    #                                  member['destinyUserInfo']['membershipId'], name)
+                    for member in clan_json['Response']['results']:
+                        name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
+                        task = asyncio.ensure_future(self.update_player_metrics(
+                            member['destinyUserInfo']['membershipType'], member['destinyUserInfo']['membershipId'],
+                            name))
+                        tasks.append(task)
+                    results = await asyncio.gather(*tasks)
+                except KeyError:
+                    pass
+
+    async def update_player_metrics(self, membership_type: str, membership_id: str, name: str) -> None:
+        cursor = await self.bot_data_db.cursor()
+        url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
+        member = await self.get_cached_json('playermetrics_{}'.format(membership_id),
+                                            'metrics for {}'.format(membership_id), url, params=self.metric_params,
+                                            change_msg=False)
+        metrics = []
+        try:
+            await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
+                                 (membership_id, datetime.utcnow().isoformat()))
+            # await self.bot_data_db.commit()
+        except aiosqlite.OperationalError:
+            pass
+        try:
+            await cursor.execute('''UPDATE playermetrics SET name=? WHERE membershipId=?''',
+                                 (name, membership_id))
+            await self.bot_data_db.commit()
+        except aiosqlite.OperationalError:
+            pass
+        if member:
+            for metric in member['Response']['metrics']['data']['metrics'].keys():
+                try:
+                    await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN '{}' INTEGER'''.format(metric))
+                    # await self.bot_data_db.commit()
+                except aiosqlite.OperationalError:
+                    pass
+                if 'objectiveProgress' in member['Response']['metrics']['data']['metrics'][metric].keys():
+                    value = member['Response']['metrics']['data']['metrics'][metric]['objectiveProgress']['progress']
+                    metrics.append({
+                        'name': metric,
+                        'value': value
+                    })
+                    try:
+                        await cursor.execute('''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric), (value, membership_id))
+                        # await self.bot_data_db.commit()
+                    except aiosqlite.OperationalError:
+                        pass
+            await self.bot_data_db.commit()
+        await cursor.close()
+        return
+
     async def get_osiris_predictions(self, langs: List[str], forceget: bool = False, force_info: Optional[list] = None):
         win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
         # win3_rotation = ['?', '?', '?']
@@ -2375,6 +2460,57 @@ class D2data:
         # await cache_connection.close()
         response_json['timestamp'] = timestamp
         return response_json
+
+    async def get_global_leaderboard(self, metric: int, number: int, is_time: bool = False,
+                                     is_kda: bool = False) -> list:
+        cursor = await self.bot_data_db.cursor()
+
+        leaderboard = []
+
+        if is_time:
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM playermetrics WHERE `{}`>0 ORDER BY `{}` ASC'''.format(metric, metric, metric, number+50))
+            raw_leaderboard = await raw_leaderboard.fetchall()
+
+            for place in raw_leaderboard:
+                index = raw_leaderboard.index(place)
+                leaderboard.append([raw_leaderboard[index][0], str(timedelta(minutes=(int(raw_leaderboard[index][1]) / 60000))).split('.')[0]])
+        else:
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM playermetrics WHERE `{}`>0 ORDER BY `{}` DESC'''.format(metric, metric, metric, number+50))
+            raw_leaderboard = await raw_leaderboard.fetchall()
+
+            if is_kda:
+                for place in raw_leaderboard:
+                    index = raw_leaderboard.index(place)
+                    leaderboard.append([raw_leaderboard[index][0], raw_leaderboard[index][1] / 100])
+            else:
+                for place in raw_leaderboard:
+                    index = raw_leaderboard.index(place)
+                    leaderboard.append([raw_leaderboard[index][0], raw_leaderboard[index][1]])
+        await cursor.close()
+
+        if len(leaderboard) > 0:
+            for place in leaderboard[1:]:
+                delta = 0
+                try:
+                    index = leaderboard.index(place)
+                except ValueError:
+                    continue
+                if leaderboard[index][1] == leaderboard[index - 1][1]:
+                    leaderboard[index][0] = '{}\n{}'.format(leaderboard[index - 1][0], leaderboard[index][0])
+                    leaderboard.pop(index - 1)
+            indexed_list = leaderboard.copy()
+            i = 1
+            for place in indexed_list:
+                old_i = i
+                index = indexed_list.index(place)
+                indexed_list[index] = [i, *indexed_list[index]]
+                i = i + len(indexed_list[index][1].splitlines())
+            while indexed_list[-1][0] > number:
+                indexed_list.pop(-1)
+
+            return indexed_list[:old_i]
+        else:
+            return leaderboard
 
     async def get_clan_leaderboard(self, clan_ids: list, metric: int, number: int, is_time: bool = False,
                                    is_kda: bool = False, is_global: bool = False) -> list:

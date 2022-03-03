@@ -248,6 +248,7 @@ class ClanBot(commands.Bot):
         self.get_channels()
         await self.update_history()
         await self.data.get_chars()
+        await self.update_metrics()
         if self.args.forceupdate:
             await self.force_update(self.args.type)
         if not self.sched.running:
@@ -1077,7 +1078,9 @@ class ClanBot(commands.Bot):
         clan_ids = []
         for clan_id in clan_ids_c:
             clan_ids.append(clan_id[0])
-        await self.data.get_clan_leaderboard(clan_ids, 1572939289, 10)
+        clan_ids = list(set(clan_ids))
+        await self.data.update_clan_metrics(clan_ids)
+        # await self.data.get_clan_leaderboard(clan_ids, 1572939289, 10)
         await cursor.close()
 
     async def update_metric_list(self) -> None:

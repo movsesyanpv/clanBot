@@ -224,14 +224,17 @@ class Public(commands.Cog):
             except pydest.pydest.PydestException:
                 await ctx.respond(translations['unknown_metric'].format(metric))
                 return
+            # if is_global:
+            #     clan_ids_c = ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans''')
+            #     clan_ids_c = clan_ids_c.fetchall()
+            #     clan_ids = []
+            #     for clan_id in clan_ids_c:
+            #         if clan_id[0] not in clan_ids:
+            #             clan_ids.append(clan_id[0])
             if is_global:
-                clan_ids_c = ctx.bot.guild_cursor.execute('''SELECT clan_id FROM clans''')
-                clan_ids_c = clan_ids_c.fetchall()
-                clan_ids = []
-                for clan_id in clan_ids_c:
-                    if clan_id[0] not in clan_ids:
-                        clan_ids.append(clan_id[0])
-            top_list = await ctx.bot.data.get_clan_leaderboard(clan_ids, metric, number, is_time, is_kda, is_global)
+                top_list = await ctx.bot.data.get_global_leaderboard(metric, number, is_time, is_kda)
+            else:
+                top_list = await ctx.bot.data.get_clan_leaderboard(clan_ids, metric, number, is_time, is_kda, is_global)
             max_len = min(number, len(top_list))
             if len(top_list) > 0:
                 metric_description = top_name['displayProperties']['description'].splitlines()
