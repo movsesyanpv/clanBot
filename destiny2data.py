@@ -2167,6 +2167,7 @@ class D2data:
             player = '{} [{}]'.format(name, tag)
         else:
             player = name
+        await self.update_player_metrics(member_type, member_id, '{} [{}]'.format(name, tag))
         return [player, await self.get_player_metric(member_type, member_id, metric, is_global)]
 
     async def update_clan_metrics(self, clan_ids: list) -> None:
