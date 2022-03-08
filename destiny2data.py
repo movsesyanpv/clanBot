@@ -1520,7 +1520,7 @@ class D2data:
             await self.write_to_db(lang, '820_nightfalls', db_data,
                                    name=self.translations[lang]['site']['nightfalls820'], order=0, type='weekly')
 
-    async def get_modifiers(self, lang: str, act_hash: int) -> Union[bool, list]:
+    async def get_modifiers(self, lang: str, act_hash: int, mods_to_seek=None) -> Union[bool, list]:
         url = 'https://www.bungie.net/{}/Explore/Detail/DestinyActivityDefinition/{}'.format(lang, act_hash)
         r = await self.session.get(url)
         r = await r.text()
@@ -1793,6 +1793,17 @@ class D2data:
                         'name': info['name'],
                         'description': info['value']
                     })
+                    if 3865215494 in key['modifierHashes']: # Check for double rewards
+                        mod_info = await self.destiny.decode_hash(3865215494, 'DestinyActivityModifierDefinition', language=lang)
+                        self.data[lang]['ordeal']['fields'].append({
+                            'inline': False,
+                            'name': mod_info['displayProperties']['name'],
+                            'value': mod_info['displayProperties']['description']
+                        })
+                        db_data.append({
+                            'name': mod_info['displayProperties']['name'],
+                            'description': mod_info['displayProperties']['description']
+                        })
 
             if len(self.data[lang]['ordeal']['fields']) > 0:
                 for strike in strikes:
