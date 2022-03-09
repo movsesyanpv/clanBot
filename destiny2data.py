@@ -1719,7 +1719,7 @@ class D2data:
                         'description': info['value'].replace('\n', '<br>')
                     })
                     self.data[lang]['raids']['fields'].append(info)
-                if r_json['hash'] in [910380154, 3881495763] and 'modifierHashes' in key.keys():
+                if r_json['hash'] in [910380154, 3881495763, 1441982566] and 'modifierHashes' in key.keys():
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
@@ -1793,7 +1793,7 @@ class D2data:
                         'name': info['name'],
                         'description': info['value']
                     })
-                    if 3865215494 in key['modifierHashes']: # Check for double rewards
+                    if 3865215494 in key['modifierHashes']:  # Check for double rewards
                         mod_info = await self.destiny.decode_hash(3865215494, 'DestinyActivityModifierDefinition', language=lang)
                         self.data[lang]['ordeal']['fields'].append({
                             'inline': False,
