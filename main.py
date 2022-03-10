@@ -627,8 +627,10 @@ class ClanBot(commands.Bot):
             traceback_str = ''
             for line in traceback.format_exception(type(exception), exception, exception.__traceback__):
                 traceback_str = '{}{}'.format(traceback_str, line)
-            if len(traceback_str) > 1998:
+            if len(traceback_str) < 1998:
                 await owner.dm_channel.send('`{}`'.format(traceback_str))
+            else:
+                self.logger.exception(traceback_str)
             command_line = '/{}'.format(context.interaction.data['name'])
             if 'options' in context.interaction.data.keys():
                 for option in context.interaction.data['options']:
