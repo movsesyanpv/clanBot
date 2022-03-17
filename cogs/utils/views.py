@@ -420,6 +420,8 @@ class LFGModal(discord.ui.Modal):
         for role in interaction.guild.roles:
             if role.mentionable and not role.managed:
                 role_list.append(discord.SelectOption(label=role.name, value=str(role.id)))
+        if len(role_list) > 25:
+            role_list = role_list[:25]
         view = RoleLFG(len(role_list), role_list, interaction.user, self.is_edit, manual=translations['manual_roles'],
                        auto=translations['auto_roles'], has_custom=False, no_change=translations['button_no_change'])
         if len(role_list) == 0:
