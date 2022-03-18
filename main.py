@@ -29,6 +29,8 @@ from cogs.utils.converters import locale_2_lang
 
 from typing import List, Union, Callable
 
+# discord.http.API_VERSION = 9
+
 
 class ClanBot(commands.Bot):
     version = ''
@@ -150,12 +152,12 @@ class ClanBot(commands.Bot):
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400, post=post, get=get, channels=channels, forceget=forceget)
-        if 'banshee' in upd_type:
+        if 'banshee' in upd_type and get:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 await self.data.get_banshee(self.langs, forceget=forceget)
-        if 'ada' in upd_type:
+        if 'ada' in upd_type and get:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
@@ -190,7 +192,7 @@ class ClanBot(commands.Bot):
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 await self.universal_update(self.data.get_raids, 'raids', 604800, post=post, get=get, channels=channels, forceget=forceget)
-        if 'evweekly' in upd_type:
+        if 'evweekly' in upd_type and get:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
