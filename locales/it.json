@@ -49,7 +49,11 @@
         "no_admin": "You lack the administrator permissions to use this command",
         "language_select": "Select language",
         "lfg_cleanup": "Done, removed {} entries.",
-        "noslash": "Try adding the bot to this server again by clicking 'Add to Server' in the bot's profile. **DO NOT** kick the bot, this will delete all the settings for the server. If you need more help, feel free to ask at the support server. You can find the link to the support server by running the `support` command."
+        "noslash": "Try adding the bot to this server again by clicking 'Add to Server' in the bot's profile. **DO NOT** kick the bot, this will delete all the settings for the server. If you need more help, feel free to ask at the support server. You can find the link to the support server by running the `support` command.",
+        "perm_check_title": "Permission check failed",
+        "perm_check_description": "I lack at least one of the following permissions in this channel to function properly",
+        "perm_send_msg": "Send messages {}",
+        "perm_embed_links": "Embed links {}"
     },
     "lfg": {
         "go": "Go",
