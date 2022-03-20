@@ -515,7 +515,7 @@ class LFGModal(discord.ui.Modal):
                 await self.bot_loc.bot.raid.edit_info(self.old_group, args, group)
                 await self.old_group.delete()
         if channel.permissions_for(interaction.guild.me).embed_links:
-            embed = self.bot_loc.bot.raid.make_embed(group, self.bot_loc.bot.translations[lang], lang)
+            embed = await self.bot_loc.bot.raid.make_embed(group, self.bot_loc.bot.translations[lang], lang)
             buttons = GroupButtons(group.id, self.bot_loc.bot,
                                    label_go=self.bot_loc.bot.translations[lang]['lfg']['button_want'],
                                    label_help=self.bot_loc.bot.translations[lang]['lfg']['button_help'],

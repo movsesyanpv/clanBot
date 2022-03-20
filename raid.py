@@ -467,7 +467,7 @@ class LFG:
         self.c.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
         self.conn.commit()
 
-    def make_embed(self, message: discord.Message, translations: dict, lang: str) -> discord.Embed:
+    async def make_embed(self, message: discord.Message, translations: dict, lang: str) -> discord.Embed:
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
         name = self.get_cell('group_id', message.id, 'name')
         tz = self.get_cell('group_id', message.id, 'timezone')
@@ -491,7 +491,7 @@ class LFG:
         length = self.get_cell('group_id', message.id, 'length')
         group_mode = self.get_cell('group_id', message.id, 'group_mode')
         owner = self.get_cell('group_id', message.id, 'owner')
-        owner = message.guild.get_member(owner)
+        owner = await message.guild.fetch_member(owner)
         if owner is None:
             nick = 'None'
         else:
@@ -632,7 +632,7 @@ class LFG:
         is_embed = self.get_cell('group_id', message.id, 'is_embed')
 
         if is_embed and message.channel.permissions_for(message.guild.me).embed_links:
-            embed = self.make_embed(message, translations, lang)
+            embed = await self.make_embed(message, translations, lang)
             await message.edit(content=None, embed=embed)
             return
 

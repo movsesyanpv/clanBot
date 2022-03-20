@@ -83,7 +83,7 @@ class Group(commands.Cog):
                         msg = '{} {},'.format(msg, parts[0])
                         parts.pop(0)
         if is_embed and ctx.channel.permissions_for(ctx.guild.me).embed_links:
-            embed = ctx.bot.raid.make_embed(message, ctx.bot.translations[lang], lang)
+            embed = await ctx.bot.raid.make_embed(message, ctx.bot.translations[lang], lang)
             out = await message.channel.send(content=msg)
             buttons = GroupButtons(out.id, ctx.bot, label_go=ctx.bot.translations[lang]['lfg']['button_want'],
                                    label_help=ctx.bot.translations[lang]['lfg']['button_help'],
