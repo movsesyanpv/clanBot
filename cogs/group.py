@@ -6,6 +6,7 @@ import dateparser
 import asyncio
 from cogs.utils.views import GroupButtons, ActivityType, ModeLFG, RoleLFG, ConfirmLFG, MyButton, ViewLFG, LFGModal
 from cogs.utils.converters import locale_2_lang, CtxLocale
+from cogs.utils.checks import message_permissions
 from babel.dates import format_datetime
 from babel import Locale
 
@@ -764,6 +765,10 @@ class Group(commands.Cog):
     async def lfg_sl(self, ctx):
         lang = await locale_2_lang(ctx)
         translations = ctx.bot.translations[lang]['lfg']
+
+        if not await message_permissions(ctx, lang):
+            return
+
         modal = LFGModal(ctx.bot, ctx.interaction.locale, translations)
         await ctx.interaction.response.send_modal(modal)
 
@@ -774,6 +779,10 @@ class Group(commands.Cog):
     async def edit_lfg_msg(self, ctx, message: discord.Message):
         lang = await locale_2_lang(ctx)
         translations = ctx.bot.translations[lang]['lfg']
+
+        if not await message_permissions(ctx, lang):
+            return
+
         if ctx.bot.raid.is_raid(message.id):
             owner = ctx.bot.raid.get_cell('group_id', message.id, 'owner')
             if ctx.author.id == owner:
@@ -789,9 +798,12 @@ class Group(commands.Cog):
     )
     @commands.guild_only()
     async def edit_lfg_sl(self, ctx):
-        await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
         translations = ctx.bot.translations[lang]['lfg']
+
+        if not await message_permissions(ctx, lang):
+            return
+        await ctx.defer(ephemeral=True)
 
         lfg_list = ctx.bot.raid.c.execute(
             'SELECT group_id, name, time, channel_name, server_name, timezone, lfg_channel FROM raid WHERE owner=?',

@@ -10,6 +10,7 @@ import os
 import sqlite3
 from cogs.utils.views import UpdateTypes, BotLangs
 from cogs.utils.converters import locale_2_lang
+from cogs.utils.checks import message_permissions
 import dateparser
 
 
@@ -27,11 +28,12 @@ class ServerAdmin(commands.Cog):
     @autopost.command(description='Make the bot stop posting updates in this channel')
     async def remove(self, ctx):
         await ctx.defer(ephemeral=True)
+        lang = await locale_2_lang(ctx)
         if ctx.guild is None:
-            await ctx.respond("This command can not be used in DMs")
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_dm'])
             return
         if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond("You lack the administrator permissions to use this command")
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
             return
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
@@ -44,11 +46,14 @@ class ServerAdmin(commands.Cog):
     @register.command(description='Make the bot start posting rotation updates in this channel')
     async def rotations(self, ctx):
         await ctx.defer(ephemeral=True)
+        lang = await locale_2_lang(ctx)
         if ctx.guild is None:
-            await ctx.respond("This command can not be used in DMs")
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_dm'])
             return
         if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond("You lack the administrator permissions to use this command")
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
+            return
+        if not await message_permissions(ctx, lang):
             return
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
@@ -63,11 +68,14 @@ class ServerAdmin(commands.Cog):
     @register.command(description='Make the bot start posting changelogs in this channel')
     async def changelogs(self, ctx):
         await ctx.defer(ephemeral=True)
+        lang = await locale_2_lang(ctx)
         if ctx.guild is None:
-            await ctx.respond("This command can not be used in DMs")
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_dm'])
             return
         if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond("You lack the administrator permissions to use this command")
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
+            return
+        if not await message_permissions(ctx, lang):
             return
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''INSERT or IGNORE into updates values (?,?)''',
@@ -152,6 +160,8 @@ class ServerAdmin(commands.Cog):
         if not ctx.channel.permissions_for(ctx.author).administrator:
             await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
             return
+        if not await message_permissions(ctx, lang):
+            return
         notifier_type = upd_type
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
@@ -190,6 +200,8 @@ class ServerAdmin(commands.Cog):
         lang = await locale_2_lang(ctx)
         if not ctx.channel.permissions_for(ctx.author).administrator:
             await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
+            return
+        if not await message_permissions(ctx, lang):
             return
         if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
             ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
@@ -407,6 +419,8 @@ class ServerAdmin(commands.Cog):
         lang = await locale_2_lang(ctx)
         if not ctx.channel.permissions_for(ctx.author).administrator:
             await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
+            return
+        if not await message_permissions(ctx, lang):
             return
         get = True
         channels = None
