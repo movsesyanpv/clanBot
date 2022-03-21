@@ -743,9 +743,14 @@ class LFG:
                 if len(wanters) > number:
                     if not wanters[number] in goers:
                         goers.append(wanters[number])
-        for number in numbers:
-            wanters.pop(number)
-            w_dm.pop(number)
+        tmp_wanters = []
+        tmp_w_dm = []
+        for i in range(len(wanters)):
+            if i not in numbers:
+                tmp_wanters.append(wanters[i])
+                tmp_w_dm.append(w_dm[i])
+        wanters = tmp_wanters
+        w_dm = tmp_w_dm
 
         self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
         self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
