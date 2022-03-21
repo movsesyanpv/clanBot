@@ -445,10 +445,11 @@ class LFG:
         w_dm = eval(w_dm.fetchone()[0])
 
         size = self.get_cell('group_id', group_id, 'size')
+        group_mode = self.get_cell('group_id', group_id, 'group_mode')
 
         if user.mention in goers and emoji == '👌':
             goers.pop(goers.index(user.mention))
-            if len(wanters) > 0:
+            if len(wanters) > 0 and group_mode == 'manual':
                 goers.append(wanters[0])
                 wanters.pop(0)
                 if len(w_dm) > 0:
