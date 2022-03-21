@@ -449,7 +449,7 @@ class LFG:
 
         if user.mention in goers and emoji == '👌':
             goers.pop(goers.index(user.mention))
-            if len(wanters) > 0 and group_mode == 'manual':
+            if len(wanters) > 0 and group_mode == 'basic':
                 goers.append(wanters[0])
                 wanters.pop(0)
                 if len(w_dm) > 0:
