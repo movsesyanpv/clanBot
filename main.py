@@ -38,7 +38,7 @@ class ClanBot(commands.Bot):
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'mods', 'xur', 'osiris', 'alerts', 'events', 'gambit']
     daily_rotations = ('strikes', 'spider', 'banshee', 'ada', 'mods')
-    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'gambit')
+    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire')
     embeds_with_img = ['thelie']
 
     sched = AsyncIOScheduler(timezone='UTC')
