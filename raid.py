@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 from hashids import Hashids
 from babel.dates import format_datetime, get_timezone_name, get_timezone, get_timezone_gmt
 from babel import Locale
-from cogs.utils.views import LFGModal
+from cogs.utils.views import LFGModal, DMSelectLFG
 
 from typing import List, Union
 
@@ -38,10 +38,11 @@ class LFG:
         }
     }
 
-    def __init__(self, **options):
+    def __init__(self, bot, **options):
         super().__init__(**options)
         self.conn = sqlite3.connect('lfg.db')
         self.c = self.conn.cursor()
+        self.bot = bot
 
     def add(self, message: discord.Message, lfg_string: str = None, args: dict = None) -> None:
         if lfg_string is None:
@@ -702,19 +703,23 @@ class LFG:
 
         if len(wanters) > 0:
             i = 0
-            dm_message = await owner.dm_channel.send(msg)
-            dm_id = dm_message.id
+            wanter_select = []
             for wanter in wanters:
-                if i < 6:
-                    msg = '{}\n{}. {}'.format(msg, emoji[i], wanter)
-                    await dm_message.edit(content=msg)
-                    await dm_message.add_reaction(emoji[i])
-                    i = i + 1
+                wanter_select.append(discord.SelectOption(label=wanter, value=str(i)))
+                i += 1
+                # if i < 6:
+                #     msg = '{}\n{}. {}'.format(msg, emoji[i], wanter)
+                #     await dm_message.edit(content=msg)
+                #     await dm_message.add_reaction(emoji[i])
+                #     i = i + 1
+            view = DMSelectLFG(wanter_select, '{}'.format(group_id), self.bot)
+            dm_message = await owner.dm_channel.send(content=msg, view=view)
+            dm_id = dm_message.id
 
         self.c.execute('''UPDATE raid SET dm_message=? WHERE owner=? AND group_id=?''', (dm_id, owner.id, group_id))
         self.conn.commit()
 
-    async def add_going(self, group_id: int, number: int) -> None:
+    async def add_going(self, group_id: int, numbers: Union[int, List[int]]) -> None:
         goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,)).fetchone()
 
         if len(goers) > 0:
@@ -731,12 +736,16 @@ class LFG:
         size = self.get_cell('group_id', group_id, 'size')
         group_mode = self.get_cell('group_id', group_id, 'group_mode')
 
-        if size > len(goers):
-            if len(wanters) > number:
-                if not wanters[number] in goers:
-                    goers.append(wanters[number])
-                    wanters.pop(number)
-                    w_dm.pop(number)
+        numbers = list(numbers)
+
+        for number in numbers:
+            if size > len(goers):
+                if len(wanters) > number:
+                    if not wanters[number] in goers:
+                        goers.append(wanters[number])
+        for number in numbers:
+            wanters.pop(number)
+            w_dm.pop(number)
 
         self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
         self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
@@ -835,7 +844,7 @@ class LFG:
         self.conn.commit()
 
     def get_all(self) -> List:
-        lfg_list = self.c.execute('SELECT group_id, lfg_channel, time, server_id, length FROM raid')
+        lfg_list = self.c.execute('SELECT group_id, lfg_channel, time, server_id, length, dm_message, owner FROM raid')
         lfg_list = lfg_list.fetchall()
 
         return lfg_list

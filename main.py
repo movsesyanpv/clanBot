@@ -24,7 +24,7 @@ from discord.ext import commands
 import raid as lfg
 import destiny2data as d2
 import unauthorized
-from cogs.utils.views import GroupButtons
+from cogs.utils.views import GroupButtons, DMSelectLFG
 from cogs.utils.converters import locale_2_lang
 
 from typing import List, Union, Callable
@@ -36,9 +36,9 @@ class ClanBot(commands.Bot):
     version = ''
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
-    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'mods', 'xur', 'osiris', 'alerts', 'events']
+    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'mods', 'xur', 'osiris', 'alerts', 'events', 'gambit']
     daily_rotations = ('strikes', 'spider', 'banshee', 'ada', 'mods')
-    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire')
+    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'gambit')
     embeds_with_img = ['thelie']
 
     sched = AsyncIOScheduler(timezone='UTC')
@@ -73,7 +73,7 @@ class ClanBot(commands.Bot):
                                   (self.args.cert, self.args.key))
         except RuntimeError:
             return
-        self.raid = lfg.LFG()
+        self.raid = lfg.LFG(self)
         asyncio.run(self.set_up_guild_db())
 
         self.guild_db_sync = sqlite3.connect('guild.db')
@@ -230,6 +230,11 @@ class ClanBot(commands.Bot):
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 # await self.universal_update(self.data.get_the_lie_progress, 'thelie', 3600, channels=channels, post=post, get=get, forceget=forceget)
                 pass
+        if 'gambit' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_gambit_modifiers, 'gambit', 604800, post=post, get=get, channels=channels, forceget=forceget)
         if self.args.forceupdate:
             await self.data.destiny.close()
             await self.logout()
@@ -282,6 +287,15 @@ class ClanBot(commands.Bot):
                     self.add_view(buttons)
                 except discord.NotFound:
                     self.add_view(GroupButtons(lfg[0], self))
+                if lfg[5] != 0:
+                    owner = await self.fetch_user(lfg[6])
+                    if owner.dm_channel is None:
+                        await owner.create_dm()
+                    dm_msg = await owner.dm_channel.fetch_message(lfg[5])
+                    if len(dm_msg.components) == 0:
+                        await self.raid.upd_dm(owner, lfg[0], self.translations[self.guild_lang(lfg[3])])
+                    else:
+                        self.add_view(DMSelectLFG(dm_msg.components[0].children[0].options, custom_id=dm_msg.components[0].children[0].custom_id, bot=self))
             self.persistent_views_added = True
         await self.change_presence(status=discord.Status.online, activity=game)
         # self.all_commands['update'].enabled = True

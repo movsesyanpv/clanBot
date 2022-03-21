@@ -57,8 +57,11 @@ class MySelect(discord.ui.Select):
         super().__init__(min_values=min_values, max_values=max_values, options=options, row=row)
 
     async def callback(self, interaction: discord.Interaction):
-        if interaction.user != self.view.owner:
-            return
+        try:
+            if interaction.user != self.view.owner:
+                return
+        except AttributeError:
+            pass
         self.view.value = []
         for selected in self.values:
             self.view.value.append(selected)
@@ -272,6 +275,31 @@ class SelectLFG(discord.ui.Select):
         old_channel = await self.bot.fetch_channel(group[6])
         message = await old_channel.fetch_message(group[0])
         await self.bot.raid.make_edits(self.bot, interaction, message, self.translations)
+
+
+class DMSelect(discord.ui.Select):
+    def __init__(self, max_values, options, custom_id, bot):
+        super().__init__(min_values=1, max_values=max_values, options=options, custom_id='{}_select'.format(custom_id))
+        self.bot = bot
+        self.custom_id = custom_id
+
+    async def callback(self, interaction: discord.Interaction):
+        want2goer = [int(number) for number in self.values]
+        await self.bot.raid.add_going(self.custom_id, want2goer)
+        lang = self.bot.guild_lang(self.bot.raid.get_cell('group_id', self.custom_id, 'server_id'))
+        channel = self.bot.raid.get_cell('group_id', self.custom_id, 'lfg_channel')
+        message = await self.bot.fetch_channel(channel)
+        message = await message.fetch_message(self.custom_id)
+        await self.bot.raid.update_group_msg(message, self.bot.translations[lang], lang)
+        await self.bot.raid.upd_dm(interaction.user, self.custom_id, self.bot.translations[lang])
+
+
+class DMSelectLFG(discord.ui.View):
+    def __init__(self, options, custom_id, bot):
+        super().__init__(timeout=None)
+
+        self.select = DMSelect(max_values=len(options), options=options, custom_id=custom_id, bot=bot)
+        self.add_item(self.select)
 
 
 class ViewLFG(discord.ui.View):

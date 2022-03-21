@@ -1917,6 +1917,44 @@ class D2data:
                                    order=5, type='weekly')
         await self.write_bot_data('empire_hunts', langs)
 
+    async def get_gambit_modifiers(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
+        activities_resp = await self.get_activities_response('gambit_modifiers', force=forceget)
+        if not activities_resp:
+            return False
+        resp_time = activities_resp['timestamp']
+
+        for lang in langs:
+            local_types = self.translations[lang]
+            r_json = await self.destiny.decode_hash(135431604, 'DestinyActivityDefinition', language=lang)
+
+            self.data[lang]['gambit'] = {
+                'thumbnail': {
+                    'url': 'https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_'
+                           '96f7e9009d4f26e30cfd60564021925e.png'
+                },
+                'fields': [],
+                'color': 1332799,
+                'type': 'rich',
+                'title': r_json['displayProperties']['name'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
+            }
+
+            db_data = []
+            for key in activities_resp['Response']['activities']['data']['availableActivities']:
+                item_hash = key['activityHash']
+                if item_hash == 135431604:
+                    try:
+                        key['modifierHashes'].pop(key['modifierHashes'].index(997157971))
+                    except ValueError:
+                        pass
+                    mods = await self.decode_modifiers(key, lang)
+                    self.data[lang]['gambit']['fields'] = mods[0]
+                    db_data = mods[1]
+            await self.write_to_db(lang, 'gambit', db_data, name=r_json['displayProperties']['name'],
+                                   order=5, type='weekly')
+        await self.write_bot_data('gambit', langs)
+
     async def get_crucible_rotators(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('cruciblerotators', string='crucible rotators',
                                                              force=forceget)
@@ -2384,6 +2422,7 @@ class D2data:
         for lang in langs:
             data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
             data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('xur',))
+            data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('gambit',))
         data_db.commit()
         data_cursor.close()
         data_db.close()
