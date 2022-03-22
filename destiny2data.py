@@ -1945,7 +1945,11 @@ class D2data:
                 item_hash = key['activityHash']
                 if item_hash == 135431604:
                     try:
-                        key['modifierHashes'].pop(key['modifierHashes'].index(997157971))
+                        key['modifierHashes'].pop(key['modifierHashes'].index(4077775851))
+                    except ValueError:
+                        pass
+                    try:
+                        key['modifierHashes'].pop(key['modifierHashes'].index(256472851))
                     except ValueError:
                         pass
                     mods = await self.decode_modifiers(key, lang)
