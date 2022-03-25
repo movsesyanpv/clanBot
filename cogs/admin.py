@@ -389,12 +389,28 @@ class Admin(commands.Cog):
 
     @commands.slash_command(
         name='help',
+        description_localizations={
+            'ru': "Информация о командах"
+        },
         description='The help command!'
     )
     async def help_command_sl(self, ctx,
-                              command_name: Option(str, 'Command name', required=False, default='all'),
+                              command_name: Option(str, 'Command name', required=False, default='all',
+                                                   name_localizations={
+                                                       'ru': 'имя_команды'
+                                                   },
+                                                   description_localizations={
+                                                       'ru': "Имя команды"
+                                                   }),
                               additional_arg: Option(str, 'Additional argument (can be a metric table name)',
-                                                     required=False, default=None)):
+                                                     required=False, default=None,
+                                                     name_localizations={
+                                                         'ru': "дополнительный_параметр"
+                                                     },
+                                                     description_localizations={
+                                                         'ru': 'Дополнительный параметр (может быть таблицей метрик)'
+                                                     })
+                              ):
         await ctx.defer()
         lang = await locale_2_lang(ctx)
         if ctx.guild is not None:

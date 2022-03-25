@@ -25,7 +25,12 @@ class ServerAdmin(commands.Cog):
         "start", "Register this channel for automatic posts"
     )
 
-    @autopost.command(description='Make the bot stop posting updates in this channel')
+    @autopost.command(
+        description_localizations={
+            'ru': "Прекратить автоматические посты бота в этом канале"
+        },
+        description='Make the bot stop posting updates in this channel'
+    )
     async def remove(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
@@ -43,7 +48,12 @@ class ServerAdmin(commands.Cog):
             msg = 'Got it, {}'.format(ctx.author.mention)
             await ctx.respond(msg)
 
-    @register.command(description='Make the bot start posting rotation updates in this channel')
+    @register.command(
+        description_localizations={
+            'ru': "Начать автоматические посты об обновлениях игры в этом канале"
+        },
+        description='Make the bot start posting rotation updates in this channel'
+    )
     async def rotations(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
@@ -65,7 +75,12 @@ class ServerAdmin(commands.Cog):
             await ctx.bot.force_update(['daily', 'weekly'], get=False, channels=[ctx.channel.id], forceget=False)
         return
 
-    @register.command(description='Make the bot start posting changelogs in this channel')
+    @register.command(
+        description_localizations={
+            'ru': "Начать автоматические посты об обновлениях бота в этом канале"
+        },
+        description='Make the bot start posting changelogs in this channel'
+    )
     async def changelogs(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
@@ -86,8 +101,7 @@ class ServerAdmin(commands.Cog):
             await ctx.respond(msg)
         return
 
-    @commands.command(
-        description='Delete groups that are unavailable or inactive'
+    @commands.command(description='Delete groups that are unavailable or inactive'
     )
     async def lfgcleanup(self, ctx, days=0):
         lang = 'en'
@@ -110,9 +124,19 @@ class ServerAdmin(commands.Cog):
                     pass
 
     @commands.slash_command(name='lfgcleanup',
+                            description_localizations={
+                                'ru': "Удалить прошедшие сборы"
+                            },
                             description='Delete groups that are unavailable or inactive')
     async def sl_lfgcleanup(self, ctx,
-                            days: Option(int, "Days since the activity was finished", required=False, default=0)):
+                            days: Option(int, "Days since the activity was finished", required=False, default=0,
+                                         name_localizations={
+                                             'ru': 'дни'
+                                         },
+                                         description_localizations={
+                                             'ru': 'Дней с окончания активности'
+                                         })
+                            ):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
         msg = ctx.bot.translations[lang]['msg']['lfg_cleanup']
@@ -151,10 +175,28 @@ class ServerAdmin(commands.Cog):
         return
 
     @commands.slash_command(name='regnotifier',
+                            description_localizations={
+                                'ru': "Зарегистрировать канал для автоматических постов"
+                            },
                             description='Register notifier channel')
     @commands.guild_only()
     async def sl_regnotifier(self, ctx,
-                             upd_type: Option(str, "The type of notifier", required=False, default='notifiers', choices=['notifiers', 'updates'])):
+                             upd_type: Option(str, "The type of notifier", required=False, default='notifiers',
+                                              choices=[discord.OptionChoice('Rotations', value='notifiers',
+                                                                            name_localizations={
+                                                                                'ru': 'Обновления игры'
+                                                                            }),
+                                                       discord.OptionChoice('Changelogs', value='updates',
+                                                                            name_localizations={
+                                                                                'ru': 'Обновления бота'
+                                                                            })],
+                                              name_localizations={
+                                                  'ru': 'тип_постов'
+                                              },
+                                              description_localizations={
+                                                  'ru': 'Тип постов на канале'
+                                              })
+                             ):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
         if not ctx.channel.permissions_for(ctx.author).administrator:
@@ -193,6 +235,9 @@ class ServerAdmin(commands.Cog):
         return
 
     @commands.slash_command(name='rmnotifier',
+                            description_localizations={
+                                'ru': "Удалить регистрацию канала для автоматических постов"
+                            },
                             description='Deregister notifier channel')
     @commands.guild_only()
     async def sl_rmnotifier(self, ctx):
@@ -232,7 +277,13 @@ class ServerAdmin(commands.Cog):
             await message.delete()
         return
 
-    @commands.slash_command(name='setlang')
+    @commands.slash_command(
+        name='setlang',
+        description_localizations={
+            'ru': "Указать боту язык сервера"
+        },
+        description='Tell the bot the server\'s language'
+    )
     @commands.guild_only()
     async def sl_setlang(self, ctx):
         await ctx.defer(ephemeral=True)
@@ -297,9 +348,19 @@ class ServerAdmin(commands.Cog):
             await ctx.message.delete()
 
     @commands.slash_command(name='setclan',
+                            description_localizations={
+                                'ru': "Задать клан Destiny 2 для сервера"
+                            },
                             description='Set a Destiny 2 clan for the server')
     @commands.guild_only()
-    async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True)):
+    async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True,
+                                                    name_localizations={
+                                                        'ru': 'клан'
+                                                    },
+                                                    description_localizations={
+                                                        'ru': 'Имя или ID клана'
+                                                    })
+                         ):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
         if not ctx.channel.permissions_for(ctx.author).administrator:
@@ -411,6 +472,9 @@ class ServerAdmin(commands.Cog):
 
     @commands.slash_command(
         name='update',
+        description_localizations={
+            'ru': "Получить обновления от Bungie"
+        },
         description='Get updates from Bungie'
     )
     @commands.guild_only()
