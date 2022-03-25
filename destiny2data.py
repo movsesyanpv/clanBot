@@ -1182,7 +1182,8 @@ class D2data:
                                     elif item_resp['classType'] == 2:
                                         exotic['name'] = self.translations[lang]['Warlock']
 
-                                    self.data[lang]['xur']['fields'].append(exotic)
+                                    if item_hash not in [3654674561, 3856705927]:
+                                        self.data[lang]['xur']['fields'].append(exotic)
                                     for item in cat_sales[1]:
                                         if item['hash'] == item_hash:
                                             sales[2]['items'].append(item)
@@ -1190,7 +1191,7 @@ class D2data:
                                 if item_resp['summaryItemHash'] in [715326750, 2673424576]:
                                     i = 0
                                     for item in self.data[lang]['xur']['fields']:
-                                        if item['name'] == self.translations[lang]['msg']['weapon']:
+                                        if item['name'] == self.translations[lang]['msg']['weapon'] and item_hash not in [3654674561, 3856705927]:
                                             self.data[lang]['xur']['fields'][i]['value'] = item_name
                                         i += 1
                                     for item in cat_sales[1]:
