@@ -812,6 +812,7 @@ class Group(commands.Cog):
 
         if len(lfg_list) == 0:
             await ctx.respond(translations['lfglist_empty'], ephemeral=True)
+            return
         lfg_options = []
         i = 0
         for lfg in lfg_list:
