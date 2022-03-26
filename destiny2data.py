@@ -2524,14 +2524,14 @@ class D2data:
         leaderboard = []
 
         if is_time:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM playermetrics WHERE `{}`>0 ORDER BY `{}` ASC'''.format(metric, metric, metric, number+50))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}` FROM playermetrics WHERE `{}`>0 ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             for place in raw_leaderboard:
                 index = raw_leaderboard.index(place)
                 leaderboard.append([raw_leaderboard[index][0], str(timedelta(minutes=(int(raw_leaderboard[index][1]) / 60000))).split('.')[0]])
         else:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM playermetrics WHERE `{}`>0 ORDER BY `{}` DESC'''.format(metric, metric, metric, number+50))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}` FROM playermetrics WHERE `{}`>0 ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_kda:
@@ -2564,7 +2564,7 @@ class D2data:
             while indexed_list[-1][0] > number:
                 indexed_list.pop(-1)
 
-            return indexed_list[:old_i]
+            return indexed_list
         else:
             return leaderboard
 
