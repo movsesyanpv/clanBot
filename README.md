@@ -1,3 +1,5 @@
+![Discord Bots](https://top.gg/api/widget/servers/677145368894373965.svg)
+
 It would be awesome if you just add the bot to your server, and not actually self-host it. Anyways, the instructions for self-hosting are below.
 
 # Translations
