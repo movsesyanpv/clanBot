@@ -42,11 +42,9 @@ class LFG:
     def __init__(self, bot, **options):
         super().__init__(**options)
         asyncio.run(self.set_up_db())
-        # self.conn = sqlite3.connect('lfg.db')
-        # self.c = self.conn.cursor()
         self.bot = bot
 
-    async def set_up_db(self):
+    async def set_up_db(self) -> None:
         self.conn = await aiosqlite.connect('lfg.db')
 
     async def add(self, message: discord.Message, lfg_string: str = None, args: dict = None) -> None:
@@ -848,7 +846,7 @@ class LFG:
             await user.create_dm()
         if len(lfg_list) > 0:
             await user.dm_channel.send(msg)
-            return lfg_list
+            return list(lfg_list)
         else:
             await user.dm_channel.send(translations['lfglist_empty'])
             return False
