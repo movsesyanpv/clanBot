@@ -2337,6 +2337,14 @@ class D2data:
         else:
             flawless = find_adept(saint_resp)
 
+        modifiers = []
+        trials_are_active = False
+        activities = await self.get_activities_response('activities')
+        for activity in activities['Response']['activities']['data']['availableActivities']:
+            if activity['activityHash'] == 588019350:
+                modifiers = activity['modifierHashes']
+                trials_are_active = True
+
         for lang in langs:
             db_data = []
             self.data[lang]['osiris'] = {
@@ -2351,6 +2359,8 @@ class D2data:
                 'footer': {'text': self.translations[lang]['msg']['resp_time']},
                 'timestamp': datetime.utcnow().isoformat()
             }
+            if not trials_are_active:
+                continue
             locale = self.translations[lang]['osiris']
             if flawless != '?':
                 flawless_def = await self.destiny.decode_hash(flawless, 'DestinyInventoryItemDefinition', language=lang)
