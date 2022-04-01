@@ -138,11 +138,11 @@ class WantButton(discord.ui.Button):
         super().__init__(style=style, label=label, row=row, custom_id=custom_id)
 
     async def callback(self, interaction: discord.Interaction):
-        self.view.bot.raid.add_people(interaction.message.id, interaction.user)
+        await self.view.bot.raid.add_people(interaction.message.id, interaction.user)
         lang = self.view.bot.guild_lang(interaction.message.guild.id)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
-        mode = self.view.bot.raid.get_cell('group_id', interaction.message.id, 'group_mode')
-        owner = self.view.bot.get_user(self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
+        mode = await self.view.bot.raid.get_cell('group_id', interaction.message.id, 'group_mode')
+        owner = self.view.bot.get_user(await self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
         if mode == 'manual' and owner.id != interaction.user.id:
             if interaction.user.nick is not None:
                 nick = interaction.user.nick
@@ -158,7 +158,7 @@ class MaybeButton(discord.ui.Button):
         super().__init__(style=style, label=label, row=row, custom_id=custom_id)
 
     async def callback(self, interaction: discord.Interaction):
-        self.view.bot.raid.add_mb_goers(interaction.message.id, interaction.user)
+        await self.view.bot.raid.add_mb_goers(interaction.message.id, interaction.user)
         lang = self.view.bot.guild_lang(interaction.message.guild.id)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
 
@@ -168,22 +168,22 @@ class NoGoButton(discord.ui.Button):
         super().__init__(style=style, label=label, row=row, custom_id=custom_id)
 
     async def callback(self, interaction: discord.Interaction):
-        was_goer = self.view.bot.raid.is_goer(interaction.message, interaction.user)
-        is_mb_goer = self.view.bot.raid.is_mb_goer(interaction.message, interaction.user)
-        was_wanter = self.view.bot.raid.is_wanter(interaction.message, interaction.user)
+        was_goer = await self.view.bot.raid.is_goer(interaction.message, interaction.user)
+        is_mb_goer = await self.view.bot.raid.is_mb_goer(interaction.message, interaction.user)
+        was_wanter = await self.view.bot.raid.is_wanter(interaction.message, interaction.user)
         emoji = ''
         if was_goer or was_wanter:
             emoji = '👌'
         elif is_mb_goer:
             emoji = '❓'
-        self.view.bot.raid.rm_people(interaction.message.id, interaction.user, emoji)
+        await self.view.bot.raid.rm_people(interaction.message.id, interaction.user, emoji)
         lang = self.view.bot.guild_lang(interaction.message.guild.id)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
         if not was_goer and not is_mb_goer:
             locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
             if was_wanter:
                 await interaction.response.send_message(content=self.view.bot.translations[locale]['lfg']['will_not_go'], ephemeral=True)
-                owner = self.view.bot.get_user(self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
+                owner = self.view.bot.get_user(await self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
                 await self.view.bot.raid.upd_dm(owner, interaction.message.id, self.view.bot.translations[locale])
             else:
                 await interaction.response.send_message(content=self.view.bot.translations[locale]['lfg']['was_not_going'], ephemeral=True)
@@ -194,27 +194,27 @@ class DeleteButton(discord.ui.Button):
         super().__init__(style=style, label=label, row=row, custom_id=custom_id)
 
     async def callback(self, interaction: discord.Interaction):
-        owner = self.view.bot.get_user(self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
+        owner = self.view.bot.get_user(await self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
         message = interaction.message
         if owner.id == interaction.user.id:
-            mode = self.view.bot.raid.get_cell('group_id', message.id, 'group_mode')
+            mode = await self.view.bot.raid.get_cell('group_id', message.id, 'group_mode')
             if mode == 'manual':
-                dm_id = self.view.bot.raid.get_cell('group_id', message.id, 'dm_message')
+                dm_id = await self.view.bot.raid.get_cell('group_id', message.id, 'dm_message')
                 if owner.dm_channel is None:
                     await owner.create_dm()
                 if dm_id != 0:
                     dm_message = await owner.dm_channel.fetch_message(dm_id)
                     await dm_message.delete()
             if message.guild.me.guild_permissions.manage_roles:
-                role = message.guild.get_role(self.view.bot.raid.get_cell('group_id', message.id, 'group_role'))
+                role = message.guild.get_role(await self.view.bot.raid.get_cell('group_id', message.id, 'group_role'))
                 if role is not None:
                     await role.delete(reason='LFG deletion')
             if message.guild.me.guild_permissions.manage_channels:
-                group_ch = message.guild.get_channel(self.view.bot.raid.get_cell('group_id', message.id, 'group_channel'))
+                group_ch = message.guild.get_channel(await self.view.bot.raid.get_cell('group_id', message.id, 'group_channel'))
                 if group_ch is not None:
                     if group_ch.permissions_for(message.guild.me).manage_channels:
                         await group_ch.delete(reason='LFG deletion')
-            self.view.bot.raid.del_entry(message.id)
+            await self.view.bot.raid.del_entry(message.id)
             await message.delete()
         else:
             lang = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
@@ -286,8 +286,8 @@ class DMSelect(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         want2goer = [int(number) for number in self.values]
         await self.bot.raid.add_going(self.custom_id, want2goer)
-        lang = self.bot.guild_lang(self.bot.raid.get_cell('group_id', self.custom_id, 'server_id'))
-        channel = self.bot.raid.get_cell('group_id', self.custom_id, 'lfg_channel')
+        lang = self.bot.guild_lang(await self.bot.raid.get_cell('group_id', self.custom_id, 'server_id'))
+        channel = await self.bot.raid.get_cell('group_id', self.custom_id, 'lfg_channel')
         message = await self.bot.fetch_channel(channel)
         message = await message.fetch_message(self.custom_id)
         await self.bot.raid.update_group_msg(message, self.bot.translations[lang], lang)
@@ -399,9 +399,10 @@ class LFGModal(discord.ui.Modal):
                         parts.pop(0)
         return await channel.send(msg)
 
-    def validate_edits(self, a_type, mode, roles, role_str):
-        group_data = self.bot_loc.bot.raid.c.execute('''SELECT is_embed, group_mode, the_role FROM raid WHERE group_id=?''', (self.old_group.id,))
-        group_data = group_data.fetchone()
+    async def validate_edits(self, a_type, mode, roles, role_str):
+        cursor = await self.bot_loc.bot.raid.conn.cursor()
+        group_data = await cursor.execute('''SELECT is_embed, group_mode, the_role FROM raid WHERE group_id=?''', (self.old_group.id,))
+        group_data = await group_data.fetchone()
         edits = [a_type, mode, roles, role_str]
         if a_type == '--':
             edits[0] = self.at[group_data[0]]
@@ -418,6 +419,7 @@ class LFGModal(discord.ui.Modal):
                     pass
             if len(edits[3]) > 0:
                 edits[3] = edits[3][:-1]
+        await cursor.close()
         return edits
 
     async def callback(self, interaction: discord.Interaction):
@@ -492,7 +494,7 @@ class LFGModal(discord.ui.Modal):
         values = self.children
         await interaction.edit_original_message(content=translations['processing'], view=None)
         if self.is_edit:
-            button_inputs = self.validate_edits(a_type, mode, roles, role)
+            button_inputs = await self.validate_edits(a_type, mode, roles, role)
         else:
             if a_type == '-':
                 a_type = 'default'
@@ -529,12 +531,12 @@ class LFGModal(discord.ui.Modal):
         lang = self.bot_loc.bot.guild_lang(interaction.guild.id)
         if not self.is_edit:
             group = await self.send_initial_lfg(lang, args, channel)
-            self.bot_loc.bot.raid.add(group, args=args)
-            self.bot_loc.bot.raid.set_owner(interaction.user.id, group.id)
+            await self.bot_loc.bot.raid.add(group, args=args)
+            await self.bot_loc.bot.raid.set_owner(interaction.user.id, group.id)
         else:
-            old_channel = self.bot_loc.bot.raid.get_cell('group_id', self.old_group.id, 'lfg_channel')
+            old_channel = await self.bot_loc.bot.raid.get_cell('group_id', self.old_group.id, 'lfg_channel')
             old_channel = await self.bot_loc.bot.fetch_channel(old_channel)
-            old_roles = self.bot_loc.bot.raid.get_cell('group_id', self.old_group.id, 'the_role')
+            old_roles = await self.bot_loc.bot.raid.get_cell('group_id', self.old_group.id, 'the_role')
             if channel.id == old_channel.id and old_roles == args['the_role']:
                 await self.bot_loc.bot.raid.edit_info(self.old_group, args)
                 group = self.old_group

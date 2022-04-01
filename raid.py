@@ -1,5 +1,7 @@
+import asyncio
+
 import discord
-import sqlite3
+import aiosqlite
 import os
 import dateparser
 from datetime import datetime, timezone, timedelta
@@ -13,7 +15,6 @@ from typing import List, Union
 
 class LFG:
     conn = ''
-    c = ''
     hashids = Hashids()
     lfg_i = ['null', 'default', 'vanguard', 'raid', 'crucible', 'gambit']
     at = ['null', 'default', 'pve', 'raid', 'pvp', 'gambit']
@@ -40,56 +41,62 @@ class LFG:
 
     def __init__(self, bot, **options):
         super().__init__(**options)
-        self.conn = sqlite3.connect('lfg.db')
-        self.c = self.conn.cursor()
+        asyncio.run(self.set_up_db())
+        # self.conn = sqlite3.connect('lfg.db')
+        # self.c = self.conn.cursor()
         self.bot = bot
 
-    def add(self, message: discord.Message, lfg_string: str = None, args: dict = None) -> None:
+    async def set_up_db(self):
+        self.conn = await aiosqlite.connect('lfg.db')
+
+    async def add(self, message: discord.Message, lfg_string: str = None, args: dict = None) -> None:
+        cursor = await self.conn.cursor()
         if lfg_string is None:
             content = message.content.splitlines()
         else:
             content = lfg_string.splitlines()
 
         if args is None:
-            args = self.parse_args(content, message, is_init=True)
+            args = await self.parse_args(content, message, is_init=True)
         group_id = message.id
         owner = message.author.id
 
         try:
-            self.c.execute('''CREATE TABLE raid
+            await cursor.execute('''CREATE TABLE raid
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
                      wanters text, going text, the_role text, group_mode text, dm_message integer, 
                      lfg_channel integer, channel_name text, server_name text, want_dm text, is_embed integer, 
                      length integer, server_id integer, group_role integer, group_channel integer, maybe_goers text, timezone text)''')
-        except sqlite3.OperationalError:
+        except aiosqlite.OperationalError:
             try:
-                self.c.execute('''ALTER TABLE raid ADD COLUMN is_embed integer''')
-            except sqlite3.OperationalError:
+                await cursor.execute('''ALTER TABLE raid ADD COLUMN is_embed integer''')
+            except aiosqlite.OperationalError:
                 try:
-                    self.c.execute('''ALTER TABLE raid ADD COLUMN length integer''')
-                except sqlite3.OperationalError:
+                    await cursor.execute('''ALTER TABLE raid ADD COLUMN length integer''')
+                except aiosqlite.OperationalError:
                     try:
-                        self.c.execute('''ALTER TABLE raid ADD COLUMN server_id integer''')
-                    except sqlite3.OperationalError:
+                        await cursor.execute('''ALTER TABLE raid ADD COLUMN server_id integer''')
+                    except aiosqlite.OperationalError:
                         try:
-                            self.c.execute('''ALTER TABLE raid ADD COLUMN group_role integer''')
-                            self.c.execute('''ALTER TABLE raid ADD COLUMN group_channel integer''')
-                        except sqlite3.OperationalError:
+                            await cursor.execute('''ALTER TABLE raid ADD COLUMN group_role integer''')
+                            await cursor.execute('''ALTER TABLE raid ADD COLUMN group_channel integer''')
+                        except aiosqlite.OperationalError:
                             try:
-                                self.c.execute('''ALTER TABLE raid ADD COLUMN maybe_goers text''')
-                            except sqlite3.OperationalError:
+                                await cursor.execute('''ALTER TABLE raid ADD COLUMN maybe_goers text''')
+                            except aiosqlite.OperationalError:
                                 try:
-                                    self.c.execute('''ALTER TABLE raid ADD COLUMN timezone text''')
-                                except sqlite3.OperationalError:
+                                    await cursor.execute('''ALTER TABLE raid ADD COLUMN timezone text''')
+                                except aiosqlite.OperationalError:
                                     pass
 
         newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
                    message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id, 0, 0, '[]', args['timezone'])]
-        self.c.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
-        self.conn.commit()
+        await cursor.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
+        await self.conn.commit()
+        await cursor.close()
 
-    def parse_args(self, content: List[str], message: Union[discord.Message, int], is_init: bool,
+    async def parse_args(self, content: List[str], message: Union[discord.Message, int], is_init: bool,
                    guild: discord.Guild = None) -> dict:
         time = datetime.now()
 
@@ -121,9 +128,9 @@ class LFG:
                 for word in text:
                     group_id = hashids.decode(word)
                     if len(group_id) > 0:
-                        time_start = self.get_cell('group_id', group_id[0], 'time')
+                        time_start = await self.get_cell('group_id', group_id[0], 'time')
             else:
-                time_start = self.get_cell('group_id', message, 'time')
+                time_start = await self.get_cell('group_id', message, 'time')
         for string in content:
             str_arg = string.split(':')
             if len(str_arg) < 2:
@@ -305,68 +312,96 @@ class LFG:
                 the_role_str = "{}, {}".format(the_role_str, i.mention)
         return the_role_str
 
-    def del_entry(self, group_id: int) -> None:
-        self.c.executemany('''DELETE FROM raid WHERE group_id LIKE (?)''', [(group_id,)])
-        self.conn.commit()
+    async def del_entry(self, group_id: int) -> None:
+        cursor = await self.conn.cursor()
+        await cursor.executemany('''DELETE FROM raid WHERE group_id LIKE (?)''', [(group_id,)])
+        await self.conn.commit()
+        await cursor.close()
 
-    def set_id(self, new_id: int, group_id: int) -> None:
-        self.c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_id, group_id))
-        self.conn.commit()
+    async def set_id(self, new_id: int, group_id: int) -> None:
+        cursor = await self.conn.cursor()
+        await cursor.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_id, group_id))
+        await self.conn.commit()
+        await cursor.close()
 
-    def set_owner(self, new_owner: int, group_id: int) -> None:
-        self.c.execute('''UPDATE raid SET owner=? WHERE group_id=?''', (new_owner, group_id))
-        self.conn.commit()
+    async def set_owner(self, new_owner: int, group_id: int) -> None:
+        cursor = await self.conn.cursor()
+        await cursor.execute('''UPDATE raid SET owner=? WHERE group_id=?''', (new_owner, group_id))
+        await self.conn.commit()
+        await cursor.close()
 
-    def set_group_space(self, group_id: int, group_role: int, group_channel: int) -> None:
-        self.c.execute('''UPDATE raid SET group_role=?, group_channel=? WHERE group_id=?''', (group_role, group_channel, group_id))
-        self.conn.commit()
+    async def set_group_space(self, group_id: int, group_role: int, group_channel: int) -> None:
+        cursor = await self.conn.cursor()
+        await cursor.execute('''UPDATE raid SET group_role=?, group_channel=? WHERE group_id=?''', (group_role, group_channel, group_id))
+        await self.conn.commit()
+        await cursor.close()
 
-    def is_raid(self, message_id: int) -> bool:
+    async def is_raid(self, message_id: int) -> bool:
+        cursor = await self.conn.cursor()
         try:
-            cell = self.c.execute('SELECT group_id FROM raid WHERE group_id=?', (message_id,))
-        except sqlite3.OperationalError:
+            cell = await cursor.execute('SELECT group_id FROM raid WHERE group_id=?', (message_id,))
+        except aiosqlite.OperationalError:
+            await cursor.close()
             return False
-        cell = cell.fetchall()
+        cell = await cell.fetchall()
         if len(cell) == 0:
+            await cursor.close()
             return False
         else:
             cell = cell[0]
+            await cursor.close()
             return message_id == cell[0]
 
-    def get_cell(self, search_field: str, group_id: int, field: str) -> Union[str, int, None]:
+    async def get_cell(self, search_field: str, group_id: int, field: str) -> Union[str, int, None]:
+        cursor = await self.conn.cursor()
         try:
-            cell = self.c.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,)).fetchone()
-        except sqlite3.OperationalError:
+            cell = await cursor.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,))
+            cell = await cell.fetchone()
+        except aiosqlite.OperationalError:
+            await cursor.close()
             return None
         if cell is not None:
             if len(cell) > 0:
+                await cursor.close()
                 return cell[0]
             else:
+                await cursor.close()
                 return None
 
-    def get_cell_array(self, search_field: str, group_id: int, field: str) -> List:
+    async def get_cell_array(self, search_field: str, group_id: int, field: str) -> List:
+        cursor = await self.conn.cursor()
         try:
-            arr = self.c.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,))
-            arr = eval(arr.fetchone()[0])
-        except sqlite3.OperationalError:
+            arr = await cursor.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,))
+            arr = await arr.fetchone()
+            arr = eval(arr[0])
+        except aiosqlite.OperationalError:
+            await cursor.close()
             return []
         except AttributeError:
+            await cursor.close()
             return []
 
+        await cursor.close()
         return arr
 
-    def add_mb_goers(self, group_id: int, user: discord.Member) -> None:
-        mb_goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
-        mb_goers = mb_goers.fetchone()[0]
+    async def add_mb_goers(self, group_id: int, user: discord.Member) -> None:
+        cursor = await self.conn.cursor()
 
-        goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
-        goers = eval(goers.fetchone()[0])
+        mb_goers = await cursor.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
+        mb_goers = await mb_goers.fetchone()
+        mb_goers = mb_goers[0]
 
-        wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
-        wanters = eval(wanters.fetchone()[0])
+        goers = await cursor.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
+        goers = await goers.fetchone()
+        goers = eval(goers[0])
 
-        w_dm = self.c.execute('SELECT want_dm FROM raid WHERE group_id=?', (group_id,))
-        w_dm = eval(w_dm.fetchone()[0])
+        wanters = await cursor.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
+        wanters = await wanters.fetchone()
+        wanters = eval(wanters[0])
+
+        w_dm = await cursor.execute('SELECT want_dm FROM raid WHERE group_id=?', (group_id,))
+        w_dm = await w_dm.fetchone()
+        w_dm = eval(w_dm[0])
 
         if mb_goers is None:
             mb_goers = []
@@ -382,27 +417,34 @@ class LFG:
                 wanters.pop(i)
                 w_dm.pop(i)
 
-        self.c.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
-        self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
-        self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
-        self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
-        self.conn.commit()
+        await cursor.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
+        await cursor.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
+        await cursor.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
+        await cursor.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
+        await self.conn.commit()
+        await cursor.close()
 
-    def add_people(self, group_id: int, user: discord.Member) -> None:
-        mb_goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
-        mb_goers = mb_goers.fetchone()[0]
+    async def add_people(self, group_id: int, user: discord.Member) -> None:
+        cursor = await self.conn.cursor()
 
-        goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
-        goers = eval(goers.fetchone()[0])
+        mb_goers = await cursor.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
+        mb_goers = await mb_goers.fetchone()
+        mb_goers = mb_goers[0]
 
-        wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
-        wanters = eval(wanters.fetchone()[0])
+        goers = await cursor.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
+        goers = await goers.fetchone()
+        goers = eval(goers[0])
 
-        w_dm = self.c.execute('SELECT want_dm FROM raid WHERE group_id=?', (group_id,))
-        w_dm = eval(w_dm.fetchone()[0])
+        wanters = await cursor.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
+        wanters = await wanters.fetchone()
+        wanters = eval(wanters[0])
 
-        size = self.get_cell('group_id', group_id, 'size')
-        group_mode = self.get_cell('group_id', group_id, 'group_mode')
+        w_dm = await cursor.execute('SELECT want_dm FROM raid WHERE group_id=?', (group_id,))
+        w_dm = await w_dm.fetchone()
+        w_dm = eval(w_dm[0])
+
+        size = await self.get_cell('group_id', group_id, 'size')
+        group_mode = await self.get_cell('group_id', group_id, 'group_mode')
 
         if mb_goers is None:
             mb_goers = []
@@ -412,7 +454,7 @@ class LFG:
         if user.mention in mb_goers:
             mb_goers.pop(mb_goers.index(user.mention))
 
-        if user.id == self.get_cell('group_id', group_id, 'owner') and user.mention not in goers:
+        if user.id == await self.get_cell('group_id', group_id, 'owner') and user.mention not in goers:
             goers = [user.mention, *goers]
             if len(goers) > size:
                 wanters = [goers[-1], *wanters]
@@ -426,27 +468,34 @@ class LFG:
                 wanters.append(user.mention)
                 w_dm.append(user.display_name)
 
-        self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
-        self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
-        self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
-        self.c.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
-        self.conn.commit()
+        await cursor.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
+        await cursor.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
+        await cursor.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
+        await cursor.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
+        await self.conn.commit()
+        await cursor.close()
 
-    def rm_people(self, group_id: int, user: discord.Member, emoji: str = '') -> None:
-        goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
-        goers = eval(goers.fetchone()[0])
+    async def rm_people(self, group_id: int, user: discord.Member, emoji: str = '') -> None:
+        cursor = await self.conn.cursor()
 
-        mb_goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
-        mb_goers = eval(mb_goers.fetchone()[0])
+        mb_goers = await cursor.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
+        mb_goers = await mb_goers.fetchone()
+        mb_goers = eval(mb_goers[0])
 
-        wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
-        wanters = eval(wanters.fetchone()[0])
+        goers = await cursor.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
+        goers = await goers.fetchone()
+        goers = eval(goers[0])
 
-        w_dm = self.c.execute('SELECT want_dm FROM raid WHERE group_id=?', (group_id,))
-        w_dm = eval(w_dm.fetchone()[0])
+        wanters = await cursor.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
+        wanters = await wanters.fetchone()
+        wanters = eval(wanters[0])
 
-        size = self.get_cell('group_id', group_id, 'size')
-        group_mode = self.get_cell('group_id', group_id, 'group_mode')
+        w_dm = await cursor.execute('SELECT want_dm FROM raid WHERE group_id=?', (group_id,))
+        w_dm = await w_dm.fetchone()
+        w_dm = eval(w_dm[0])
+
+        size = await self.get_cell('group_id', group_id, 'size')
+        group_mode = await self.get_cell('group_id', group_id, 'group_mode')
 
         if user.mention in goers and emoji == '👌':
             goers.pop(goers.index(user.mention))
@@ -463,16 +512,19 @@ class LFG:
         if user.mention in mb_goers and emoji == '❓':
             mb_goers.pop(mb_goers.index(user.mention))
 
-        self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
-        self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
-        self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
-        self.c.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
-        self.conn.commit()
+        await cursor.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
+        await cursor.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
+        await cursor.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
+        await cursor.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
+        await self.conn.commit()
+        await cursor.close()
 
     async def make_embed(self, message: discord.Message, translations: dict, lang: str) -> discord.Embed:
-        is_embed = self.get_cell('group_id', message.id, 'is_embed')
-        name = self.get_cell('group_id', message.id, 'name')
-        tz = self.get_cell('group_id', message.id, 'timezone')
+        cursor = await self.conn.cursor()
+
+        is_embed = await self.get_cell('group_id', message.id, 'is_embed')
+        name = await self.get_cell('group_id', message.id, 'name')
+        tz = await self.get_cell('group_id', message.id, 'timezone')
         if tz is None:
             tz = 'UTC+03:00'
         if tz == 'UTC':
@@ -480,19 +532,22 @@ class LFG:
         else:
             tz_elements = tz.strip('UTC+').split(':')
         ts = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
-        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'), tz=timezone.utc)#.replace(tzinfo=ts)
-        description = self.get_cell('group_id', message.id, 'description')
-        dm_id = self.get_cell('group_id', message.id, 'dm_message')
-        size = self.get_cell('group_id', message.id, 'size')
-        goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
-        goers = eval(goers.fetchone()[0])
-        wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
-        wanters = eval(wanters.fetchone()[0])
-        mb_goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (message.id,))
-        mb_goers = eval(mb_goers.fetchone()[0])
-        length = self.get_cell('group_id', message.id, 'length')
-        group_mode = self.get_cell('group_id', message.id, 'group_mode')
-        owner = self.get_cell('group_id', message.id, 'owner')
+        time = datetime.fromtimestamp(await self.get_cell('group_id', message.id, 'time'), tz=timezone.utc)#.replace(tzinfo=ts)
+        description = await self.get_cell('group_id', message.id, 'description')
+        dm_id = await self.get_cell('group_id', message.id, 'dm_message')
+        size = await self.get_cell('group_id', message.id, 'size')
+        goers = await cursor.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
+        goers = await goers.fetchone()
+        goers = eval(goers[0])
+        wanters = await cursor.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
+        wanters = await wanters.fetchone()
+        wanters = eval(wanters[0])
+        mb_goers = await cursor.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (message.id,))
+        mb_goers = await mb_goers.fetchone()
+        mb_goers = eval(mb_goers[0])
+        length = await self.get_cell('group_id', message.id, 'length')
+        group_mode = await self.get_cell('group_id', message.id, 'group_mode')
+        owner = await self.get_cell('group_id', message.id, 'owner')
         owner = await message.guild.fetch_member(owner)
         if owner is None:
             nick = 'None'
@@ -628,20 +683,23 @@ class LFG:
 
         print(embed_length)
 
+        await cursor.close()
         return embed
 
     async def update_group_msg(self, message: discord.Message, translations: dict, lang: str) -> None:
-        is_embed = self.get_cell('group_id', message.id, 'is_embed')
+        cursor = await self.conn.cursor()
+
+        is_embed = await self.get_cell('group_id', message.id, 'is_embed')
 
         if is_embed and message.channel.permissions_for(message.guild.me).embed_links:
             embed = await self.make_embed(message, translations, lang)
             await message.edit(content=None, embed=embed)
             return
 
-        role = self.get_cell('group_id', message.id, 'the_role')
-        name = self.get_cell('group_id', message.id, 'name')
-        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
-        description = self.get_cell('group_id', message.id, 'description')
+        role = await self.get_cell('group_id', message.id, 'the_role')
+        name = await self.get_cell('group_id', message.id, 'name')
+        time = datetime.fromtimestamp(await self.get_cell('group_id', message.id, 'time'))
+        description = await self.get_cell('group_id', message.id, 'description')
         msg = "{}, {} {}\n{} {}\n{}". \
             format(role, translations['lfg']['go'], name, translations['lfg']['at'], time, description)
         if len(msg) > 2000:
@@ -654,17 +712,19 @@ class LFG:
                     while len(msg) < 1900:
                         msg = '{} {},'.format(msg, parts[0])
                         parts.pop(0)
-        goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
-        goers = eval(goers.fetchone()[0])
-        wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
-        wanters = eval(wanters.fetchone()[0])
+        goers = await cursor.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
+        goers = await goers.fetchone()
+        goers = eval(goers[0])
+        wanters = await cursor.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
+        wanters = await wanters.fetchone()
+        wanters = eval(wanters[0])
 
         if len(goers) > 0:
             msg = '{}\n{}'.format(msg, translations['lfg']['participants'])
             for participant in goers:
                 msg = '{} {},'.format(msg, participant)
             msg = '{}.'.format(msg[:-1])
-        dm_id = self.get_cell('group_id', message.id, 'dm_message')
+        dm_id = await self.get_cell('group_id', message.id, 'dm_message')
         if dm_id == 0:
             if len(wanters) > 0:
                 msg = '{}\n{} '.format(msg, translations['lfg']['wanters'])
@@ -672,19 +732,25 @@ class LFG:
                     msg = '{} {},'.format(msg, wanter)
                 msg = '{}.'.format(msg[:-1])
         await message.edit(content=msg)
+        await cursor.close()
 
     async def upd_dm(self, owner: Union[discord.User, discord.Member], group_id: int, translations: dict) -> None:
-        wanters = self.c.execute('SELECT want_dm FROM raid WHERE owner=? AND group_id=?', (owner.id, group_id))
-        wanters = eval(wanters.fetchone()[0])
+        cursor = await self.conn.cursor()
 
-        dm_id = self.c.execute('SELECT dm_message FROM raid WHERE owner=? AND group_id=?', (owner.id, group_id))
-        dm_id = dm_id.fetchone()[0]
+        wanters = await cursor.execute('SELECT want_dm FROM raid WHERE owner=? AND group_id=?', (owner.id, group_id))
+        wanters = await wanters.fetchone()
+        wanters = eval(wanters[0])
+
+        dm_id = await cursor.execute('SELECT dm_message FROM raid WHERE owner=? AND group_id=?', (owner.id, group_id))
+        dm_id = await dm_id.fetchone()
+        dm_id = dm_id[0]
 
         emoji = ["{}\N{COMBINING ENCLOSING KEYCAP}".format(num) for num in range(1, 7)]
 
-        lfg = self.c.execute('SELECT group_id, name, time, channel_name, server_name FROM raid WHERE group_id=?',
-                             (group_id,))
-        lfg = lfg.fetchall()[0]
+        lfg = await cursor.execute('SELECT group_id, name, time, channel_name, server_name FROM raid WHERE group_id=?',
+                                   (group_id,))
+        lfg = await lfg.fetchall()
+        lfg = lfg[0]
 
         msg = "{}\n{}.\n{} {}, #{} {} {}".format(translations['lfg']['newBlood'], lfg[1],
                                                  translations['lfg']['at'].lower(),
@@ -716,25 +782,31 @@ class LFG:
             dm_message = await owner.dm_channel.send(content=msg, view=view)
             dm_id = dm_message.id
 
-        self.c.execute('''UPDATE raid SET dm_message=? WHERE owner=? AND group_id=?''', (dm_id, owner.id, group_id))
-        self.conn.commit()
+        await cursor.execute('''UPDATE raid SET dm_message=? WHERE owner=? AND group_id=?''', (dm_id, owner.id, group_id))
+        await self.conn.commit()
+        await cursor.close()
 
     async def add_going(self, group_id: int, numbers: Union[int, List[int]]) -> None:
-        goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (group_id,)).fetchone()
+        cursor = await self.conn.cursor()
+
+        goers = await cursor.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
+        goers = await goers.fetchone()
 
         if len(goers) > 0:
             goers = eval(goers[0])
         else:
             goers = []
 
-        wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
-        wanters = eval(wanters.fetchone()[0])
+        wanters = await cursor.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
+        wanters = await wanters.fetchone()
+        wanters = eval(wanters[0])
 
-        w_dm = self.c.execute('SELECT want_dm FROM raid WHERE group_id=?', (group_id,))
-        w_dm = eval(w_dm.fetchone()[0])
+        w_dm = await cursor.execute('SELECT want_dm FROM raid WHERE group_id=?', (group_id,))
+        w_dm = await w_dm.fetchone()
+        w_dm = eval(w_dm[0])
 
-        size = self.get_cell('group_id', group_id, 'size')
-        group_mode = self.get_cell('group_id', group_id, 'group_mode')
+        size = await self.get_cell('group_id', group_id, 'size')
+        group_mode = await self.get_cell('group_id', group_id, 'group_mode')
 
         numbers = list(numbers)
 
@@ -752,15 +824,18 @@ class LFG:
         wanters = tmp_wanters
         w_dm = tmp_w_dm
 
-        self.c.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
-        self.c.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
-        self.c.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
-        self.conn.commit()
+        await cursor.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
+        await cursor.execute('''UPDATE raid SET want_dm=? WHERE group_id=?''', (str(w_dm), group_id))
+        await cursor.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
+        await self.conn.commit()
+        await cursor.close()
 
     async def dm_lfgs(self, user: Union[discord.Member, discord.User], translations: dict) -> Union[List, bool]:
-        lfg_list = self.c.execute('SELECT group_id, name, time, channel_name, server_name, timezone FROM raid WHERE owner=?',
-                                  (user.id,))
-        lfg_list = lfg_list.fetchall()
+        cursor = await self.conn.cursor()
+
+        lfg_list = await cursor.execute('SELECT group_id, name, time, channel_name, server_name, timezone FROM raid WHERE owner=?',
+                                        (user.id,))
+        lfg_list = await lfg_list.fetchall()
 
         msg = translations['lfglist_head']
         i = 1
@@ -768,6 +843,7 @@ class LFG:
             msg = translations['lfglist'].format(msg, i, lfg[1], datetime.fromtimestamp(lfg[2]), lfg[5],
                                                                   lfg[3], lfg[4], self.hashids.encode(lfg[0]))
             i = i + 1
+        await cursor.close()
         if user.dm_channel is None:
             await user.create_dm()
         if len(lfg_list) > 0:
@@ -779,24 +855,26 @@ class LFG:
 
     async def edit(self, message: discord.Message, old_lfg: discord.Message, translations: dict, lang: str,
                    param_str: str = None) -> discord.Message:
+        cursor = await self.conn.cursor()
+
         if param_str is not None:
             text = param_str.splitlines()
         else:
             text = message.content.splitlines()
-        args = self.parse_args(text, message, is_init=False)
+        args = await self.parse_args(text, message, is_init=False)
 
         role_changed = False
         for item in args:
-            self.c.execute('''UPDATE raid SET {}=? WHERE group_id=?'''.format(item), (args[item], old_lfg.id))
+            await cursor.execute('''UPDATE raid SET {}=? WHERE group_id=?'''.format(item), (args[item], old_lfg.id))
             if item == 'the_role':
                 role_changed = True
-        self.conn.commit()
+        await self.conn.commit()
 
         if message.channel.id != old_lfg.channel.id or role_changed:
-            new_lfg = await message.channel.send(self.get_cell('group_id', old_lfg.id, 'the_role'))
+            new_lfg = await message.channel.send(await self.get_cell('group_id', old_lfg.id, 'the_role'))
 
-            self.c.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_lfg.id, old_lfg.id))
-            self.c.execute('''UPDATE raid SET lfg_channel=? WHERE group_id=?''', (message.channel.id, new_lfg.id))
+            await cursor.execute('''UPDATE raid SET group_id=? WHERE group_id=?''', (new_lfg.id, old_lfg.id))
+            await cursor.execute('''UPDATE raid SET lfg_channel=? WHERE group_id=?''', (message.channel.id, new_lfg.id))
             await old_lfg.delete()
         else:
             new_lfg = old_lfg
@@ -806,26 +884,29 @@ class LFG:
         except discord.NotFound:
             pass
         await self.update_group_msg(new_lfg, translations, lang)
-        self.conn.commit()
+        await self.conn.commit()
+        await cursor.close()
         return new_lfg
 
     async def edit_info(self, old_lfg: discord.Message, args: dict, new_lfg: discord.Message = None) -> None:
-        self.c.execute(
+        cursor = await self.conn.cursor()
+        await cursor.execute(
             '''UPDATE raid 
             SET size=?, name=?, time=?, description=?, the_role=?, group_mode=?, is_embed=?, length=?, timezone=? 
             WHERE group_id=?''', (args['size'], args['name'], args['time'], args['description'], args['the_role'],
                                   args['group_mode'], args['is_embed'], args['length'], args['timezone'], old_lfg.id))
         if new_lfg is not None:
-            self.c.execute(
+            await cursor.execute(
                 '''UPDATE raid 
                 SET group_id=?, lfg_channel=?, channel_name=?, server_name=?, server_id=? 
                 WHERE group_id=?''', (new_lfg.id, new_lfg.channel.id, new_lfg.channel.name, new_lfg.guild.name,
                                       new_lfg.guild.id, old_lfg.id)
             )
-        self.conn.commit()
+        await self.conn.commit()
+        await cursor.close()
 
     async def make_edits(self, bot, interaction, message, translations):
-        tz = self.get_cell('group_id', message.id, 'timezone')
+        tz = await self.get_cell('group_id', message.id, 'timezone')
         if tz is None:
             tz = 'UTC+03:00'
         if tz == 'UTC':
@@ -833,41 +914,53 @@ class LFG:
         else:
             tz_elements = tz.strip('UTC+').split(':')
         ts = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
-        time = datetime.fromtimestamp(self.get_cell('group_id', message.id, 'time'))
+        time = datetime.fromtimestamp(await self.get_cell('group_id', message.id, 'time'))
         data = {
-            'name': self.get_cell('group_id', message.id, 'name'),
-            'description': self.get_cell('group_id', message.id, 'description'),
+            'name': await self.get_cell('group_id', message.id, 'name'),
+            'description': await self.get_cell('group_id', message.id, 'description'),
             'time': time.astimezone(ts).strftime('%d-%m-%Y %H:%M%z'),
-            'size': str(self.get_cell('group_id', message.id, 'size')),
-            'length': '{}m'.format(int(self.get_cell('group_id', message.id, 'length') / 60))
+            'size': str(await self.get_cell('group_id', message.id, 'size')),
+            'length': '{}m'.format(int(await self.get_cell('group_id', message.id, 'length') / 60))
         }
         modal = LFGModal(bot, interaction.locale, translations, is_edit=True, data=data, message=message)
         await interaction.response.send_modal(modal)
 
-    def purge_guild(self, guild_id: int) -> None:
-        self.c.executemany('''DELETE FROM raid WHERE server_id LIKE (?)''', [(guild_id,)])
-        self.conn.commit()
+    async def purge_guild(self, guild_id: int) -> None:
+        cursor = await self.conn.cursor()
+        await cursor.executemany('''DELETE FROM raid WHERE server_id LIKE (?)''', [(guild_id,)])
+        await self.conn.commit()
+        await cursor.close()
 
-    def get_all(self) -> List:
-        lfg_list = self.c.execute('SELECT group_id, lfg_channel, time, server_id, length, dm_message, owner FROM raid')
-        lfg_list = lfg_list.fetchall()
+    async def get_all(self) -> List:
+        cursor = await self.conn.cursor()
+        lfg_list = await cursor.execute('SELECT group_id, lfg_channel, time, server_id, length, dm_message, owner FROM raid')
+        lfg_list = await lfg_list.fetchall()
+        await cursor.close()
 
-        return lfg_list
+        return list(lfg_list)
 
-    def is_goer(self, message: discord.Message, user: discord.Member) -> bool:
-        goers = self.c.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
-        goers = eval(goers.fetchone()[0])
+    async def is_goer(self, message: discord.Message, user: discord.Member) -> bool:
+        cursor = await self.conn.cursor()
+        goers = await cursor.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
+        goers = await goers.fetchone()
+        goers = eval(goers[0])
+        await cursor.close()
 
         return user.mention in goers
 
-    def is_wanter(self, message: discord.Message, user: discord.Member) -> bool:
-        wanters = self.c.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
-        wanters = eval(wanters.fetchone()[0])
+    async def is_wanter(self, message: discord.Message, user: discord.Member) -> bool:
+        cursor = await self.conn.cursor()
+        wanters = await cursor.execute('SELECT wanters FROM raid WHERE group_id=?', (message.id,))
+        wanters = await wanters.fetchone()
+        wanters = eval(wanters[0])
+        await cursor.close()
 
         return user.mention in wanters
 
-    def is_mb_goer(self, message: discord.Message, user: discord.Member) -> bool:
-        goers = self.c.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (message.id,))
-        goers = eval(goers.fetchone()[0])
+    async def is_mb_goer(self, message: discord.Message, user: discord.Member) -> bool:
+        cursor = await self.conn.cursor()
+        goers = await cursor.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (message.id,))
+        goers = await goers.fetchone()
+        goers = eval(goers[0])
 
         return user.mention in goers

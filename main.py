@@ -271,7 +271,7 @@ class ClanBot(commands.Bot):
                 self.load_extension('cogs.dbl')
         game = discord.Game('v{}'.format(self.version))
         if not self.persistent_views_added:
-            lfg_list = self.raid.get_all()
+            lfg_list = await self.raid.get_all()
             for lfg in lfg_list:
                 try:
                     lang = self.guild_lang(lfg[3])
@@ -338,7 +338,7 @@ class ClanBot(commands.Bot):
         await cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM prefixes WHERE server_id=?''', (guild.id,))
         await self.guild_db.commit()
-        self.raid.purge_guild(guild.id)
+        await self.raid.purge_guild(guild.id)
         await cursor.close()
 
     async def dm_owner(self, text: str) -> None:
@@ -504,7 +504,7 @@ class ClanBot(commands.Bot):
     #         await owner.dm_channel.send('`{}`'.format(traceback.format_exc()))
 
     async def lfg_cleanup(self, days: Union[int, float], guild: discord.Guild = None) -> int:
-        lfg_list = self.raid.get_all()
+        lfg_list = await self.raid.get_all()
         if guild is None:
             guild_id = 0
         else:
@@ -519,10 +519,10 @@ class ClanBot(commands.Bot):
                 length = lfg[4] if lfg[4] > 0 else 0
                 if (datetime.now() - start - timedelta(seconds=length)) > timedelta(days=days) and (guild_id == 0 or guild_id == lfg[3]):
                     await lfg_msg.delete()
-                    self.raid.del_entry(lfg[0])
+                    await self.raid.del_entry(lfg[0])
                     i = i + 1
             except discord.NotFound:
-                self.raid.del_entry(lfg[0])
+                await self.raid.del_entry(lfg[0])
                 i = i + 1
         return i
 
@@ -534,16 +534,16 @@ class ClanBot(commands.Bot):
         return
 
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent) -> None:
-        if self.raid.is_raid(payload.message_id):
-            owner = self.raid.get_cell('group_id', payload.message_id, 'owner')
+        if await self.raid.is_raid(payload.message_id):
+            owner = await self.raid.get_cell('group_id', payload.message_id, 'owner')
             owner = self.get_user(owner)
-            dm_id = self.raid.get_cell('group_id', payload.message_id, 'dm_message')
+            dm_id = await self.raid.get_cell('group_id', payload.message_id, 'dm_message')
             if owner.dm_channel is None:
                 await owner.create_dm()
             if dm_id != 0:
                 dm_message = await owner.dm_channel.fetch_message(dm_id)
                 await dm_message.delete()
-            self.raid.del_entry(payload.message_id)
+            await self.raid.del_entry(payload.message_id)
 
     async def on_command_error(self, ctx: discord.ext.commands.Context, exception):
         message = ctx.message
