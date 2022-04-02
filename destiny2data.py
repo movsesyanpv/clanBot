@@ -2337,13 +2337,16 @@ class D2data:
         else:
             flawless = find_adept(saint_resp)
 
-        modifiers = []
-        trials_are_active = False
-        activities = await self.get_activities_response('activities')
-        for activity in activities['Response']['activities']['data']['availableActivities']:
-            if activity['activityHash'] == 588019350:
-                modifiers = activity['modifierHashes']
-                trials_are_active = True
+        modifiers = {}
+        trials_are_active = True
+        # activities = await self.get_activities_response('activities')
+        # for activity in activities['Response']['activities']['data']['availableActivities']:
+        #     if activity['activityHash'] in [588019350, 2431109627, 4150051058]:
+        #         if 1361609633 in activity['modifierHashes']:
+        #             modifiers = activity
+        #             modifiers['modifierHashes'] = [1361609633]
+        #         trials_are_active = True
+        #         break
 
         for lang in langs:
             db_data = []
@@ -2411,6 +2414,9 @@ class D2data:
                         'value': '{} ({})'.format(flawless_def['displayProperties']['name'], flawless_def['itemTypeDisplayName'])
                     }
                 ]
+            if modifiers:
+                mods = await self.decode_modifiers(modifiers, lang)
+                self.data[lang]['osiris']['fields'].append(*mods[0])
             for field in self.data[lang]['osiris']['fields']:
                 db_data.append({
                     'name': field['name'],
