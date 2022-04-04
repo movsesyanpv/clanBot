@@ -276,7 +276,10 @@ class ClanBot(commands.Bot):
                 try:
                     lang = self.guild_lang(lfg[3])
                     group_msg = await self.fetch_channel(lfg[1])
-                    group_msg = await group_msg.fetch_message(lfg[0])
+                    try:
+                        group_msg = await group_msg.fetch_message(lfg[0])
+                    except discord.Forbidden:
+                        continue
                     buttons = GroupButtons(lfg[0], self,
                                            label_go=self.translations[lang]['lfg']['button_want'],
                                            label_help=self.translations[lang]['lfg']['button_help'],
@@ -522,6 +525,9 @@ class ClanBot(commands.Bot):
                     await self.raid.del_entry(lfg[0])
                     i = i + 1
             except discord.NotFound:
+                await self.raid.del_entry(lfg[0])
+                i = i + 1
+            except discord.Forbidden:
                 await self.raid.del_entry(lfg[0])
                 i = i + 1
         return i
