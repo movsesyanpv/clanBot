@@ -543,13 +543,14 @@ class ClanBot(commands.Bot):
         if await self.raid.is_raid(payload.message_id):
             owner = await self.raid.get_cell('group_id', payload.message_id, 'owner')
             owner = self.get_user(owner)
-            dm_id = await self.raid.get_cell('group_id', payload.message_id, 'dm_message')
-            if owner.dm_channel is None:
-                await owner.create_dm()
-            if dm_id != 0:
-                dm_message = await owner.dm_channel.fetch_message(dm_id)
-                await dm_message.delete()
-            await self.raid.del_entry(payload.message_id)
+            if owner is not None:
+                dm_id = await self.raid.get_cell('group_id', payload.message_id, 'dm_message')
+                if owner.dm_channel is None:
+                    await owner.create_dm()
+                if dm_id != 0:
+                    dm_message = await owner.dm_channel.fetch_message(dm_id)
+                    await dm_message.delete()
+                await self.raid.del_entry(payload.message_id)
 
     async def on_command_error(self, ctx: discord.ext.commands.Context, exception):
         message = ctx.message
