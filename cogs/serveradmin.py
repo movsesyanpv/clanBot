@@ -232,7 +232,8 @@ class ServerAdmin(commands.Cog):
             await message.delete()
         return
 
-    @commands.slash_command(name='setlang')
+    @commands.slash_command(name='setlang',
+                            description='Tell the bot the server\'s language')
     @commands.guild_only()
     async def sl_setlang(self, ctx):
         await ctx.defer(ephemeral=True)
