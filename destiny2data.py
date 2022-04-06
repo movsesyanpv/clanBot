@@ -2282,24 +2282,25 @@ class D2data:
         except aiosqlite.OperationalError:
             pass
         if member:
-            for metric in member['Response']['metrics']['data']['metrics'].keys():
-                try:
-                    await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN '{}' INTEGER'''.format(metric))
-                    # await self.bot_data_db.commit()
-                except aiosqlite.OperationalError:
-                    pass
-                if 'objectiveProgress' in member['Response']['metrics']['data']['metrics'][metric].keys():
-                    value = member['Response']['metrics']['data']['metrics'][metric]['objectiveProgress']['progress']
-                    metrics.append({
-                        'name': metric,
-                        'value': value
-                    })
+            if member['Response']['metrics']['privacy'] != 2:
+                for metric in member['Response']['metrics']['data']['metrics'].keys():
                     try:
-                        await cursor.execute('''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric), (value, membership_id))
+                        await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN '{}' INTEGER'''.format(metric))
                         # await self.bot_data_db.commit()
                     except aiosqlite.OperationalError:
                         pass
-            await self.bot_data_db.commit()
+                    if 'objectiveProgress' in member['Response']['metrics']['data']['metrics'][metric].keys():
+                        value = member['Response']['metrics']['data']['metrics'][metric]['objectiveProgress']['progress']
+                        metrics.append({
+                            'name': metric,
+                            'value': value
+                        })
+                        try:
+                            await cursor.execute('''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric), (value, membership_id))
+                            # await self.bot_data_db.commit()
+                        except aiosqlite.OperationalError:
+                            pass
+                await self.bot_data_db.commit()
         await cursor.close()
         return
 
@@ -2609,15 +2610,14 @@ class D2data:
 
             if clan_members_resp and type(clan_json) == dict:
                 clan_json = clan_members_resp
-                try:
-                    tasks = []
-                    for member in clan_json['Response']['results']:
-                        task = asyncio.ensure_future(self.get_member_metric_wrapper(member, metric, is_global, tag))
-                        tasks.append(task)
-                    results = await asyncio.gather(*tasks)
-                    metric_list = [*metric_list, *results]
-                except KeyError:
-                    pass
+                if 'Response' in clan_json.keys():
+                    if 'results' in clan_json['Response'].keys():
+                        tasks = []
+                        for member in clan_json['Response']['results']:
+                            task = asyncio.ensure_future(self.get_member_metric_wrapper(member, metric, is_global, tag))
+                            tasks.append(task)
+                        results = await asyncio.gather(*tasks)
+                        metric_list = [*metric_list, *results]
 
         if len(metric_list) > 0:
             try:
