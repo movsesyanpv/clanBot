@@ -144,7 +144,7 @@ class Public(commands.Cog):
     @commands.guild_only()
     async def top_sl(self, ctx,
                      metric: Option(str, "Metric to make a leaderboard", required=True, autocomplete=metric_picker),
-                     number: Option(int, "Max number of positions to display", required=False, default=10),
+                     number: Option(int, "Max number of positions to display", required=False, default=10, min_value=1),
                      is_global: Option(bool, "Make a leaderboard across all tracked clans", required=False, default=False)
                      ):
         await ctx.defer()
