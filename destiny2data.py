@@ -1944,13 +1944,17 @@ class D2data:
             db_data = []
             for key in activities_resp['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
-                if item_hash == 135431604:
+                if item_hash in [135431604, 1479362175, 2051483412]:
                     try:
-                        key['modifierHashes'].pop(key['modifierHashes'].index(4077775851))
+                        key['modifierHashes'].pop(key['modifierHashes'].index(2841995557))
                     except ValueError:
                         pass
                     try:
-                        key['modifierHashes'].pop(key['modifierHashes'].index(256472851))
+                        key['modifierHashes'].pop(key['modifierHashes'].index(1783825372))
+                    except ValueError:
+                        pass
+                    try:
+                        key['modifierHashes'].pop(key['modifierHashes'].index(1123720291))
                     except ValueError:
                         pass
                     mods = await self.decode_modifiers(key, lang)
