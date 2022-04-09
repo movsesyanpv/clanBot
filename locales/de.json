@@ -390,5 +390,98 @@
         "creation_date": "Creation date",
         "founder": "Founder",
         "id": "ID"
+    },
+    "slash_localization": {
+        "help": {
+            "description": "The help command",
+            "options": {
+                "command_name": {
+                    "name": "command_name",
+                    "description": "Command name"
+                },
+                "additional_arg": {
+                    "name": "additional_arg",
+                    "description": "Additional argument (can be a metric table name)"
+                }
+            }
+        },
+        "top": {
+            "description": "Print top players for one of the available metrics.",
+            "options": {
+                "metric": {
+                    "name": "metric",
+                    "description": "Metric to make a leaderboard"
+                },
+                "number": {
+                    "name": "number",
+                    "description": "Max number of positions to display"
+                },
+                "is_global": {
+                    "name": "is_global",
+                    "description": "Make a leaderboard across all tracked clans"
+                }
+            }
+        },
+        "support": {
+            "description": "Get the link to the support server"
+        },
+        "online": {
+            "description": "Get the list of online clan members."
+        },
+        "lfglist": {
+            "description": "Print your LFG list"
+        },
+        "lfg": {
+            "description": "Create a group"
+        },
+        "editlfg": {
+            "context_name": "Edit LFG",
+            "description": "Edit LFG post"
+        },
+        "autopost": {
+            "rotations": {
+                "description": "Make the bot start posting rotation updates in this channel"
+            },
+            "changelogs": {
+                "description": "Make the bot start posting changelogs in this channel"
+            },
+            "remove": {
+                "description": "Make the bot stop posting updates in this channel"
+            }
+        },
+        "lfgcleanup": {
+            "description": "Delete groups that are unavailable or inactive",
+            "options": {
+                "days": {
+                    "name": "days",
+                    "description": "Days since the activity was finished"
+                }
+            }
+        },
+        "regnotifier": {
+            "description": "Register notifier channel",
+            "options": {
+                "upd_type": {
+                    "name": "upd_type",
+                    "description": "The type of notifier",
+                    "values": {
+                        "notifiers": "Rotations",
+                        "updates": "Changelogs"
+                    }
+                }
+            }
+        },
+        "rmnotifier": {
+            "description": "Deregister notifier channel"
+        },
+        "setlang": {
+            "description": "Tell the bot the server's language"
+        },
+        "setclan": {
+            "description": "Set a Destiny 2 clan for the server"
+        },
+        "update": {
+            "description": "Get updates from Bungie"
+        }
     }
 }
