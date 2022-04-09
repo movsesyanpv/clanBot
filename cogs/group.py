@@ -31,6 +31,9 @@ class Group(commands.Cog):
         return status
 
     @commands.slash_command(name='lfglist',
+                            description_localizations={
+                                'ru': 'Вывести список ваших сборов'
+                            },
                             description='Print your LFG list')
     async def sl_lfglist(self, ctx):
         await ctx.defer(ephemeral=True)
@@ -774,6 +777,9 @@ class Group(commands.Cog):
         return
 
     @commands.slash_command(name='lfg',
+                            description_localizations={
+                                'ru': 'Создать сбор'
+                            },
                             description='Create a group')
     @commands.guild_only()
     async def lfg_sl(self, ctx):
@@ -788,6 +794,9 @@ class Group(commands.Cog):
 
     @commands.message_command(
         name="Edit LFG",
+        name_localizations={
+            'ru': 'Редактировать сбор'
+        },
         description="Edit LFG post"
     )
     async def edit_lfg_msg(self, ctx, message: discord.Message):
@@ -808,6 +817,9 @@ class Group(commands.Cog):
 
     @commands.slash_command(
         name='editlfg',
+        description_localizations={
+            'ru': 'Редактировать сбор'
+        },
         description='Edit LFG post'
     )
     @commands.guild_only()

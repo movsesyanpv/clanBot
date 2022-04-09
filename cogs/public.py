@@ -139,13 +139,35 @@ class Public(commands.Cog):
 
     @commands.slash_command(
         name='top',
+        description_localizations={
+            'ru': 'Вывести рейтинг игроков по одной из метрик'
+        },
         description='Print top players for one of the available metrics.'
     )
     @commands.guild_only()
     async def top_sl(self, ctx,
-                     metric: Option(str, "Metric to make a leaderboard", required=True, autocomplete=metric_picker),
-                     number: Option(int, "Max number of positions to display", required=False, default=10, min_value=1),
-                     is_global: Option(bool, "Make a leaderboard across all tracked clans", required=False, default=False)
+                     metric: Option(str, "Metric to make a leaderboard", required=True, autocomplete=metric_picker,
+                                    name_localizations={
+                                        'ru': 'метрика'
+                                    },
+                                    description_localizations={
+                                        'ru': 'Метрика для построения рейтинга'
+                                    }),
+                     number: Option(int, "Max number of positions to display", required=False, default=10,
+                                    name_localizations={
+                                        'ru': 'длина'
+                                    },
+                                    description_localizations={
+                                        'ru': 'Максимальное число позиций в таблице'
+                                    },
+                                    min_value=1),
+                     is_global: Option(bool, "Make a leaderboard across all tracked clans", required=False,
+                                       default=False, name_localizations={
+                                                          'ru': 'глобально'
+                                                      },
+                                       description_localizations={
+                                           'ru': 'Делать ли рейтинг по всем известным боту кланам'
+                                       })
                      ):
         await ctx.defer()
         lang = await locale_2_lang(ctx)
@@ -309,6 +331,9 @@ class Public(commands.Cog):
 
     @commands.slash_command(
         name="support",
+        description_localizations={
+            'ru': 'Ссылка на сервер поддержки'
+        },
         description='Get the link to the support server'
     )
     async def support_sl(self, ctx):
@@ -356,6 +381,9 @@ class Public(commands.Cog):
 
     @commands.slash_command(
         name="online",
+        description_localizations={
+            'ru': 'Список онлайн членов клана'
+        },
         description="Get the list of online clan members."
     )
     @commands.guild_only()
