@@ -406,7 +406,7 @@
             }
         },
         "top": {
-            "description": "Print top players for one of the available metrics.",
+            "description": "Afficher le top des joueurs",
             "options": {
                 "metric": {
                     "name": "metric",
@@ -423,34 +423,34 @@
             }
         },
         "support": {
-            "description": "Get the link to the support server"
+            "description": "Lien pour joindre le support"
         },
         "online": {
-            "description": "Get the list of online clan members."
+            "description": "Liste des membres du clan en ligne"
         },
         "lfglist": {
-            "description": "Print your LFG list"
+            "description": "Affichez votre liste LFG"
         },
         "lfg": {
-            "description": "Create a group"
+            "description": "Creer un message LFG"
         },
         "editlfg": {
             "context_name": "Edit LFG",
-            "description": "Edit LFG post"
+            "description": "Édition du message LFG"
         },
         "autopost": {
             "rotations": {
-                "description": "Make the bot start posting rotation updates in this channel"
+                "description": "Autorisez le bot à poster la mise a jour des rotations dans ce canal"
             },
             "changelogs": {
-                "description": "Make the bot start posting changelogs in this channel"
+                "description": "Autorisez le bot à poster les changelogs dans ce canal"
             },
             "remove": {
                 "description": "Make the bot stop posting updates in this channel"
             }
         },
         "lfgcleanup": {
-            "description": "Delete groups that are unavailable or inactive",
+            "description": "Supprimer les messages LFG expirés",
             "options": {
                 "days": {
                     "name": "days",
@@ -459,7 +459,7 @@
             }
         },
         "regnotifier": {
-            "description": "Register notifier channel",
+            "description": "Enregistrer le canal de notification",
             "options": {
                 "upd_type": {
                     "name": "upd_type",
@@ -472,16 +472,16 @@
             }
         },
         "rmnotifier": {
-            "description": "Deregister notifier channel"
+            "description": "Supprimer le canal de notification"
         },
         "setlang": {
-            "description": "Tell the bot the server's language"
+            "description": "Selectionner la langue du serveur"
         },
         "setclan": {
-            "description": "Set a Destiny 2 clan for the server"
+            "description": "Définir le clan Destiny 2 sur le serveur"
         },
         "update": {
-            "description": "Get updates from Bungie"
+            "description": "Recevoir les mises a jour de Bungie"
         }
     }
 }
