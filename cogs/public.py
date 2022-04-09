@@ -140,7 +140,9 @@ class Public(commands.Cog):
     @commands.slash_command(
         name='top',
         description_localizations={
-            'ru': 'Вывести рейтинг игроков по одной из метрик'
+            'ru': 'Вывести рейтинг игроков по одной из метрик',
+            'de': 'Kopieren denTop-Spieler für eine der verfügbaren Metriken',
+            'fr': 'Afficher le top des joueurs'
         },
         description='Print top players for one of the available metrics.'
     )
@@ -332,7 +334,9 @@ class Public(commands.Cog):
     @commands.slash_command(
         name="support",
         description_localizations={
-            'ru': 'Ссылка на сервер поддержки'
+            'ru': 'Ссылка на сервер поддержки',
+            'de': 'Der link zum Support Server',
+            'fr': 'Lien pour joindre le support'
         },
         description='Get the link to the support server'
     )
@@ -382,7 +386,9 @@ class Public(commands.Cog):
     @commands.slash_command(
         name="online",
         description_localizations={
-            'ru': 'Список онлайн членов клана'
+            'ru': 'Список онлайн членов клана',
+            'de': 'Zeig die Liste der Clan Member',
+            'fr': 'Liste des membres du clan en ligne'
         },
         description="Get the list of online clan members."
     )

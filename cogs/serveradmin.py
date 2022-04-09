@@ -50,7 +50,8 @@ class ServerAdmin(commands.Cog):
 
     @register.command(
         description_localizations={
-            'ru': "Начать автоматические посты об обновлениях игры в этом канале"
+            'ru': "Начать автоматические посты об обновлениях игры в этом канале",
+            'fr': 'Autorisez le bot à poster la mise a jour des rotations dans ce canal'
         },
         description='Make the bot start posting rotation updates in this channel'
     )
@@ -77,7 +78,8 @@ class ServerAdmin(commands.Cog):
 
     @register.command(
         description_localizations={
-            'ru': "Начать автоматические посты об обновлениях бота в этом канале"
+            'ru': "Начать автоматические посты об обновлениях бота в этом канале",
+            'fr': 'Autorisez le bot à poster les changelogs dans ce canal'
         },
         description='Make the bot start posting changelogs in this channel'
     )
@@ -125,7 +127,8 @@ class ServerAdmin(commands.Cog):
 
     @commands.slash_command(name='lfgcleanup',
                             description_localizations={
-                                'ru': "Удалить прошедшие сборы"
+                                'ru': "Удалить прошедшие сборы",
+                                'fr': 'Supprimer les messages LFG expirés'
                             },
                             description='Delete groups that are unavailable or inactive')
     async def sl_lfgcleanup(self, ctx,
@@ -176,7 +179,9 @@ class ServerAdmin(commands.Cog):
 
     @commands.slash_command(name='regnotifier',
                             description_localizations={
-                                'ru': "Зарегистрировать канал для автоматических постов"
+                                'ru': "Зарегистрировать канал для автоматических постов",
+                                'de': 'Meldekanal registrieren',
+                                'fr': 'Enregistrer le canal de notification'
                             },
                             description='Register notifier channel')
     @commands.guild_only()
@@ -236,7 +241,9 @@ class ServerAdmin(commands.Cog):
 
     @commands.slash_command(name='rmnotifier',
                             description_localizations={
-                                'ru': "Удалить регистрацию канала для автоматических постов"
+                                'ru': "Удалить регистрацию канала для автоматических постов",
+                                'de': 'Meldekanal abmelden',
+                                'fr': 'Supprimer le canal de notification'
                             },
                             description='Deregister notifier channel')
     @commands.guild_only()
@@ -280,7 +287,9 @@ class ServerAdmin(commands.Cog):
     @commands.slash_command(
         name='setlang',
         description_localizations={
-            'ru': "Указать боту язык сервера"
+            'ru': "Указать боту язык сервера",
+            'de': 'Serversprache einstellen',
+            'fr': 'Selectionner la langue du serveur'
         },
         description='Tell the bot the server\'s language'
     )
@@ -349,7 +358,9 @@ class ServerAdmin(commands.Cog):
 
     @commands.slash_command(name='setclan',
                             description_localizations={
-                                'ru': "Задать клан Destiny 2 для сервера"
+                                'ru': "Задать клан Destiny 2 для сервера",
+                                'de': 'Lege einen Destiny 2-Clan für den Server fest',
+                                'fr': 'Définir le clan Destiny 2 sur le serveur'
                             },
                             description='Set a Destiny 2 clan for the server')
     @commands.guild_only()
@@ -473,7 +484,9 @@ class ServerAdmin(commands.Cog):
     @commands.slash_command(
         name='update',
         description_localizations={
-            'ru': "Получить обновления от Bungie"
+            'ru': "Получить обновления от Bungie",
+            'de': 'Holen Sie sich Updates von Bungie',
+            'fr': 'Recevoir les mises a jour de Bungie'
         },
         description='Get updates from Bungie'
     )

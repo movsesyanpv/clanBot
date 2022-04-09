@@ -32,7 +32,9 @@ class Group(commands.Cog):
 
     @commands.slash_command(name='lfglist',
                             description_localizations={
-                                'ru': 'Вывести список ваших сборов'
+                                'ru': 'Вывести список ваших сборов',
+                                'de': 'Kopiere deine LFG liste',
+                                'fr': 'Affichez votre liste LFG'
                             },
                             description='Print your LFG list')
     async def sl_lfglist(self, ctx):
@@ -778,7 +780,9 @@ class Group(commands.Cog):
 
     @commands.slash_command(name='lfg',
                             description_localizations={
-                                'ru': 'Создать сбор'
+                                'ru': 'Создать сбор',
+                                'de': 'Erstellen Sie eine LFG-Nachricht',
+                                'fr': 'Creer un message LFG'
                             },
                             description='Create a group')
     @commands.guild_only()
@@ -818,7 +822,9 @@ class Group(commands.Cog):
     @commands.slash_command(
         name='editlfg',
         description_localizations={
-            'ru': 'Редактировать сбор'
+            'ru': 'Редактировать сбор',
+            'de': 'Bearbeite eine LFG Nachricht',
+            'fr': 'Édition du message LFG'
         },
         description='Edit LFG post'
     )
