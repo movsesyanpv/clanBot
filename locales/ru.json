@@ -390,5 +390,98 @@
         "creation_date": "Дата создания",
         "founder": "Основатель",
         "id": "ID"
+    },
+    "slash_localization": {
+        "help": {
+            "description": "Информация о командах",
+            "options": {
+                "command_name": {
+                    "name": "имя_команды",
+                    "description": "Имя команды"
+                },
+                "additional_arg": {
+                    "name": "дополнительный_параметр",
+                    "description": "Дополнительный параметр (может быть таблицей метрик)"
+                }
+            }
+        },
+        "top": {
+            "description": "Вывести рейтинг игроков по одной из метрик",
+            "options": {
+                "metric": {
+                    "name": "метрика",
+                    "description": "Метрика для построения рейтинга"
+                },
+                "number": {
+                    "name": "длина",
+                    "description": "Максимальное число позиций в таблице"
+                },
+                "is_global": {
+                    "name": "глобально",
+                    "description": "Делать ли рейтинг по всем известным боту кланам"
+                }
+            }
+        },
+        "support": {
+            "description": "Ссылка на сервер поддержки"
+        },
+        "online": {
+            "description": "Список онлайн членов клана"
+        },
+        "lfglist": {
+            "description": "Вывести список ваших сборов"
+        },
+        "lfg": {
+            "description": "Создать сбор"
+        },
+        "editlfg": {
+            "context_name": "Редактировать сбор",
+            "description": "Редактировать сбор"
+        },
+        "autopost": {
+            "rotations": {
+                "description": "Начать автоматические посты об обновлениях игры в этом канале"
+            },
+            "changelogs": {
+                "description": "Начать автоматические посты об обновлениях бота в этом канале"
+            },
+            "remove": {
+                "description": "Прекратить автоматические посты бота в этом канале"
+            }
+        },
+        "lfgcleanup": {
+            "description": "Удалить прошедшие сборы",
+            "options": {
+                "days": {
+                    "name": "дни",
+                    "description": "Дней с окончания активности"
+                }
+            }
+        },
+        "regnotifier": {
+            "description": "Зарегистрировать канал для автоматических постов",
+            "options": {
+                "upd_type": {
+                    "name": "тип_постов",
+                    "description": "Тип постов на канале",
+                    "values": {
+                        "notifiers": "Обновления игры",
+                        "updates": "Обновления бота"
+                    }
+                }
+            }
+        },
+        "rmnotifier": {
+            "description": "Удалить регистрацию канала для автоматических постов"
+        },
+        "setlang": {
+            "description": "Указать боту язык сервера"
+        },
+        "setclan": {
+            "description": "Задать клан Destiny 2 для сервера"
+        },
+        "update": {
+            "description": "Получить обновления от Bungie"
+        }
     }
 }
