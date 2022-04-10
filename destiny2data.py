@@ -2286,7 +2286,7 @@ class D2data:
         except aiosqlite.OperationalError:
             pass
         if member:
-            if member['Response']['metrics']['privacy'] != 2:
+            if 'data' in member['Response']['metrics'].keys():
                 for metric in member['Response']['metrics']['data']['metrics'].keys():
                     try:
                         await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN '{}' INTEGER'''.format(metric))
