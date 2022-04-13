@@ -483,6 +483,7 @@
                     "name": "clan_id",
                     "description": "Name or id of a clan"
                 }
+            }
         },
         "update": {
             "description": "Get updates from Bungie"

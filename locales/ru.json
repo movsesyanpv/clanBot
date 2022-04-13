@@ -484,6 +484,7 @@
                     "name": "клан",
                     "description": "Имя или ID клана"
                 }
+            }
         },
         "update": {
             "description": "Получить обновления от Bungie"
