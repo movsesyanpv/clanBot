@@ -478,7 +478,13 @@
             "description": "Serversprache einstellen"
         },
         "setclan": {
-            "description": "Lege einen Destiny 2-Clan für den Server fest"
+            "description": "Lege einen Destiny 2-Clan für den Server fest",
+            "options": {
+                "clan_id": {
+                    "name": "clan_id",
+                    "description": "Name or id of a clan"
+                }
+            }
         },
         "update": {
             "description": "Holen Sie sich Updates von Bungie"
