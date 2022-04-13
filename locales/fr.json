@@ -478,7 +478,12 @@
             "description": "Selectionner la langue du serveur"
         },
         "setclan": {
-            "description": "Définir le clan Destiny 2 sur le serveur"
+            "description": "Définir le clan Destiny 2 sur le serveur",
+            "options": {
+                "clan_id": {
+                    "name": "clan_id",
+                    "description": "Name or id of a clan"
+                }
             }
         },
         "update": {
