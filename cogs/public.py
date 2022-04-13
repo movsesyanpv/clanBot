@@ -150,17 +150,21 @@ class Public(commands.Cog):
     async def top_sl(self, ctx,
                      metric: Option(str, "Metric to make a leaderboard", required=True, autocomplete=metric_picker,
                                     name_localizations={
-                                        'ru': 'метрика'
+                                        'ru': 'метрика',
+                                        'fr': 'critère'
                                     },
                                     description_localizations={
-                                        'ru': 'Метрика для построения рейтинга'
+                                        'ru': 'Метрика для построения рейтинга',
+                                        'fr': 'critère pour faire un classement'
                                     }),
                      number: Option(int, "Max number of positions to display", required=False, default=10,
                                     name_localizations={
-                                        'ru': 'длина'
+                                        'ru': 'длина',
+                                        'fr': 'nombre'
                                     },
                                     description_localizations={
-                                        'ru': 'Максимальное число позиций в таблице'
+                                        'ru': 'Максимальное число позиций в таблице',
+                                        'fr': 'Nombre d\'emplacements a afficher'
                                     },
                                     min_value=1),
                      is_global: Option(bool, "Make a leaderboard across all tracked clans", required=False,
@@ -168,7 +172,8 @@ class Public(commands.Cog):
                                                           'ru': 'глобально'
                                                       },
                                        description_localizations={
-                                           'ru': 'Делать ли рейтинг по всем известным боту кланам'
+                                           'ru': 'Делать ли рейтинг по всем известным боту кланам',
+                                           'fr': 'Faire un classement de tous les clans suivis'
                                        })
                      ):
         await ctx.defer()

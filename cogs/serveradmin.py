@@ -27,7 +27,8 @@ class ServerAdmin(commands.Cog):
 
     @autopost.command(
         description_localizations={
-            'ru': "Прекратить автоматические посты бота в этом канале"
+            'ru': "Прекратить автоматические посты бота в этом канале",
+            'fr': 'Forcer le Bot a ne plus poster de mise a jour dans ce canal'
         },
         description='Make the bot stop posting updates in this channel'
     )
@@ -103,8 +104,7 @@ class ServerAdmin(commands.Cog):
             await ctx.respond(msg)
         return
 
-    @commands.command(description='Delete groups that are unavailable or inactive'
-    )
+    @commands.command(description='Delete groups that are unavailable or inactive')
     async def lfgcleanup(self, ctx, days=0):
         lang = 'en'
         msg = 'Done, removed {} entries.'
@@ -134,10 +134,12 @@ class ServerAdmin(commands.Cog):
     async def sl_lfgcleanup(self, ctx,
                             days: Option(int, "Days since the activity was finished", required=False, default=0,
                                          name_localizations={
-                                             'ru': 'дни'
+                                             'ru': 'дни',
+                                             'fr': 'jours'
                                          },
                                          description_localizations={
-                                             'ru': 'Дней с окончания активности'
+                                             'ru': 'Дней с окончания активности',
+                                             'fr': 'jours depuis la fin de l\'activité'
                                          })
                             ):
         await ctx.defer(ephemeral=True)
@@ -189,17 +191,21 @@ class ServerAdmin(commands.Cog):
                              upd_type: Option(str, "The type of notifier", required=False, default='notifiers',
                                               choices=[discord.OptionChoice('Rotations', value='notifiers',
                                                                             name_localizations={
-                                                                                'ru': 'Обновления игры'
+                                                                                'ru': 'Обновления игры',
+                                                                                'fr': 'Rotations'
                                                                             }),
                                                        discord.OptionChoice('Changelogs', value='updates',
                                                                             name_localizations={
-                                                                                'ru': 'Обновления бота'
+                                                                                'ru': 'Обновления бота',
+                                                                                'fr': 'Logs des modifications'
                                                                             })],
                                               name_localizations={
-                                                  'ru': 'тип_постов'
+                                                  'ru': 'тип_постов',
+                                                  'fr': 'upd_type'
                                               },
                                               description_localizations={
-                                                  'ru': 'Тип постов на канале'
+                                                  'ru': 'Тип постов на канале',
+                                                  'fr': 'Le type du paramètre'
                                               })
                              ):
         await ctx.defer(ephemeral=True)

@@ -390,7 +390,8 @@ class Admin(commands.Cog):
     @commands.slash_command(
         name='help',
         description_localizations={
-            'ru': "Информация о командах"
+            'ru': "Информация о командах",
+            'fr': 'La commande Aide'
         },
         description='The help command!'
     )
@@ -400,7 +401,8 @@ class Admin(commands.Cog):
                                                        'ru': 'имя_команды'
                                                    },
                                                    description_localizations={
-                                                       'ru': "Имя команды"
+                                                       'ru': "Имя команды",
+                                                       'fr': 'Nom de la Commande'
                                                    }),
                               additional_arg: Option(str, 'Additional argument (can be a metric table name)',
                                                      required=False, default=None,
@@ -408,7 +410,8 @@ class Admin(commands.Cog):
                                                          'ru': "дополнительный_параметр"
                                                      },
                                                      description_localizations={
-                                                         'ru': 'Дополнительный параметр (может быть таблицей метрик)'
+                                                         'ru': 'Дополнительный параметр (может быть таблицей метрик)',
+                                                         'fr': 'Argument Supplémentaire (peut-être un critère)'
                                                      })
                               ):
         await ctx.defer()
