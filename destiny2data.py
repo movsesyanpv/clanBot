@@ -2495,14 +2495,14 @@ class D2data:
                     await cache_cursor.execute(
                         '''CREATE TABLE cache (id text, expires integer, json text, timestamp text);''')
                     await cache_cursor.execute('''CREATE UNIQUE INDEX cache_id ON cache(id)''')
-                    await cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                    await cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
                                          (cache_id, int(datetime.now().timestamp() + expires_in), json.dumps(response_json),
                                           timestamp))
                 except aiosqlite.OperationalError:
                 # except mariadb.Error:
                     try:
                         await cache_cursor.execute('''ALTER TABLE cache ADD COLUMN timestamp text''')
-                        await cache_cursor.execute('''INSERT IGNORE INTO cache VALUES (?,?,?,?)''',
+                        await cache_cursor.execute('''INSERT OR IGNORE INTO cache VALUES (?,?,?,?)''',
                                              (cache_id, int(datetime.now().timestamp() + expires_in),
                                               json.dumps(response_json), timestamp))
                     # except mariadb.Error:
