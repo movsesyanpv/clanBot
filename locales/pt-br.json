@@ -478,7 +478,13 @@
             "description": "Tell the bot the server's language"
         },
         "setclan": {
-            "description": "Set a Destiny 2 clan for the server"
+            "description": "Set a Destiny 2 clan for the server",
+            "options": {
+                "clan_id": {
+                    "name": "clan_id",
+                    "description": "Name or id of a clan"
+                }
+            }
         },
         "update": {
             "description": "Get updates from Bungie"
