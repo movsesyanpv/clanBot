@@ -50,8 +50,8 @@
         "language_select": "Choisir la langue à utiliser.",
         "lfg_cleanup": "Terminé, {} données supprimées.",
         "noslash": "Essayez d'ajouter à nouveau le bot à ce serveur en cliquant sur \"Ajouter au serveur\" dans le profil du bot. **NE PAS** kicker le bot, cela supprimera tous les paramètres du serveur. Si vous avez besoin de plus d'aide, n'hésitez pas à demander au support. Vous pouvez trouver le lien vers le serveur de support en tapant la commande `support`.",
-        "perm_check_title": "Permission check failed",
-        "perm_check_description": "I lack at least one of the following permissions in this channel to function properly",
+        "perm_check_title": "Permission refusée",
+        "perm_check_description": "Il me manque une des autorisations suivantes dans ce canal pour fonctionner correctement\n\n",
         "perm_send_msg": "Envoyer des messages {}",
         "perm_embed_links": "Intégrer des liens {}"
     },
@@ -393,15 +393,15 @@
     },
     "slash_localization": {
         "help": {
-            "description": "The help command",
+            "description": "La commande Aide",
             "options": {
                 "command_name": {
                     "name": "command_name",
-                    "description": "Command name"
+                    "description": "Nom de la Commande"
                 },
                 "additional_arg": {
-                    "name": "additional_arg",
-                    "description": "Additional argument (can be a metric table name)"
+                    "name": "additional_arg\n",
+                    "description": "Argument Supplémentaire (peut-être un critère)"
                 }
             }
         },
@@ -409,16 +409,16 @@
             "description": "Afficher le top des joueurs",
             "options": {
                 "metric": {
-                    "name": "metric",
-                    "description": "Metric to make a leaderboard"
+                    "name": "critère",
+                    "description": "critère pour faire un classement"
                 },
                 "number": {
-                    "name": "number",
-                    "description": "Max number of positions to display"
+                    "name": "nombre",
+                    "description": "Nombre d'emplacements a afficher"
                 },
                 "is_global": {
                     "name": "is_global",
-                    "description": "Make a leaderboard across all tracked clans"
+                    "description": "Faire un classement de tous les clans suivis"
                 }
             }
         },
@@ -435,7 +435,7 @@
             "description": "Creer un message LFG"
         },
         "editlfg": {
-            "context_name": "Edit LFG",
+            "context_name": "Editer le LFG",
             "description": "Édition du message LFG"
         },
         "autopost": {
@@ -446,15 +446,15 @@
                 "description": "Autorisez le bot à poster les changelogs dans ce canal"
             },
             "remove": {
-                "description": "Make the bot stop posting updates in this channel"
+                "description": "Forcer le Bot a ne plus poster de mise a jour dans ce canal"
             }
         },
         "lfgcleanup": {
             "description": "Supprimer les messages LFG expirés",
             "options": {
                 "days": {
-                    "name": "days",
-                    "description": "Days since the activity was finished"
+                    "name": "jours",
+                    "description": "jours depuis la fin de l'activité."
                 }
             }
         },
@@ -462,11 +462,11 @@
             "description": "Enregistrer le canal de notification",
             "options": {
                 "upd_type": {
-                    "name": "upd_type",
-                    "description": "The type of notifier",
+                    "name": "upd_type\n",
+                    "description": "Le type du paramètre",
                     "values": {
                         "notifiers": "Rotations",
-                        "updates": "Changelogs"
+                        "updates": "Logs des modifications"
                     }
                 }
             }
