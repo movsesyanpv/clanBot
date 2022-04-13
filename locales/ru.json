@@ -478,7 +478,12 @@
             "description": "Указать боту язык сервера"
         },
         "setclan": {
-            "description": "Задать клан Destiny 2 для сервера"
+            "description": "Задать клан Destiny 2 для сервера",
+            "options": {
+                "clan_id": {
+                    "name": "клан",
+                    "description": "Имя или ID клана"
+                }
         },
         "update": {
             "description": "Получить обновления от Bungie"
