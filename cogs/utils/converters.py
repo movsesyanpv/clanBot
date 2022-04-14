@@ -1,5 +1,5 @@
 from typing import Union
-from discord import ApplicationContext
+from discord import ApplicationContext, Interaction
 
 
 class CtxLocale:
@@ -8,7 +8,7 @@ class CtxLocale:
         self.locale = locale
 
 
-async def locale_2_lang(ctx: Union[ApplicationContext, CtxLocale]) -> str:
+async def locale_2_lang(ctx: Union[ApplicationContext, CtxLocale, Interaction]) -> str:
     locale = ctx.locale
 
     if 'en' in locale:

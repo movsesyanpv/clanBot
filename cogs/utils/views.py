@@ -3,6 +3,7 @@ from cogs.utils.converters import locale_2_lang, CtxLocale
 from datetime import datetime, timedelta, timezone
 from babel.dates import format_datetime
 from babel import Locale
+import traceback
 
 
 class MyButton(discord.ui.Button):
@@ -119,7 +120,7 @@ class RoleLFG(discord.ui.View):
                  no_change='nochange', response_line='Enter names of the roles', has_custom=True):
         super().__init__()
         self.owner = owner
-        self.select = MySelect(min_values=0, max_values=max_val, options=options, row=1)
+        self.select = MySelect(min_values=1, max_values=max_val, options=options, row=1)
         if has_custom:
             self.custom_button = MyButton(type='custom', label=manual, style=discord.ButtonStyle.gray, row=2,
                                           response_line=response_line)
@@ -370,6 +371,23 @@ class LFGModal(discord.ui.Modal):
                 required=False
             )
         )
+
+    async def on_error(self, error: Exception, interaction: discord.Interaction) -> None:
+        bot_info = await self.bot_loc.bot.application_info()
+        locale = await locale_2_lang(self.bot_loc)
+        owner = bot_info.owner
+        if owner.dm_channel is None:
+            await owner.create_dm()
+        traceback_str = ''
+        for line in traceback.format_exception(type(error), error, error.__traceback__):
+            traceback_str = '{}{}'.format(traceback_str, line)
+        if len(traceback_str) < 1998:
+            await owner.dm_channel.send('`{}`'.format(traceback_str))
+        else:
+            self.bot_loc.bot.logger.exception(traceback_str)
+        command_line = '/lfg is_edit:{}'.format(self.is_edit)
+        await owner.dm_channel.send('{}:\n{}'.format(interaction.user, command_line))
+        await interaction.edit_original_message(content=self.bot_loc.bot.translations[locale]['error'], view=None)
 
     async def send_initial_lfg(self, lang, args, channel) -> discord.Message:
         role = args['the_role']
