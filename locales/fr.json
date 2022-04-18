@@ -53,7 +53,11 @@
         "perm_check_title": "Permission refusée",
         "perm_check_description": "Il me manque une des autorisations suivantes dans ce canal pour fonctionner correctement\n\n",
         "perm_send_msg": "Envoyer des messages {}",
-        "perm_embed_links": "Intégrer des liens {}"
+        "perm_embed_links": "Intégrer des liens {}",
+        "eol_title": "Please use slash commands",
+        "eol": "This command is only available in SlashCommands now, use `/{}` to execute this command.\n\n\nSlash Commands are not showing up? Then check permissions and use the `{}` button below to add them.\n**You don't need to kick the bot, just invite it again.**",
+        "invite_btn": "Invite me",
+        "support_btn": "Support server"
     },
     "lfg": {
         "go": "Go",
