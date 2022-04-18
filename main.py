@@ -566,25 +566,21 @@ class ClanBot(commands.Bot):
             elif isinstance(exception, commands.PrivateMessageOnly):
                 await ctx.send("\N{WARNING SIGN} Sorry, you can't use this command in a guild channel!",
                                delete_after=60)
-                # await ctx.message.delete()
 
             elif isinstance(exception, commands.CommandNotFound):
-                await ctx.send("\N{WARNING SIGN} That command doesn't exist!", delete_after=60)
-                # await ctx.message.delete()
+                if message.guild is None:
+                    await ctx.send("\N{WARNING SIGN} That command doesn't exist!", delete_after=60)
 
             elif isinstance(exception, commands.DisabledCommand):
                 await ctx.send("\N{WARNING SIGN} Sorry, this command is temporarily disabled! Please, try again later.",
                                delete_after=60)
-                # await ctx.message.delete()
 
             elif isinstance(exception, commands.MissingPermissions):
                 await ctx.send(f"\N{WARNING SIGN} You do not have permissions to use this command.", delete_after=60)
-                # await ctx.message.delete()
 
             elif isinstance(exception, commands.CommandOnCooldown):
                 await ctx.send(f"{ctx.author.mention} slow down! Try that again in {exception.retry_after:.1f} seconds",
                                delete_after=60)
-                # await ctx.message.delete()
 
             elif isinstance(exception, commands.MissingRequiredArgument) or isinstance(exception, commands.BadArgument):
                 await ctx.send(f"\N{WARNING SIGN} {exception}")
