@@ -55,7 +55,7 @@
         "perm_send_msg": "Send messages {}",
         "perm_embed_links": "Embed links {}",
         "eol_title": "Please use slash commands",
-        "eol": "This command is only available in SlashCommands, use `/{}` to execute this command.\n\nAfter <t:1650574800:D>, this command doesn't work.\n\n\nSlash Commands are not showing up? Then check permissions and use the `{}` button below to add them.\n**You don't need to kick the bot, just invite it again.**",
+        "eol": "This command is only available in SlashCommands now, use `/{}` to execute this command.\n\n\nSlash Commands are not showing up? Then check permissions and use the `{}` button below to add them.\n**You don't need to kick the bot, just invite it again.**",
         "invite_btn": "Invite me",
         "support_btn": "Support server"
     },
