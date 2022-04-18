@@ -115,6 +115,13 @@ class ModeLFG(discord.ui.View):
         self.value = None
 
 
+class EOLButtons(discord.ui.View):
+    def __init__(self, bot_id, support_label='Support', invite_label='Invite me'):
+        super().__init__()
+        self.add_item(discord.ui.Button(label=support_label, url='https://discord.gg/JEbzECp'))
+        self.add_item(discord.ui.Button(label=invite_label, url='https://discord.com/oauth2/authorize?client_id={}&permissions=395204623424&scope=bot%20applications.commands'.format(bot_id)))
+
+
 class RoleLFG(discord.ui.View):
     def __init__(self, max_val, options, owner, is_edit=False, manual='Enter manually', auto='Automatic',
                  no_change='nochange', response_line='Enter names of the roles', has_custom=True):
@@ -139,6 +146,7 @@ class WantButton(discord.ui.Button):
         super().__init__(style=style, label=label, row=row, custom_id=custom_id)
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         await self.view.bot.raid.add_people(interaction.message.id, interaction.user)
         lang = self.view.bot.guild_lang(interaction.message.guild.id)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
@@ -159,6 +167,7 @@ class MaybeButton(discord.ui.Button):
         super().__init__(style=style, label=label, row=row, custom_id=custom_id)
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         await self.view.bot.raid.add_mb_goers(interaction.message.id, interaction.user)
         lang = self.view.bot.guild_lang(interaction.message.guild.id)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
@@ -169,6 +178,7 @@ class NoGoButton(discord.ui.Button):
         super().__init__(style=style, label=label, row=row, custom_id=custom_id)
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         was_goer = await self.view.bot.raid.is_goer(interaction.message, interaction.user)
         is_mb_goer = await self.view.bot.raid.is_mb_goer(interaction.message, interaction.user)
         was_wanter = await self.view.bot.raid.is_wanter(interaction.message, interaction.user)
@@ -195,6 +205,7 @@ class DeleteButton(discord.ui.Button):
         super().__init__(style=style, label=label, row=row, custom_id=custom_id)
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         owner = self.view.bot.get_user(await self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
         message = interaction.message
         if owner.id == interaction.user.id:
