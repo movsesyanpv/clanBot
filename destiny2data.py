@@ -1794,8 +1794,8 @@ class D2data:
                         'name': info['name'],
                         'description': info['value']
                     })
-                    if 3865215494 in key['modifierHashes']:  # Check for double rewards
-                        mod_info = await self.destiny.decode_hash(3865215494, 'DestinyActivityModifierDefinition', language=lang)
+                    if 1171597537 in key['modifierHashes']:  # Check for double rewards
+                        mod_info = await self.destiny.decode_hash(1171597537, 'DestinyActivityModifierDefinition', language=lang)
                         self.data[lang]['ordeal']['fields'].append({
                             'inline': False,
                             'name': mod_info['displayProperties']['name'],
