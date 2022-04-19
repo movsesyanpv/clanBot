@@ -530,9 +530,13 @@ class LFGModal(discord.ui.Modal):
         check_embed = discord.Embed()
         check_embed.description = args['description']
         check_embed.title = args['name']
+        if 'zh' in lang:
+            loc = 'zh'
+        else:
+            loc = lang
         check_embed.add_field(
             name=self.bot_loc.bot.translations[lang]['lfge']['date'],
-            value='{} {}'.format(format_datetime(ts, 'medium', tzinfo=ts.tzinfo, locale=Locale.parse(lang, sep='-')),
+            value='{} {}'.format(format_datetime(ts, 'medium', tzinfo=ts.tzinfo, locale=Locale.parse(loc, sep='-')),
                                  args['timezone'])
         )
 
