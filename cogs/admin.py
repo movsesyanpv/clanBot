@@ -384,7 +384,8 @@ class Admin(commands.Cog):
                 else:
                     command_desc = command.description
             help_msg = '{}'.format(command_desc)
-            await channel.send(help_msg)
+            if len(help_msg) > 0:
+                await channel.send(help_msg)
             pass
 
     @commands.slash_command(
