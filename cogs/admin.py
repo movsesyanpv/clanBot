@@ -15,12 +15,29 @@ import asyncio
 import main
 
 from cogs.utils.converters import locale_2_lang
+from cogs.utils.views import EOLButtons
 
 
 class Admin(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command(
+        aliases=['top', 'support', 'online', 'lfglist', 'lfg', 'editlfg', 'setprefix', 'prefix', 'setclan', 'setlang',
+                 'rmnotifier', 'regnotifier', 'lfgcleanup']
+    )
+    async def eol(self, ctx, *args):
+        lang = 'en'
+        if ctx.guild is not None:
+            lang = ctx.bot.guild_lang(ctx.message.guild.id)
+        translations = ctx.bot.translations[lang]['msg']
+        response_embed = discord.Embed(title=translations['eol_title'],
+                                       description=translations['eol'].format(ctx.invoked_with,
+                                                                              translations['invite_btn']))
+        view = EOLButtons(ctx.bot.application_id, support_label=translations['support_btn'],
+                          invite_label=translations['invite_btn'])
+        await ctx.message.reply(embed=response_embed, view=view, mention_author=False)
 
     @commands.command()
     @commands.dm_only()
@@ -384,7 +401,8 @@ class Admin(commands.Cog):
                 else:
                     command_desc = command.description
             help_msg = '{}'.format(command_desc)
-            await channel.send(help_msg)
+            if len(help_msg) > 0:
+                await channel.send(help_msg)
             pass
 
     @commands.slash_command(
