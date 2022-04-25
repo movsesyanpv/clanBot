@@ -84,7 +84,7 @@ class Admin(commands.Cog):
             if len(strings) > 2:
                 for string in ctx.message.content.splitlines()[2:]:
                     content = '{}\n{}'.format(content, string)
-            await ctx.bot.post_updates(version, content, lang)
+            await ctx.bot.post_updates(version, content, lang, ctx.message.attachments)
         importlib.reload(updater)
         updater.go()
         await ctx.channel.send('Ok')

@@ -1,3 +1,4 @@
+import io
 import json
 import discord
 import argparse
@@ -935,14 +936,19 @@ class ClanBot(commands.Bot):
             else:
                 await self.dm_owner(msg)
 
-    async def post_updates(self, version: str, content: str, lang: str) -> None:
+    async def post_updates(self, version: str, content: str, lang: str, attachments: List[discord.Attachment] = []) -> None:
         msg = '`{} v{}`\n{}'.format(self.user.name, version, content)
+        files = []
+        for attachment in attachments:
+            fp = io.BytesIO()
+            await attachment.save(fp)
+            files.append(discord.File(fp, filename=attachment.filename))
         for server in self.guilds:
             if (lang == self.guild_lang(server.id) and lang == 'ru') or (lang != 'ru' and self.guild_lang(server.id) != 'ru'):
                 for channel in server.channels:
                     if channel.id in self.update_ch:
                         try:
-                            message = await channel.send(msg)
+                            message = await channel.send(msg, files=files)
                             if channel.type == discord.ChannelType.news:
                                 try:
                                     await message.publish()
