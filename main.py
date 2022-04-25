@@ -951,7 +951,10 @@ class ClanBot(commands.Bot):
                 for channel in server.channels:
                     if channel.id in self.update_ch:
                         try:
-                            message = await channel.send(msg, files=files)
+                            if channel.permissions_for(server.me).attach_files:
+                                message = await channel.send(msg, files=files)
+                            else:
+                                message = await channel.send(msg)
                             if channel.type == discord.ChannelType.news:
                                 try:
                                     await message.publish()
