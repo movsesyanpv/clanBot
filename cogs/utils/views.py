@@ -158,7 +158,7 @@ class WantButton(discord.ui.Button):
             else:
                 nick = interaction.user.name
             locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
-            await interaction.response.send_message(content=self.view.bot.translations[locale]['lfg']['gotcha'].format(nick), ephemeral=True)
+            await interaction.followup.send(content=self.view.bot.translations[locale]['lfg']['gotcha'].format(nick), ephemeral=True)
             await self.view.bot.raid.upd_dm(owner, interaction.message.id, self.view.bot.translations[lang])
 
 
@@ -193,11 +193,11 @@ class NoGoButton(discord.ui.Button):
         if not was_goer and not is_mb_goer:
             locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
             if was_wanter:
-                await interaction.response.send_message(content=self.view.bot.translations[locale]['lfg']['will_not_go'], ephemeral=True)
+                await interaction.followup.send(content=self.view.bot.translations[locale]['lfg']['will_not_go'], ephemeral=True)
                 owner = self.view.bot.get_user(await self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
                 await self.view.bot.raid.upd_dm(owner, interaction.message.id, self.view.bot.translations[locale])
             else:
-                await interaction.response.send_message(content=self.view.bot.translations[locale]['lfg']['was_not_going'], ephemeral=True)
+                await interaction.followup.send(content=self.view.bot.translations[locale]['lfg']['was_not_going'], ephemeral=True)
 
 
 class DeleteButton(discord.ui.Button):
@@ -206,7 +206,7 @@ class DeleteButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        owner = self.view.bot.get_user(await self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
+        owner = await self.view.bot.fetch_user(await self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
         message = interaction.message
         if owner.id == interaction.user.id:
             mode = await self.view.bot.raid.get_cell('group_id', message.id, 'group_mode')
@@ -230,7 +230,7 @@ class DeleteButton(discord.ui.Button):
             await message.delete()
         else:
             lang = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
-            await interaction.response.send_message(content=self.view.bot.translations[lang]['lfg']['will_not_delete'], ephemeral=True)
+            await interaction.followup.send(content=self.view.bot.translations[lang]['lfg']['will_not_delete'], ephemeral=True)
 
 
 class GroupButtons(discord.ui.View):
