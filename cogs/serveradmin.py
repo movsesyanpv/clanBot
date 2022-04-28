@@ -138,11 +138,8 @@ class ServerAdmin(commands.Cog):
             else:
                 await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
         else:
-            if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-                n = await ctx.bot.lfg_cleanup(days, ctx.guild)
-                await ctx.respond(msg.format(n))
-            else:
-                await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
+            n = await ctx.bot.lfg_cleanup(days, ctx.guild)
+            await ctx.respond(msg.format(n))
 
     @commands.slash_command(name='regnotifier',
                             description_localizations={
@@ -176,18 +173,14 @@ class ServerAdmin(commands.Cog):
                              ):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         if not await message_permissions(ctx, lang):
             return
         notifier_type = upd_type
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
-                                         (ctx.channel.id, ctx.guild.id))
-            ctx.bot.guild_db_sync.commit()
-            ctx.bot.get_channels()
-            await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
+        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
+                                     (ctx.channel.id, ctx.guild.id))
+        ctx.bot.guild_db_sync.commit()
+        ctx.bot.get_channels()
+        await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
         return
 
     @commands.slash_command(name='rmnotifier',
@@ -202,17 +195,13 @@ class ServerAdmin(commands.Cog):
     async def sl_rmnotifier(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         if not await message_permissions(ctx, lang):
             return
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
-            ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
-            ctx.bot.guild_db_sync.commit()
-            ctx.bot.get_channels()
-            await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
+        ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
+        ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
+        ctx.bot.guild_db_sync.commit()
+        ctx.bot.get_channels()
+        await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
 
     @commands.slash_command(
         name='setlang',
@@ -228,21 +217,17 @@ class ServerAdmin(commands.Cog):
     async def sl_setlang(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         view = BotLangs(ctx.author, self.bot)
         await ctx.respond(ctx.bot.translations[lang]['msg']['language_select'], view=view)
         await view.wait()
         args = view.value
 
         msg = ctx.bot.translations[lang]['msg']['command_is_done']
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
-                                         (args[0].lower(), ctx.guild.id))
-            ctx.bot.guild_db_sync.commit()
-            if ctx.guild.me.guild_permissions.change_nickname:
-                await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
+        ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
+                                     (args[0].lower(), ctx.guild.id))
+        ctx.bot.guild_db_sync.commit()
+        if ctx.guild.me.guild_permissions.change_nickname:
+            await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
         await ctx.interaction.edit_original_message(content=msg, view=None)
 
     @commands.slash_command(name='setclan',
@@ -265,10 +250,6 @@ class ServerAdmin(commands.Cog):
                          ):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
-        # lang = ctx.bot.guild_lang(ctx.guild.id)
         try:
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(int(clan_id))
         except ValueError:
@@ -293,18 +274,17 @@ class ServerAdmin(commands.Cog):
             clan_embed.add_field(name=translations['id'], value=clan_json['Response']['detail']['groupId'])
             clan_embed.add_field(name=translations['founder'], value=clan_json['Response']['founder']['destinyUserInfo']['LastSeenDisplayName'])
             await ctx.respond(embed=clan_embed)
-            if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-                ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
-                                             (clan_json['Response']['detail']['name'],
-                                              clan_json['Response']['detail']['groupId'], ctx.guild.id))
-                ctx.bot.guild_db_sync.commit()
-                if ctx.guild.me.guild_permissions.change_nickname:
-                    try:
-                        await ctx.guild.me.edit(
-                            nick='{}bot'.format(clan_json['Response']['detail']['clanInfo']['clanCallsign']),
-                            reason='clan setup')
-                    except KeyError:
-                        pass
+            ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
+                                         (clan_json['Response']['detail']['name'],
+                                          clan_json['Response']['detail']['groupId'], ctx.guild.id))
+            ctx.bot.guild_db_sync.commit()
+            if ctx.guild.me.guild_permissions.change_nickname:
+                try:
+                    await ctx.guild.me.edit(
+                        nick='{}bot'.format(clan_json['Response']['detail']['clanInfo']['clanCallsign']),
+                        reason='clan setup')
+                except KeyError:
+                    pass
         else:
             await ctx.respond('{}: {}'.format(clan_id, clan_json['Message']))
 
@@ -386,9 +366,6 @@ class ServerAdmin(commands.Cog):
     async def sl_update(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         if not await message_permissions(ctx, lang):
             return
         get = True
