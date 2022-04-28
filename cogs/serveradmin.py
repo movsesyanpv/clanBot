@@ -30,7 +30,9 @@ class ServerAdmin(commands.Cog):
             'ru': "Прекратить автоматические посты бота в этом канале",
             'fr': 'Forcer le Bot a ne plus poster de mise a jour dans ce canal'
         },
-        description='Make the bot stop posting updates in this channel'
+        description='Make the bot stop posting updates in this channel',
+        dm_permissions=False,
+        default_member_permissions=discord.Permissions(administrator=True)
     )
     async def remove(self, ctx):
         await ctx.defer(ephemeral=True)
@@ -54,7 +56,9 @@ class ServerAdmin(commands.Cog):
             'ru': "Начать автоматические посты об обновлениях игры в этом канале",
             'fr': 'Autorisez le bot à poster la mise a jour des rotations dans ce canal'
         },
-        description='Make the bot start posting rotation updates in this channel'
+        description='Make the bot start posting rotation updates in this channel',
+        dm_permissions=False,
+        default_member_permissions=discord.Permissions(administrator=True)
     )
     async def rotations(self, ctx):
         await ctx.defer(ephemeral=True)
@@ -82,7 +86,9 @@ class ServerAdmin(commands.Cog):
             'ru': "Начать автоматические посты об обновлениях бота в этом канале",
             'fr': 'Autorisez le bot à poster les changelogs dans ce canal'
         },
-        description='Make the bot start posting changelogs in this channel'
+        description='Make the bot start posting changelogs in this channel',
+        dm_permissions=False,
+        default_member_permissions=discord.Permissions(administrator=True)
     )
     async def changelogs(self, ctx):
         await ctx.defer(ephemeral=True)
@@ -109,7 +115,8 @@ class ServerAdmin(commands.Cog):
                                 'ru': "Удалить прошедшие сборы",
                                 'fr': 'Supprimer les messages LFG expirés'
                             },
-                            description='Delete groups that are unavailable or inactive')
+                            description='Delete groups that are unavailable or inactive',
+                            default_member_permissions=discord.Permissions(administrator=True))
     async def sl_lfgcleanup(self, ctx,
                             days: Option(int, "Days since the activity was finished", required=False, default=0,
                                          name_localizations={
@@ -143,8 +150,9 @@ class ServerAdmin(commands.Cog):
                                 'de': 'Meldekanal registrieren',
                                 'fr': 'Enregistrer le canal de notification'
                             },
-                            description='Register notifier channel')
-    @commands.guild_only()
+                            description='Register notifier channel',
+                            dm_permissions=False,
+                            default_member_permissions=discord.Permissions(administrator=True))
     async def sl_regnotifier(self, ctx,
                              upd_type: Option(str, "The type of notifier", required=False, default='notifiers',
                                               choices=[discord.OptionChoice('Rotations', value='notifiers',
@@ -188,8 +196,9 @@ class ServerAdmin(commands.Cog):
                                 'de': 'Meldekanal abmelden',
                                 'fr': 'Supprimer le canal de notification'
                             },
-                            description='Deregister notifier channel')
-    @commands.guild_only()
+                            description='Deregister notifier channel',
+                            dm_permissions=False,
+                            default_member_permissions=discord.Permissions(administrator=True))
     async def sl_rmnotifier(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
@@ -212,9 +221,10 @@ class ServerAdmin(commands.Cog):
             'de': 'Serversprache einstellen',
             'fr': 'Selectionner la langue du serveur'
         },
-        description='Tell the bot the server\'s language'
+        description='Tell the bot the server\'s language',
+        dm_permissions=False,
+        default_member_permissions=discord.Permissions(administrator=True)
     )
-    @commands.guild_only()
     async def sl_setlang(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
@@ -241,8 +251,10 @@ class ServerAdmin(commands.Cog):
                                 'de': 'Lege einen Destiny 2-Clan für den Server fest',
                                 'fr': 'Définir le clan Destiny 2 sur le serveur'
                             },
-                            description='Set a Destiny 2 clan for the server')
-    @commands.guild_only()
+                            description='Set a Destiny 2 clan for the server',
+                            dm_permissions=False,
+                            default_member_permissions=discord.Permissions(administrator=True)
+                            )
     async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True,
                                                     name_localizations={
                                                         'ru': 'клан'
@@ -367,9 +379,10 @@ class ServerAdmin(commands.Cog):
             'de': 'Holen Sie sich Updates von Bungie',
             'fr': 'Recevoir les mises a jour de Bungie'
         },
-        description='Get updates from Bungie'
+        description='Get updates from Bungie',
+        dm_permissions=False,
+        default_member_permissions=discord.Permissions(administrator=True)
     )
-    @commands.guild_only()
     async def sl_update(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
