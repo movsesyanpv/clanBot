@@ -105,7 +105,7 @@ class Public(commands.Cog):
                         is_kda = True
                     else:
                         is_kda = False
-                    if 'speed' in metric.lower():
+                    if 'speed' in metric.lower() or 'ranking' in metric.lower():
                         is_time = True
                     else:
                         is_time = False
