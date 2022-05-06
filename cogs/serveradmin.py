@@ -11,6 +11,7 @@ import sqlite3
 from cogs.utils.views import UpdateTypes, BotLangs
 from cogs.utils.converters import locale_2_lang
 from cogs.utils.checks import message_permissions
+from cogs.utils.autocomplete import tz_picker
 import dateparser
 
 
@@ -419,6 +420,13 @@ class ServerAdmin(commands.Cog):
         await ctx.bot.force_update(args, get=get, channels=channels, forceget=get)
         await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
         return
+
+    @commands.slash_command(
+        description='Set a default timezone for the server',
+        dm_permission=False
+    )
+    async def settimezone(self, ctx, time_zone: Option(str, "Timezone", required=True, autocomplete=tz_picker)):
+        pass
 
     # @commands.slash_command(
     #     description='Register the channel as a place for LFG posts',

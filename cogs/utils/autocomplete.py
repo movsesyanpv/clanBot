@@ -1,5 +1,6 @@
 import mariadb
 import json
+import zoneinfo
 
 
 api_data_file = open('api.json', 'r')
@@ -38,3 +39,15 @@ async def metric_picker(interaction, value):
         return metric_list[:25]
     else:
         return metric_list
+
+
+async def tz_picker(interaction, value):
+    zones = []
+    for tz in zoneinfo.available_timezones():
+        if value.value.lower() in tz.lower() or len(value.value) == 0:
+            zones.append(tz)
+    if len(zones) > 25:
+        return zones[:25]
+    else:
+        return zones
+
