@@ -2539,18 +2539,23 @@ class D2data:
         return response_json
 
     async def get_global_leaderboard(self, metric: int, number: int, is_time: bool = False,
-                                     is_kda: bool = False) -> list:
+                                     is_kda: bool = False, is_ranking: bool = False) -> list:
         cursor = await self.bot_data_db.cursor()
 
         leaderboard = []
 
-        if is_time:
+        if is_time or is_ranking:
             raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}` FROM playermetrics WHERE `{}`>0 ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
-            for place in raw_leaderboard:
-                index = raw_leaderboard.index(place)
-                leaderboard.append([raw_leaderboard[index][0], str(timedelta(minutes=(int(raw_leaderboard[index][1]) / 60000))).split('.')[0]])
+            if is_time:
+                for place in raw_leaderboard:
+                    index = raw_leaderboard.index(place)
+                    leaderboard.append([raw_leaderboard[index][0], str(timedelta(minutes=(int(raw_leaderboard[index][1]) / 60000))).split('.')[0]])
+            if is_ranking:
+                for place in raw_leaderboard:
+                    index = raw_leaderboard.index(place)
+                    leaderboard.append([raw_leaderboard[index][0], raw_leaderboard[index][1]])
         else:
             raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}` FROM playermetrics WHERE `{}`>0 ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
@@ -2590,7 +2595,7 @@ class D2data:
             return leaderboard
 
     async def get_clan_leaderboard(self, clan_ids: list, metric: int, number: int, is_time: bool = False,
-                                   is_kda: bool = False, is_global: bool = False) -> list:
+                                   is_kda: bool = False, is_ranking: bool = False, is_global: bool = False) -> list:
         metric_list = []
         for clan_id in clan_ids:
             url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
@@ -2625,7 +2630,7 @@ class D2data:
 
         if len(metric_list) > 0:
             try:
-                if is_time:
+                if is_time or is_ranking:
                     metric_list.sort(reverse=False, key=lambda x: x[1])
                     while metric_list[0][1] <= 0:
                         metric_list.pop(0)
