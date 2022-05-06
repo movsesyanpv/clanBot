@@ -591,6 +591,13 @@ class ClanBot(commands.Bot):
 
     async def update_clans(self) -> None:
         cursor = await self.guild_db.cursor()
+        data_cursor = await self.data.bot_data_db.cursor()
+        try:
+            await data_cursor.execute('''CREATE TABLE clans (clan_name text, clan_id integer)''')
+            await data_cursor.execute('''CREATE UNIQUE INDEX clan ON clans(clan_id)''')
+            await self.data.bot_data_db.commit()
+        except aiosqlite.OperationalError:
+            pass
         for server in self.guilds:
             try:
                 await cursor.execute('''CREATE TABLE clans (server_name text, server_id integer, clan_name text, clan_id integer)''')
@@ -604,6 +611,7 @@ class ClanBot(commands.Bot):
 
         await self.guild_db.commit()
         await cursor.close()
+        await data_cursor.close()
 
     async def update_langs(self) -> None:
         cursor = await self.guild_db.cursor()
@@ -964,7 +972,7 @@ class ClanBot(commands.Bot):
                             pass
 
     async def update_metrics(self) -> None:
-        cursor = await self.guild_db.cursor()
+        cursor = await self.data.bot_data_db.cursor()
         clan_ids_c = await cursor.execute('''SELECT clan_id FROM clans''')
         clan_ids_c = await clan_ids_c.fetchall()
         clan_ids = []

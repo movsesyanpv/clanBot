@@ -1,3 +1,5 @@
+import aiosqlite
+
 from discord.ext import commands
 from discord.commands import Option, option, SlashCommandGroup, slash_command
 import importlib
@@ -38,19 +40,12 @@ class ServerAdmin(commands.Cog):
     async def remove(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if ctx.guild is None:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_dm'])
-            return
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
-            ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
-            ctx.bot.guild_db_sync.commit()
-            ctx.bot.get_channels()
-            msg = 'Got it, {}'.format(ctx.author.mention)
-            await ctx.respond(msg)
+        ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
+        ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
+        ctx.bot.guild_db_sync.commit()
+        ctx.bot.get_channels()
+        msg = 'Got it, {}'.format(ctx.author.mention)
+        await ctx.respond(msg)
 
     @register.command(
         description_localizations={
@@ -64,22 +59,15 @@ class ServerAdmin(commands.Cog):
     async def rotations(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if ctx.guild is None:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_dm'])
-            return
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         if not await message_permissions(ctx, lang):
             return
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
-                                         (ctx.channel.id, ctx.guild.id))
-            ctx.bot.guild_db_sync.commit()
-            ctx.bot.get_channels()
-            msg = 'Got it, {}'.format(ctx.author.mention)
-            await ctx.respond(msg)
-            await ctx.bot.force_update(['daily', 'weekly'], get=False, channels=[ctx.channel.id], forceget=False)
+        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
+                                     (ctx.channel.id, ctx.guild.id))
+        ctx.bot.guild_db_sync.commit()
+        ctx.bot.get_channels()
+        msg = 'Got it, {}'.format(ctx.author.mention)
+        await ctx.respond(msg)
+        await ctx.bot.force_update(['daily', 'weekly'], get=False, channels=[ctx.channel.id], forceget=False)
         return
 
     @register.command(
@@ -94,21 +82,14 @@ class ServerAdmin(commands.Cog):
     async def changelogs(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if ctx.guild is None:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_dm'])
-            return
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         if not await message_permissions(ctx, lang):
             return
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into updates values (?,?)''',
-                                         (ctx.channel.id, ctx.guild.id))
-            ctx.bot.guild_db_sync.commit()
-            ctx.bot.get_channels()
-            msg = 'Got it, {}'.format(ctx.author.mention)
-            await ctx.respond(msg)
+        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into updates values (?,?)''',
+                                     (ctx.channel.id, ctx.guild.id))
+        ctx.bot.guild_db_sync.commit()
+        ctx.bot.get_channels()
+        msg = 'Got it, {}'.format(ctx.author.mention)
+        await ctx.respond(msg)
         return
 
     @slash_command(name='lfgcleanup',
@@ -275,6 +256,13 @@ class ServerAdmin(commands.Cog):
             clan_embed.add_field(name=translations['id'], value=clan_json['Response']['detail']['groupId'])
             clan_embed.add_field(name=translations['founder'], value=clan_json['Response']['founder']['destinyUserInfo']['LastSeenDisplayName'])
             await ctx.respond(embed=clan_embed)
+            data_cursor = await ctx.bot.data.bot_data_db.cursor()
+            try:
+                await data_cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?)''', (clan_json['Response']['detail']['name'], clan_json['Response']['detail']['groupId']))
+                await ctx.bot.data.bot_data_db.commit()
+            except aiosqlite.OperationalError:
+                pass
+            await data_cursor.close()
             ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
                                          (clan_json['Response']['detail']['name'],
                                           clan_json['Response']['detail']['groupId'], ctx.guild.id))
