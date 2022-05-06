@@ -1,3 +1,5 @@
+import aiosqlite
+
 from discord.ext import commands
 from discord.commands import Option, option, SlashCommandGroup
 import importlib
@@ -282,6 +284,13 @@ class ServerAdmin(commands.Cog):
             clan_embed.add_field(name=translations['founder'], value=clan_json['Response']['founder']['destinyUserInfo']['LastSeenDisplayName'])
             await ctx.respond(embed=clan_embed)
             if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
+                data_cursor = await ctx.bot.data.bot_data_db.cursor()
+                try:
+                    await data_cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?)''', (clan_json['Response']['detail']['name'], clan_json['Response']['detail']['groupId']))
+                    await ctx.bot.data.bot_data_db.commit()
+                except aiosqlite.OperationalError:
+                    pass
+                await data_cursor.close()
                 ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
                                              (clan_json['Response']['detail']['name'],
                                               clan_json['Response']['detail']['groupId'], ctx.guild.id))
