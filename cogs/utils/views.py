@@ -353,7 +353,7 @@ class LFGModal(discord.ui.Modal):
                 label=translations['description'],
                 value=data['description'],
                 style=discord.InputTextStyle.long,
-                required=True
+                required=False
             )
         )
         self.add_item(
