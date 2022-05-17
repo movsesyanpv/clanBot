@@ -569,7 +569,8 @@ class LFG:
         }
 
         if is_embed == 1:
-            embed['thumbnail']['url'] = message.guild.icon.url.split('?')[0]
+            if message.guild.icon is not None:
+                embed['thumbnail']['url'] = message.guild.icon.url.split('?')[0]
             embed['color'] = 0x000000
         else:
             embed['thumbnail']['url'] = self.lfg_categories[self.lfg_i[is_embed]]['thumbnail']

@@ -105,7 +105,11 @@ class Public(commands.Cog):
                         is_kda = True
                     else:
                         is_kda = False
-                    if 'speed' in metric.lower() or 'ranking' in metric.lower():
+                    if 'ranking' in metric.lower():
+                        is_ranking = True
+                    else:
+                        is_ranking = False
+                    if 'speed' in metric.lower():
                         is_time = True
                     else:
                         is_time = False
@@ -135,9 +139,9 @@ class Public(commands.Cog):
             #         if clan_id[0] not in clan_ids:
             #             clan_ids.append(clan_id[0])
             if is_global:
-                top_list = await ctx.bot.data.get_global_leaderboard(metric, number, is_time, is_kda)
+                top_list = await ctx.bot.data.get_global_leaderboard(metric, number, is_time, is_kda, is_ranking)
             else:
-                top_list = await ctx.bot.data.get_clan_leaderboard(clan_ids, metric, number, is_time, is_kda, is_global)
+                top_list = await ctx.bot.data.get_clan_leaderboard(clan_ids, metric, number, is_time, is_kda, is_ranking, is_global)
             max_len = min(number, len(top_list))
             if len(top_list) > 0:
                 metric_description = top_name['displayProperties']['description'].splitlines()
