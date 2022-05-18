@@ -21,7 +21,7 @@ class ServerAdmin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    autopost = SlashCommandGroup("autopost", "Autopost channel settings", dm_permission=False,
+    autopost = SlashCommandGroup("autopost", "Autopost channel settings", guild_only=True,
                                  default_member_permissions=discord.Permissions(administrator=True))
 
     register = autopost.create_subgroup(
@@ -34,7 +34,7 @@ class ServerAdmin(commands.Cog):
             'fr': 'Forcer le Bot a ne plus poster de mise a jour dans ce canal'
         },
         description='Make the bot stop posting updates in this channel',
-        dm_permission=False,
+        guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)
     )
     async def remove(self, ctx):
@@ -53,7 +53,7 @@ class ServerAdmin(commands.Cog):
             'fr': 'Autorisez le bot à poster la mise a jour des rotations dans ce canal'
         },
         description='Make the bot start posting rotation updates in this channel',
-        dm_permission=False,
+        guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)
     )
     async def rotations(self, ctx):
@@ -76,7 +76,7 @@ class ServerAdmin(commands.Cog):
             'fr': 'Autorisez le bot à poster les changelogs dans ce canal'
         },
         description='Make the bot start posting changelogs in this channel',
-        dm_permission=False,
+        guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)
     )
     async def changelogs(self, ctx):
@@ -130,7 +130,7 @@ class ServerAdmin(commands.Cog):
                        'fr': 'Enregistrer le canal de notification'
                    },
                    description='Register notifier channel',
-                   dm_permissions=False,
+                   guild_only=True,
                    default_member_permissions=discord.Permissions(administrator=True))
     async def sl_regnotifier(self, ctx,
                              upd_type: Option(str, "The type of notifier", required=False, default='notifiers',
@@ -172,7 +172,7 @@ class ServerAdmin(commands.Cog):
                        'fr': 'Supprimer le canal de notification'
                    },
                    description='Deregister notifier channel',
-                   dm_permissions=False,
+                   guild_only=True,
                    default_member_permissions=discord.Permissions(administrator=True))
     async def sl_rmnotifier(self, ctx):
         await ctx.defer(ephemeral=True)
@@ -193,7 +193,7 @@ class ServerAdmin(commands.Cog):
             'fr': 'Selectionner la langue du serveur'
         },
         description='Tell the bot the server\'s language',
-        dm_permissions=False,
+        guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)
     )
     async def sl_setlang(self, ctx):
@@ -219,7 +219,7 @@ class ServerAdmin(commands.Cog):
                        'fr': 'Définir le clan Destiny 2 sur le serveur'
                    },
                    description='Set a Destiny 2 clan for the server',
-                   dm_permissions=False,
+                   guild_only=True,
                    default_member_permissions=discord.Permissions(administrator=True)
                    )
     async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True,
@@ -349,7 +349,7 @@ class ServerAdmin(commands.Cog):
             'fr': 'Recevoir les mises a jour de Bungie'
         },
         description='Get updates from Bungie',
-        dm_permissions=False,
+        guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)
     )
     async def sl_update(self, ctx):

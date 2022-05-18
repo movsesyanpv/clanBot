@@ -57,7 +57,7 @@ class Group(commands.Cog):
                                 'fr': 'Creer un message LFG'
                             },
                             description='Create a group',
-                            dm_permissions=False)
+                            guild_only=True)
     async def lfg_sl(self, ctx):
         lang = await locale_2_lang(ctx)
         translations = ctx.bot.translations[lang]['lfg']
@@ -75,7 +75,7 @@ class Group(commands.Cog):
             'fr': 'Editer le LFG'
         },
         description="Edit LFG post",
-        dm_permissions=False
+        guild_only=True
     )
     async def edit_lfg_msg(self, ctx, message: discord.Message):
         lang = await locale_2_lang(ctx)
@@ -101,7 +101,7 @@ class Group(commands.Cog):
             'fr': 'Édition du message LFG'
         },
         description='Edit LFG post',
-        dm_permissions=False
+        guild_only=True
     )
     async def edit_lfg_sl(self, ctx):
         lang = await locale_2_lang(ctx)

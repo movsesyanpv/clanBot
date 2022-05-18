@@ -24,7 +24,7 @@ class Public(commands.Cog):
             'fr': 'Afficher le top des joueurs'
         },
         description='Print top players for one of the available metrics.',
-        dm_permissions=False
+        guild_only=True
     )
     async def top_sl(self, ctx,
                      metric: Option(str, "Metric to make a leaderboard", required=True, autocomplete=metric_picker,
@@ -212,7 +212,7 @@ class Public(commands.Cog):
             'fr': 'Liste des membres du clan en ligne'
         },
         description="Get the list of online clan members.",
-        dm_permissions=False
+        guild_only=True
     )
     @commands.guild_only()
     async def online_sl(self, ctx):
