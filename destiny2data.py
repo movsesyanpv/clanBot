@@ -1766,7 +1766,7 @@ class D2data:
                 'fields': [],
                 'color': 5331575,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['ordeal'],
+                'title': self.translations[lang]['ordeal'],
                 'footer': {'text': self.translations[lang]['msg']['resp_time']},
                 'timestamp': resp_time
             }
