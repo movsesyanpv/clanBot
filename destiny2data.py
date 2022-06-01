@@ -1556,10 +1556,10 @@ class D2data:
             return False
         resp_time = activities_resp['timestamp']
 
-        hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
-            format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
-        hawthorne_resp = await self.get_cached_json('hawthorne', 'hawthorne', hawthorne_url, self.vendor_params,
-                                                    force=forceget)
+        # hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
+        #     format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
+        # hawthorne_resp = await self.get_cached_json('hawthorne', 'hawthorne', hawthorne_url, self.vendor_params,
+        #                                             force=forceget)
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -1586,16 +1586,16 @@ class D2data:
             sotp_ch = 0
             cos_ch = 0
 
-            hawthorne_json = hawthorne_resp
-            if hawthorne_resp:
-                resp_time = hawthorne_json['timestamp']
-                for cat in hawthorne_json['Response']['sales']['data']:
-                    if hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in last_wish_challenges:
-                        lw_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
-                    elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in sotp_challenges:
-                        sotp_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
-                    elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in cos_challenges:
-                        cos_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+            # hawthorne_json = hawthorne_resp
+            # if hawthorne_resp:
+            #     resp_time = hawthorne_json['timestamp']
+            #     for cat in hawthorne_json['Response']['sales']['data']:
+            #         if hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in last_wish_challenges:
+            #             lw_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+            #         elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in sotp_challenges:
+            #             sotp_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+            #         elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in cos_challenges:
+            #             cos_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
 
             db_data = []
             activities_json = activities_resp
@@ -1653,22 +1653,22 @@ class D2data:
                 #         'description': info['value'].replace('\n\n', '<br>').replace('\n', '<br>')
                 #     })
                 #     self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and lw_ch != 0 and hawthorne_resp:
-                    info = {
-                        'inline': True,
-                        'name': r_json['originalDisplayProperties']['name'],
-                        'value': u"\u2063"
-                    }
-                    curr_challenge = lw_ch
-                    curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
-                                                                    language=lang)
-                    info['value'] = curr_challenge['displayProperties']['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
+                # if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath'] and lw_ch != 0 and hawthorne_resp:
+                #     info = {
+                #         'inline': True,
+                #         'name': r_json['originalDisplayProperties']['name'],
+                #         'value': u"\u2063"
+                #     }
+                #     curr_challenge = lw_ch
+                #     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                #                                                     language=lang)
+                #     info['value'] = curr_challenge['displayProperties']['name']
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': info['value'].replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
                 # if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
                 #         not r_json['matchmaking']['requiresGuardianOath'] and sotp_ch != 0 and hawthorne_resp:
                 #     info = {
@@ -1701,35 +1701,38 @@ class D2data:
                 #         'description': info['value'].replace('\n', '<br>')
                 #     })
                 #     self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and 'modifierHashes' in key.keys():
+                # if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath'] and 'modifierHashes' in key.keys():
+                #     info = {
+                #         'inline': True,
+                #         'name': r_json['originalDisplayProperties']['name'],
+                #         'value': u"\u2063"
+                #     }
+                #     # mods = await self.get_modifiers(lang, r_json['hash'])
+                #     mods = await self.destiny.decode_hash(key['modifierHashes'][0], 'DestinyActivityModifierDefinition', lang)
+                #     resp_time = datetime.utcnow().isoformat()
+                #     if mods:
+                #         info['value'] = mods['displayProperties']['name']
+                #     else:
+                #         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': info['value'].replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
+                if r_json['hash'] in [910380154, 3881495763, 1441982566, 2122313384, 3458480158] and 'modifierHashes' in key.keys():
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    # mods = await self.get_modifiers(lang, r_json['hash'])
                     mods = await self.destiny.decode_hash(key['modifierHashes'][0], 'DestinyActivityModifierDefinition', lang)
                     resp_time = datetime.utcnow().isoformat()
                     if mods:
-                        info['value'] = mods['displayProperties']['name']
-                    else:
-                        info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
-                if r_json['hash'] in [910380154, 3881495763, 1441982566] and 'modifierHashes' in key.keys():
-                    info = {
-                        'inline': True,
-                        'name': r_json['originalDisplayProperties']['name'],
-                        'value': u"\u2063"
-                    }
-                    mods = await self.destiny.decode_hash(key['modifierHashes'][0], 'DestinyActivityModifierDefinition', lang)
-                    resp_time = datetime.utcnow().isoformat()
-                    if mods:
-                        info['value'] = mods['displayProperties']['name']
+                        if len(key['modifierHashes']) > 2:
+                            info['value'] = local_types['msg']['featured_raid']
+                        else:
+                            info['value'] = mods['displayProperties']['name']
                     else:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
                     db_data.append({
