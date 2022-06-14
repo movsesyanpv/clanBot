@@ -54,11 +54,13 @@
         "perm_check_description": "Il me manque une des autorisations suivantes dans ce canal pour fonctionner correctement\n\n",
         "perm_send_msg": "Envoyer des messages {}",
         "perm_embed_links": "Intégrer des liens {}",
-        "eol_title": "Please use slash commands",
-        "eol": "This command is only available in SlashCommands now, use `/{}` to execute this command.\n\n\nSlash Commands are not showing up? Then check permissions and use the `{}` button below to add them.\n**You don't need to kick the bot, just invite it again.**",
-        "invite_btn": "Invite me",
-        "support_btn": "Support server",
-        "featured_raid": "**Weekly featured raid**"
+        "eol_title": "Merci d'utiliser les commandes avec les \"/\"",
+        "eol": "Cette commande n'est disponible qu'avec le \"/\" dorénavant, merci d'utiliser `/{}` pour exécuter cette commande\n\n\nles commandes commençant par / ne sont pas visibles ? Merci de vérifier les permissions et d'utiliser le bouton `{}` pour les ajouter.\n**Vous n'avez pas besoin de kicker le bot, inviter le a nouveau (sans le kicker)**",
+        "invite_btn": "Invitez moi",
+        "support_btn": "Le serveur du Support",
+        "featured_raid": "Défi de raid hebdomadaire.",
+        "armor_mods": "Armor mods",
+        "weapon_mods": "Weapon mods"
     },
     "lfg": {
         "go": "Go",
@@ -487,7 +489,7 @@
             "options": {
                 "clan_id": {
                     "name": "clan_id",
-                    "description": "Name or id of a clan"
+                    "description": "Nom ou ID d'un clan"
                 }
             }
         },
