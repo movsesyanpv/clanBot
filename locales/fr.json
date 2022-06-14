@@ -58,7 +58,7 @@
         "eol": "Cette commande n'est disponible qu'avec le \"/\" dorénavant, merci d'utiliser `/{}` pour exécuter cette commande\n\n\nles commandes commençant par / ne sont pas visibles ? Merci de vérifier les permissions et d'utiliser le bouton `{}` pour les ajouter.\n**Vous n'avez pas besoin de kicker le bot, inviter le a nouveau (sans le kicker)**",
         "invite_btn": "Invitez moi",
         "support_btn": "Le serveur du Support",
-        "featured_raid": "Défi de raid hebdomadaire.",
+        "featured_raid": "**Défi de raid hebdomadaire**",
         "armor_mods": "Armor mods",
         "weapon_mods": "Weapon mods"
     },
