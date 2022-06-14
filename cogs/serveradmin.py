@@ -250,7 +250,8 @@ class ServerAdmin(commands.Cog):
                                                         'ru': 'клан'
                                                     },
                                                     description_localizations={
-                                                        'ru': 'Имя или ID клана'
+                                                        'ru': 'Имя или ID клана',
+                                                        'fr': 'Nom ou ID d\'un clan'
                                                     })
                          ):
         await ctx.defer(ephemeral=True)
