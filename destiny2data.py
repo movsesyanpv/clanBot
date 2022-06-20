@@ -1042,18 +1042,22 @@ class D2data:
             items_to_get = ada_cats[1]['itemIndexes']
             ada_sales = await self.get_vendor_sales(lang, ada_resp, items_to_get, [1812969468])
 
+            fields = [{'inline': True, 'name': self.translations[lang]['msg']['armor_mods'], 'value': ''}]
             for item in ada_sales[1]:
                 item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
                 if item_def['itemType'] == 19:
                     mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
+                    fields[-1]['value'] = '{}{}\n'.format(fields[-1]['value'], item_def['displayProperties']['name'])
 
             items_to_get = banshee_cats[2]['itemIndexes']
             banshee_sales = await self.get_vendor_sales(lang, banshee_resp, items_to_get, [1812969468, 2731650749])
+            fields.append({'inline': True, 'name': self.translations[lang]['msg']['weapon_mods'], 'value': ''})
             for item in banshee_sales[1]:
                 item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
                 if item_def['itemType'] == 19:
                     mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
-            self.data[lang]['daily_mods']['fields'] = mods
+                    fields[-1]['value'] = '{}{}\n'.format(fields[-1]['value'], item_def['displayProperties']['name'])
+            self.data[lang]['daily_mods']['fields'] = fields
         await self.write_bot_data('daily_mods', langs)
 
     async def get_xur_loc(self) -> dict:
@@ -1556,10 +1560,10 @@ class D2data:
             return False
         resp_time = activities_resp['timestamp']
 
-        hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
-            format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
-        hawthorne_resp = await self.get_cached_json('hawthorne', 'hawthorne', hawthorne_url, self.vendor_params,
-                                                    force=forceget)
+        # hawthorne_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3347378076/'. \
+        #     format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
+        # hawthorne_resp = await self.get_cached_json('hawthorne', 'hawthorne', hawthorne_url, self.vendor_params,
+        #                                             force=forceget)
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -1586,16 +1590,16 @@ class D2data:
             sotp_ch = 0
             cos_ch = 0
 
-            hawthorne_json = hawthorne_resp
-            if hawthorne_resp:
-                resp_time = hawthorne_json['timestamp']
-                for cat in hawthorne_json['Response']['sales']['data']:
-                    if hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in last_wish_challenges:
-                        lw_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
-                    elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in sotp_challenges:
-                        sotp_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
-                    elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in cos_challenges:
-                        cos_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+            # hawthorne_json = hawthorne_resp
+            # if hawthorne_resp:
+            #     resp_time = hawthorne_json['timestamp']
+            #     for cat in hawthorne_json['Response']['sales']['data']:
+            #         if hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in last_wish_challenges:
+            #             lw_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+            #         elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in sotp_challenges:
+            #             sotp_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
+            #         elif hawthorne_json['Response']['sales']['data'][cat]['itemHash'] in cos_challenges:
+            #             cos_ch = hawthorne_json['Response']['sales']['data'][cat]['itemHash']
 
             db_data = []
             activities_json = activities_resp
@@ -1653,22 +1657,22 @@ class D2data:
                 #         'description': info['value'].replace('\n\n', '<br>').replace('\n', '<br>')
                 #     })
                 #     self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and lw_ch != 0 and hawthorne_resp:
-                    info = {
-                        'inline': True,
-                        'name': r_json['originalDisplayProperties']['name'],
-                        'value': u"\u2063"
-                    }
-                    curr_challenge = lw_ch
-                    curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
-                                                                    language=lang)
-                    info['value'] = curr_challenge['displayProperties']['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
+                # if self.translations[lang]['LW'] in r_json['displayProperties']['name'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath'] and lw_ch != 0 and hawthorne_resp:
+                #     info = {
+                #         'inline': True,
+                #         'name': r_json['originalDisplayProperties']['name'],
+                #         'value': u"\u2063"
+                #     }
+                #     curr_challenge = lw_ch
+                #     curr_challenge = await self.destiny.decode_hash(curr_challenge, 'DestinyInventoryItemDefinition',
+                #                                                     language=lang)
+                #     info['value'] = curr_challenge['displayProperties']['name']
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': info['value'].replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
                 # if self.translations[lang]['SotP'] in r_json['displayProperties']['name'] and \
                 #         not r_json['matchmaking']['requiresGuardianOath'] and sotp_ch != 0 and hawthorne_resp:
                 #     info = {
@@ -1701,40 +1705,43 @@ class D2data:
                 #         'description': info['value'].replace('\n', '<br>')
                 #     })
                 #     self.data[lang]['raids']['fields'].append(info)
-                if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
-                        not r_json['matchmaking']['requiresGuardianOath'] and 'modifierHashes' in key.keys():
+                # if self.translations[lang]['GoS'] in r_json['displayProperties']['name'] and \
+                #         not r_json['matchmaking']['requiresGuardianOath'] and 'modifierHashes' in key.keys():
+                #     info = {
+                #         'inline': True,
+                #         'name': r_json['originalDisplayProperties']['name'],
+                #         'value': u"\u2063"
+                #     }
+                #     # mods = await self.get_modifiers(lang, r_json['hash'])
+                #     mods = await self.destiny.decode_hash(key['modifierHashes'][0], 'DestinyActivityModifierDefinition', lang)
+                #     resp_time = datetime.utcnow().isoformat()
+                #     if mods:
+                #         info['value'] = mods['displayProperties']['name']
+                #     else:
+                #         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                #     db_data.append({
+                #         'name': info['name'],
+                #         'description': info['value'].replace('\n', '<br>')
+                #     })
+                #     self.data[lang]['raids']['fields'].append(info)
+                if r_json['hash'] in [910380154, 3881495763, 1441982566, 2122313384, 3458480158] and 'modifierHashes' in key.keys():
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    # mods = await self.get_modifiers(lang, r_json['hash'])
                     mods = await self.destiny.decode_hash(key['modifierHashes'][0], 'DestinyActivityModifierDefinition', lang)
                     resp_time = datetime.utcnow().isoformat()
                     if mods:
-                        info['value'] = mods['displayProperties']['name']
+                        if len(key['modifierHashes']) > 2:
+                            info['value'] = local_types['msg']['featured_raid']
+                        else:
+                            info['value'] = mods['displayProperties']['name']
                     else:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
                     db_data.append({
                         'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
-                if r_json['hash'] in [910380154, 3881495763, 1441982566] and 'modifierHashes' in key.keys():
-                    info = {
-                        'inline': True,
-                        'name': r_json['originalDisplayProperties']['name'],
-                        'value': u"\u2063"
-                    }
-                    mods = await self.destiny.decode_hash(key['modifierHashes'][0], 'DestinyActivityModifierDefinition', lang)
-                    resp_time = datetime.utcnow().isoformat()
-                    if mods:
-                        info['value'] = mods['displayProperties']['name']
-                    else:
-                        info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>')
+                        'description': info['value'].replace('\n', '<br>').replace('**', '')
                     })
                     self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
@@ -1766,7 +1773,7 @@ class D2data:
                 'fields': [],
                 'color': 5331575,
                 'type': 'rich',
-                'title': self.translations[lang]['msg']['ordeal'],
+                'title': self.translations[lang]['ordeal'],
                 'footer': {'text': self.translations[lang]['msg']['resp_time']},
                 'timestamp': resp_time
             }
@@ -2006,7 +2013,7 @@ class D2data:
                         obj_def = 'DestinyObjectiveDefinition'
                         objective = await self.destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def,
                                                                    lang)
-                        if item_hash in [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519]:
+                        if item_hash in [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349]:
                             if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
                                 if 'icon' in r_json['displayProperties']:
                                     self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
