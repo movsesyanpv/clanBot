@@ -1042,18 +1042,22 @@ class D2data:
             items_to_get = ada_cats[1]['itemIndexes']
             ada_sales = await self.get_vendor_sales(lang, ada_resp, items_to_get, [1812969468])
 
+            fields = [{'inline': True, 'name': self.translations[lang]['msg']['armor_mods'], 'value': ''}]
             for item in ada_sales[1]:
                 item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
                 if item_def['itemType'] == 19:
                     mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
+                    fields[-1]['value'] = '{}{}\n'.format(fields[-1]['value'], item_def['displayProperties']['name'])
 
             items_to_get = banshee_cats[2]['itemIndexes']
             banshee_sales = await self.get_vendor_sales(lang, banshee_resp, items_to_get, [1812969468, 2731650749])
+            fields.append({'inline': True, 'name': self.translations[lang]['msg']['weapon_mods'], 'value': ''})
             for item in banshee_sales[1]:
                 item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
                 if item_def['itemType'] == 19:
                     mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
-            self.data[lang]['daily_mods']['fields'] = mods
+                    fields[-1]['value'] = '{}{}\n'.format(fields[-1]['value'], item_def['displayProperties']['name'])
+            self.data[lang]['daily_mods']['fields'] = fields
         await self.write_bot_data('daily_mods', langs)
 
     async def get_xur_loc(self) -> dict:
@@ -1737,7 +1741,7 @@ class D2data:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
                     db_data.append({
                         'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>')
+                        'description': info['value'].replace('\n', '<br>').replace('**', '')
                     })
                     self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
