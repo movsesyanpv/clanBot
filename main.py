@@ -16,6 +16,7 @@ from discord import ApplicationContext, DiscordException
 import aiosqlite
 import sqlite3
 import logging
+from logging.handlers import RotatingFileHandler
 import traceback
 from inspect import currentframe, getframeinfo
 from tabulate import tabulate
@@ -107,8 +108,9 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
         self.sched.add_job(self.update_metrics, 'cron', hour='10', minute='0', second='0', misfire_grace_time=86300)
 
-        logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-        logging.getLogger('apscheduler')
+        self.log_handler = RotatingFileHandler('bot.log', maxBytes=5*1024*1024, backupCount=20)
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s', handlers=[self.log_handler])
+        self.ap_logger = logging.getLogger('apscheduler')
 
     async def set_up_guild_db(self):
         self.guild_db = await aiosqlite.connect('guild.db')
