@@ -915,10 +915,10 @@ class ClanBot(commands.Bot):
                 responses.append(resp[1])
             except discord.HTTPException as e:
                 # responses.append([channel_id, "discord.HTTPException"])
-                responses.append(["discord.HTTPException"])
+                responses.append("discord.HTTPException")
             except Exception as e:
                 # responses.append([channel_id, "Exception"])
-                responses.append(["Exception"])
+                responses.append("Exception")
                 traceback_str = ''
                 for line in traceback.format_exception(type(e), e, e.__traceback__):
                     traceback_str = '{}{}'.format(traceback_str, line)
