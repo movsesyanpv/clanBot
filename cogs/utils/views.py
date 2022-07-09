@@ -330,7 +330,7 @@ class LFGModal(discord.ui.Modal):
             title = translations['edit_modal_title']
         else:
             title = translations['modal_title']
-        super().__init__(title)
+        super().__init__(title=title)
         self.bot_loc = CtxLocale(bot, locale)
         self.is_edit = is_edit
         self.old_group = message
