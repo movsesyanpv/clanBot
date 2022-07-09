@@ -1,7 +1,7 @@
 import aiosqlite
 
 from discord.ext import commands
-from discord.commands import Option, option, SlashCommandGroup
+from discord.commands import Option, option, SlashCommandGroup, slash_command
 import importlib
 import discord
 import json
@@ -21,7 +21,8 @@ class ServerAdmin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    autopost = SlashCommandGroup("autopost", "Autopost channel settings")
+    autopost = SlashCommandGroup("autopost", "Autopost channel settings", guild_only=True,
+                                 default_member_permissions=discord.Permissions(administrator=True))
 
     register = autopost.create_subgroup(
         "start", "Register this channel for automatic posts"
@@ -32,51 +33,41 @@ class ServerAdmin(commands.Cog):
             'ru': "Прекратить автоматические посты бота в этом канале",
             'fr': 'Forcer le Bot a ne plus poster de mise a jour dans ce canal'
         },
-        description='Make the bot stop posting updates in this channel'
+        description='Make the bot stop posting updates in this channel',
+        guild_only=True,
+        default_member_permissions=discord.Permissions(administrator=True)
     )
     async def remove(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if ctx.guild is None:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_dm'])
-            return
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
-            ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
-            ctx.bot.guild_db_sync.commit()
-            ctx.bot.get_channels()
-            msg = 'Got it, {}'.format(ctx.author.mention)
-            await ctx.respond(msg)
+        ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
+        ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
+        ctx.bot.guild_db_sync.commit()
+        ctx.bot.get_channels()
+        msg = 'Got it, {}'.format(ctx.author.mention)
+        await ctx.respond(msg)
 
     @register.command(
         description_localizations={
             'ru': "Начать автоматические посты об обновлениях игры в этом канале",
             'fr': 'Autorisez le bot à poster la mise a jour des rotations dans ce canal'
         },
-        description='Make the bot start posting rotation updates in this channel'
+        description='Make the bot start posting rotation updates in this channel',
+        guild_only=True,
+        default_member_permissions=discord.Permissions(administrator=True)
     )
     async def rotations(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if ctx.guild is None:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_dm'])
-            return
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         if not await message_permissions(ctx, lang):
             return
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
-                                         (ctx.channel.id, ctx.guild.id))
-            ctx.bot.guild_db_sync.commit()
-            ctx.bot.get_channels()
-            msg = 'Got it, {}'.format(ctx.author.mention)
-            await ctx.respond(msg)
-            await ctx.bot.force_update(['daily', 'weekly'], get=False, channels=[ctx.channel.id], forceget=False)
+        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
+                                     (ctx.channel.id, ctx.guild.id))
+        ctx.bot.guild_db_sync.commit()
+        ctx.bot.get_channels()
+        msg = 'Got it, {}'.format(ctx.author.mention)
+        await ctx.respond(msg)
+        await ctx.bot.force_update(['daily', 'weekly'], get=False, channels=[ctx.channel.id], forceget=False)
         return
 
     @register.command(
@@ -84,34 +75,30 @@ class ServerAdmin(commands.Cog):
             'ru': "Начать автоматические посты об обновлениях бота в этом канале",
             'fr': 'Autorisez le bot à poster les changelogs dans ce canal'
         },
-        description='Make the bot start posting changelogs in this channel'
+        description='Make the bot start posting changelogs in this channel',
+        guild_only=True,
+        default_member_permissions=discord.Permissions(administrator=True)
     )
     async def changelogs(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if ctx.guild is None:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_dm'])
-            return
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         if not await message_permissions(ctx, lang):
             return
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into updates values (?,?)''',
-                                         (ctx.channel.id, ctx.guild.id))
-            ctx.bot.guild_db_sync.commit()
-            ctx.bot.get_channels()
-            msg = 'Got it, {}'.format(ctx.author.mention)
-            await ctx.respond(msg)
+        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into updates values (?,?)''',
+                                     (ctx.channel.id, ctx.guild.id))
+        ctx.bot.guild_db_sync.commit()
+        ctx.bot.get_channels()
+        msg = 'Got it, {}'.format(ctx.author.mention)
+        await ctx.respond(msg)
         return
 
-    @commands.slash_command(name='lfgcleanup',
-                            description_localizations={
-                                'ru': "Удалить прошедшие сборы",
-                                'fr': 'Supprimer les messages LFG expirés'
-                            },
-                            description='Delete groups that are unavailable or inactive')
+    @slash_command(name='lfgcleanup',
+                   description_localizations={
+                       'ru': "Удалить прошедшие сборы",
+                       'fr': 'Supprimer les messages LFG expirés'
+                   },
+                   description='Delete groups that are unavailable or inactive',
+                   default_member_permissions=discord.Permissions(administrator=True))
     async def sl_lfgcleanup(self, ctx,
                             days: Option(int, "Days since the activity was finished", required=False, default=0,
                                          name_localizations={
@@ -133,20 +120,18 @@ class ServerAdmin(commands.Cog):
             else:
                 await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
         else:
-            if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-                n = await ctx.bot.lfg_cleanup(days, ctx.guild)
-                await ctx.respond(msg.format(n))
-            else:
-                await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
+            n = await ctx.bot.lfg_cleanup(days, ctx.guild)
+            await ctx.respond(msg.format(n))
 
-    @commands.slash_command(name='regnotifier',
-                            description_localizations={
-                                'ru': "Зарегистрировать канал для автоматических постов",
-                                'de': 'Meldekanal registrieren',
-                                'fr': 'Enregistrer le canal de notification'
-                            },
-                            description='Register notifier channel')
-    @commands.guild_only()
+    @slash_command(name='regnotifier',
+                   description_localizations={
+                       'ru': "Зарегистрировать канал для автоматических постов",
+                       'de': 'Meldekanal registrieren',
+                       'fr': 'Enregistrer le canal de notification'
+                   },
+                   description='Register notifier channel',
+                   guild_only=True,
+                   default_member_permissions=discord.Permissions(administrator=True))
     async def sl_regnotifier(self, ctx,
                              upd_type: Option(str, "The type of notifier", required=False, default='notifiers',
                                               choices=[discord.OptionChoice('Rotations', value='notifiers',
@@ -170,81 +155,73 @@ class ServerAdmin(commands.Cog):
                              ):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         if not await message_permissions(ctx, lang):
             return
         notifier_type = upd_type
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
-                                         (ctx.channel.id, ctx.guild.id))
-            ctx.bot.guild_db_sync.commit()
-            ctx.bot.get_channels()
-            await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
+        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
+                                     (ctx.channel.id, ctx.guild.id))
+        ctx.bot.guild_db_sync.commit()
+        ctx.bot.get_channels()
+        await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
         return
 
-    @commands.slash_command(name='rmnotifier',
-                            description_localizations={
-                                'ru': "Удалить регистрацию канала для автоматических постов",
-                                'de': 'Meldekanal abmelden',
-                                'fr': 'Supprimer le canal de notification'
-                            },
-                            description='Deregister notifier channel')
-    @commands.guild_only()
+    @slash_command(name='rmnotifier',
+                   description_localizations={
+                       'ru': "Удалить регистрацию канала для автоматических постов",
+                       'de': 'Meldekanal abmelden',
+                       'fr': 'Supprimer le canal de notification'
+                   },
+                   description='Deregister notifier channel',
+                   guild_only=True,
+                   default_member_permissions=discord.Permissions(administrator=True))
     async def sl_rmnotifier(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         if not await message_permissions(ctx, lang):
             return
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
-            ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
-            ctx.bot.guild_db_sync.commit()
-            ctx.bot.get_channels()
-            await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
+        ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
+        ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
+        ctx.bot.guild_db_sync.commit()
+        ctx.bot.get_channels()
+        await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
 
-    @commands.slash_command(
+    @slash_command(
         name='setlang',
         description_localizations={
             'ru': "Указать боту язык сервера",
             'de': 'Serversprache einstellen',
             'fr': 'Selectionner la langue du serveur'
         },
-        description='Tell the bot the server\'s language'
+        description='Tell the bot the server\'s language',
+        guild_only=True,
+        default_member_permissions=discord.Permissions(administrator=True)
     )
-    @commands.guild_only()
     async def sl_setlang(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         view = BotLangs(ctx.author, self.bot)
         await ctx.respond(ctx.bot.translations[lang]['msg']['language_select'], view=view)
         await view.wait()
         args = view.value
 
         msg = ctx.bot.translations[lang]['msg']['command_is_done']
-        if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-            ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
-                                         (args[0].lower(), ctx.guild.id))
-            ctx.bot.guild_db_sync.commit()
-            if ctx.guild.me.guild_permissions.change_nickname:
-                await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
+        ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
+                                     (args[0].lower(), ctx.guild.id))
+        ctx.bot.guild_db_sync.commit()
+        if ctx.guild.me.guild_permissions.change_nickname:
+            await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
         await ctx.interaction.edit_original_message(content=msg, view=None)
 
-    @commands.slash_command(name='setclan',
-                            description_localizations={
-                                'ru': "Задать клан Destiny 2 для сервера",
-                                'de': 'Lege einen Destiny 2-Clan für den Server fest',
-                                'fr': 'Définir le clan Destiny 2 sur le serveur'
-                            },
-                            description='Set a Destiny 2 clan for the server')
-    @commands.guild_only()
+    @slash_command(name='setclan',
+                   description_localizations={
+                       'ru': "Задать клан Destiny 2 для сервера",
+                       'de': 'Lege einen Destiny 2-Clan für den Server fest',
+                       'fr': 'Définir le clan Destiny 2 sur le serveur'
+                   },
+                   description='Set a Destiny 2 clan for the server',
+                   guild_only=True,
+                   default_member_permissions=discord.Permissions(administrator=True)
+                   )
     async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True,
                                                     name_localizations={
                                                         'ru': 'клан'
@@ -256,10 +233,6 @@ class ServerAdmin(commands.Cog):
                          ):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
-        # lang = ctx.bot.guild_lang(ctx.guild.id)
         try:
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(int(clan_id))
         except ValueError:
@@ -284,25 +257,24 @@ class ServerAdmin(commands.Cog):
             clan_embed.add_field(name=translations['id'], value=clan_json['Response']['detail']['groupId'])
             clan_embed.add_field(name=translations['founder'], value=clan_json['Response']['founder']['destinyUserInfo']['LastSeenDisplayName'])
             await ctx.respond(embed=clan_embed)
-            if await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True):
-                data_cursor = await ctx.bot.data.bot_data_db.cursor()
+            data_cursor = await ctx.bot.data.bot_data_db.cursor()
+            try:
+                await data_cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?)''', (clan_json['Response']['detail']['name'], clan_json['Response']['detail']['groupId']))
+                await ctx.bot.data.bot_data_db.commit()
+            except aiosqlite.OperationalError:
+                pass
+            await data_cursor.close()
+            ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
+                                         (clan_json['Response']['detail']['name'],
+                                          clan_json['Response']['detail']['groupId'], ctx.guild.id))
+            ctx.bot.guild_db_sync.commit()
+            if ctx.guild.me.guild_permissions.change_nickname:
                 try:
-                    await data_cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?)''', (clan_json['Response']['detail']['name'], clan_json['Response']['detail']['groupId']))
-                    await ctx.bot.data.bot_data_db.commit()
-                except aiosqlite.OperationalError:
+                    await ctx.guild.me.edit(
+                        nick='{}bot'.format(clan_json['Response']['detail']['clanInfo']['clanCallsign']),
+                        reason='clan setup')
+                except KeyError:
                     pass
-                await data_cursor.close()
-                ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
-                                             (clan_json['Response']['detail']['name'],
-                                              clan_json['Response']['detail']['groupId'], ctx.guild.id))
-                ctx.bot.guild_db_sync.commit()
-                if ctx.guild.me.guild_permissions.change_nickname:
-                    try:
-                        await ctx.guild.me.edit(
-                            nick='{}bot'.format(clan_json['Response']['detail']['clanInfo']['clanCallsign']),
-                            reason='clan setup')
-                    except KeyError:
-                        pass
         else:
             await ctx.respond('{}: {}'.format(clan_id, clan_json['Message']))
 
@@ -370,22 +342,20 @@ class ServerAdmin(commands.Cog):
         await ctx.bot.force_update(args, get=get, channels=channels, forceget=get)
         return
 
-    @commands.slash_command(
+    @slash_command(
         name='update',
         description_localizations={
             'ru': "Получить обновления от Bungie",
             'de': 'Holen Sie sich Updates von Bungie',
             'fr': 'Recevoir les mises a jour de Bungie'
         },
-        description='Get updates from Bungie'
+        description='Get updates from Bungie',
+        guild_only=True,
+        default_member_permissions=discord.Permissions(administrator=True)
     )
-    @commands.guild_only()
     async def sl_update(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        if not ctx.channel.permissions_for(ctx.author).administrator:
-            await ctx.respond(ctx.bot.translations[lang]['msg']['no_admin'])
-            return
         if not await message_permissions(ctx, lang):
             return
         get = True
