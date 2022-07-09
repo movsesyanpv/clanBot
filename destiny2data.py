@@ -834,7 +834,12 @@ class D2data:
                 break
             except mariadb.PoolError:
                 try:
-                    self.data_pool.add_connection()
+                    conn = mariadb.connect(host=self.api_data['db_host'],
+                                           user=self.api_data['cache_login'],
+                                           password=self.api_data['pass'],
+                                           port=self.api_data['db_port'],
+                                           database=self.api_data['data_db'])
+                    self.data_pool.add_connection(conn)
                 except mariadb.PoolError:
                     pass
                 await asyncio.sleep(0.125)

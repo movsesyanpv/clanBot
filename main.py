@@ -16,9 +16,11 @@ from discord import ApplicationContext, DiscordException
 import aiosqlite
 import sqlite3
 import logging
+from logging.handlers import RotatingFileHandler
 import traceback
 from inspect import currentframe, getframeinfo
 from tabulate import tabulate
+from collections import Counter
 
 from discord.ext import commands
 
@@ -107,8 +109,9 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
         self.sched.add_job(self.update_metrics, 'cron', hour='10', minute='0', second='0', misfire_grace_time=86300)
 
-        logging.basicConfig(filename='bot.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s')
-        logging.getLogger('apscheduler')
+        self.log_handler = RotatingFileHandler('bot.log', maxBytes=5*1024*1024, backupCount=20)
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s', handlers=[self.log_handler])
+        self.ap_logger = logging.getLogger('apscheduler')
 
     async def set_up_guild_db(self):
         self.guild_db = await aiosqlite.connect('guild.db')
@@ -730,14 +733,14 @@ class ClanBot(commands.Bot):
             channel = self.get_channel(channel_id)
         except discord.Forbidden:
             frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'unable to fetch the channel ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
+            return [channel_id, 'unable to fetch the channel ({})'.format(frameinfo.lineno + 1)]
         if channel is None:
             frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'channel id None ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
+            return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
         server = channel.guild
         if not channel.permissions_for(server.me).send_messages:
             frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'no permission to send messages ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
+            return [channel_id, 'no permission to send messages ({})'.format(frameinfo.lineno + 1)]
         lang = self.guild_lang(channel.guild.id)
         # print('delay is {}'.format(delay))
 
@@ -752,7 +755,7 @@ class ClanBot(commands.Bot):
                                          filename='{}-{}.png'.format(upd_type, lang))
                 if len(src_dict[lang][upd_type]['fields']) == 0:
                     frameinfo = getframeinfo(currentframe())
-                    return [channel_id, 'no need to post ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
+                    return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
                 embed = discord.Embed.from_dict(src_dict[lang][upd_type])
 
         hist = 0
@@ -809,7 +812,7 @@ class ClanBot(commands.Bot):
                                 last.append(message)
                     if len(last) == 0:
                         frameinfo = getframeinfo(currentframe())
-                        return [channel_id, 'no need to post ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
+                        return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
                 else:
                     if hist != "[]":
                         try:
@@ -821,7 +824,7 @@ class ClanBot(commands.Bot):
                         if len(last.embeds) > 0:
                             if last.embeds[0].to_dict()['fields'] == embed.to_dict()['fields']:
                                 frameinfo = getframeinfo(currentframe())
-                                return [channel_id, 'no need to post ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
+                                return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
                 try:
                     if type(hist) == list and channel.type != discord.ChannelType.news:
                         if len(hist) < 100:
@@ -902,17 +905,20 @@ class ClanBot(commands.Bot):
         await cursor.close()
 
         frameinfo = getframeinfo(currentframe())
-        return [channel_id, 'posted ({}) {:.2f}s'.format(frameinfo.lineno + 1, delay)]
+        return [channel_id, 'posted ({})'.format(frameinfo.lineno + 1)]
 
     async def post_embed(self, upd_type: str, src_dict: dict, time_to_delete: float, channels: List[int]) -> None:
         responses = []
         for channel_id in channels:
             try:
-                responses.append(await self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id))
+                resp = await self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id)
+                responses.append(resp[1])
             except discord.HTTPException as e:
-                responses.append([channel_id, "discord.HTTPException"])
+                # responses.append([channel_id, "discord.HTTPException"])
+                responses.append("discord.HTTPException")
             except Exception as e:
-                responses.append([channel_id, "Exception"])
+                # responses.append([channel_id, "Exception"])
+                responses.append("Exception")
                 traceback_str = ''
                 for line in traceback.format_exception(type(e), e, e.__traceback__):
                     traceback_str = '{}{}'.format(traceback_str, line)
@@ -927,9 +933,14 @@ class ClanBot(commands.Bot):
 
         # responses = await asyncio.gather(*tasks)
 
+        elements = Counter(responses)
+        statuses = []
+        for key, value in elements.items():
+            statuses.append([key, "{:.2f} %".format(value / len(responses) * 100)])
         if self.update_status:
             msg = '{} is posted'.format(upd_type)
-            statuses = tabulate(responses, tablefmt='simple', colalign=('left', 'left'), headers=['channel', 'status'])
+            statuses = tabulate(statuses, tablefmt='simple', colalign=('left', 'left'), headers=['status', 'percentage'])
+            # statuses = tabulate(responses, tablefmt='simple', colalign=('left', 'left'), headers=['channel', 'status'])
             msg = '{}\n```{}```'.format(msg, statuses)
             if len(msg) > 2000:
                 msg_strs = msg.splitlines()

@@ -435,6 +435,8 @@ class LFGModal(discord.ui.Modal):
         edits = [a_type, mode, roles, role_str]
         if a_type == '--':
             edits[0] = self.at[group_data[0]]
+        if a_type == '-':
+            edits[0] = 'default'
         if mode == '--':
             edits[1] = group_data[1]
         if not roles:
