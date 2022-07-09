@@ -13,14 +13,15 @@ class MyButton(discord.ui.Button):
         self.response_line = response_line
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         if interaction.user != self.view.owner:
             return
         if self.button_type == 'confirm':
-            await interaction.response.send_message('OK', ephemeral=True)
+            await interaction.edit_original_message(content='OK', embed=None, view=None)
             self.view.value = True
             self.view.stop()
         elif self.button_type == 'cancel':
-            await interaction.response.send_message(self.view.cancel_line, ephemeral=True)
+            await interaction.edit_original_message(content=self.view.cancel_line, embed=None, view=None)
             self.view.value = False
             self.view.stop()
         elif self.button_type == 'raid':
@@ -49,7 +50,7 @@ class MyButton(discord.ui.Button):
             self.view.stop()
         elif self.button_type == 'custom':
             self.view.value = 'custom'
-            await interaction.response.send_message(self.response_line)
+            await interaction.edit_original_message(content=self.response_line)
             self.view.stop()
 
 
