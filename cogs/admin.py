@@ -480,11 +480,13 @@ class Admin(commands.Cog):
                     command_desc = command.description
                 if (not (command.cog.qualified_name == 'Admin' and command.name != 'help') or await ctx.bot.is_owner(
                         ctx.author)) and type(command) in [discord.SlashCommand, discord.SlashCommandGroup]:
-                    if ctx.guild is None:
+                    if ctx.guild is None and (command.cog.qualified_name != 'ServerAdmin' or not await ctx.bot.is_owner(ctx.author)):
                         if command.guild_ids is None:
                             command_list.append([command.name, command_desc])
                     else:
-                        if command.guild_ids is None:
+                        if command.guild_ids is None and (command.cog.qualified_name != 'ServerAdmin' or
+                                                          await ctx.bot.is_owner(ctx.author) or
+                                                          await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True)):
                             command_list.append([command.name, command_desc])
                         elif ctx.guild.id in command.guild_ids:
                             command_list.append([command.name, command_desc])

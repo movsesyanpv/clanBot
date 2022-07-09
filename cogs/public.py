@@ -23,9 +23,9 @@ class Public(commands.Cog):
             'de': 'Kopieren denTop-Spieler für eine der verfügbaren Metriken',
             'fr': 'Afficher le top des joueurs'
         },
-        description='Print top players for one of the available metrics.'
+        description='Print top players for one of the available metrics.',
+        guild_only=True
     )
-    @commands.guild_only()
     async def top_sl(self, ctx,
                      metric: Option(str, "Metric to make a leaderboard", required=True, autocomplete=metric_picker,
                                     name_localizations={
@@ -211,7 +211,8 @@ class Public(commands.Cog):
             'de': 'Zeig die Liste der Clan Member',
             'fr': 'Liste des membres du clan en ligne'
         },
-        description="Get the list of online clan members."
+        description="Get the list of online clan members.",
+        guild_only=True
     )
     @commands.guild_only()
     async def online_sl(self, ctx):
