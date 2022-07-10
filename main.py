@@ -935,8 +935,15 @@ class ClanBot(commands.Bot):
 
         elements = Counter(responses)
         statuses = []
+        response = []
         for key, value in elements.items():
             statuses.append([key, "{:.2f} %".format(value / len(responses) * 100)])
+            response.append({
+                'name': key,
+                'description': statuses[-1][1]
+            })
+        if len(channels) > 1:
+            await self.data.write_to_db('status', upd_type, response, name=upd_type, template='table_items.html', annotations=[datetime.utcnow().isoformat(timespec='seconds')])
         if self.update_status:
             msg = '{} is posted'.format(upd_type)
             statuses = tabulate(statuses, tablefmt='simple', colalign=('left', 'left'), headers=['status', 'percentage'])
