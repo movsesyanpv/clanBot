@@ -325,6 +325,9 @@ class ViewLFG(discord.ui.View):
 
 
 class LFGModal(discord.ui.Modal):
+    a_type = None
+    mode = None
+    roles = None
 
     def __init__(self, bot, locale, translations, is_edit=False, data=None, message=None) -> None:
         if is_edit:
@@ -400,6 +403,12 @@ class LFGModal(discord.ui.Modal):
         command_line = '/lfg is_edit:{}'.format(self.is_edit)
         await owner.dm_channel.send('{}:\n{}'.format(interaction.user, command_line))
         await interaction.edit_original_message(content=self.bot_loc.bot.translations[locale]['error'], view=None)
+        values = self.children
+        self.bot_loc.bot.logger.info('Role LFG: \nname={}\ndescription={}\ntime={}\nsize={}\nlength={}\na_type={}\n'
+                                     'mode={}\nroles={}'.
+                                     format(values[0].value, values[1].value, values[2].value, values[3].value,
+                                            values[4].value, self.a_type, self.mode,
+                                            self.roles))
 
     async def send_initial_lfg(self, lang, args, channel) -> discord.Message:
         role = args['the_role']
@@ -465,7 +474,7 @@ class LFGModal(discord.ui.Modal):
         if view.value is None:
             await interaction.edit_original_message(content='Timed out')
             return
-        a_type = view.value
+        self.a_type = view.value
 
         view = ModeLFG(interaction.user, self.is_edit, basic=translations['basic_mode'],
                        manual=translations['manual_mode'], no_change=translations['button_no_change'])
@@ -476,7 +485,7 @@ class LFGModal(discord.ui.Modal):
         if view.value is None:
             await interaction.edit_original_message(content='Timed out')
             return
-        mode = view.value
+        self.mode = view.value
 
         role_list = []
         for role in interaction.guild.roles:
@@ -484,12 +493,13 @@ class LFGModal(discord.ui.Modal):
                 role_list.append(discord.SelectOption(label=role.name, value=str(role.id)))
         if len(role_list) > 25:
             role_list = role_list[:25]
-        self.bot_loc.bot.logger.info('Role LFG: len={}, list={}'.format(len(role_list), role_list))
-        view = RoleLFG(len(role_list), role_list, interaction.user, self.is_edit, manual=translations['manual_roles'],
-                       auto=translations['auto_roles'], has_custom=False, no_change=translations['button_no_change'])
         if len(role_list) == 0:
             view.value = '-'
         else:
+            view = RoleLFG(len(role_list), role_list, interaction.user, self.is_edit,
+                           manual=translations['manual_roles'],
+                           auto=translations['auto_roles'], has_custom=False,
+                           no_change=translations['button_no_change'])
             await interaction.edit_original_message(content=translations['role'], view=view)
             await view.wait()
         if view.value is None:
@@ -501,21 +511,21 @@ class LFGModal(discord.ui.Modal):
 
             role_str = self.bot_loc.bot.raid.find_roles(True, interaction.guild, [r.strip() for r in role.split(';')])
             role = ''
-            roles = []
+            self.roles = []
             for role_mention in role_str.split(', '):
                 try:
                     role_obj = interaction.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
-                    roles.append(role_obj)
+                    self.roles.append(role_obj)
                     role = '{} {};'.format(role, role_obj.name)
                 except ValueError:
                     pass
         else:
             role = ''
-            roles = []
+            self.roles = []
             for role_id in view.value:
                 try:
                     role_obj = interaction.guild.get_role(int(role_id))
-                    roles.append(role_obj)
+                    self.roles.append(role_obj)
                     role = '{} {};'.format(role, role_obj.name)
                 except ValueError:
                     pass
@@ -527,11 +537,11 @@ class LFGModal(discord.ui.Modal):
         values = self.children
         await interaction.edit_original_message(content=translations['processing'], view=None)
         if self.is_edit:
-            button_inputs = await self.validate_edits(a_type, mode, roles, role)
+            button_inputs = await self.validate_edits(self.a_type, self.mode, self.roles, role)
         else:
-            if a_type == '-':
-                a_type = 'default'
-            button_inputs = [a_type, mode, roles, role]
+            if self.a_type == '-':
+                self.a_type = 'default'
+            button_inputs = [self.a_type, self.mode, self.roles, role]
         args = self.bot_loc.bot.raid.parse_args_sl(values[0].value, values[1].value, values[2].value, values[3].value, values[4].value, button_inputs[0], button_inputs[1], button_inputs[2])
         ts = datetime.now(timezone(timedelta(0))).astimezone()
         ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
