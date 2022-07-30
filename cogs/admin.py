@@ -488,8 +488,6 @@ class Admin(commands.Cog):
                                                           await ctx.bot.is_owner(ctx.author) or
                                                           await ctx.bot.check_ownership(ctx, is_silent=True, admin_check=True)):
                             command_list.append([command.name, command_desc])
-                        elif ctx.guild.id in command.guild_ids:
-                            command_list.append([command.name, command_desc])
 
             help_msg = '{}```\t{}```'.format(help_msg,
                                              tabulate(command_list, tablefmt='plain', colalign=('left', 'left'))
