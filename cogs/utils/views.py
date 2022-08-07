@@ -59,11 +59,11 @@ class MySelect(discord.ui.Select):
         super().__init__(min_values=min_values, max_values=max_values, options=options, row=row)
 
     async def callback(self, interaction: discord.Interaction):
-        try:
-            if interaction.user != self.view.owner:
-                return
-        except AttributeError:
-            pass
+        # try:
+        #     if interaction.user != self.view.owner:
+        #         return
+        # except AttributeError:
+        #     pass
         self.view.value = []
         for selected in self.values:
             self.view.value.append(selected)
