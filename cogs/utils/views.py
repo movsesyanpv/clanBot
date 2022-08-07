@@ -14,8 +14,8 @@ class MyButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        if interaction.user != self.view.owner:
-            return
+        # if interaction.user != self.view.owner:
+        #     return
         if self.button_type == 'confirm':
             await interaction.edit_original_message(content='OK', embed=None, view=None)
             self.view.value = True
@@ -282,8 +282,8 @@ class SelectLFG(discord.ui.Select):
         self.translations = translations
 
     async def callback(self, interaction: discord.Interaction):
-        if interaction.user != self.view.owner:
-            return
+        # if interaction.user != self.view.owner:
+        #     return
         group = self.view.groups[int(self.values[0])]
         old_channel = await self.bot.fetch_channel(group[6])
         message = await old_channel.fetch_message(group[0])
