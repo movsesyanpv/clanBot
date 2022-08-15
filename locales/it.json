@@ -184,7 +184,7 @@
         "update": "Get updates from Bungie for the selected types",
         "setclan": "Set Destiny 2 clan for the server.",
         "top": "Print top players for one of the available metrics.",
-        "additional_info": "Type `{}help command` for more info on a `command`. Available languages are `{}` (Some lines might be untranslated).",
+        "additional_info": "Type `{}help command` for more info on a `command`. Available languages are `{}` (Some lines might be untranslated). Some commands here may not be available to you because of the Discord's permission system.",
         "aliases": "Can be called with the following names:```{}```",
         "parameters": "Usage:```{}```",
         "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
@@ -275,7 +275,8 @@
         "groups": {
             "autopost": {
                 "subcommands": {
-                    "remove": "Make the bot stop posting updates in this channel"
+                    "remove": "Make the bot stop posting updates in this channel",
+                    "settings": "Choose update types to post in this channel"
                 },
                 "subgroups": {
                     "start": {
@@ -454,6 +455,9 @@
             },
             "remove": {
                 "description": "Make the bot stop posting updates in this channel"
+            },
+            "settings": {
+                "description": "Choose update types to post in this channel"
             }
         },
         "lfgcleanup": {
