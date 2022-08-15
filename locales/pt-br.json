@@ -60,7 +60,8 @@
         "support_btn": "Support server",
         "featured_raid": "**Weekly featured raid**",
         "armor_mods": "Armor mods",
-        "weapon_mods": "Weapon mods"
+        "weapon_mods": "Weapon mods",
+        "timed_out": "Timed out"
     },
     "lfg": {
         "go": "Vai",
