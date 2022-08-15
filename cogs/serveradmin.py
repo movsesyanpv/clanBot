@@ -75,7 +75,7 @@ class ServerAdmin(commands.Cog):
             reg_ch.append(ch[0])
         if len(reg_ch) == 0:
             await ctx.respond(ctx.bot.translations[lang]['msg']['no_notifiers'])
-            return
+            return 0
         else:
             notifiers_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?''',
                                                        (ctx.guild.id,))
@@ -87,7 +87,7 @@ class ServerAdmin(commands.Cog):
             if not list(set(notifiers).intersection(channels)):
                 await ctx.interaction.edit_original_message(
                     content=ctx.bot.translations[lang]['msg']['no_regular_reg'], view=None)
-                return
+                return 0
 
             view = AutopostSettings(ctx, lang, registration)
             await ctx.respond(ctx.bot.translations[lang]['msg']['update_types'], view=view)
@@ -97,7 +97,7 @@ class ServerAdmin(commands.Cog):
             if args is None:
                 await ctx.interaction.edit_original_message(
                     content=ctx.bot.translations[lang]['msg']['timed_out'], view=None)
-                return
+                return 1
             if args == 'cancel':
                 await ctx.interaction.edit_original_message(
                     content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
@@ -133,9 +133,10 @@ class ServerAdmin(commands.Cog):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
 
-        await self.post_selection(ctx)
+        status = await self.post_selection(ctx)
 
-        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
+        if status is None:
+            await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
 
     @register.command(
         description_localizations={

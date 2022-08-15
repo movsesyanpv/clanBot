@@ -261,7 +261,7 @@ class UpdateTypes(discord.ui.View):
     translations = {}
     owner = None
     value = None
-    
+
     def __init__(self, ctx, lang):
         super().__init__()
         self.owner = ctx.author
