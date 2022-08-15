@@ -275,7 +275,8 @@
         "groups": {
             "autopost": {
                 "subcommands": {
-                    "remove": "Autoriser le bot a poster les mises a jour dans ce canal"
+                    "remove": "Autoriser le bot a poster les mises a jour dans ce canal",
+                    "settings": "Choose update types to post in this channel"
                 },
                 "subgroups": {
                     "start": {
@@ -439,7 +440,7 @@
             "description": "Affichez votre liste LFG"
         },
         "lfg": {
-            "description": "Creer un message LFG"
+            "description": "Monter une équipe"
         },
         "editlfg": {
             "context_name": "Editer le LFG",
@@ -454,6 +455,9 @@
             },
             "remove": {
                 "description": "Forcer le Bot a ne plus poster de mise a jour dans ce canal"
+            },
+            "settings": {
+                "description": "Choose update types to post in this channel"
             }
         },
         "lfgcleanup": {
