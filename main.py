@@ -340,6 +340,7 @@ class ClanBot(commands.Bot):
         cursor = await self.guild_db.cursor()
         await cursor.execute('''DELETE FROM clans WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM history WHERE server_id=?''', (guild.id,))
+        await cursor.execute('''DELETE FROM post_settings WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM language WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM seasonal WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
