@@ -45,20 +45,9 @@ class ServerAdmin(commands.Cog):
         ctx.bot.guild_cursor.execute('''DELETE FROM post_settings WHERE channel_id=?''', (ctx.channel.id,))
         ctx.bot.guild_db_sync.commit()
         ctx.bot.get_channels()
-        msg = 'Got it, {}'.format(ctx.author.mention)
-        await ctx.respond(msg)
+        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
 
-    @autopost.command(
-        description_localizations={
-            'ru': 'Выбрать обновления в этом канале'
-        },
-        description='Choose update types to post in this channel',
-        guild_only=True,
-        default_member_permissions=discord.Permissions(administrator=True)
-    )
-    async def settings(self, ctx):
-        await ctx.defer(ephemeral=True)
-
+    async def post_selection(self, ctx, registration=False):
         converter = {
             'nightmares': 'nightmares',
             'crucible': 'cruciblerotators',
@@ -77,8 +66,8 @@ class ServerAdmin(commands.Cog):
         lang = await locale_2_lang(ctx)
         channels = [ctx.channel.id]
         reg_ch_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?
-                                                            UNION ALL
-                                                            SELECT channel_id FROM seasonal WHERE server_id=?''',
+                                                                    UNION ALL
+                                                                    SELECT channel_id FROM seasonal WHERE server_id=?''',
                                                 (ctx.guild.id, ctx.guild.id))
         reg_ch_c = reg_ch_c.fetchall()
         reg_ch = []
@@ -100,7 +89,7 @@ class ServerAdmin(commands.Cog):
                     content=ctx.bot.translations[lang]['msg']['no_regular_reg'], view=None)
                 return
 
-            view = AutopostSettings(ctx, lang)
+            view = AutopostSettings(ctx, lang, registration)
             await ctx.respond(ctx.bot.translations[lang]['msg']['update_types'], view=view)
             await view.wait()
             args = view.value
@@ -112,7 +101,7 @@ class ServerAdmin(commands.Cog):
             if args == 'cancel':
                 await ctx.interaction.edit_original_message(
                     content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
-                return
+                return -1
             if args == 'all':
                 args = set(ctx.bot.translations[lang]['update_types']).intersection(set(ctx.bot.all_types))
 
@@ -126,12 +115,27 @@ class ServerAdmin(commands.Cog):
                     ctx.bot.guild_cursor.execute('''UPDATE post_settings SET {}=? WHERE channel_id=?'''.
                                                  format(converter[upd_type]), (value, ctx.channel.id))
                 except sqlite3.OperationalError:
-                    ctx.bot.guild_cursor.execute('''ALTER TABLE post_settings ADD COLUMN {} INTEGER'''.format(converter[upd_type]))
+                    ctx.bot.guild_cursor.execute(
+                        '''ALTER TABLE post_settings ADD COLUMN {} INTEGER'''.format(converter[upd_type]))
                     ctx.bot.guild_cursor.execute('''UPDATE post_settings SET {}=? WHERE channel_id=?'''.
                                                  format(converter[upd_type]), (value, ctx.channel.id))
                 ctx.bot.guild_db_sync.commit()
+
+    @autopost.command(
+        description_localizations={
+            'ru': 'Выбрать обновления в этом канале'
+        },
+        description='Choose update types to post in this channel',
+        guild_only=True,
+        default_member_permissions=discord.Permissions(administrator=True)
+    )
+    async def settings(self, ctx):
+        await ctx.defer(ephemeral=True)
+        lang = await locale_2_lang(ctx)
+
+        await self.post_selection(ctx)
+
         await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
-        pass
 
     @register.command(
         description_localizations={
@@ -149,12 +153,14 @@ class ServerAdmin(commands.Cog):
             return
         ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
                                      (ctx.channel.id, ctx.guild.id))
-        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into post_settings (channel_id, server_id) values (?,?)''',
-                                     (ctx.channel.id, ctx.guild.id))
+        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into post_settings (channel_id, server_id, server_name) values (?,?,?)''',
+                                     (ctx.channel.id, ctx.guild.id, ctx.guild.name))
         ctx.bot.guild_db_sync.commit()
         ctx.bot.get_channels()
-        msg = 'Got it, {}'.format(ctx.author.mention)
-        await ctx.respond(msg)
+
+        await self.post_selection(ctx, True)
+
+        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
         await ctx.bot.force_update(['daily', 'weekly'], get=False, channels=[ctx.channel.id], forceget=False)
         return
 
@@ -176,8 +182,7 @@ class ServerAdmin(commands.Cog):
                                      (ctx.channel.id, ctx.guild.id))
         ctx.bot.guild_db_sync.commit()
         ctx.bot.get_channels()
-        msg = 'Got it, {}'.format(ctx.author.mention)
-        await ctx.respond(msg)
+        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
         return
 
     @slash_command(name='lfgcleanup',

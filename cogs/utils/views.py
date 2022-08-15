@@ -274,10 +274,11 @@ class UpdateTypes(discord.ui.View):
 
 
 class AutopostSettings(UpdateTypes):
-    def __init__(self, ctx, lang):
+    def __init__(self, ctx, lang, registration):
         super().__init__(ctx, lang)
         self.add_item(MyButton('all_upd_types', self.translations['msg']['all_upd_types'], discord.ButtonStyle.gray, row=2))
-        self.add_item(MyButton('all_upd_types', self.translations['msg']['cancel'], discord.ButtonStyle.gray, row=2))
+        if not registration:
+            self.add_item(MyButton('all_upd_types', self.translations['msg']['cancel'], discord.ButtonStyle.red, row=2))
 
 
 class BotLangs(discord.ui.View):
