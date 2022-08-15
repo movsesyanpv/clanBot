@@ -61,7 +61,9 @@
         "featured_raid": "**Weekly featured raid**",
         "armor_mods": "Armor mods",
         "weapon_mods": "Weapon mods",
-        "timed_out": "Timed out"
+        "timed_out": "Timed out",
+        "all_upd_types": "Enable all",
+        "cancel": "Cancel"
     },
     "lfg": {
         "go": "Go",
