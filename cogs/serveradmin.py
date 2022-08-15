@@ -143,7 +143,7 @@ class ServerAdmin(commands.Cog):
             return
         ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
                                      (ctx.channel.id, ctx.guild.id))
-        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into post_settings values (?,?)''',
+        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into post_settings (channel_id, server_id) values (?,?)''',
                                      (ctx.channel.id, ctx.guild.id))
         ctx.bot.guild_db_sync.commit()
         ctx.bot.get_channels()
@@ -242,8 +242,9 @@ class ServerAdmin(commands.Cog):
         notifier_type = upd_type
         ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
                                      (ctx.channel.id, ctx.guild.id))
-        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into post_settings values (?,?)''',
-                                     (ctx.channel.id, ctx.guild.id))
+        if notifier_type == 'notifiers':
+            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into post_settings (channel_id, server_id) values (?,?)''',
+                                         (ctx.channel.id, ctx.guild.id))
         ctx.bot.guild_db_sync.commit()
         ctx.bot.get_channels()
         await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
