@@ -275,7 +275,8 @@
         "groups": {
             "autopost": {
                 "subcommands": {
-                    "remove": "Make the bot stop posting updates in this channel"
+                    "remove": "Make the bot stop posting updates in this channel",
+                    "settings": "Choose update types to post in this channel"
                 },
                 "subgroups": {
                     "start": {
@@ -454,6 +455,9 @@
             },
             "remove": {
                 "description": "Make the bot stop posting updates in this channel"
+            },
+            "settings": {
+                "description": "Choose update types to post in this channel"
             }
         },
         "lfgcleanup": {
