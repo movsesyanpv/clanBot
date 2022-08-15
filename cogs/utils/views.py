@@ -52,6 +52,12 @@ class MyButton(discord.ui.Button):
             self.view.value = 'custom'
             await interaction.edit_original_message(content=self.response_line)
             self.view.stop()
+        elif self.button_type == 'all_upd_types':
+            self.view.value = 'all'
+            self.view.stop()
+        elif self.button_type == 'cancel':
+            self.view.value = 'cancel'
+            self.view.stop()
 
 
 class MySelect(discord.ui.Select):
@@ -252,17 +258,26 @@ class GroupButtons(discord.ui.View):
 
 
 class UpdateTypes(discord.ui.View):
+    translations = {}
+    owner = None
+    value = None
     def __init__(self, ctx, lang):
         super().__init__()
         self.owner = ctx.author
-        self.value = None
-        translations = ctx.bot.translations[lang]
-        variants = set(translations['update_types']).intersection(set(ctx.bot.all_types))
-        types = translations['update_types']
+        self.translations = ctx.bot.translations[lang]
+        variants = set(self.translations['update_types']).intersection(set(ctx.bot.all_types))
+        types = self.translations['update_types']
         options = [discord.SelectOption(label=types[option]['label'], value=option,
                                         description=types[option]['description']) for option in variants]
         self.select = MySelect(min_values=0, max_values=len(options), options=options, row=1)
         self.add_item(self.select)
+
+
+class AutopostSettings(UpdateTypes):
+    def __init__(self, ctx, lang):
+        super().__init__(ctx, lang)
+        self.add_item(MyButton('all_upd_types', self.translations['msg']['all_upd_types'], discord.ButtonStyle.gray, row=2))
+        self.add_item(MyButton('all_upd_types', self.translations['msg']['cancel'], discord.ButtonStyle.gray, row=2))
 
 
 class BotLangs(discord.ui.View):

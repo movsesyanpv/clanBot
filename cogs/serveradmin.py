@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 import updater
 import os
 import sqlite3
-from cogs.utils.views import UpdateTypes, BotLangs
+from cogs.utils.views import UpdateTypes, BotLangs, AutopostSettings
 from cogs.utils.converters import locale_2_lang
 from cogs.utils.checks import message_permissions
 import dateparser
@@ -100,7 +100,7 @@ class ServerAdmin(commands.Cog):
                     content=ctx.bot.translations[lang]['msg']['no_regular_reg'], view=None)
                 return
 
-            view = UpdateTypes(ctx, lang)
+            view = AutopostSettings(ctx, lang)
             await ctx.respond(ctx.bot.translations[lang]['msg']['update_types'], view=view)
             await view.wait()
             args = view.value
@@ -109,6 +109,12 @@ class ServerAdmin(commands.Cog):
                 await ctx.interaction.edit_original_message(
                     content=ctx.bot.translations[lang]['msg']['timed_out'], view=None)
                 return
+            if args == 'cancel':
+                await ctx.interaction.edit_original_message(
+                    content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
+                return
+            if args == 'all':
+                args = set(ctx.bot.translations[lang]['update_types']).intersection(set(ctx.bot.all_types))
 
             variants = set(ctx.bot.translations[lang]['update_types']).intersection(set(ctx.bot.all_types))
             for upd_type in variants:
