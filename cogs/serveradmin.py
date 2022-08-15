@@ -104,6 +104,11 @@ class ServerAdmin(commands.Cog):
             await view.wait()
             args = view.value
 
+            if args is None:
+                await ctx.interaction.edit_original_message(
+                    content=ctx.bot.translations[lang]['msg']['timed_out'], view=None)
+                return
+
             variants = set(ctx.bot.translations[lang]['update_types']).intersection(set(ctx.bot.all_types))
             for upd_type in variants:
                 if upd_type in args:
@@ -118,8 +123,7 @@ class ServerAdmin(commands.Cog):
                     ctx.bot.guild_cursor.execute('''UPDATE post_settings SET {}=? WHERE channel_id=?'''.
                                                  format(converter[upd_type]), (value, ctx.channel.id))
                 ctx.bot.guild_db_sync.commit()
-        msg = 'Ok'
-        await ctx.interaction.edit_original_message(content=msg, view=None)
+        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
         pass
 
     @register.command(
@@ -456,6 +460,11 @@ class ServerAdmin(commands.Cog):
             await ctx.respond(ctx.bot.translations[lang]['msg']['update_types'], view=view)
             await view.wait()
             args = view.value
+
+            if args is None:
+                await ctx.interaction.edit_original_message(
+                    content=ctx.bot.translations[lang]['msg']['timed_out'], view=None)
+                return
 
             notifiers_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?''',
                                                        (ctx.guild.id,))
