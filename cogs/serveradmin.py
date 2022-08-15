@@ -47,6 +47,81 @@ class ServerAdmin(commands.Cog):
         msg = 'Got it, {}'.format(ctx.author.mention)
         await ctx.respond(msg)
 
+    @autopost.command(
+        description_localizations={
+            'ru': 'Выбрать обновления в этом канале'
+        },
+        description='Choose update types to post in this channel',
+        guild_only=True,
+        default_member_permissions=discord.Permissions(administrator=True)
+    )
+    async def settings(self, ctx):
+        await ctx.defer(ephemeral=True)
+
+        converter = {
+            'nightmares': 'nightmares',
+            'crucible': 'cruciblerotators',
+            'raids': 'raids',
+            'ordeal': 'ordeal',
+            'empire': 'empire_hunts',
+            'strikes': 'vanguardstrikes',
+            'spider': 'spider',
+            'mods': 'daily_mods',
+            'xur': 'xur',
+            'osiris': 'osiris',
+            'alerts': 'alerts',
+            'gambit': 'gambit'
+        }
+
+        lang = await locale_2_lang(ctx)
+        channels = [ctx.channel.id]
+        reg_ch_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?
+                                                            UNION ALL
+                                                            SELECT channel_id FROM seasonal WHERE server_id=?''',
+                                                (ctx.guild.id, ctx.guild.id))
+        reg_ch_c = reg_ch_c.fetchall()
+        reg_ch = []
+        for ch in reg_ch_c:
+            reg_ch.append(ch[0])
+        if len(reg_ch) == 0:
+            await ctx.respond(ctx.bot.translations[lang]['msg']['no_notifiers'])
+            return
+        else:
+            notifiers_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?''',
+                                                       (ctx.guild.id,))
+            notifiers_c = notifiers_c.fetchall()
+            notifiers = []
+            for ch in notifiers_c:
+                notifiers.append(ch[0])
+
+            if not list(set(notifiers).intersection(channels)):
+                await ctx.interaction.edit_original_message(
+                    content=ctx.bot.translations[lang]['msg']['no_regular_reg'], view=None)
+                return
+
+            view = UpdateTypes(ctx, lang)
+            await ctx.respond(ctx.bot.translations[lang]['msg']['update_types'], view=view)
+            await view.wait()
+            args = view.value
+
+            variants = set(ctx.bot.translations[lang]['update_types']).intersection(set(ctx.bot.all_types))
+            for upd_type in variants:
+                if upd_type in args:
+                    value = 1
+                else:
+                    value = 0
+                try:
+                    ctx.bot.guild_cursor.execute('''UPDATE post_settings SET {}=? WHERE channel_id=?'''.
+                                                 format(converter[upd_type]), (value, ctx.channel.id))
+                except sqlite3.OperationalError:
+                    ctx.bot.guild_cursor.execute('''ALTER TABLE post_settings ADD COLUMN {} INTEGER'''.format(converter[upd_type]))
+                    ctx.bot.guild_cursor.execute('''UPDATE post_settings SET {}=? WHERE channel_id=?'''.
+                                                 format(converter[upd_type]), (value, ctx.channel.id))
+                ctx.bot.guild_db_sync.commit()
+        msg = 'Ok'
+        await ctx.interaction.edit_original_message(content=msg, view=None)
+        pass
+
     @register.command(
         description_localizations={
             'ru': "Начать автоматические посты об обновлениях игры в этом канале",
@@ -62,6 +137,8 @@ class ServerAdmin(commands.Cog):
         if not await message_permissions(ctx, lang):
             return
         ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
+                                     (ctx.channel.id, ctx.guild.id))
+        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into post_settings values (?,?)''',
                                      (ctx.channel.id, ctx.guild.id))
         ctx.bot.guild_db_sync.commit()
         ctx.bot.get_channels()

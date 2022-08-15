@@ -64,6 +64,7 @@ class MySelect(discord.ui.Select):
         #         return
         # except AttributeError:
         #     pass
+        await interaction.response.defer()
         self.view.value = []
         for selected in self.values:
             self.view.value.append(selected)

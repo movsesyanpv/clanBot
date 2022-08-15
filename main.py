@@ -674,12 +674,20 @@ class ClanBot(commands.Bot):
             await cursor.execute('''CREATE UNIQUE INDEX hist ON history(channel_id)''')
         except aiosqlite.OperationalError:
             pass
+
+        try:
+            await cursor.execute('''CREATE TABLE post_settings ( server_name text, server_id integer, channel_id integer)''')
+            await cursor.execute('''CREATE UNIQUE INDEX post_prefs ON post_settings(channel_id)''')
+        except aiosqlite.OperationalError:
+            pass
+
         for channel_id in self.notifiers:
             try:
                 channel = self.get_channel(channel_id)
                 if channel is not None:
                     init_values = [channel.guild.name, channel.guild.id, channel_id]
                     await cursor.execute("INSERT or IGNORE INTO history (server_name, server_id, channel_id) VALUES (?,?,?)", init_values)
+                    await cursor.execute("INSERT or IGNORE INTO post_settings (server_name, server_id, channel_id) VALUES (?,?,?)", init_values)
                     await self.guild_db.commit()
             except aiosqlite.OperationalError:
                 pass
@@ -761,7 +769,7 @@ class ClanBot(commands.Bot):
         hist = 0
         try:
             last = await cursor.execute('''SELECT {} FROM history WHERE channel_id=?'''.format(upd_type),
-                                             (channel_id,))
+                                        (channel_id,))
             last = await last.fetchone()
             if last is not None:
                 if type(src_dict[lang][upd_type]) == list:
@@ -794,6 +802,23 @@ class ClanBot(commands.Bot):
                 # self.guild_db.commit()
             except aiosqlite.OperationalError:
                 await self.update_history()
+
+        try:
+            last = await cursor.execute('''SELECT {} FROM post_settings WHERE channel_id=?'''.format(upd_type),
+                                        (channel_id,))
+            last = await last.fetchone()
+        except aiosqlite.OperationalError:
+            await cursor.execute('''ALTER TABLE post_settings ADD COLUMN {} INTEGER'''.format(upd_type))
+            await self.guild_db.commit()
+            last = None
+
+        if last is not None:
+            if len(last) > 0:
+                if last[0] is not None:
+                    last = last[0]
+            if last == 0:
+                frameinfo = getframeinfo(currentframe())
+                return [channel_id, 'Aborted due to post preferences ({})'.format(frameinfo.lineno + 1)]
 
         if hist and not self.args.noclear:
             try:
@@ -942,7 +967,7 @@ class ClanBot(commands.Bot):
                 'name': key,
                 'description': statuses[-1][1]
             })
-        if len(channels) > 1:
+        if len(channels) > 1 and self.args.production:
             await self.data.write_to_db('status', upd_type, response, name=upd_type, template='table_items.html', annotations=[datetime.utcnow().isoformat(timespec='seconds')])
         if self.update_status:
             msg = '{} is posted'.format(upd_type)
