@@ -42,6 +42,7 @@ class ServerAdmin(commands.Cog):
         lang = await locale_2_lang(ctx)
         ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
         ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
+        ctx.bot.guild_cursor.execute('''DELETE FROM post_settings WHERE channel_id=?''', (ctx.channel.id,))
         ctx.bot.guild_db_sync.commit()
         ctx.bot.get_channels()
         msg = 'Got it, {}'.format(ctx.author.mention)
@@ -241,6 +242,8 @@ class ServerAdmin(commands.Cog):
         notifier_type = upd_type
         ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
                                      (ctx.channel.id, ctx.guild.id))
+        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into post_settings values (?,?)''',
+                                     (ctx.channel.id, ctx.guild.id))
         ctx.bot.guild_db_sync.commit()
         ctx.bot.get_channels()
         await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
@@ -262,6 +265,7 @@ class ServerAdmin(commands.Cog):
             return
         ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
         ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
+        ctx.bot.guild_cursor.execute('''DELETE FROM post_settings WHERE channel_id=?''', (ctx.channel.id,))
         ctx.bot.guild_db_sync.commit()
         ctx.bot.get_channels()
         await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
