@@ -60,7 +60,8 @@
         "support_btn": "Le serveur du Support",
         "featured_raid": "**Défi de raid hebdomadaire**",
         "armor_mods": "Mods d'armures",
-        "weapon_mods": "Mods d'armes"
+        "weapon_mods": "Mods d'armes",
+        "timed_out": "Timed out"
     },
     "lfg": {
         "go": "Go",
