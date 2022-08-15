@@ -61,7 +61,9 @@
         "featured_raid": "**Défi de raid hebdomadaire**",
         "armor_mods": "Mods d'armures",
         "weapon_mods": "Mods d'armes",
-        "timed_out": "Timed out"
+        "timed_out": "Timed out",
+        "all_upd_types": "Enable all",
+        "cancel": "Cancel"
     },
     "lfg": {
         "go": "Go",
