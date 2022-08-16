@@ -9,7 +9,6 @@ from tabulate import tabulate
 from datetime import datetime, timedelta, timezone
 import updater
 import os
-import sqlite3
 from cogs.utils.views import UpdateTypes, BotLangs, AutopostSettings
 from cogs.utils.converters import locale_2_lang
 from cogs.utils.checks import message_permissions
@@ -40,14 +39,11 @@ class ServerAdmin(commands.Cog):
     async def remove(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
-        ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
-        ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
-        ctx.bot.guild_cursor.execute('''DELETE FROM post_settings WHERE channel_id=?''', (ctx.channel.id,))
-        ctx.bot.guild_db_sync.commit()
-        ctx.bot.get_channels()
+        await ctx.bot.remove_channel(ctx.channel.id)
         await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
 
-    async def post_selection(self, ctx, registration=False):
+    @staticmethod
+    async def post_selection(ctx, registration=False):
         converter = {
             'nightmares': 'nightmares',
             'crucible': 'cruciblerotators',
@@ -64,22 +60,24 @@ class ServerAdmin(commands.Cog):
         }
 
         lang = await locale_2_lang(ctx)
+        data_cursor = await ctx.bot.guild_db.cursor()
         channels = [ctx.channel.id]
-        reg_ch_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?
+        reg_ch_c = await data_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?
                                                                     UNION ALL
                                                                     SELECT channel_id FROM seasonal WHERE server_id=?''',
                                                 (ctx.guild.id, ctx.guild.id))
-        reg_ch_c = reg_ch_c.fetchall()
+        reg_ch_c = await reg_ch_c.fetchall()
         reg_ch = []
         for ch in reg_ch_c:
             reg_ch.append(ch[0])
         if len(reg_ch) == 0:
             await ctx.respond(ctx.bot.translations[lang]['msg']['no_notifiers'])
+            await data_cursor.close()
             return 0
         else:
-            notifiers_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?''',
+            notifiers_c = await data_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?''',
                                                        (ctx.guild.id,))
-            notifiers_c = notifiers_c.fetchall()
+            notifiers_c = await notifiers_c.fetchall()
             notifiers = []
             for ch in notifiers_c:
                 notifiers.append(ch[0])
@@ -87,6 +85,7 @@ class ServerAdmin(commands.Cog):
             if not list(set(notifiers).intersection(channels)):
                 await ctx.interaction.edit_original_message(
                     content=ctx.bot.translations[lang]['msg']['no_regular_reg'], view=None)
+                await data_cursor.close()
                 return 0
 
             view = AutopostSettings(ctx, lang, registration)
@@ -97,10 +96,12 @@ class ServerAdmin(commands.Cog):
             if args is None:
                 await ctx.interaction.edit_original_message(
                     content=ctx.bot.translations[lang]['msg']['timed_out'], view=None)
+                await data_cursor.close()
                 return 1
             if args == 'cancel':
                 await ctx.interaction.edit_original_message(
                     content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
+                await data_cursor.close()
                 return -1
             if args == 'all':
                 args = set(ctx.bot.translations[lang]['update_types']).intersection(set(ctx.bot.all_types))
@@ -112,14 +113,15 @@ class ServerAdmin(commands.Cog):
                 else:
                     value = 0
                 try:
-                    ctx.bot.guild_cursor.execute('''UPDATE post_settings SET {}=? WHERE channel_id=?'''.
-                                                 format(converter[upd_type]), (value, ctx.channel.id))
-                except sqlite3.OperationalError:
-                    ctx.bot.guild_cursor.execute(
+                    await data_cursor.execute('''UPDATE post_settings SET {}=? WHERE channel_id=?'''.
+                                              format(converter[upd_type]), (value, ctx.channel.id))
+                except aiosqlite.OperationalError:
+                    await data_cursor.execute(
                         '''ALTER TABLE post_settings ADD COLUMN {} INTEGER'''.format(converter[upd_type]))
-                    ctx.bot.guild_cursor.execute('''UPDATE post_settings SET {}=? WHERE channel_id=?'''.
-                                                 format(converter[upd_type]), (value, ctx.channel.id))
-                ctx.bot.guild_db_sync.commit()
+                    await data_cursor.execute('''UPDATE post_settings SET {}=? WHERE channel_id=?'''.
+                                              format(converter[upd_type]), (value, ctx.channel.id))
+                await ctx.bot.guild_db.commit()
+        await data_cursor.close()
 
     @autopost.command(
         description_localizations={
@@ -152,12 +154,7 @@ class ServerAdmin(commands.Cog):
         lang = await locale_2_lang(ctx)
         if not await message_permissions(ctx, lang):
             return
-        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into notifiers values (?,?)''',
-                                     (ctx.channel.id, ctx.guild.id))
-        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into post_settings (channel_id, server_id, server_name) values (?,?,?)''',
-                                     (ctx.channel.id, ctx.guild.id, ctx.guild.name))
-        ctx.bot.guild_db_sync.commit()
-        ctx.bot.get_channels()
+        await ctx.bot.register_channel(ctx, 'notifiers')
 
         await self.post_selection(ctx, True)
 
@@ -179,10 +176,7 @@ class ServerAdmin(commands.Cog):
         lang = await locale_2_lang(ctx)
         if not await message_permissions(ctx, lang):
             return
-        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into updates values (?,?)''',
-                                     (ctx.channel.id, ctx.guild.id))
-        ctx.bot.guild_db_sync.commit()
-        ctx.bot.get_channels()
+        await ctx.bot.register_channel(ctx, 'updates')
         await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
         return
 
@@ -251,14 +245,7 @@ class ServerAdmin(commands.Cog):
         lang = await locale_2_lang(ctx)
         if not await message_permissions(ctx, lang):
             return
-        notifier_type = upd_type
-        ctx.bot.guild_cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(notifier_type),
-                                     (ctx.channel.id, ctx.guild.id))
-        if notifier_type == 'notifiers':
-            ctx.bot.guild_cursor.execute('''INSERT or IGNORE into post_settings (channel_id, server_id) values (?,?)''',
-                                         (ctx.channel.id, ctx.guild.id))
-        ctx.bot.guild_db_sync.commit()
-        ctx.bot.get_channels()
+        await ctx.bot.register_channel(ctx, upd_type)
         await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
         return
 
@@ -276,12 +263,9 @@ class ServerAdmin(commands.Cog):
         lang = await locale_2_lang(ctx)
         if not await message_permissions(ctx, lang):
             return
-        ctx.bot.guild_cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (ctx.channel.id,))
-        ctx.bot.guild_cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (ctx.channel.id,))
-        ctx.bot.guild_cursor.execute('''DELETE FROM post_settings WHERE channel_id=?''', (ctx.channel.id,))
-        ctx.bot.guild_db_sync.commit()
-        ctx.bot.get_channels()
-        await ctx.respond(ctx.bot.translations[lang]['msg']['command_is_done'])
+        await ctx.bot.remove_channel(ctx.channel.id)
+        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'],
+                                                    view=None)
 
     @slash_command(
         name='setlang',
@@ -303,9 +287,12 @@ class ServerAdmin(commands.Cog):
         args = view.value
 
         msg = ctx.bot.translations[lang]['msg']['command_is_done']
-        ctx.bot.guild_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
-                                     (args[0].lower(), ctx.guild.id))
-        ctx.bot.guild_db_sync.commit()
+
+        data_cursor = await ctx.bot.guild_db.cursor()
+        await data_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
+                                  (args[0].lower(), ctx.guild.id))
+        await ctx.bot.guild_db.commit()
+        await data_cursor.close()
         if ctx.guild.me.guild_permissions.change_nickname:
             await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
         await ctx.interaction.edit_original_message(content=msg, view=None)
@@ -356,16 +343,18 @@ class ServerAdmin(commands.Cog):
             clan_embed.add_field(name=translations['founder'], value=clan_json['Response']['founder']['destinyUserInfo']['LastSeenDisplayName'])
             await ctx.respond(embed=clan_embed)
             data_cursor = await ctx.bot.data.bot_data_db.cursor()
+            guild_cursor = await ctx.bot.guild_db.cursor()
             try:
                 await data_cursor.execute('''INSERT or IGNORE INTO clans VALUES (?,?)''', (clan_json['Response']['detail']['name'], clan_json['Response']['detail']['groupId']))
                 await ctx.bot.data.bot_data_db.commit()
             except aiosqlite.OperationalError:
                 pass
             await data_cursor.close()
-            ctx.bot.guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
+            await guild_cursor.execute('''UPDATE clans SET clan_name=?, clan_id=? WHERE server_id=?''',
                                          (clan_json['Response']['detail']['name'],
                                           clan_json['Response']['detail']['groupId'], ctx.guild.id))
-            ctx.bot.guild_db_sync.commit()
+            await ctx.bot.guild_db.commit()
+            await guild_cursor.close()
             if ctx.guild.me.guild_permissions.change_nickname:
                 try:
                     await ctx.guild.me.edit(
@@ -461,11 +450,12 @@ class ServerAdmin(commands.Cog):
 
         get = False
         channels = [ctx.channel.id]
-        reg_ch_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?
-                                                    UNION ALL
-                                                    SELECT channel_id FROM seasonal WHERE server_id=?''',
-                                                (ctx.guild.id, ctx.guild.id))
-        reg_ch_c = reg_ch_c.fetchall()
+        data_cursor = await ctx.bot.guild_db.cursor()
+        reg_ch_c = await data_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?
+                                                UNION ALL
+                                                SELECT channel_id FROM seasonal WHERE server_id=?''',
+                                             (ctx.guild.id, ctx.guild.id))
+        reg_ch_c = await reg_ch_c.fetchall()
         reg_ch = []
         for ch in reg_ch_c:
             reg_ch.append(ch[0])
@@ -483,9 +473,9 @@ class ServerAdmin(commands.Cog):
                     content=ctx.bot.translations[lang]['msg']['timed_out'], view=None)
                 return
 
-            notifiers_c = ctx.bot.guild_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?''',
-                                                       (ctx.guild.id,))
-            notifiers_c = notifiers_c.fetchall()
+            notifiers_c = await data_cursor.execute('''SELECT channel_id FROM notifiers WHERE server_id=?''',
+                                                    (ctx.guild.id,))
+            notifiers_c = await notifiers_c.fetchall()
             notifiers = []
             for ch in notifiers_c:
                 notifiers.append(ch[0])
@@ -495,12 +485,14 @@ class ServerAdmin(commands.Cog):
             if not list(set(notifiers).intersection(channels)):
                 if list(set(regular_types).intersection(args)):
                     await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['no_regular_reg'], view=None)
+                    await data_cursor.close()
                     return
             else:
                 if list(set(regular_types).intersection(args)):
                     correct_ch = True
         await ctx.bot.force_update(args, get=get, channels=channels, forceget=get)
         await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
+        await data_cursor.close()
         return
 
     # @commands.slash_command(

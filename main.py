@@ -566,6 +566,30 @@ class ClanBot(commands.Bot):
         self.seasonal_ch = self.get_channel_type('seasonal')
         self.update_ch = self.get_channel_type('updates')
 
+    async def register_channel(self, ctx, channel_type: str) -> None:
+        cursor = await self.guild_db.cursor()
+
+        await cursor.execute('''INSERT or IGNORE into {} values (?,?)'''.format(channel_type),
+                             (ctx.channel.id, ctx.guild.id))
+        if channel_type == 'notifiers':
+            await cursor.execute('''INSERT or IGNORE into post_settings (channel_id, server_id, server_name) values (?,?,?)''',
+                                 (ctx.channel.id, ctx.guild.id, ctx.guild.name))
+        await self.guild_db.commit()
+        await cursor.close()
+
+        self.get_channels()
+
+    async def remove_channel(self, channel_id: int) -> None:
+        cursor = await self.guild_db.cursor()
+
+        await cursor.execute('''DELETE FROM updates WHERE channel_id=?''', (channel_id,))
+        await cursor.execute('''DELETE FROM notifiers WHERE channel_id=?''', (channel_id,))
+        await cursor.execute('''DELETE FROM post_settings WHERE channel_id=?''', (channel_id,))
+        await self.guild_db.commit()
+        await cursor.close()
+
+        self.get_channels()
+
     def guild_lang(self, guild_id: int) -> str:
         cursor = self.guild_cursor
         try:
