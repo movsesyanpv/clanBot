@@ -410,6 +410,7 @@ class LFGModal(discord.ui.Modal):
         locale = await locale_2_lang(self.bot_loc)
         if isinstance(error, OverflowError):
             await interaction.edit_original_message(content=self.bot_loc.bot.translations[locale]['overflow_error'], view=None)
+            return
         owner = bot_info.owner
         if owner.dm_channel is None:
             await owner.create_dm()
