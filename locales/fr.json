@@ -503,5 +503,6 @@
         "update": {
             "description": "Recevoir les mises a jour de Bungie"
         }
-    }
+    },
+    "overflow_error": "Invalid time input. Please try again."
 }
