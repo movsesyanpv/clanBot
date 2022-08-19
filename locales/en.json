@@ -168,6 +168,7 @@
     "LW": "Last Wish",
     "GoS": "Garden of Salvation",
     "error": "An unexpected error has occurred. The information was sent to the developer",
+    "overflow_error": "Invalid time input. Please try again.",
     "classnames": [
         "hunter",
         "warlock",
