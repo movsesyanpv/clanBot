@@ -2703,37 +2703,40 @@ class D2data:
                 return [member['destinyUserInfo']['LastSeenDisplayName'], '-']
             for char in profile_resp['Response']['characterActivities']['data']:
                 char_resp = profile_resp['Response']['characterActivities']['data'][char]
-                if char_resp['currentActivityHash'] != 0:
-                    activity = await self.destiny.decode_hash(char_resp['currentActivityHash'],
-                                                              'DestinyActivityDefinition', language=lang)
-                    try:
-                        activity_mode = await self.destiny.decode_hash(char_resp['currentActivityModeHash'],
-                                                                       'DestinyActivityModeDefinition', language=lang)
-                    except pydest.PydestException:
-                        activity_mode = {'displayProperties': {'name': ''}}
-                    activity_type = await self.destiny.decode_hash(activity['activityTypeHash'],
-                                                                   'DestinyActivityTypeDefinition', language=lang)
-                    place = await self.destiny.decode_hash(activity['placeHash'], 'DestinyPlaceDefinition',
-                                                           language=lang)
-                    if activity['activityTypeHash'] in [332181804] and char_resp['currentActivityHash'] not in [
-                        82913930]:
-                        activity_string = activity['displayProperties']['name']
-                    elif char_resp['currentActivityHash'] in [82913930]:
-                        activity_string = place['displayProperties']['name']
-                    elif activity['activityTypeHash'] in [4088006058, 2371050408]:
-                        activity_string = '{}: {}: {}'.format(activity_type['displayProperties']['name'],
-                                                              activity_mode['displayProperties']['name'],
+                try:
+                    if char_resp['currentActivityHash'] != 0:
+                        activity = await self.destiny.decode_hash(char_resp['currentActivityHash'],
+                                                                  'DestinyActivityDefinition', language=lang)
+                        try:
+                            activity_mode = await self.destiny.decode_hash(char_resp['currentActivityModeHash'],
+                                                                           'DestinyActivityModeDefinition', language=lang)
+                        except pydest.PydestException:
+                            activity_mode = {'displayProperties': {'name': ''}}
+                        activity_type = await self.destiny.decode_hash(activity['activityTypeHash'],
+                                                                       'DestinyActivityTypeDefinition', language=lang)
+                        place = await self.destiny.decode_hash(activity['placeHash'], 'DestinyPlaceDefinition',
+                                                               language=lang)
+                        if activity['activityTypeHash'] in [332181804] and char_resp['currentActivityHash'] not in [
+                            82913930]:
+                            activity_string = activity['displayProperties']['name']
+                        elif char_resp['currentActivityHash'] in [82913930]:
+                            activity_string = place['displayProperties']['name']
+                        elif activity['activityTypeHash'] in [4088006058, 2371050408]:
+                            activity_string = '{}: {}: {}'.format(activity_type['displayProperties']['name'],
+                                                                  activity_mode['displayProperties']['name'],
+                                                                  activity['displayProperties']['name'])
+                        elif activity['activityTypeHash'] in [4110605575, 1686739444, 248695599, 2043403989, 2112637710] \
+                                and char_resp['currentActivityModeHash'] not in [2166136261]:
+                            activity_string = '{}: {}'.format(activity_mode['displayProperties']['name'],
                                                               activity['displayProperties']['name'])
-                    elif activity['activityTypeHash'] in [4110605575, 1686739444, 248695599, 2043403989, 2112637710] \
-                            and char_resp['currentActivityModeHash'] not in [2166136261]:
-                        activity_string = '{}: {}'.format(activity_mode['displayProperties']['name'],
-                                                          activity['displayProperties']['name'])
-                    elif activity['activityTypeHash'] in [3497767639]:
-                        activity_string = '{}: {}'.format(activity_mode['displayProperties']['name'],
-                                                          place['displayProperties']['name'])
-                    else:
-                        activity_string = '{}'.format(activity['displayProperties']['name'])
-                    break
+                        elif activity['activityTypeHash'] in [3497767639]:
+                            activity_string = '{}: {}'.format(activity_mode['displayProperties']['name'],
+                                                              place['displayProperties']['name'])
+                        else:
+                            activity_string = '{}'.format(activity['displayProperties']['name'])
+                        break
+                except pydest.PydestException:
+                    activity_string = '???'
             length = now - datetime.fromisoformat(char_resp['dateActivityStarted'].replace('Z', ''))
             activity_string = '{} ({})'.format(activity_string, str(timedelta(seconds=length.seconds)))
         else:
