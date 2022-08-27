@@ -575,7 +575,10 @@ class Admin(commands.Cog):
                         help_msg = ''
                     if len(help_lines) == 0:
                         break
-                help_embeds.pop(len(help_embeds) - 1)
+                if len(help_msg) > 0:
+                    help_embeds[-1].description = help_msg
+                else:
+                    help_embeds.pop(len(help_embeds) - 1)
             else:
                 help_embeds[0].description = help_msg
             if len(help_embeds) > 10:
