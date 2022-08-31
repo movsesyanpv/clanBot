@@ -1729,7 +1729,7 @@ class D2data:
                 #         'description': info['value'].replace('\n', '<br>')
                 #     })
                 #     self.data[lang]['raids']['fields'].append(info)
-                if r_json['hash'] in [910380154, 3881495763, 1441982566, 2122313384, 3458480158] and 'modifierHashes' in key.keys():
+                if r_json['hash'] in [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663] and 'modifierHashes' in key.keys():
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
@@ -2014,36 +2014,32 @@ class D2data:
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 if r_json['destinationHash'] == 4088006058:
-                    if len(r_json['challenges']) > 0:
-                        obj_def = 'DestinyObjectiveDefinition'
-                        objective = await self.destiny.decode_hash(r_json['challenges'][0]['objectiveHash'], obj_def,
-                                                                   lang)
-                        if item_hash in [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349]:
-                            if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
-                                if 'icon' in r_json['displayProperties']:
-                                    self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
-                                                                                              r_json[
-                                                                                                  'displayProperties'][
-                                                                                                  'icon']
-                                else:
-                                    self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
-                                                                                              '/common/destiny2_content/icons/' \
-                                                                                              'cc8e6eea2300a1e27832d52e9453a227.png'
+                    if item_hash in [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349, 1689094744, 2056796644, 3254496172, 1214397515]:
+                        if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
                             if 'icon' in r_json['displayProperties']:
-                                icon = r_json['displayProperties']['icon']
+                                self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
+                                                                                          r_json[
+                                                                                              'displayProperties'][
+                                                                                              'icon']
                             else:
-                                icon = '/common/destiny2_content/icons/cc8e6eea2300a1e27832d52e9453a227.png'
-                            info = {
-                                'inline': True,
-                                "name": r_json['displayProperties']['name'],
-                                "value": r_json['displayProperties']['description']
-                            }
-                            db_data.append({
-                                'name': info['name'],
-                                'description': info['value'].replace('\n\n', '<br>'),
-                                'icon': icon
-                            })
-                            self.data[lang]['cruciblerotators']['fields'].append(info)
+                                self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
+                                                                                          '/common/destiny2_content/icons/' \
+                                                                                          'cc8e6eea2300a1e27832d52e9453a227.png'
+                        if 'icon' in r_json['displayProperties']:
+                            icon = r_json['displayProperties']['icon']
+                        else:
+                            icon = '/common/destiny2_content/icons/cc8e6eea2300a1e27832d52e9453a227.png'
+                        info = {
+                            'inline': True,
+                            "name": r_json['displayProperties']['name'],
+                            "value": r_json['displayProperties']['description']
+                        }
+                        db_data.append({
+                            'name': info['name'],
+                            'description': info['value'].replace('\n\n', '<br>'),
+                            'icon': icon
+                        })
+                        self.data[lang]['cruciblerotators']['fields'].append(info)
             if len(db_data) >= 3:
                 style = 'wide tall'
             else:
