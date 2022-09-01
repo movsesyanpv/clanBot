@@ -32,8 +32,6 @@ from cogs.utils.converters import locale_2_lang
 
 from typing import List, Union, Callable
 
-discord.http.API_VERSION = 9
-
 
 class ClanBot(commands.Bot):
     version = ''
