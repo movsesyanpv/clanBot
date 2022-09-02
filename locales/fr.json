@@ -61,9 +61,9 @@
         "featured_raid": "**Défi de raid hebdomadaire**",
         "armor_mods": "Mods d'armures",
         "weapon_mods": "Mods d'armes",
-        "timed_out": "Timed out",
-        "all_upd_types": "Enable all",
-        "cancel": "Cancel"
+        "timed_out": "Expiré",
+        "all_upd_types": "Tout activé",
+        "cancel": "Annulé"
     },
     "lfg": {
         "go": "Go",
@@ -279,7 +279,7 @@
             "autopost": {
                 "subcommands": {
                     "remove": "Autoriser le bot a poster les mises a jour dans ce canal",
-                    "settings": "Choose update types to post in this channel"
+                    "settings": "Choisissez le type de mise a jour a poster dans ce canal"
                 },
                 "subgroups": {
                     "start": {
@@ -460,7 +460,7 @@
                 "description": "Forcer le Bot a ne plus poster de mise a jour dans ce canal"
             },
             "settings": {
-                "description": "Choose update types to post in this channel"
+                "description": "Choisissez le type de mise a jour a poster dans ce canal"
             }
         },
         "lfgcleanup": {
@@ -504,5 +504,5 @@
             "description": "Recevoir les mises a jour de Bungie"
         }
     },
-    "overflow_error": "Invalid time input. Please try again."
+    "overflow_error": "Saisie erronée. Recommencez."
 }
