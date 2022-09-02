@@ -600,7 +600,7 @@ class LFGModal(discord.ui.Modal):
         if not self.is_edit:
             group = await self.send_initial_lfg(lang, args, channel)
             await self.bot_loc.bot.raid.add(group, args=args)
-            await self.bot_loc.bot.raid.set_owner(interaction.user.id, group.id)
+            await self.bot_loc.bot.raid.set_owner(interaction.user, group.id)
         else:
             old_channel = await self.bot_loc.bot.raid.get_cell('group_id', self.old_group.id, 'lfg_channel')
             old_channel = await self.bot_loc.bot.fetch_channel(old_channel)

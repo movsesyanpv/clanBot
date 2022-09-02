@@ -58,13 +58,14 @@ class LFG:
             args = await self.parse_args(content, message, is_init=True)
         group_id = message.id
         owner = message.author.id
+        nick = message.author.nick
 
         try:
             await cursor.execute('''CREATE TABLE raid
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
                      wanters text, going text, the_role text, group_mode text, dm_message integer, 
                      lfg_channel integer, channel_name text, server_name text, want_dm text, is_embed integer, 
-                     length integer, server_id integer, group_role integer, group_channel integer, maybe_goers text, timezone text)''')
+                     length integer, server_id integer, group_role integer, group_channel integer, maybe_goers text, timezone text, owner_nick text)''')
         except aiosqlite.OperationalError:
             try:
                 await cursor.execute('''ALTER TABLE raid ADD COLUMN is_embed integer''')
@@ -85,12 +86,15 @@ class LFG:
                                 try:
                                     await cursor.execute('''ALTER TABLE raid ADD COLUMN timezone text''')
                                 except aiosqlite.OperationalError:
-                                    pass
+                                    try:
+                                        await cursor.execute('''ALTER TABLE raid ADD COLUMN owner_nick text''')
+                                    except aiosqlite.OperationalError:
+                                        pass
 
         newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
-                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id, 0, 0, '[]', args['timezone'])]
-        await cursor.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
+                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id, 0, 0, '[]', args['timezone'], nick)]
+        await cursor.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         await self.conn.commit()
         await cursor.close()
 
@@ -322,9 +326,13 @@ class LFG:
         await self.conn.commit()
         await cursor.close()
 
-    async def set_owner(self, new_owner: int, group_id: int) -> None:
+    async def set_owner(self, new_owner: discord.Member, group_id: int) -> None:
         cursor = await self.conn.cursor()
-        await cursor.execute('''UPDATE raid SET owner=? WHERE group_id=?''', (new_owner, group_id))
+        if new_owner.nick is None:
+            nick = new_owner.name
+        else:
+            nick = new_owner.nick
+        await cursor.execute('''UPDATE raid SET owner=?, owner_nick=? WHERE group_id=?''', (new_owner.id, nick, group_id))
         await self.conn.commit()
         await cursor.close()
 
@@ -545,15 +553,16 @@ class LFG:
         mb_goers = eval(mb_goers[0])
         length = await self.get_cell('group_id', message.id, 'length')
         group_mode = await self.get_cell('group_id', message.id, 'group_mode')
-        owner = await self.get_cell('group_id', message.id, 'owner')
-        owner = await message.guild.fetch_member(owner)
+        owner = await self.get_cell('group_id', message.id, 'owner_nick')
+        # owner = await message.guild.fetch_member(owner)
         if owner is None:
             nick = 'None'
         else:
-            if owner.nick is None:
-                nick = owner.name
-            else:
-                nick = owner.nick
+            nick = owner
+        #     if owner.nick is None:
+        #         nick = owner.name
+        #     else:
+        #         nick = owner.nick
 
         embed = {
             'thumbnail': {
