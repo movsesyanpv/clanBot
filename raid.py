@@ -409,6 +409,8 @@ class LFG:
         w_dm = await w_dm.fetchone()
         w_dm = eval(w_dm[0])
 
+        group_mode = await self.get_cell('group_id', group_id, 'group_mode')
+
         if mb_goers is None:
             mb_goers = []
         else:
@@ -418,6 +420,11 @@ class LFG:
             mb_goers.append(user.mention)
             if user.mention in goers:
                 goers.pop(goers.index(user.mention))
+                if len(wanters) > 0 and group_mode == 'basic':
+                    goers.append(wanters[0])
+                    wanters.pop(0)
+                    if len(w_dm) > 0:
+                        w_dm.pop(0)
             if user.mention in wanters:
                 i = wanters.index(user.mention)
                 wanters.pop(i)
