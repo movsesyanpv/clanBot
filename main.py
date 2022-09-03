@@ -33,7 +33,7 @@ from cogs.utils.converters import locale_2_lang
 from typing import List, Union, Callable
 
 
-class ClanBot(commands.Bot):
+class ClanBot(commands.AutoShardedBot):
     version = ''
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']

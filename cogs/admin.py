@@ -166,7 +166,9 @@ class Admin(commands.Cog):
         description='Check connection stats'
     )
     async def connstats(self, ctx):
-        await ctx.channel.send(f'Ping is {ctx.bot.latency*1000} ms')
+        msg = tabulate(ctx.bot.latencies, headers=['Shard_id', 'Latency'])
+
+        await ctx.message.reply(embed=discord.Embed(title='Bot latency', description=f'```{msg}```'), mention_author=False)
 
     @commands.is_owner()
     @commands.command()
