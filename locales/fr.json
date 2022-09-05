@@ -63,7 +63,8 @@
         "weapon_mods": "Mods d'armes",
         "timed_out": "Expiré",
         "all_upd_types": "Tout activé",
-        "cancel": "Annulé"
+        "cancel": "Annulé",
+        "lostsector": "Lost Sector"
     },
     "lfg": {
         "go": "Go",
