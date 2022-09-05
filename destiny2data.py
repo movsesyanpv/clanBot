@@ -17,6 +17,8 @@ import tracemalloc
 
 from typing import Optional, Union, List
 
+from lstorations import lost_sector_order, loot_order
+
 
 class D2data:
     api_data_file = open('api.json', 'r')
@@ -628,6 +630,24 @@ class D2data:
             except KeyError:
                 if 'startDate' in season_json[season].keys() and 'endDate' not in season_json[season].keys():
                     return isoparse(season_json[season]['startDate'])
+                pass
+
+    async def get_season_number(self) -> int:
+        manifest_url = 'https://www.bungie.net/Platform/Destiny2/Manifest/'
+        manifest_json = await self.get_bungie_json('default', manifest_url, {}, '')
+        season_url = 'https://www.bungie.net{}'.format(
+            manifest_json['Response']['jsonWorldComponentContentPaths']['en']['DestinySeasonDefinition'])
+        season_json = await self.get_bungie_json('default', season_url, {}, '')
+
+        for season in season_json:
+            try:
+                start = isoparse(season_json[season]['startDate'])
+                end = isoparse(season_json[season]['endDate'])
+                if start <= datetime.now(tz=timezone.utc) <= end:
+                    return season_json[season]['seasonNumber']
+            except KeyError:
+                if 'startDate' in season_json[season].keys() and 'endDate' not in season_json[season].keys():
+                    return 0
                 pass
 
     async def get_seasonal_featured_bd(self, langs: List[str], start: datetime) -> list:
@@ -2438,6 +2458,38 @@ class D2data:
             await self.write_to_db(lang, 'trials_of_osiris', db_data, order=6,
                                    name=self.translations[lang]['site']['osiris'])
         await self.write_bot_data('osiris', langs)
+
+    async def get_lost_sector(self, langs: List[str], forceget: bool = False, force_info: Optional[list] = None) -> None:
+        season_start = await self.get_season_start()
+        season_number = await self.get_season_number()
+        day_n = datetime.now(tz=timezone.utc) - season_start
+        ls_hash = lost_sector_order[season_number][int(day_n.days % len(lost_sector_order[season_number]))]
+        ls_loot = loot_order[season_number][day_n.days % len(loot_order[season_number])]
+
+        for lang in langs:
+            db_data = []
+            self.data[lang]['lostsector'] = {
+                'thumbnail': {
+                    'url': self.icon_prefix + '/common/destiny2_content/icons/DestinyActivityModeDefinition_'
+                                              '7d11acd7d5a3daebc0a0c906452932d6.png'
+                },
+                'fields': [],
+                'color': 0xb69460,
+                'type': "rich",
+                'title': self.translations[lang]['msg']['osiris'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            ls_def = await self.destiny.decode_hash(ls_hash, 'DestinyActivityDefinition', lang)
+            loot_str = self.translations[lang]['osiris'][ls_loot]
+            self.data[lang]['lostsector']['fields'].append({'name': ls_def['displayProperties']['name'].split(':')[0], 'value': loot_str})
+            db_data.append({
+                'name': ls_def['displayProperties']['name'].split(':')[0],
+                'description': loot_str
+            })
+            await self.write_to_db(lang, 'lost_sector', db_data, order=6,
+                                   name=self.translations[lang]['site']['lostsector'])
+        await self.write_bot_data('lostsector', langs)
 
     async def drop_weekend_info(self, langs: List[str]) -> None:
         while True:

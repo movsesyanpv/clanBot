@@ -37,8 +37,8 @@ class ClanBot(commands.Bot):
     version = ''
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht']
-    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'mods', 'xur', 'osiris', 'alerts', 'events', 'gambit']
-    daily_rotations = ('strikes', 'spider', 'banshee', 'ada', 'mods')
+    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']
+    daily_rotations = ('strikes', 'spider', 'banshee', 'ada', 'mods', 'lostsector')
     weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire')
     embeds_with_img = ['thelie']
 
@@ -233,11 +233,16 @@ class ClanBot(commands.Bot):
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 # await self.universal_update(self.data.get_the_lie_progress, 'thelie', 3600, channels=channels, post=post, get=get, forceget=forceget)
                 pass
-        if 'gambit' in upd_type:
+        # if 'gambit' in upd_type:
+        #     if channels is None:
+        #         channels = self.notifiers
+        #     if (post and list(set(channels).intersection(self.notifiers))) or get:
+        #         await self.universal_update(self.data.get_gambit_modifiers, 'gambit', 604800, post=post, get=get, channels=channels, forceget=forceget)
+        if 'lostsector' in upd_type:
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_gambit_modifiers, 'gambit', 604800, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_lost_sector, 'lostsector', 86400, post=post, get=get, channels=channels, forceget=forceget)
         if self.args.forceupdate:
             await self.data.destiny.close()
             await self.logout()
