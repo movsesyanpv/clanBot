@@ -5,7 +5,7 @@
         "noapi": "Bungie-API ist nicht verfügbar",
         "maintenance": "Bungie API wird wegen Wartungsarbeiten heruntergefahren",
         "later": "Die Informationen werden später aktualisiert",
-        "spider": "Material exchange",
+        "spider": "Material austausch",
         "xur": "Xur verkauft es",
         "weapon": "Waffe",
         "heroicstory": "Aktuelle heroische Story-Missionen sind",
@@ -301,7 +301,7 @@
         "no_data": "Keine Daten für die Meta."
     },
     "site": {
-        "spider": "Material exchange",
+        "spider": "Material austausch\n",
         "forge": "Schmiede",
         "heroicstory": "Heroische Story Mission",
         "reckoningboss": "Der Albtraum Boss",
@@ -309,7 +309,8 @@
         "nightmares": "Albtraum Jagten",
         "bd": "Everversum",
         "osiris": "Prüfung von Osiris",
-        "empire_hunts": "Imperium Jagten"
+        "empire_hunts": "Imperium Jagten",
+        "lostsector": "Lost Sector"
     },
     "osiris": {
         "map": "Karte",
@@ -393,6 +394,10 @@
         "osiris": {
             "label": "Trials of Osiris",
             "description": "Current ToO info"
+        },
+        "lostsector": {
+            "label": "Lost Sector",
+            "description": "Available Legend/Master Lost sector"
         }
     },
     "clan_info": {
