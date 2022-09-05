@@ -42,6 +42,7 @@
         "empire_hunts": "Elective difficulty empire hunt",
         "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
         "daily_mods": "Ada-1 and Banshee-44 sell these",
+        "lostsector": "Lost Sector",
         "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version. If you don't see any slash commands, run `noslash` command to get instructions on how to fix this.",
         "command_is_done": "Done",
         "update_types": "Select update types",

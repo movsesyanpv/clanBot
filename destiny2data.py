@@ -2476,7 +2476,7 @@ class D2data:
                 'fields': [],
                 'color': 0xb69460,
                 'type': "rich",
-                'title': self.translations[lang]['msg']['osiris'],
+                'title': self.translations[lang]['msg']['lostsector'],
                 'footer': {'text': self.translations[lang]['msg']['resp_time']},
                 'timestamp': datetime.utcnow().isoformat()
             }
