@@ -56,7 +56,8 @@ class ServerAdmin(commands.Cog):
             'xur': 'xur',
             'osiris': 'osiris',
             'alerts': 'alerts',
-            'gambit': 'gambit'
+            'gambit': 'gambit',
+            'lostsector': 'lostsector'
         }
 
         lang = await locale_2_lang(ctx)
