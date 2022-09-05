@@ -63,7 +63,8 @@
         "weapon_mods": "Weapon mods",
         "timed_out": "Timed out",
         "all_upd_types": "Enable all",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "lostsector": "Lost Sector"
     },
     "lfg": {
         "go": "Los",
