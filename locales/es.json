@@ -309,7 +309,8 @@
         "nightmares": "Nightmare hunts",
         "bd": "Eververse",
         "osiris": "Trials of Osiris",
-        "empire_hunts": "Empire hunts"
+        "empire_hunts": "Empire hunts",
+        "lostsector": "Lost Sector"
     },
     "osiris": {
         "map": "Map",
@@ -319,7 +320,7 @@
         "7win": "7 wins",
         "flawless": "Flawless",
         "helmet": "Helmet",
-        "gloves": "Gloves",
+        "gloves": "Gauntlets",
         "chest": "Chest",
         "boots": "Boots",
         "class": "Class Item",
@@ -393,6 +394,10 @@
         "osiris": {
             "label": "Trials of Osiris",
             "description": "Current ToO info"
+        },
+        "lostsector": {
+            "label": "Lost Sector",
+            "description": "Available Legend/Master Lost sector"
         }
     },
     "clan_info": {
