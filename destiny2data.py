@@ -2474,7 +2474,7 @@ class D2data:
                                               '7d11acd7d5a3daebc0a0c906452932d6.png'
                 },
                 'fields': [],
-                'color': 0xb69460,
+                'color': 5331575,
                 'type': "rich",
                 'title': self.translations[lang]['msg']['lostsector'],
                 'footer': {'text': self.translations[lang]['msg']['resp_time']},
