@@ -309,7 +309,8 @@
         "nightmares": "Chasses aux cauchemars",
         "bd": "Everversum",
         "osiris": "Jugement d'Osiris",
-        "empire_hunts": "Chasses de l'Empire"
+        "empire_hunts": "Chasses de l'Empire",
+        "lostsector": "Lost Sector"
     },
     "osiris": {
         "map": "Carte",
@@ -393,6 +394,10 @@
         "osiris": {
             "label": "Jugement d'Osiris",
             "description": "Information sur le jugement d'Osiris en cours"
+        },
+        "lostsector": {
+            "label": "Lost Sector",
+            "description": "Available Legend/Master Lost sector"
         }
     },
     "clan_info": {
