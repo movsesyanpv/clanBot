@@ -2463,8 +2463,12 @@ class D2data:
         season_start = await self.get_season_start()
         season_number = await self.get_season_number()
         day_n = datetime.now(tz=timezone.utc) - season_start
-        ls_hash = lost_sector_order[season_number][int(day_n.days % len(lost_sector_order[season_number]))]
-        ls_loot = loot_order[season_number][day_n.days % len(loot_order[season_number])]
+        if season_number in lost_sector_order.keys():
+            ls_hash = lost_sector_order[season_number][int(day_n.days % len(lost_sector_order[season_number]))]
+            ls_loot = loot_order[season_number][day_n.days % len(loot_order[season_number])]
+        else:
+            ls_hash = 0
+            ls_loot = '?'
 
         for lang in langs:
             db_data = []
@@ -2480,7 +2484,10 @@ class D2data:
                 'footer': {'text': self.translations[lang]['msg']['resp_time']},
                 'timestamp': datetime.utcnow().isoformat()
             }
-            ls_def = await self.destiny.decode_hash(ls_hash, 'DestinyActivityDefinition', lang)
+            if ls_hash != 0:
+                ls_def = await self.destiny.decode_hash(ls_hash, 'DestinyActivityDefinition', lang)
+            else:
+                ls_def = {'displayProperties': {'name': self.translations[lang]['osiris']['?']}}
             loot_str = self.translations[lang]['osiris'][ls_loot]
             self.data[lang]['lostsector']['fields'].append({'name': ls_def['displayProperties']['name'].split(':')[0], 'value': loot_str})
             db_data.append({
