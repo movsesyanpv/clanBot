@@ -64,7 +64,7 @@
         "timed_out": "Expiré",
         "all_upd_types": "Tout activé",
         "cancel": "Annulé",
-        "lostsector": "Lost Sector"
+        "lostsector": "Secteur Oublié"
     },
     "lfg": {
         "go": "Go",
@@ -311,7 +311,7 @@
         "bd": "Everversum",
         "osiris": "Jugement d'Osiris",
         "empire_hunts": "Chasses de l'Empire",
-        "lostsector": "Lost Sector"
+        "lostsector": "Secteur Oublié"
     },
     "osiris": {
         "map": "Carte",
@@ -322,7 +322,7 @@
         "flawless": "Flawless",
         "helmet": "Casque",
         "gloves": "Gant",
-        "chest": "Veste",
+        "chest": "Torse",
         "boots": "Botte",
         "class": "Elément de classe",
         "mod": "Mod",
@@ -397,8 +397,8 @@
             "description": "Information sur le jugement d'Osiris en cours"
         },
         "lostsector": {
-            "label": "Lost Sector",
-            "description": "Available Legend/Master Lost sector"
+            "label": "Secteur Oublié",
+            "description": "Secteur Oublié Legendaire/Maitrise Disponible"
         }
     },
     "clan_info": {
