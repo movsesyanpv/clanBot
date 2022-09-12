@@ -925,6 +925,8 @@ class ClanBot(commands.Bot):
                         await message.publish()
                     except discord.Forbidden:
                         pass
+                    except discord.HTTPException:
+                        pass
             hist = str(hist)
         else:
             if channel.permissions_for(server.me).embed_links:
@@ -951,6 +953,8 @@ class ClanBot(commands.Bot):
                     # await asyncio.sleep(delay)
                     await message.publish()
                 except discord.Forbidden:
+                    pass
+                except discord.HTTPException:
                     pass
 
         await cursor.execute('''UPDATE history SET {}=? WHERE channel_id=?'''.format(upd_type),
