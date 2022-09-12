@@ -988,8 +988,9 @@ class ClanBot(commands.Bot):
                     await owner.dm_channel.send('`{}`'.format(traceback_str))
                 else:
                     self.logger.exception(traceback_str)
-                for lang in self.langs:
-                    self.logger.exception('Embed info {}\n{}'.format(lang, src_dict[lang][upd_type]))
+                channel = self.get_channel(channel_id)
+                lang = self.guild_lang(channel.guild.id)
+                self.logger.exception('Embed info {}\n{}'.format(lang, src_dict[lang][upd_type]))
             except Exception as e:
                 # responses.append([channel_id, "Exception"])
                 responses.append("Exception")
