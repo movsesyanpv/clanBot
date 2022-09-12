@@ -255,7 +255,7 @@ class ClanBot(commands.Bot):
         game = discord.Game('v{}'.format(self.version))
         await self.change_presence(status=discord.Status.dnd, activity=game)
         # self.all_commands['update'].enabled = False
-        self.all_commands['top'].enabled = False
+        # self.all_commands['top'].enabled = False
         # self.all_commands['online'].enabled = False
         await self.data.token_update()
         await self.update_langs()
@@ -312,7 +312,7 @@ class ClanBot(commands.Bot):
             self.persistent_views_added = True
         await self.change_presence(status=discord.Status.online, activity=game)
         # self.all_commands['update'].enabled = True
-        self.all_commands['top'].enabled = True
+        # self.all_commands['top'].enabled = True
         # self.all_commands['online'].enabled = True
         await self.dm_owner('on_ready tasks finished')
         return
@@ -873,7 +873,7 @@ class ClanBot(commands.Bot):
                         try:
                             # await asyncio.sleep(delay)
                             last = await channel.fetch_message(hist)
-                        except discord.HTTPException:
+                        except discord.HTTPException as e:
                             # await asyncio.sleep(delay)
                             last = await channel.fetch_message(0)
                         if len(last.embeds) > 0:
@@ -968,9 +968,22 @@ class ClanBot(commands.Bot):
             try:
                 resp = await self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id)
                 responses.append(resp[1])
+                if channel_id == 1016903052667658250:
+                    await self.dm_owner('{}: {}'.format(upd_type, resp[1]))
             except discord.HTTPException as e:
                 # responses.append([channel_id, "discord.HTTPException"])
                 responses.append("discord.HTTPException")
+                bot_info = await self.application_info()
+                owner = bot_info.owner
+                if owner.dm_channel is None:
+                    await owner.create_dm()
+                traceback_str = ''
+                for line in traceback.format_exception(type(e), e, e.__traceback__):
+                    traceback_str = '{}{}'.format(traceback_str, line)
+                if len(traceback_str) < 1998:
+                    await owner.dm_channel.send('`{}`'.format(traceback_str))
+                else:
+                    self.logger.exception(traceback_str)
             except Exception as e:
                 # responses.append([channel_id, "Exception"])
                 responses.append("Exception")
