@@ -1764,11 +1764,12 @@ class D2data:
                             info['value'] = mods['displayProperties']['name']
                     else:
                         info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
-                    db_data.append({
-                        'name': info['name'],
-                        'description': info['value'].replace('\n', '<br>').replace('**', '')
-                    })
-                    self.data[lang]['raids']['fields'].append(info)
+                    if mods['displayProperties']['name']:
+                        db_data.append({
+                            'name': info['name'],
+                            'description': info['value'].replace('\n', '<br>').replace('**', '')
+                        })
+                        self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
             await self.write_to_db(lang, 'raid_challenges', db_data, '',
                                    self.translations[lang]['msg']['raids'], order=1, type='weekly')
