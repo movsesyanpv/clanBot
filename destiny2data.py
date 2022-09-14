@@ -2487,13 +2487,17 @@ class D2data:
             }
             if ls_hash != 0:
                 ls_def = await self.destiny.decode_hash(ls_hash, 'DestinyActivityDefinition', lang)
+                dest_def = await self.destiny.decode_hash(ls_def['destinationHash'], 'DestinyDestinationDefinition', lang)
+                dest_str = dest_def['displayProperties']['name']
             else:
                 ls_def = {'displayProperties': {'name': self.translations[lang]['osiris']['?']}}
+                dest_str = '?'
             loot_str = self.translations[lang]['osiris'][ls_loot]
-            self.data[lang]['lostsector']['fields'].append({'name': ls_def['displayProperties']['name'].split(':')[0], 'value': loot_str})
+
+            self.data[lang]['lostsector']['fields'].append({'name': ls_def['displayProperties']['name'].split(':')[0], 'value': '{}\n{}'.format(loot_str, dest_str)})
             db_data.append({
                 'name': ls_def['displayProperties']['name'].split(':')[0],
-                'description': loot_str
+                'description': '{}<br>{}'.format(loot_str, dest_str)
             })
             await self.write_to_db(lang, 'lost_sector', db_data, order=6,
                                    name=self.translations[lang]['site']['lostsector'])
