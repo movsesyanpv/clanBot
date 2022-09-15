@@ -977,6 +977,8 @@ class ClanBot(commands.Bot):
             except discord.HTTPException as e:
                 # responses.append([channel_id, "discord.HTTPException"])
                 responses.append("discord.HTTPException")
+                if channel_id == 1016903052667658250:
+                    await self.dm_owner('{}: {}'.format(upd_type, "discord.HTTPException"))
                 bot_info = await self.application_info()
                 owner = bot_info.owner
                 if owner.dm_channel is None:
@@ -994,6 +996,8 @@ class ClanBot(commands.Bot):
             except Exception as e:
                 # responses.append([channel_id, "Exception"])
                 responses.append("Exception")
+                if channel_id == 1016903052667658250:
+                    await self.dm_owner('{}: {}'.format(upd_type, "Exception"))
                 traceback_str = ''
                 for line in traceback.format_exception(type(e), e, e.__traceback__):
                     traceback_str = '{}{}'.format(traceback_str, line)
