@@ -84,25 +84,34 @@ class ClanBot(commands.Bot):
         version_file = open('version.dat', 'r')
         self.version = version_file.read()
 
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_daily_mods, 'daily_mods', 86400])
-        self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_lost_sector, 'lostsector', 86400])
-        self.sched.add_job(self.data.get_banshee, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
-        self.sched.add_job(self.data.get_ada, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
+        self.sched.add_job(self.force_update, 'cron', day_of_week='mon', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
+        self.sched.add_job(self.force_update, 'cron', day_of_week='tue', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily weekly'])
+        self.sched.add_job(self.force_update, 'cron', day_of_week='wed', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
+        self.sched.add_job(self.force_update, 'cron', day_of_week='thu', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
+        self.sched.add_job(self.force_update, 'cron', day_of_week='fri', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily xur osiris'])
+        self.sched.add_job(self.force_update, 'cron', day_of_week='sat', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
+        self.sched.add_job(self.force_update, 'cron', day_of_week='sun', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
+
+        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
+        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
+        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_daily_mods, 'daily_mods', 86400])
+        # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_lost_sector, 'lostsector', 86400])
+        # self.sched.add_job(self.data.get_banshee, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
+        # self.sched.add_job(self.data.get_ada, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
         # self.sched.add_job(self.data.get_lost_sector, 'cron', hour='17', minute='0', second='10', misfire_grace_time=86300, args=[self.langs])
 
+        # self.sched.add_job(self.force_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=['weekly'])
         self.sched.add_job(self.data.drop_weekend_info, 'cron', day_of_week='tue', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.langs])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_empire_hunt, 'empire_hunts', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_gambit_modifiers, 'gambit', 604800])
-        self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_ordeal, 'ordeal', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_nightmares, 'nightmares', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_empire_hunt, 'empire_hunts', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_gambit_modifiers, 'gambit', 604800])
+        # self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
 
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
-        self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
+        # self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
 
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
         self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 86400])
@@ -146,7 +155,7 @@ class ClanBot(commands.Bot):
         parser.add_argument('-c', '--cert', help='SSL certificate', type=str, default='')
         self.args = parser.parse_args()
 
-    async def force_update(self, upd_type: List[str], post: bool = True, get: bool = True,channels: List[int] = None,
+    async def force_update(self, upd_type: List[str], post: bool = True, get: bool = True, channels: List[int] = None,
                            forceget: bool = False) -> None:
         if 'daily' in upd_type and post:
             upd_type = (tuple(upd_type) + self.daily_rotations)
