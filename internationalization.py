@@ -265,13 +265,15 @@ class I18n:
     async def set_current_locale(self, ctx: ApplicationContext) -> None:
         """Sets the locale to be used in the next translation session. This is passed
         to `bot.before_invoke`."""
-
-        if (
-            locale := (ctx.locale or ctx.guild_locale)
-            if self.consider_user_locale
-            else ctx.guild_locale
-        ):
-            self.current_locale = locale  # type: ignore # locale is of type Locale
+        try:
+            if (
+                locale := (ctx.locale or ctx.guild_locale)
+                if self.consider_user_locale
+                else ctx.guild_locale
+            ):
+                self.current_locale = locale  # type: ignore # locale is of type Locale
+        except AttributeError:
+            pass
 
     @classmethod
     def get_text(cls, original: str) -> str:
