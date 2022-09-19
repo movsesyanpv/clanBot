@@ -185,7 +185,7 @@ class ServerAdmin(commands.Cog):
             await ctx.respond(msg.format(n))
 
     @slash_command(name='regnotifier',
-                description='Register notifier channel',
+                   description='Register notifier channel',
                    guild_only=True,
                    default_member_permissions=discord.Permissions(administrator=True))
     async def sl_regnotifier(self, ctx,
