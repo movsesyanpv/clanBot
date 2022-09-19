@@ -1,0 +1,394 @@
+{
+    "nick": "Indeedstor",
+    "msg": {
+        "error": "Error",
+        "noapi": "Bungie API is unavailable",
+        "maintenance": "Bungie API is brought down for maintenance",
+        "later": "The information will be updated later",
+        "spider": "Material exchange",
+        "xur": "Xur sells this",
+        "weapon": "Weapon",
+        "heroicstory": "Current heroic story missions are",
+        "forge": "Current forge is",
+        "strikesmods": "Current Vanguard strikes modifiers",
+        "reckoningmods": "The Reckoning",
+        "nightfalls820": "Current 820 nightfalls are",
+        "guidedgamenightfall": "Current guided game nightfall",
+        "ordeal": "Current ordeal",
+        "nightmares": "Current nightmare hunts are",
+        "reckoningboss": "The Reckoning boss is",
+        "cruciblerotators": "Crucible rotators are",
+        "xurloc": "Location",
+        "cost": "Cost",
+        "xurtitle": "Xur",
+        "raids": "Raids",
+        "silver": "Featured Silver items",
+        "featured_bd": "Featured Bright Dust items",
+        "bd": "Bright Dust items",
+        "week": ", part",
+        "bd_consumables": "Bright Dust consumables",
+        "resp_time": "Data updated at",
+        "no_embed_links": "No permission to 'Embed links', required for the posts.",
+        "complete": "Complete",
+        "prefixes": "Here are the available prefixes aside from `@{}`, i.e. you can send `{}prefix` to call this command.",
+        "no_prefixes": "The bot's commands can be invoked only with `@{}`",
+        "no_notifiers": "This channel is not set up for the posts. Please set it up with `/autopost` command.",
+        "in_progress": "Getting updates. If the types match with the registered channels, they will be posted. Keep in mind, that this command does not force me to get updates from Bungie.",
+        "invalid_type": "Invalid update type. Please see `help update` for the available update types.",
+        "no_seasonal_reg": "This channel is not registered as a seasonal notifier.",
+        "no_regular_reg": "This channel is not registered as a non-seasonal notifier.",
+        "no_send_messages": "{}, I'm not allowed to respond in that channel.",
+        "osiris": "Trials of Osiris",
+        "empire_hunts": "Elective difficulty empire hunt",
+        "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
+        "daily_mods": "Ada-1 and Banshee-44 sell these",
+        "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version. If you don't see any slash commands, run `noslash` command to get instructions on how to fix this.",
+        "command_is_done": "Done",
+        "update_types": "Select update types",
+        "no_dm": "This command can't be used in DMs",
+        "no_admin": "You lack the administrator permissions to use this command",
+        "language_select": "Select language",
+        "lfg_cleanup": "Done, removed {} entries.",
+        "noslash": "Try adding the bot to this server again by clicking 'Add to Server' in the bot's profile. **DO NOT** kick the bot, this will delete all the settings for the server. If you need more help, feel free to ask at the support server. You can find the link to the support server by running the `support` command.",
+        "perm_check_title": "Permission check failed",
+        "perm_check_description": "I lack at least one of the following permissions in this channel to function properly",
+        "perm_send_msg": "Send messages {}",
+        "perm_embed_links": "Embed links {}"
+    },
+    "lfg": {
+        "go": "Go",
+        "at": "@",
+        "participants": "Participants:",
+        "wanters": "Want to go:",
+        "newBlood": "There are new guys for:",
+        "gotcha": "Ok, please wait for the group's owner to add you to the participants",
+        "server": "of",
+        "name": "Provide the name of the activity",
+        "description": "Describe, what are you going to do there",
+        "time": "When are you going to start? (format is `%d-%m-%Y %H:%M` for UTC+3 timezone and `%d-%m-%Y %H:%M%z`, for custom timezone)\nExamples of the current time: `{}` for UTC+3, `{}` for custom timezone.",
+        "size": "What is the group size?",
+        "length": "How long are you planning to do this? Example: 1h 30m for one and a half hour group.",
+        "type": "What is the type of the activity?",
+        "mode": "What is the mode for this group? ({} if you want to approve everyone, {} for automatic approvals)",
+        "role": "Choose the roles to mention",
+        "check": "Is the info correct?\nName: {}\nDescription: {}\nTime of start: {}\nGroup size: {}\nLength: {}\nActivity type: {}\nMode: {}\nRoles: {}",
+        "no": "no",
+        "creation": "Creation",
+        "edit": "Edit",
+        "again": "Check your input and repeat the process.",
+        "too_long": "The answer is too long ({} symbols). Maximum length is {} symbols. You will need to answer again.\n{}",
+        "dm_noedit": "Send '--' if you don't want to change your previous answer.",
+        "lfg_choice": "Send the number of the group from the list above.",
+        "lfg_choice_fail": "Unable to process the answer ('{}'). The answer should contain only numbers, i.e. '1' for the first LFG in the list and should be less, than {}.\n{}",
+        "lfglist_head": "Your LFGs:\n",
+        "lfglist": "{}{}. {} @ {} {} in #{} of {}, ID: `{}`\n",
+        "lfglist_empty": "No LFGs were found",
+        "lfglist_choice_check": "Is the LFG choice correct?\n",
+        "no_change": "Not changed",
+        "dm_start": "{}, check your DMs",
+        "modal_title": "LFG creation",
+        "edit_modal_title": "LFG editing",
+        "lfg_choice_select": "#{} of {} @ {}",
+        "time_modal": "When are you going to start?",
+        "time_placeholder": "Format is `%d-%m-%Y %H:%M%z`.",
+        "length_modal": "How long are you planning to do this?",
+        "length_placeholder": "Example: 1h 30m for one and a half hour group.",
+        "role_manual": "Name the roles to mention, separated by `;`. Send `-` for automatic role choice.",
+        "lfg_select": "Select the group you want to edit.",
+        "raid": "Raid",
+        "pve": "PvE",
+        "gambit": "Gambit",
+        "pvp": "PvP",
+        "default": "Other",
+        "basic_mode": "Basic",
+        "manual_mode": "Manual",
+        "manual_roles": "Enter manually",
+        "auto_roles": "Automatic",
+        "confirm_yes": "Yes",
+        "confirm_no": "No",
+        "button_want": "I want to go",
+        "button_help": "I'll help/Maybe I'll go",
+        "button_no_go": "Remove registration",
+        "button_delete": "Delete the post",
+        "was_not_going": "You weren't in the group",
+        "will_not_delete": "Only the group's owner can do this",
+        "not_a_post": "This is not my LFG post!",
+        "thread_start": "Please continue in the thread",
+        "button_no_change": "No changes",
+        "will_not_go": "Ok",
+        "processing": "Processing, please wait",
+        "check_embed": "Check the embed below"
+    },
+    "lfge": {
+        "roles": "Roles",
+        "description": "Description",
+        "goers": "Participants",
+        "wanters": "Reserve",
+        "mb_goers": "Will join if needed",
+        "length": "Duration",
+        "total_goers": "Total participants",
+        "total_wanters": "Total reserve",
+        "date": "Time of start",
+        "footer": "ID: {} | Owner: {}"
+    },
+    "xur": {
+        "Earth": "Earth",
+        "Tower": "Tower",
+        "Titan": "Titan",
+        "Io": "Io",
+        "Nessus": "Nessus",
+        "NULL": "Unable to get the info",
+        "noxur": "Only the Nine know",
+        "copyright": "Location is provided by paracausal.science."
+    },
+    "forge": "鍛爐",
+    "heroicstory": "每日英雄主線任務: ",
+    "ordeal": "日暮任務：磨難",
+    "nightmare": "夢魘狩獵：",
+    "adept": ": 大師",
+    "Warlock": "Warlock",
+    "Titan": "Titan",
+    "Hunter": "Hunter",
+    "rotator": "Rotator",
+    "strikes": "Heroic Strikes Playlist",
+    "reckoning": "清算之地: 階段III",
+    "oryx": "Likeness of Oryx",
+    "swords": "The Swords",
+    "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers.",
+    "LW": "最後遺願",
+    "GoS": "救贖之園",
+    "error": "An unexpected error has occurred. The information was sent to the developer",
+    "classnames": [
+        "hunter",
+        "warlock",
+        "titan"
+    ],
+    "help": {
+        "list": "__**Here's the list of all available commands**__",
+        "help": "Print this message",
+        "lfglist": "Print your LFG list",
+        "stop": "Stop the bot",
+        "setlang": "Set server language",
+        "plan_maintenance": "Prevent updates at given time frame",
+        "lfg": "Create an LFG message",
+        "edit_lfg": "Edit LFG message",
+        "regnotifier": "Register notifier channel",
+        "rmnotifier": "Deregister notifier channel",
+        "update": "Get updates from Bungie for the selected types",
+        "setclan": "Set Destiny 2 clan for the server.",
+        "top": "Print top players for one of the available metrics.",
+        "additional_info": "Type `{}help command` for more info on a `command`. Available languages are `{}` (Some lines might be untranslated).",
+        "aliases": "Can be called with the following names:```{}```",
+        "parameters": "Usage:```{}```",
+        "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
+        "commands": {
+            "setclan": {
+                "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
+            },
+            "top": {
+                "info": "Print top players for one of the available metrics. Metric's description is available through the link. You can also pass the metric's hash to the command. Use `gtop` or `globaltop` to get lists across all the clans that are known to the bot.",
+                "seasonsmetrics": "Seasons",
+                "accountmetrics": "Account",
+                "cruciblemetrics": "Crucible",
+                "destinationmetrics": "Destinations",
+                "gambitmetrics": "Gambit",
+                "raidsmetrics": "Raids",
+                "strikesmetrics": "Strikes",
+                "trialsofosirismetrics": "Trials of Osiris",
+                "cat_list": "Available categories. To get the category's metric list send `{}help top category`. The categories are listed in the table below (left column), right column contains the descriptions of the aforementioned categories. The categories match in-game ones.",
+                "unavailable": {
+                    "displayProperties": {
+                        "name": "Metric is unavailable"
+                    }
+                }
+            },
+            "setlang": {
+                "info": "Available languages are {}. Available only to the server's admins."
+            },
+            "update": {
+                "info": "Get updates from Bungie for the given `args`. The types should be separated with spaces. Available args:\n - `daily` for strike modifiers and spider\n - `weekly` for available empire hunts and nightmares, current ordeal and crucible rotators\n - `spider` for material prices\n - `xur` for Xur's location and exotics\nUpdates are posted in the channel, the command was invoked, if the channel was registered with `regnotifier`. Everything, except `seasonal` is posted on the `notifier` channels. Available only to the server's admins."
+            },
+            "rmnotifier": {
+                "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
+            },
+            "regnotifier": {
+                "info": "`upd_type` can be either 'notifier' for regular updates (daily, weekly, etc.) or 'updates' for the bot's updates. Defaults to 'notifier'. Available only to the servers admins."
+            },
+            "plan_maintenance": {
+                "info": "Available only to the bot's owners."
+            },
+            "stop": {
+                "info": "Available only to the bot's owners."
+            },
+            "lfglist": {
+                "info": "The command is used to get the list of the groups you've created. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**."
+            },
+            "lfg": {
+                "info": "You can set up LFG either with arguments or in direct messages. For the latter, just don't pass any arguments for the command and answer the questions about the group.",
+                "creation": "__**Creating a group**__\nList of 'lfg' command arguments. The arguments must be on the separate lines.",
+                "creation_note": "Every parameter should be in **separate lines**\n`%Hh %Mm` - time format, in which one and a half hour activity will be written as `1h 30m` or `1.5h` or `90m`.\n`%d-%m-%Y %H:%M%z` - time format, in which midnight at Moscow, Russia on February the 1st 2000 is written like `01-02-2000 00:00+0300`.",
+                "name": "LFG name or planned activity",
+                "time": "Time of the activity start, format %d-%m-%Y %H:%M%z",
+                "description": "Description of the activity",
+                "size": "Size of the group",
+                "mode": "Type of lfg(basic or manual)",
+                "role": "Names of the roles to mention, separated by ';'. Defaults to 'Guardian, Recruit, Destiny'",
+                "length": "The duration of the activity, format '%Hh %Mm'",
+                "type": "Activity type: (pve, pvp, gambit/reckoning, raid)",
+                "example_title": "__Here's an example of LFG creation command:__",
+                "example_lfg": "lfg\n-at: pve\n-s: 3\n-n: Nightfall\n-t: 13-02-2020 19:00+0300\n-d: Farm ascendant shards\n-m: basic\n-r: Guardian\n-l: 01h 30m",
+                "edit_title": "__**LFG editing**__\nEvery group has it's own ID. To get information about your LFGs message the bot in DM `lfglist`. The bot will send you the list of your groups with the following information: name, time of start, channel name, server name, **ID**.\nIn order to edit the group send `editlfg` command in the channel you want the updated group announcement be in. The syntax is the same as in `lfg`",
+                "manual": "__**Managing manual groups**__\nWhen someone presses 👌, the group owner will receive a message with a list of those, who wishes to participate along with some information about the group (time, channel, server).\nTo choose a person press the corresponding emote. The list will update. **Don't** press multiple emotes, wait for the list update!!!",
+                "use_lfg": "__**Participating in the group**__\nUse 👌 to add yourself to the list of wishing to participate. The bot should confirm your emote. To remove yourself from the group delete your 👌 reaction.\nUse ❓ to add yourself to the list of those, who are ready to help. To remove yourself from the list of on demand helpers delete your ❓ reaction.\nUse ❌ to delete the group (works only for the group owner).",
+                "slash_info": "__**Creating a group**__\nThe bot will send you a form you'll need to fill. After that the bot will ask a couple of questions, that you can answer by clicking a button or by selecting options in a dropdown menu. After that the bot will process the data and ask you to confirm the information.\n__**Participating and managing LFG**__\nClick `I want to go` to add yourself to the list of wishing to participate. The bot should confirm that by responding to the button or by adding you to the list.\nClick `I'll help/Maybe I'll go` to add yourself to the list of those, who are ready to help.\nTo remove yourself from the group click `Remove registration`\nTo delete the group click `Delete the post`"
+            },
+            "prefix": {
+                "info": "Print available prefixes."
+            },
+            "setprefix": {
+                "info": "Set prefixes for this server. To set multiple prefixes send them separated from each other with spaces, i.e. `setprefix ? !` to set `?` and `!` as prefixes. Send `none` as the parameter to disable all prefixes, except bot mention."
+            },
+            "online": {
+                "info": "Get the list of online clan members.",
+                "name": "online"
+            },
+            "editlfg": {
+                "info": "__**Editing a group**__\nYou can either call this command from a group message context menu, or by running `/editlfg`. In the second case the bot will ask you to choose the group you want to edit. After that the bot will send you a form filled with that group info you'll need to edit. After that the bot will ask a couple of questions, that you can answer by clicking a button or by selecting options in a dropdown menu. After that the bot will process the data and ask you to confirm the information.\n__**Participating and managing LFG**__\nClick `I want to go` to add yourself to the list of wishing to participate. The bot should confirm that by responding to the button or by adding you to the list.\nClick `I'll help/Maybe I'll go` to add yourself to the list of those, who are ready to help.\nTo remove yourself from the group click `Remove registration`\nTo delete the group click `Delete the post`"
+            }
+        },
+        "prefix": "Print available prefixes",
+        "setprefix": "Set available prefixes",
+        "support": "Get the link to the support server",
+        "online": "Get the list of online clan members.",
+        "editlfg": "Edit LFG message",
+        "autopost": "Autopost channel settings",
+        "lfgcleanup": "Delete expired LFG posts",
+        "reglfg": "Register the channel as a place for LFG posts",
+        "noslash": "Help with missing slash commands",
+        "groups": {
+            "autopost": {
+                "subcommands": {
+                    "remove": "Make the bot stop posting updates in this channel"
+                },
+                "subgroups": {
+                    "start": {
+                        "rotations": "Make the bot start posting rotation updates in this channel",
+                        "changelogs": "Make the bot start posting changelogs in this channel"
+                    }
+                }
+            }
+        }
+    },
+    "graph": {
+        "percentage": "Completion percentage",
+        "datefromstart": "Days from start"
+    },
+    "top": {
+        "no_clan": "There is no clan to get information from. Please use the `setclan` command to set up a valid Destiny 2 clan.",
+        "unknown_metric": "Unknown metric `{}`. Use `help top` to get the list of available metrics.",
+        "in_progress": "Getting the leaderboard, could take a long time.",
+        "no_data": "No data for the metric."
+    },
+    "site": {
+        "spider": "Material exchange",
+        "forge": "Forge",
+        "heroicstory": "Heroic story missions",
+        "reckoningboss": "The Reckoning boss",
+        "nightfalls820": "Nightfalls",
+        "nightmares": "Nightmare hunts",
+        "bd": "Eververse",
+        "osiris": "Trials of Osiris",
+        "empire_hunts": "Empire hunts"
+    },
+    "osiris": {
+        "map": "Map",
+        "?": "?",
+        "3win": "3 wins",
+        "5win": "5 wins",
+        "7win": "7 wins",
+        "flawless": "Flawless",
+        "helmet": "Helmet",
+        "gloves": "Gloves",
+        "chest": "Chest",
+        "boots": "Boots",
+        "class": "Class Item",
+        "mod": "Mod",
+        "random": "Random"
+    },
+    "weapon_types": {
+        "2766676737": "Auto Rifle",
+        "2174985928": "Scout Rifle",
+        "3263747939": "Pulse Rifle",
+        "1956740204": "Hand Cannon",
+        "2081696512": "Submachine Gun",
+        "3779085124": "Sidearm",
+        "2976016363": "Bow",
+        "1186584658": "Sniper Rifle",
+        "2122496537": "Fusion Rifle",
+        "4089315591": "Grenade Launcher",
+        "3058624876": "Shotgun",
+        "3935277741": "Machine Gun",
+        "690633563": "Linear Fusion Rifle",
+        "3106206619": "Rocket Launcher",
+        "1391900891": "Grenade Launcher",
+        "1604869479": "Sword"
+    },
+    "vanguard_strikes": "先鋒突擊任務",
+    "empire_hunt": "Empire Hunt:",
+    "online": {
+        "nick": "Nickname",
+        "since": "Last activity",
+        "error": "Error",
+        "error_t": "Unable to fetch the clan",
+        "title": "Online clan members"
+    },
+    "update_types": {
+        "nightmares": {
+            "label": "Nightmare hunts",
+            "description": "Currently available nightmare hunts"
+        },
+        "crucible": {
+            "label": "Crucible rotators",
+            "description": "Currently available crucible rotators"
+        },
+        "raids": {
+            "label": "Raid challenges",
+            "description": "Current week's raid challenges"
+        },
+        "ordeal": {
+            "label": "Nightfall: The Ordeal",
+            "description": "Current nightfall"
+        },
+        "empire": {
+            "label": "Empire hunt",
+            "description": "Current empire hunt"
+        },
+        "strikes": {
+            "label": "Strikes",
+            "description": "Daily vanguard strike playlist modifiers"
+        },
+        "spider": {
+            "label": "Resources",
+            "description": "Rahools's material exchange"
+        },
+        "mods": {
+            "label": "Ada's and Banshee's mods",
+            "description": "Currently available mods that Ada and Banshee sell"
+        },
+        "xur": {
+            "label": "Xur",
+            "description": "Xur's location and exotics"
+        },
+        "osiris": {
+            "label": "Trials of Osiris",
+            "description": "Current ToO info"
+        }
+    },
+    "clan_info": {
+        "motto": "Motto",
+        "member_count": "Member count",
+        "creation_date": "Creation date",
+        "founder": "Founder",
+        "id": "ID"
+    }
+}
