@@ -18,42 +18,14 @@ class Public(commands.Cog):
 
     @commands.slash_command(
         name='top',
-        description_localizations={
-            'ru': 'Вывести рейтинг игроков по одной из метрик',
-            'de': 'Kopieren denTop-Spieler für eine der verfügbaren Metriken',
-            'fr': 'Afficher le top des joueurs'
-        },
         description='Print top players for one of the available metrics.',
         guild_only=True
     )
     async def top_sl(self, ctx,
-                     metric: Option(str, "Metric to make a leaderboard", required=True, autocomplete=metric_picker,
-                                    name_localizations={
-                                        'ru': 'метрика',
-                                        'fr': 'critère'
-                                    },
-                                    description_localizations={
-                                        'ru': 'Метрика для построения рейтинга',
-                                        'fr': 'critère pour faire un classement'
-                                    }),
-                     number: Option(int, "Max number of positions to display", required=False, default=10,
-                                    name_localizations={
-                                        'ru': 'длина',
-                                        'fr': 'nombre'
-                                    },
-                                    description_localizations={
-                                        'ru': 'Максимальное число позиций в таблице',
-                                        'fr': 'Nombre d\'emplacements a afficher'
-                                    },
-                                    min_value=1),
+                     metric: Option(str, "Metric to make a leaderboard", required=True, autocomplete=metric_picker),
+                     number: Option(int, "Max number of positions to display", required=False, default=10, min_value=1),
                      is_global: Option(bool, "Make a leaderboard across all tracked clans", required=False,
-                                       default=False, name_localizations={
-                                                          'ru': 'глобально'
-                                                      },
-                                       description_localizations={
-                                           'ru': 'Делать ли рейтинг по всем известным боту кланам',
-                                           'fr': 'Faire un classement de tous les clans suivis'
-                                       })
+                                       default=False)
                      ):
         await ctx.defer()
         lang = await locale_2_lang(ctx)
@@ -194,11 +166,6 @@ class Public(commands.Cog):
 
     @commands.slash_command(
         name="support",
-        description_localizations={
-            'ru': 'Ссылка на сервер поддержки',
-            'de': 'Der link zum Support Server',
-            'fr': 'Lien pour joindre le support'
-        },
         description='Get the link to the support server'
     )
     async def support_sl(self, ctx):
@@ -206,11 +173,6 @@ class Public(commands.Cog):
 
     @commands.slash_command(
         name="online",
-        description_localizations={
-            'ru': 'Список онлайн членов клана',
-            'de': 'Zeig die Liste der Clan Member',
-            'fr': 'Liste des membres du clan en ligne'
-        },
         description="Get the list of online clan members.",
         guild_only=True
     )

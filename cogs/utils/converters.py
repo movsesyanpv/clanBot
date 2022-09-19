@@ -23,3 +23,20 @@ async def locale_2_lang(ctx: Union[ApplicationContext, CtxLocale, Interaction]) 
         lang = 'en'
 
     return lang
+
+
+def lang_2_locale(lang: str) -> str:
+    if 'en' in lang:
+        locale = 'en-US'
+    elif 'es' in lang:
+        locale = 'es-ES'
+    elif lang == 'pt-br':
+        locale = 'pt-BR'
+    elif lang == 'zh-cht':
+        locale = 'zh-TW'
+    elif lang == 'zh-chs':
+        locale = 'zh-CN'
+    else:
+        locale = lang
+
+    return locale

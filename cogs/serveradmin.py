@@ -182,23 +182,10 @@ class ServerAdmin(commands.Cog):
         return
 
     @slash_command(name='lfgcleanup',
-                   description_localizations={
-                       'ru': "Удалить прошедшие сборы",
-                       'fr': 'Supprimer les messages LFG expirés'
-                   },
                    description='Delete groups that are unavailable or inactive',
                    default_member_permissions=discord.Permissions(administrator=True))
     async def sl_lfgcleanup(self, ctx,
-                            days: Option(int, "Days since the activity was finished", required=False, default=0,
-                                         name_localizations={
-                                             'ru': 'дни',
-                                             'fr': 'jours'
-                                         },
-                                         description_localizations={
-                                             'ru': 'Дней с окончания активности',
-                                             'fr': 'jours depuis la fin de l\'activité'
-                                         })
-                            ):
+                            days: Option(int, "Days since the activity was finished", required=False, default=0)):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
         msg = ctx.bot.translations[lang]['msg']['lfg_cleanup']
@@ -213,12 +200,7 @@ class ServerAdmin(commands.Cog):
             await ctx.respond(msg.format(n))
 
     @slash_command(name='regnotifier',
-                   description_localizations={
-                       'ru': "Зарегистрировать канал для автоматических постов",
-                       'de': 'Meldekanal registrieren',
-                       'fr': 'Enregistrer le canal de notification'
-                   },
-                   description='Register notifier channel',
+                description='Register notifier channel',
                    guild_only=True,
                    default_member_permissions=discord.Permissions(administrator=True))
     async def sl_regnotifier(self, ctx,
@@ -232,15 +214,7 @@ class ServerAdmin(commands.Cog):
                                                                             name_localizations={
                                                                                 'ru': 'Обновления бота',
                                                                                 'fr': 'Logs des modifications'
-                                                                            })],
-                                              name_localizations={
-                                                  'ru': 'тип_постов',
-                                                  'fr': 'upd_type'
-                                              },
-                                              description_localizations={
-                                                  'ru': 'Тип постов на канале',
-                                                  'fr': 'Le type du paramètre'
-                                              })
+                                                                            })])
                              ):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
@@ -251,11 +225,6 @@ class ServerAdmin(commands.Cog):
         return
 
     @slash_command(name='rmnotifier',
-                   description_localizations={
-                       'ru': "Удалить регистрацию канала для автоматических постов",
-                       'de': 'Meldekanal abmelden',
-                       'fr': 'Supprimer le canal de notification'
-                   },
                    description='Deregister notifier channel',
                    guild_only=True,
                    default_member_permissions=discord.Permissions(administrator=True))
@@ -270,11 +239,6 @@ class ServerAdmin(commands.Cog):
 
     @slash_command(
         name='setlang',
-        description_localizations={
-            'ru': "Указать боту язык сервера",
-            'de': 'Serversprache einstellen',
-            'fr': 'Selectionner la langue du serveur'
-        },
         description='Tell the bot the server\'s language',
         guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)
@@ -299,24 +263,11 @@ class ServerAdmin(commands.Cog):
         await ctx.interaction.edit_original_message(content=msg, view=None)
 
     @slash_command(name='setclan',
-                   description_localizations={
-                       'ru': "Задать клан Destiny 2 для сервера",
-                       'de': 'Lege einen Destiny 2-Clan für den Server fest',
-                       'fr': 'Définir le clan Destiny 2 sur le serveur'
-                   },
                    description='Set a Destiny 2 clan for the server',
                    guild_only=True,
                    default_member_permissions=discord.Permissions(administrator=True)
                    )
-    async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True,
-                                                    name_localizations={
-                                                        'ru': 'клан'
-                                                    },
-                                                    description_localizations={
-                                                        'ru': 'Имя или ID клана',
-                                                        'fr': 'Nom ou ID d\'un clan'
-                                                    })
-                         ):
+    async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True)):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
         try:
@@ -432,11 +383,6 @@ class ServerAdmin(commands.Cog):
 
     @slash_command(
         name='update',
-        description_localizations={
-            'ru': "Получить обновления от Bungie",
-            'de': 'Holen Sie sich Updates von Bungie',
-            'fr': 'Recevoir les mises a jour de Bungie'
-        },
         description='Get updates from Bungie',
         guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)

@@ -18,11 +18,6 @@ class Group(commands.Cog):
         self.bot = bot
 
     @commands.slash_command(name='lfglist',
-                            description_localizations={
-                                'ru': 'Вывести список ваших сборов',
-                                'de': 'Kopiere deine LFG liste',
-                                'fr': 'Affichez votre liste LFG'
-                            },
                             description='Print your LFG list')
     async def sl_lfglist(self, ctx):
         await ctx.defer(ephemeral=True)
@@ -51,11 +46,6 @@ class Group(commands.Cog):
         await ctx.respond(embed=discord.Embed(description=msg))
 
     @commands.slash_command(name='lfg',
-                            description_localizations={
-                                'ru': 'Создать сбор',
-                                'de': 'Erstellen Sie eine LFG-Nachricht',
-                                'fr': 'Creer un message LFG'
-                            },
                             description='Create a group',
                             guild_only=True)
     async def lfg_sl(self, ctx):
@@ -95,11 +85,6 @@ class Group(commands.Cog):
 
     @commands.slash_command(
         name='editlfg',
-        description_localizations={
-            'ru': 'Редактировать сбор',
-            'de': 'Bearbeite eine LFG Nachricht',
-            'fr': 'Édition du message LFG'
-        },
         description='Edit LFG post',
         guild_only=True
     )
