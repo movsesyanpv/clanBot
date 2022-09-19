@@ -53,7 +53,18 @@
         "perm_check_title": "Permission check failed",
         "perm_check_description": "I lack at least one of the following permissions in this channel to function properly",
         "perm_send_msg": "Send messages {}",
-        "perm_embed_links": "Embed links {}"
+        "perm_embed_links": "Embed links {}",
+        "eol_title": "Please use slash commands",
+        "eol": "This command is only available in SlashCommands now, use `/{}` to execute this command.\n\n\nSlash Commands are not showing up? Then check permissions and use the `{}` button below to add them.\n**You don't need to kick the bot, just invite it again.**",
+        "invite_btn": "Invite me",
+        "support_btn": "Support server",
+        "featured_raid": "**Weekly featured raid**",
+        "armor_mods": "Armor mods",
+        "weapon_mods": "Weapon mods",
+        "timed_out": "Timed out",
+        "all_upd_types": "Enable all",
+        "cancel": "Cancel",
+        "lostsector": "Lost Sector"
     },
     "lfg": {
         "go": "Go",
@@ -177,7 +188,7 @@
         "update": "Get updates from Bungie for the selected types",
         "setclan": "Set Destiny 2 clan for the server.",
         "top": "Print top players for one of the available metrics.",
-        "additional_info": "Type `{}help command` for more info on a `command`. Available languages are `{}` (Some lines might be untranslated).",
+        "additional_info": "Type `{}help command` for more info on a `command`. Available languages are `{}` (Some lines might be untranslated). Some commands here may not be available to you because of the Discord's permission system.",
         "aliases": "Can be called with the following names:```{}```",
         "parameters": "Usage:```{}```",
         "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
@@ -268,7 +279,8 @@
         "groups": {
             "autopost": {
                 "subcommands": {
-                    "remove": "Make the bot stop posting updates in this channel"
+                    "remove": "Make the bot stop posting updates in this channel",
+                    "settings": "Choose update types to post in this channel"
                 },
                 "subgroups": {
                     "start": {
@@ -298,7 +310,8 @@
         "nightmares": "Nightmare hunts",
         "bd": "Eververse",
         "osiris": "Trials of Osiris",
-        "empire_hunts": "Empire hunts"
+        "empire_hunts": "Empire hunts",
+        "lostsector": "Lost Sector"
     },
     "osiris": {
         "map": "Map",
@@ -308,7 +321,7 @@
         "7win": "7 wins",
         "flawless": "Flawless",
         "helmet": "Helmet",
-        "gloves": "Gloves",
+        "gloves": "Gauntlets",
         "chest": "Chest",
         "boots": "Boots",
         "class": "Class Item",
@@ -382,6 +395,10 @@
         "osiris": {
             "label": "Trials of Osiris",
             "description": "Current ToO info"
+        },
+        "lostsector": {
+            "label": "Lost Sector",
+            "description": "Available Legend/Master Lost sector"
         }
     },
     "clan_info": {
@@ -390,5 +407,119 @@
         "creation_date": "Creation date",
         "founder": "Founder",
         "id": "ID"
-    }
+    },
+    "slash_localization": {
+        "help": {
+            "description": "The help command",
+            "options": {
+                "command_name": {
+                    "name": "command_name",
+                    "description": "Command name"
+                },
+                "additional_arg": {
+                    "name": "additional_arg",
+                    "description": "Additional argument (can be a metric table name)"
+                }
+            }
+        },
+        "top": {
+            "description": "Print top players for one of the available metrics.",
+            "options": {
+                "metric": {
+                    "name": "metric",
+                    "description": "Metric to make a leaderboard"
+                },
+                "number": {
+                    "name": "number",
+                    "description": "Max number of positions to display"
+                },
+                "is_global": {
+                    "name": "is_global",
+                    "description": "Make a leaderboard across all tracked clans"
+                }
+            }
+        },
+        "support": {
+            "description": "Get the link to the support server"
+        },
+        "online": {
+            "description": "Get the list of online clan members."
+        },
+        "lfglist": {
+            "description": "Print your LFG list"
+        },
+        "lfg": {
+            "description": "Create a group"
+        },
+        "editlfg": {
+            "context_name": "Edit LFG",
+            "description": "Edit LFG post"
+        },
+        "autopost": {
+            "rotations": {
+                "description": "Make the bot start posting rotation updates in this channel"
+            },
+            "changelogs": {
+                "description": "Make the bot start posting changelogs in this channel"
+            },
+            "remove": {
+                "description": "Make the bot stop posting updates in this channel"
+            },
+            "settings": {
+                "description": "Choose update types to post in this channel"
+            },
+            "start": {
+                "rotations": {
+                    "description": "Make the bot start posting rotation updates in this channel"
+                },
+                "changelogs": {
+                    "description": "Make the bot start posting changelogs in this channel"
+                }
+            }
+        },
+        "lfgcleanup": {
+            "description": "Delete groups that are unavailable or inactive",
+            "options": {
+                "days": {
+                    "name": "days",
+                    "description": "Days since the activity was finished"
+                }
+            }
+        },
+        "regnotifier": {
+            "description": "Register notifier channel",
+            "options": {
+                "upd_type": {
+                    "name": "upd_type",
+                    "description": "The type of notifier",
+                    "values": {
+                        "notifiers": "Rotations",
+                        "updates": "Changelogs"
+                    }
+                }
+            }
+        },
+        "rmnotifier": {
+            "description": "Deregister notifier channel"
+        },
+        "setlang": {
+            "description": "Tell the bot the server's language"
+        },
+        "setclan": {
+            "description": "Set a Destiny 2 clan for the server",
+            "options": {
+                "clan_id": {
+                    "name": "clan_id",
+                    "description": "Name or id of a clan"
+                }
+            }
+        },
+        "update": {
+            "description": "Get updates from Bungie"
+        },
+        "Edit LFG": {
+            "name": "Edit LFG"
+        }
+    },
+    "overflow_error": "Invalid time input. Please try again."
 }
