@@ -456,12 +456,6 @@
             "description": "Édition du message LFG"
         },
         "autopost": {
-            "rotations": {
-                "description": "Autorisez le bot à poster la mise a jour des rotations dans ce canal"
-            },
-            "changelogs": {
-                "description": "Autorisez le bot à poster les changelogs dans ce canal"
-            },
             "remove": {
                 "description": "Forcer le Bot a ne plus poster de mise a jour dans ce canal"
             },
