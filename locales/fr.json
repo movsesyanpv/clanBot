@@ -467,6 +467,14 @@
             },
             "settings": {
                 "description": "Choisissez le type de mise a jour a poster dans ce canal"
+            },
+            "start": {
+                "rotations": {
+                    "description": "Autorisez le bot à poster la mise a jour des rotations dans ce canal"
+                },
+                "changelogs": {
+                    "description": "Autorisez le bot à poster les changelogs dans ce canal"
+                }
             }
         },
         "lfgcleanup": {
@@ -508,6 +516,9 @@
         },
         "update": {
             "description": "Recevoir les mises a jour de Bungie"
+        },
+        "Edit LFG": {
+            "name": "Editer le LFG"
         }
     },
     "overflow_error": "Saisie erronée. Recommencez."
