@@ -3,7 +3,7 @@
 
 from typing import Dict, Literal, TypedDict, TypeVar, Union
 
-from discord import ApplicationContext, ContextMenuCommand, SlashCommand, utils
+from discord import ApplicationContext, ContextMenuCommand, SlashCommand, SlashCommandGroup, utils
 
 from cogs.utils.converters import lang_2_locale
 
@@ -52,9 +52,15 @@ Locale = Literal[
 ]
 
 
+class ValueLocalization(TypedDict, total=False):
+    name: str
+    description: str
+
+
 class OptionLocalization(TypedDict, total=False):
     name: str
     description: str
+    values: Dict[str, ValueLocalization]
 
 
 class CommandLocalization(OptionLocalization, total=False):
@@ -141,7 +147,7 @@ class I18n:
                 command.name_localizations = {locale: name}
             else:
                 command.name_localizations[locale] = name
-        if isinstance(command, SlashCommand):
+        if isinstance(command, Localizable):
             if description := localizations.get("description"):
                 if command.description_localizations is None:
                     command.description_localizations = {locale: description}
@@ -160,6 +166,15 @@ class I18n:
                                 option.description_localizations = {locale: op_description}
                             else:
                                 option.description_localizations[locale] = op_description
+                        if values := localization.get("values"):
+                            for value in values.keys():
+                                parameter = utils.get(option.choices, value=value)
+                                if parameter.name_localizations is None:
+                                    parameter.name_localizations = {locale: values[value]}
+                                else:
+                                    parameter.name_localizations[locale] = values[value]
+        elif isinstance(command, SlashCommandGroup):
+            pass
 
     def localize(self, command: CommandT) -> CommandT:
         """A decorator to apply name and description localizations to a command."""

@@ -205,16 +205,8 @@ class ServerAdmin(commands.Cog):
                    default_member_permissions=discord.Permissions(administrator=True))
     async def sl_regnotifier(self, ctx,
                              upd_type: Option(str, "The type of notifier", required=False, default='notifiers',
-                                              choices=[discord.OptionChoice('Rotations', value='notifiers',
-                                                                            name_localizations={
-                                                                                'ru': 'Обновления игры',
-                                                                                'fr': 'Rotations'
-                                                                            }),
-                                                       discord.OptionChoice('Changelogs', value='updates',
-                                                                            name_localizations={
-                                                                                'ru': 'Обновления бота',
-                                                                                'fr': 'Logs des modifications'
-                                                                            })])
+                                              choices=[discord.OptionChoice('Rotations', value='notifiers'),
+                                                       discord.OptionChoice('Changelogs', value='updates')])
                              ):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)

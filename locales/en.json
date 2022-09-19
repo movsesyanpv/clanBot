@@ -456,12 +456,17 @@
             "context_name": "Edit LFG",
             "description": "Edit LFG post"
         },
+        "Edit LFG": {
+            "name": "Edit LFG"
+        },
         "autopost": {
-            "rotations": {
-                "description": "Make the bot start posting rotation updates in this channel"
-            },
-            "changelogs": {
-                "description": "Make the bot start posting changelogs in this channel"
+            "start": {
+                "rotations": {
+                    "description": "Make the bot start posting rotation updates in this channel"
+                },
+                "changelogs": {
+                    "description": "Make the bot start posting changelogs in this channel"
+                }
             },
             "remove": {
                 "description": "Make the bot stop posting updates in this channel"
