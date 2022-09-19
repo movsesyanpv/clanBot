@@ -456,12 +456,6 @@
             "description": "Bearbeite eine LFG Nachricht"
         },
         "autopost": {
-            "rotations": {
-                "description": "Make the bot start posting rotation updates in this channel"
-            },
-            "changelogs": {
-                "description": "Make the bot start posting changelogs in this channel"
-            },
             "remove": {
                 "description": "Make the bot stop posting updates in this channel"
             },
