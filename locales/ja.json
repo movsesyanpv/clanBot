@@ -467,6 +467,14 @@
             },
             "settings": {
                 "description": "Choose update types to post in this channel"
+            },
+            "start": {
+                "rotations": {
+                    "description": "Make the bot start posting rotation updates in this channel"
+                },
+                "changelogs": {
+                    "description": "Make the bot start posting changelogs in this channel"
+                }
             }
         },
         "lfgcleanup": {
@@ -508,6 +516,9 @@
         },
         "update": {
             "description": "Get updates from Bungie"
+        },
+        "Edit LFG": {
+            "name": "Edit LFG"
         }
     },
     "overflow_error": "Invalid time input. Please try again."
