@@ -28,10 +28,6 @@ class ServerAdmin(commands.Cog):
     )
 
     @autopost.command(
-        description_localizations={
-            'ru': "Прекратить автоматические посты бота в этом канале",
-            'fr': 'Forcer le Bot a ne plus poster de mise a jour dans ce canal'
-        },
         description='Make the bot stop posting updates in this channel',
         guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)
@@ -125,9 +121,6 @@ class ServerAdmin(commands.Cog):
         await data_cursor.close()
 
     @autopost.command(
-        description_localizations={
-            'ru': 'Выбрать обновления в этом канале'
-        },
         description='Choose update types to post in this channel',
         guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)
@@ -142,10 +135,6 @@ class ServerAdmin(commands.Cog):
             await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
 
     @register.command(
-        description_localizations={
-            'ru': "Начать автоматические посты об обновлениях игры в этом канале",
-            'fr': 'Autorisez le bot à poster la mise a jour des rotations dans ce canal'
-        },
         description='Make the bot start posting rotation updates in this channel',
         guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)
@@ -164,10 +153,6 @@ class ServerAdmin(commands.Cog):
         return
 
     @register.command(
-        description_localizations={
-            'ru': "Начать автоматические посты об обновлениях бота в этом канале",
-            'fr': 'Autorisez le bot à poster les changelogs dans ce canal'
-        },
         description='Make the bot start posting changelogs in this channel',
         guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)

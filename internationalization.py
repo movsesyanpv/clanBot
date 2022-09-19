@@ -174,7 +174,66 @@ class I18n:
                                 else:
                                     parameter.name_localizations[locale] = values[value]
         elif isinstance(command, SlashCommandGroup):
-            pass
+            for name in localizations.keys():
+                if subcommand := utils.get(command.subcommands, name=name):
+                    if isinstance(subcommand, SlashCommand):
+                        subcommand_localizations = localizations.get(name)
+                        if description := subcommand_localizations.get("description"):
+                            if subcommand.description_localizations is None:
+                                subcommand.description_localizations = {locale: description}
+                            else:
+                                subcommand.description_localizations[locale] = description
+                        if options := subcommand_localizations.get("options"):
+                            for option_name, localization in options.items():
+                                if option := utils.get(subcommand.options, name=option_name):
+                                    if op_name := localization.get("name"):
+                                        if option.name_localizations is None:
+                                            option.name_localizations = {locale: op_name}
+                                        else:
+                                            option.name_localizations[locale] = op_name
+                                    if op_description := localization.get("description"):
+                                        if option.description_localizations is None:
+                                            option.description_localizations = {locale: op_description}
+                                        else:
+                                            option.description_localizations[locale] = op_description
+                                    if values := localization.get("values"):
+                                        for value in values.keys():
+                                            parameter = utils.get(option.choices, value=value)
+                                            if parameter.name_localizations is None:
+                                                parameter.name_localizations = {locale: values[value]}
+                                            else:
+                                                parameter.name_localizations[locale] = values[value]
+                    else:
+                        sub_localizations = localizations.get(name)
+                        for name in sub_localizations.keys():
+                            if subsubcommand := utils.get(subcommand.subcommands, name=name):
+                                if isinstance(subsubcommand, SlashCommand):
+                                    subcommand_localizations = sub_localizations.get(name)
+                                    if description := subcommand_localizations.get("description"):
+                                        if subsubcommand.description_localizations is None:
+                                            subsubcommand.description_localizations = {locale: description}
+                                        else:
+                                            subsubcommand.description_localizations[locale] = description
+                                    if options := subcommand_localizations.get("options"):
+                                        for option_name, localization in options.items():
+                                            if option := utils.get(subsubcommand.options, name=option_name):
+                                                if op_name := localization.get("name"):
+                                                    if option.name_localizations is None:
+                                                        option.name_localizations = {locale: op_name}
+                                                    else:
+                                                        option.name_localizations[locale] = op_name
+                                                if op_description := localization.get("description"):
+                                                    if option.description_localizations is None:
+                                                        option.description_localizations = {locale: op_description}
+                                                    else:
+                                                        option.description_localizations[locale] = op_description
+                                                if values := localization.get("values"):
+                                                    for value in values.keys():
+                                                        parameter = utils.get(option.choices, value=value)
+                                                        if parameter.name_localizations is None:
+                                                            parameter.name_localizations = {locale: values[value]}
+                                                        else:
+                                                            parameter.name_localizations[locale] = values[value]
 
     def localize(self, command: CommandT) -> CommandT:
         """A decorator to apply name and description localizations to a command."""
