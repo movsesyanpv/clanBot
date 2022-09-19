@@ -147,7 +147,7 @@ class I18n:
                 command.name_localizations = {locale: name}
             else:
                 command.name_localizations[locale] = name
-        if isinstance(command, Localizable):
+        if isinstance(command, SlashCommand) or isinstance(command, ContextMenuCommand):
             if description := localizations.get("description"):
                 if command.description_localizations is None:
                     command.description_localizations = {locale: description}
