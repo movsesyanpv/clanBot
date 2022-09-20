@@ -124,66 +124,66 @@ class ClanBot(commands.Bot):
         logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s', handlers=[self.log_handler])
         self.ap_logger = logging.getLogger('apscheduler')
 
-    @tasks.loop(time=time(hour=17, minute=1, second=35))
+    @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
     async def update_strikes(self):
         self.logger.info('Updating strike modifiers')
         await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400)
         self.logger.info('Finished updating strike modifiers')
 
-    @tasks.loop(time=time(hour=17, minute=1, second=35))
+    @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
     async def update_materials(self):
         self.logger.info('Updating material exchange')
         await self.universal_update(self.data.get_spider, 'spider', 86400)
         self.logger.info('Finished updating material exchange')
 
-    @tasks.loop(time=time(hour=17, minute=1, second=35))
+    @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
     async def update_daily_mods(self):
         self.logger.info('Updating daily mods')
         await self.universal_update(self.data.get_daily_mods, 'daily_mods', 86400)
         self.logger.info('Finished updating daily mods')
 
-    @tasks.loop(time=time(hour=17, minute=1, second=35))
+    @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
     async def update_lost_sector(self):
         self.logger.info('Updating lost sector')
         await self.universal_update(self.data.get_lost_sector, 'lostsector', 86400)
         self.logger.info('Finished updating lost sector')
 
-    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    @tasks.loop(time=time(hour=17, minute=1, second=40), reconnect=True)
     async def update_nightmares(self):
         if datetime.today().weekday() == 1:
             self.logger.info('Updating nightmares')
             await self.universal_update(self.data.get_nightmares, 'nightmares', 604800)
             self.logger.info('Finished updating nightmares')
 
-    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    @tasks.loop(time=time(hour=17, minute=1, second=40), reconnect=True)
     async def update_nightfall(self):
         if datetime.today().weekday() == 1:
             self.logger.info('Updating nightfall')
             await self.universal_update(self.data.get_ordeal, 'ordeal', 604800)
             self.logger.info('Finished updating nightfall')
 
-    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    @tasks.loop(time=time(hour=17, minute=1, second=40), reconnect=True)
     async def update_empire_hunt(self):
         if datetime.today().weekday() == 1:
             self.logger.info('Updating empire hunt')
             await self.universal_update(self.data.get_empire_hunt, 'empire_hunts', 604800)
             self.logger.info('Finished updating empire hunt')
 
-    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    @tasks.loop(time=time(hour=17, minute=1, second=40), reconnect=True)
     async def update_crucible(self):
         if datetime.today().weekday() == 1:
             self.logger.info('Updating crucible rotators')
             await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800)
             self.logger.info('Finished updating crucible rotators')
 
-    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    @tasks.loop(time=time(hour=17, minute=1, second=40), reconnect=True)
     async def update_raids(self):
         if datetime.today().weekday() == 1:
             self.logger.info('Updating raid challenges')
             await self.universal_update(self.data.get_raids, 'raids', 604800)
             self.logger.info('Finished updating raid challenges')
 
-    @tasks.loop(time=time(hour=17, minute=5, second=0))
+    @tasks.loop(time=time(hour=17, minute=5, second=0), reconnect=True)
     async def update_xur(self):
         if datetime.today().weekday() == 4:
             self.logger.info('Updating xur')
