@@ -87,21 +87,20 @@ class ClanBot(commands.Bot):
         version_file = open('version.dat', 'r')
         self.version = version_file.read()
 
-        self.sched.add_job(self.force_update, 'cron', day_of_week='mon', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
-        self.sched.add_job(self.force_update, 'cron', day_of_week='tue', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily weekly'])
-        self.sched.add_job(self.force_update, 'cron', day_of_week='wed', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
-        self.sched.add_job(self.force_update, 'cron', day_of_week='thu', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
-        self.sched.add_job(self.force_update, 'cron', day_of_week='fri', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily xur osiris'])
-        self.sched.add_job(self.force_update, 'cron', day_of_week='sat', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
-        self.sched.add_job(self.force_update, 'cron', day_of_week='sun', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
+        # self.sched.add_job(self.force_update, 'cron', day_of_week='mon', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
+        # self.sched.add_job(self.force_update, 'cron', day_of_week='tue', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily weekly'])
+        # self.sched.add_job(self.force_update, 'cron', day_of_week='wed', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
+        # self.sched.add_job(self.force_update, 'cron', day_of_week='thu', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
+        # self.sched.add_job(self.force_update, 'cron', day_of_week='fri', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily xur osiris'])
+        # self.sched.add_job(self.force_update, 'cron', day_of_week='sat', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
+        # self.sched.add_job(self.force_update, 'cron', day_of_week='sun', hour='17', minute='1', second='35', misfire_grace_time=86300, args=['daily'])
 
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_strike_modifiers, 'vanguardstrikes', 86400])
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_spider, 'spider', 86400])
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_daily_mods, 'daily_mods', 86400])
         # self.sched.add_job(self.universal_update, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.data.get_lost_sector, 'lostsector', 86400])
-        # self.sched.add_job(self.data.get_banshee, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
-        # self.sched.add_job(self.data.get_ada, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
-        # self.sched.add_job(self.data.get_lost_sector, 'cron', hour='17', minute='0', second='10', misfire_grace_time=86300, args=[self.langs])
+        self.sched.add_job(self.data.get_banshee, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
+        self.sched.add_job(self.data.get_ada, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
 
         # self.sched.add_job(self.force_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=['weekly'])
         self.sched.add_job(self.data.drop_weekend_info, 'cron', day_of_week='tue', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.langs])
@@ -111,19 +110,116 @@ class ClanBot(commands.Bot):
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_crucible_rotators, 'cruciblerotators', 604800])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_raids, 'raids', 604800])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_gambit_modifiers, 'gambit', 604800])
-        # self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
+        self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
 
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.data.get_osiris_predictions, 'osiris', 345600])
 
         self.sched.add_job(self.data.token_update, 'interval', hours=1)
-        self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 86400])
+        # self.sched.add_job(self.universal_update, 'cron', minute='0', second='0', misfire_grace_time=3500, args=[self.data.get_global_alerts, 'alerts', 86400])
         self.sched.add_job(self.lfg_cleanup, 'interval', weeks=1, args=[7])
         self.sched.add_job(self.update_metrics, 'cron', hour='10', minute='0', second='0', misfire_grace_time=86300)
 
         self.log_handler = RotatingFileHandler('bot.log', maxBytes=5*1024*1024, backupCount=20)
         logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s:%(message)s', handlers=[self.log_handler])
         self.ap_logger = logging.getLogger('apscheduler')
+
+    @tasks.loop(time=time(hour=17, minute=1, second=35))
+    async def update_strikes(self):
+        self.logger.info('Updating strike modifiers')
+        await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400)
+        self.logger.info('Finished updating strike modifiers')
+
+    @tasks.loop(time=time(hour=17, minute=1, second=35))
+    async def update_materials(self):
+        self.logger.info('Updating material exchange')
+        await self.universal_update(self.data.get_spider, 'spider', 86400)
+        self.logger.info('Finished updating material exchange')
+
+    @tasks.loop(time=time(hour=17, minute=1, second=35))
+    async def update_daily_mods(self):
+        self.logger.info('Updating daily mods')
+        await self.universal_update(self.data.get_daily_mods, 'daily_mods', 86400)
+        self.logger.info('Finished updating daily mods')
+
+    @tasks.loop(time=time(hour=17, minute=1, second=35))
+    async def update_lost_sector(self):
+        self.logger.info('Updating lost sector')
+        await self.universal_update(self.data.get_lost_sector, 'lostsector', 86400)
+        self.logger.info('Finished updating lost sector')
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    async def update_nightmares(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Updating nightmares')
+            await self.universal_update(self.data.get_nightmares, 'nightmares', 604800)
+            self.logger.info('Finished updating nightmares')
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    async def update_nightfall(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Updating nightfall')
+            await self.universal_update(self.data.get_ordeal, 'ordeal', 604800)
+            self.logger.info('Finished updating nightfall')
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    async def update_empire_hunt(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Updating empire hunt')
+            await self.universal_update(self.data.get_empire_hunt, 'empire_hunts', 604800)
+            self.logger.info('Finished updating empire hunt')
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    async def update_crucible(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Updating crucible rotators')
+            await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800)
+            self.logger.info('Finished updating crucible rotators')
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    async def update_raids(self):
+        if datetime.today().weekday() == 1:
+            self.logger.info('Updating raid challenges')
+            await self.universal_update(self.data.get_raids, 'raids', 604800)
+            self.logger.info('Finished updating raid challenges')
+
+    @tasks.loop(time=time(hour=17, minute=5, second=0))
+    async def update_xur(self):
+        if datetime.today().weekday() == 4:
+            self.logger.info('Updating xur')
+            await self.universal_update(self.data.get_xur, 'xur', 345600)
+            self.logger.info('Finished updating xur')
+
+    @tasks.loop(time=time(hour=17, minute=1, second=40))
+    async def update_trials(self):
+        if datetime.today().weekday() == 4:
+            self.logger.info('Updating trials')
+            await self.universal_update(self.data.get_osiris_predictions, 'osiris', 345600)
+            self.logger.info('Finished updating trials')
+
+    @tasks.loop(time=[time(hour=t, minute=0, second=0) for t in range(24)])
+    async def update_alerts(self):
+        self.logger.info('Updating alerts')
+        await self.universal_update(self.data.get_global_alerts, 'alerts', 86400)
+        self.logger.info('Finished updating alerts')
+
+    def start_tasks(self):
+        self.logger.info('Adding autopost tasks')
+        self.update_strikes.start()
+        self.update_materials.start()
+        self.update_daily_mods.start()
+        self.update_lost_sector.start()
+
+        self.update_nightmares.start()
+        self.update_nightfall.start()
+        self.update_empire_hunt.start()
+        self.update_crucible.start()
+        self.update_raids.start()
+
+        self.update_xur.start()
+        self.update_trials.start()
+
+        self.update_alerts.start()
 
     async def set_up_guild_db(self):
         self.guild_db = await aiosqlite.connect('guild.db')
@@ -291,6 +387,7 @@ class ClanBot(commands.Bot):
                 self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
                                    second='10', misfire_grace_time=86300, args=[lang])
             self.sched.start()
+            self.start_tasks()
             if self.args.production:
                 self.load_extension('cogs.dbl')
         game = discord.Game('v{}'.format(self.version))
