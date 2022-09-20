@@ -126,24 +126,28 @@ class ClanBot(commands.Bot):
 
     @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
     async def update_strikes(self):
+        await self.wait_for('manifest ready')
         self.logger.info('Updating strike modifiers')
         await self.universal_update(self.data.get_strike_modifiers, 'vanguardstrikes', 86400)
         self.logger.info('Finished updating strike modifiers')
 
     @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
     async def update_materials(self):
+        await self.wait_for('manifest ready')
         self.logger.info('Updating material exchange')
         await self.universal_update(self.data.get_spider, 'spider', 86400)
         self.logger.info('Finished updating material exchange')
 
     @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
     async def update_daily_mods(self):
+        await self.wait_for('manifest ready')
         self.logger.info('Updating daily mods')
         await self.universal_update(self.data.get_daily_mods, 'daily_mods', 86400)
         self.logger.info('Finished updating daily mods')
 
     @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
     async def update_lost_sector(self):
+        await self.wait_for('manifest ready')
         self.logger.info('Updating lost sector')
         await self.universal_update(self.data.get_lost_sector, 'lostsector', 86400)
         self.logger.info('Finished updating lost sector')
@@ -151,6 +155,7 @@ class ClanBot(commands.Bot):
     @tasks.loop(time=time(hour=17, minute=1, second=40), reconnect=True)
     async def update_nightmares(self):
         if datetime.today().weekday() == 1:
+            await self.wait_for('manifest ready')
             self.logger.info('Updating nightmares')
             await self.universal_update(self.data.get_nightmares, 'nightmares', 604800)
             self.logger.info('Finished updating nightmares')
@@ -158,6 +163,7 @@ class ClanBot(commands.Bot):
     @tasks.loop(time=time(hour=17, minute=1, second=40), reconnect=True)
     async def update_nightfall(self):
         if datetime.today().weekday() == 1:
+            await self.wait_for('manifest ready')
             self.logger.info('Updating nightfall')
             await self.universal_update(self.data.get_ordeal, 'ordeal', 604800)
             self.logger.info('Finished updating nightfall')
@@ -165,6 +171,7 @@ class ClanBot(commands.Bot):
     @tasks.loop(time=time(hour=17, minute=1, second=40), reconnect=True)
     async def update_empire_hunt(self):
         if datetime.today().weekday() == 1:
+            await self.wait_for('manifest ready')
             self.logger.info('Updating empire hunt')
             await self.universal_update(self.data.get_empire_hunt, 'empire_hunts', 604800)
             self.logger.info('Finished updating empire hunt')
@@ -172,6 +179,7 @@ class ClanBot(commands.Bot):
     @tasks.loop(time=time(hour=17, minute=1, second=40), reconnect=True)
     async def update_crucible(self):
         if datetime.today().weekday() == 1:
+            await self.wait_for('manifest ready')
             self.logger.info('Updating crucible rotators')
             await self.universal_update(self.data.get_crucible_rotators, 'cruciblerotators', 604800)
             self.logger.info('Finished updating crucible rotators')
@@ -179,6 +187,7 @@ class ClanBot(commands.Bot):
     @tasks.loop(time=time(hour=17, minute=1, second=40), reconnect=True)
     async def update_raids(self):
         if datetime.today().weekday() == 1:
+            await self.wait_for('manifest ready')
             self.logger.info('Updating raid challenges')
             await self.universal_update(self.data.get_raids, 'raids', 604800)
             self.logger.info('Finished updating raid challenges')
@@ -186,6 +195,7 @@ class ClanBot(commands.Bot):
     @tasks.loop(time=time(hour=17, minute=5, second=0), reconnect=True)
     async def update_xur(self):
         if datetime.today().weekday() == 4:
+            await self.wait_for('manifest ready')
             self.logger.info('Updating xur')
             await self.universal_update(self.data.get_xur, 'xur', 345600)
             self.logger.info('Finished updating xur')
@@ -193,6 +203,7 @@ class ClanBot(commands.Bot):
     @tasks.loop(time=time(hour=17, minute=1, second=40))
     async def update_trials(self):
         if datetime.today().weekday() == 4:
+            await self.wait_for('manifest ready')
             self.logger.info('Updating trials')
             await self.universal_update(self.data.get_osiris_predictions, 'osiris', 345600)
             self.logger.info('Finished updating trials')
@@ -203,8 +214,18 @@ class ClanBot(commands.Bot):
         await self.universal_update(self.data.get_global_alerts, 'alerts', 86400)
         self.logger.info('Finished updating alerts')
 
+    @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
+    async def update_manifest(self):
+        self.logger.info('Updating manifest')
+        for lang in self.langs:
+            await self.data.destiny.update_manifest(lang)
+        self.logger.info('Finished updating manifest')
+        self.dispatch('manifest ready')
+
     def start_tasks(self):
         self.logger.info('Adding autopost tasks')
+
+        self.update_manifest.start()
         self.update_strikes.start()
         self.update_materials.start()
         self.update_daily_mods.start()
@@ -383,9 +404,9 @@ class ClanBot(commands.Bot):
             # types.pop(types.index('osiris'))
             if not self.data.data_ready:
                 await self.force_update(types, post=False)
-            for lang in self.langs:
-                self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
-                                   second='10', misfire_grace_time=86300, args=[lang])
+            # for lang in self.langs:
+            #     self.sched.add_job(self.data.destiny.update_manifest, 'cron', day_of_week='tue', hour='17', minute='0',
+            #                        second='10', misfire_grace_time=86300, args=[lang])
             self.sched.start()
             self.start_tasks()
             if self.args.production:
