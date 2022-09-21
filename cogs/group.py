@@ -103,10 +103,14 @@ class Group(commands.Cog):
             (ctx.author.id,))
         lfg_list = await lfg_list.fetchall()
 
+        content_str = translations['lfg_select']
         if len(lfg_list) == 0:
             await ctx.respond(translations['lfglist_empty'], ephemeral=True)
             await cursor.close()
             return
+        if len(lfg_list) > 25:
+            lfg_list = lfg_list[:25]
+            content_str = '{}\n{}'.format(content_str, translations['lfglist_long'].format(ctx.bot.translations[lang]['slash_localization']['Edit LFG']['name']))
         lfg_options = []
         i = 0
         for lfg in lfg_list:
@@ -115,7 +119,7 @@ class Group(commands.Cog):
             i += 1
         view = ViewLFG(lfg_options, ctx.author, lfg_list, ctx, translations)
         await cursor.close()
-        await ctx.respond(content=translations['lfg_select'], view=view, ephemeral=True)
+        await ctx.respond(content=content_str, view=view, ephemeral=True)
 
 
 def setup(bot):
