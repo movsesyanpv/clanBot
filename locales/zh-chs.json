@@ -128,7 +128,8 @@
         "button_no_change": "No changes",
         "will_not_go": "Ok",
         "processing": "Processing, please wait",
-        "check_embed": "Check the embed below"
+        "check_embed": "Check the embed below",
+        "lfglist_long": "You have more than 25 LFGs, some of them are not shown. If the group you want to edit is not here, use a context menu command `{}` on the group's message."
     },
     "lfge": {
         "roles": "Roles",
