@@ -1755,10 +1755,15 @@ class D2data:
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    mods = await self.destiny.decode_hash(key['modifierHashes'][0], 'DestinyActivityModifierDefinition', lang)
+                    intersection = list(set(key['modifierHashes']).intersection(set([1783825372])))
+                    valid_mods = []
+                    for mod in key['modifierHashes']:
+                        if mod not in intersection:
+                            valid_mods.append(mod)
+                    mods = await self.destiny.decode_hash(valid_mods[0], 'DestinyActivityModifierDefinition', lang)
                     resp_time = datetime.utcnow().isoformat()
                     if mods:
-                        if len(key['modifierHashes']) > 2:
+                        if len(valid_mods) > 2:
                             info['value'] = local_types['msg']['featured_raid']
                         else:
                             info['value'] = mods['displayProperties']['name']
