@@ -1,15 +1,7 @@
 import discord
 
-from bot import ClanBot
+from bot import ClanBot, get_prefix
 from discord.ext import commands
-
-
-def get_prefix(client, message):
-    prefixes = ['?']
-    if message.guild:
-        prefixes = client.guild_prefix(message.guild.id)
-
-    return commands.when_mentioned_or(*prefixes)(client, message)
 
 
 if __name__ == '__main__':
