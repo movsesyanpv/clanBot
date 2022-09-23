@@ -129,7 +129,12 @@
         "button_no_change": "No changes",
         "will_not_go": "Ok",
         "processing": "Processing, please wait",
-        "check_embed": "Check the embed below"
+        "check_embed": "Check the embed below",
+        "reminder": "Hi, your group, {group_name}, of {server_name} is starting in {time}.",
+        "reminder_setup": "How many minutes before the start should the bot send a reminder?",
+        "reminder_set": "You'll get a direct message {} minutes before the start.",
+        "reminder_not_set": "This is available only for participants or helpers.",
+        "button_alert": "Notify me"
     },
     "lfge": {
         "roles": "Roles",
@@ -515,6 +520,19 @@
         },
         "update": {
             "description": "Get updates from Bungie"
+        },
+        "lfgreminder": {
+            "description": "Set up a reminder functionality for LFG posts",
+            "options": {
+                "enable": {
+                    "name": "enable",
+                    "description": "Enable or disable LFG alerts"
+                },
+                "minutes": {
+                    "name": "minutes",
+                    "description": "Minutes before the LFG start"
+                }
+            }
         }
     }
 }

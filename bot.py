@@ -375,6 +375,7 @@ class ClanBot(commands.Bot):
         await self.update_metric_list()
         self.get_channels()
         await self.update_history()
+        await self.update_alert_preferences()
         await self.data.get_chars()
         # await self.update_metrics()
         if self.args.forceupdate:
@@ -393,6 +394,7 @@ class ClanBot(commands.Bot):
                 self.load_extension('cogs.dbl')
         game = discord.Game('v{}'.format(self.version))
         if not self.persistent_views_added:
+            await self.raid.add_alert_jobs()
             lfg_list = await self.raid.get_all()
             for lfg in lfg_list:
                 try:
@@ -406,7 +408,9 @@ class ClanBot(commands.Bot):
                                            label_go=self.translations[lang]['lfg']['button_want'],
                                            label_help=self.translations[lang]['lfg']['button_help'],
                                            label_no_go=self.translations[lang]['lfg']['button_no_go'],
-                                           label_delete=self.translations[lang]['lfg']['button_delete'])
+                                           label_delete=self.translations[lang]['lfg']['button_delete'],
+                                           label_alert=self.translations[lang]['lfg']['button_alert'],
+                                           support_alerts=await self.lfg_alerts_enabled(lfg[3]))
                     await group_msg.edit(view=buttons)
                     self.persistent_views.pop(self.persistent_views.index(buttons))  # This bs is a workaround for a pycord broken persistent view processing
                     self.add_view(buttons)
@@ -452,6 +456,7 @@ class ClanBot(commands.Bot):
         await self.update_clans()
         await self.update_prefixes()
         await self.update_langs()
+        await self.update_alert_preferences()
 
     async def on_guild_remove(self, guild: discord.Guild) -> None:
         cursor = await self.guild_db.cursor()
@@ -462,6 +467,7 @@ class ClanBot(commands.Bot):
         await cursor.execute('''DELETE FROM seasonal WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM prefixes WHERE server_id=?''', (guild.id,))
+        await cursor.execute('''DELETE FROM lfg_alerts WHERE server_id=?''', (guild.id,))
         await self.guild_db.commit()
         await self.raid.purge_guild(guild.id)
         await cursor.close()
@@ -757,6 +763,22 @@ class ClanBot(commands.Bot):
         await self.guild_db.commit()
         await cursor.close()
         await data_cursor.close()
+
+    async def update_alert_preferences(self) -> None:
+        cursor = await self.guild_db.cursor()
+        for server in self.guilds:
+            try:
+                await cursor.execute('''CREATE TABLE lfg_alerts (server_name text, server_id integer, time integer)''')
+                await cursor.execute('''CREATE UNIQUE INDEX alert ON lfg_alerts(server_id)''')
+                await cursor.execute('''INSERT or IGNORE INTO lfg_alerts VALUES (?,?,?)''', [server.name, server.id, 0])
+            except aiosqlite.OperationalError:
+                try:
+                    await cursor.execute('''INSERT or IGNORE INTO lfg_alerts VALUES (?,?,?)''', [server.name, server.id, 0])
+                except:
+                    pass
+
+        await self.guild_db.commit()
+        await cursor.close()
 
     async def update_langs(self) -> None:
         cursor = await self.guild_db.cursor()
@@ -1223,6 +1245,36 @@ class ClanBot(commands.Bot):
 
         internal_db.commit()
         internal_db.close()
+
+    async def lfg_alerts_enabled(self, guild_id: int) -> bool:
+        cursor = await self.guild_db.cursor()
+
+        try:
+            await cursor.execute('''SELECT time FROM lfg_alerts WHERE server_id=?''', (guild_id,))
+            time = await cursor.fetchone()
+
+            if len(time) > 0:
+                return bool(time[0])
+            else:
+                return False
+        except aiosqlite.OperationalError:
+            await cursor.close()
+            return False
+
+    async def get_lfg_alert(self, guild_id: int) -> int:
+        cursor = await self.guild_db.cursor()
+
+        try:
+            await cursor.execute('''SELECT time FROM lfg_alerts WHERE server_id=?''', (guild_id,))
+            time = await cursor.fetchone()
+
+            if len(time) > 0:
+                return time[0]
+            else:
+                return 0
+        except aiosqlite.OperationalError:
+            await cursor.close()
+            return 0
 
     def start_up(self) -> None:
         self.get_args()

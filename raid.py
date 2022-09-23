@@ -12,6 +12,8 @@ from cogs.utils.views import LFGModal, DMSelectLFG
 
 from typing import List, Union
 
+from cogs.utils.converters import locale_2_lang
+
 
 class LFG:
     conn = ''
@@ -46,6 +48,15 @@ class LFG:
 
     async def set_up_db(self) -> None:
         self.conn = await aiosqlite.connect('lfg.db')
+
+        cursor = await self.conn.cursor()
+        try:
+            await cursor.execute('''CREATE TABLE alerts (user_id integer, user_locale text, timestamp integer, group_id integer)''')
+            await cursor.execute('''CREATE UNIQUE INDEX alert_id ON alerts(group_id)''')
+            await self.conn.commit()
+        except aiosqlite.OperationalError:
+            pass
+        await cursor.close()
 
     async def add(self, message: discord.Message, lfg_string: str = None, args: dict = None) -> None:
         cursor = await self.conn.cursor()
@@ -317,6 +328,7 @@ class LFG:
     async def del_entry(self, group_id: int) -> None:
         cursor = await self.conn.cursor()
         await cursor.executemany('''DELETE FROM raid WHERE group_id LIKE (?)''', [(group_id,)])
+        await cursor.executemany('''DELETE FROM alerts WHERE group_id LIKE (?)''', [(group_id,)])
         await self.conn.commit()
         await cursor.close()
 
@@ -358,10 +370,10 @@ class LFG:
             await cursor.close()
             return message_id == cell[0]
 
-    async def get_cell(self, search_field: str, group_id: int, field: str) -> Union[str, int, None]:
+    async def get_cell(self, search_field: str, group_id: int, field: str, table: str = 'raid') -> Union[str, int, None]:
         cursor = await self.conn.cursor()
         try:
-            cell = await cursor.execute('SELECT {} FROM raid WHERE {}=?'.format(field, search_field), (group_id,))
+            cell = await cursor.execute('SELECT {} FROM {} WHERE {}=?'.format(field, table, search_field), (group_id,))
             cell = await cell.fetchone()
         except aiosqlite.OperationalError:
             await cursor.close()
@@ -389,6 +401,52 @@ class LFG:
 
         await cursor.close()
         return arr
+
+    async def add_alert_jobs(self):
+        cursor = await self.conn.cursor()
+        alert_list = await cursor.execute('SELECT * FROM alerts ')
+        alert_list = await alert_list.fetchall()
+        alert_list = alert_list
+        await cursor.close()
+
+        for alert in alert_list:
+            guild_id = await self.get_cell('group_id', alert[3], 'server_id')
+            delta = await self.bot.get_lfg_alert(guild_id)
+            timestamp = await self.get_cell('group_id', alert[3], 'time')
+            timestamp -= delta * 60
+            alert_time = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+            self.bot.sched.add_job(self.send_alert, 'date', run_date=alert_time, args=[alert[3]],
+                                   misfire_grace_time=(delta - 1) * 60)
+
+    async def add_alert(self, interaction: discord.Interaction) -> None:
+        delta = await self.bot.get_lfg_alert(interaction.guild.id)
+        timestamp = await self.get_cell('group_id', interaction.message.id, 'time')
+        timestamp -= delta * 60
+        alert_time = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+
+        self.bot.sched.add_job(self.send_alert, 'date', run_date=alert_time, args=[interaction.message.id], misfire_grace_time=(delta-1)*60)
+
+        cursor = await self.conn.cursor()
+        await cursor.execute('''INSERT or IGNORE INTO alerts VALUES (?,?,?,?)''', (interaction.user.id, await locale_2_lang(interaction), alert_time.timestamp(), interaction.message.id))
+        await self.conn.commit()
+        await cursor.close()
+
+    async def send_alert(self, group_id):
+        user_id = await self.get_cell('group_id', group_id, 'user_id', 'alerts')
+        locale = await self.get_cell('group_id', group_id, 'user_locale', 'alerts')
+        group_name = await self.get_cell('group_id', group_id, 'name')
+        time = datetime.fromtimestamp(await self.get_cell('group_id', group_id, 'time'), tz=timezone.utc)
+        server_name = await self.get_cell('group_id', group_id, 'server_name')
+
+        user = await self.bot.fetch_user(user_id)
+        if user.dm_channel is None:
+            await user.create_dm()
+        await user.dm_channel.send(self.bot.translations[locale]['lfg']['reminder'].format(group_name=group_name, server_name=server_name, time=discord.utils.format_dt(time, 'R')))
+
+        cursor = await self.conn.cursor()
+        await cursor.execute('''DELETE FROM alerts WHERE group_id=?''', (group_id,))
+        await self.conn.commit()
+        await cursor.close()
 
     async def add_mb_goers(self, group_id: int, user: discord.Member) -> None:
         cursor = await self.conn.cursor()
@@ -942,6 +1000,9 @@ class LFG:
 
     async def purge_guild(self, guild_id: int) -> None:
         cursor = await self.conn.cursor()
+        group_list = await cursor.execute('SELECT group_id FROM raid WHERE server_id=?', (guild_id,))
+        group_list = await group_list.fetchall()
+        await cursor.executemany('''DELETE FROM alerts WHERE group_id LIKE(?)''', group_list)
         await cursor.executemany('''DELETE FROM raid WHERE server_id LIKE (?)''', [(guild_id,)])
         await self.conn.commit()
         await cursor.close()

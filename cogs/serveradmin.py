@@ -419,6 +419,32 @@ class ServerAdmin(commands.Cog):
         await data_cursor.close()
         return
 
+    @commands.slash_command(
+        description='Set up a reminder for LFG posts',
+        guild_only=True,
+        default_member_permissions=discord.Permissions(administrator=True)
+    )
+    async def lfgreminder(self, ctx, enable: Option(bool, "Enable or disable LFG alerts", required=True),
+                          minutes: Option(int, "Minutes before the LFG time", required=False, default=15)):
+        await ctx.defer(ephemeral=True)
+        lang = await locale_2_lang(ctx)
+
+        guild_cursor = await ctx.bot.guild_db.cursor()
+
+        value = 0
+        if enable:
+            value = minutes
+
+        try:
+            await guild_cursor.execute('''UPDATE lfg_alerts SET time=? WHERE server_id=?''',
+                                       (value, ctx.guild.id))
+            await ctx.bot.guild_db.commit()
+        except aiosqlite.OperationalError:
+            pass
+        await guild_cursor.close()
+
+        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'])
+
     # @commands.slash_command(
     #     description='Register the channel as a place for LFG posts',
     #     default_permission=False

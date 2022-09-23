@@ -181,6 +181,30 @@ class MaybeButton(discord.ui.Button):
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
 
 
+class AlertButton(discord.ui.Button):
+    def __init__(self, label, style, custom_id, row=1):
+        super().__init__(style=style, label=label, row=row, custom_id=custom_id)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
+        locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
+
+        was_goer = await self.view.bot.raid.is_goer(interaction.message, interaction.user)
+        is_mb_goer = await self.view.bot.raid.is_mb_goer(interaction.message, interaction.user)
+        was_wanter = await self.view.bot.raid.is_wanter(interaction.message, interaction.user)
+
+        if was_wanter or was_goer or is_mb_goer:
+            delta = await self.view.bot.get_lfg_alert(interaction.guild.id)
+            await self.view.bot.raid.add_alert(interaction)
+
+            await interaction.followup.send(content=self.view.bot.translations[locale]['lfg']['reminder_set'].format(delta),
+                                            ephemeral=True)
+        else:
+            await interaction.followup.send(
+                content=self.view.bot.translations[locale]['lfg']['reminder_not_set'], ephemeral=True)
+
+
 class NoGoButton(discord.ui.Button):
     def __init__(self, label, style, custom_id, row=1):
         super().__init__(style=style, label=label, row=row, custom_id=custom_id)
@@ -243,7 +267,8 @@ class DeleteButton(discord.ui.Button):
 
 class GroupButtons(discord.ui.View):
 
-    def __init__(self, group_id, bot, label_go='👌', label_help='❓', label_no_go='-', label_delete='❌'):
+    def __init__(self, group_id, bot, label_go='👌', label_help='❓', label_no_go='-', label_delete='❌',
+                 label_alert='🔔', support_alerts=False):
         super().__init__(timeout=None)
         self.bot = bot
 
@@ -255,6 +280,10 @@ class GroupButtons(discord.ui.View):
         self.add_item(self.maybe_button)
         self.add_item(self.no_go_button)
         self.add_item(self.delete_button)
+
+        if support_alerts:
+            self.alert_button = AlertButton(label_alert, discord.ButtonStyle.gray, '{}_alert'.format(group_id))
+            self.add_item(self.alert_button)
 
 
 class UpdateTypes(discord.ui.View):
@@ -618,13 +647,17 @@ class LFGModal(discord.ui.Modal):
                                    label_go=self.bot_loc.bot.translations[lang]['lfg']['button_want'],
                                    label_help=self.bot_loc.bot.translations[lang]['lfg']['button_help'],
                                    label_no_go=self.bot_loc.bot.translations[lang]['lfg']['button_no_go'],
-                                   label_delete=self.bot_loc.bot.translations[lang]['lfg']['button_delete'])
+                                   label_delete=self.bot_loc.bot.translations[lang]['lfg']['button_delete'],
+                                   label_alert=self.bot_loc.bot.translations[lang]['lfg']['button_alert'],
+                                   support_alerts=await self.bot_loc.bot.lfg_alerts_enabled(interaction.guild_id))
             await group.edit(content=None, embed=embed, view=buttons)
         else:
             buttons = GroupButtons(group.id, self.bot_loc.bot,
                                    label_go=self.bot_loc.bot.translations[lang]['lfg']['button_want'],
                                    label_help=self.bot_loc.bot.translations[lang]['lfg']['button_help'],
                                    label_no_go=self.bot_loc.bot.translations[lang]['lfg']['button_no_go'],
-                                   label_delete=self.bot_loc.bot.translations[lang]['lfg']['button_delete'])
+                                   label_delete=self.bot_loc.bot.translations[lang]['lfg']['button_delete'],
+                                   label_alert=self.bot_loc.bot.translations[lang]['lfg']['button_alert'],
+                                   support_alerts=await self.bot_loc.bot.lfg_alerts_enabled(interaction.guild_id))
             await group.edit(content=group.content, view=buttons)
         return
