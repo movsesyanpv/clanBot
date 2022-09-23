@@ -12,7 +12,7 @@ from cogs.utils.views import LFGModal, DMSelectLFG
 
 from typing import List, Union
 
-from cogs.utils.converters import locale_2_lang
+from cogs.utils.converters import locale_2_lang, CtxLocale
 
 
 class LFG:
@@ -427,7 +427,9 @@ class LFG:
         self.bot.sched.add_job(self.send_alert, 'date', run_date=alert_time, args=[interaction.message.id], misfire_grace_time=(delta-1)*60)
 
         cursor = await self.conn.cursor()
-        await cursor.execute('''INSERT or IGNORE INTO alerts VALUES (?,?,?,?)''', (interaction.user.id, await locale_2_lang(interaction), alert_time.timestamp(), interaction.message.id))
+
+        ctxloc = CtxLocale(self.bot, interaction.locale)
+        await cursor.execute('''INSERT or IGNORE INTO alerts VALUES (?,?,?,?)''', (interaction.user.id, await locale_2_lang(ctxloc), alert_time.timestamp(), interaction.message.id))
         await self.conn.commit()
         await cursor.close()
 
