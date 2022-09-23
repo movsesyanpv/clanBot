@@ -271,6 +271,9 @@
             },
             "editlfg": {
                 "info": "__**Editing a group**__\nYou can either call this command from a group message context menu, or by running `/editlfg`. In the second case the bot will ask you to choose the group you want to edit. After that the bot will send you a form filled with that group info you'll need to edit. After that the bot will ask a couple of questions, that you can answer by clicking a button or by selecting options in a dropdown menu. After that the bot will process the data and ask you to confirm the information.\n__**Participating and managing LFG**__\nClick `I want to go` to add yourself to the list of wishing to participate. The bot should confirm that by responding to the button or by adding you to the list.\nClick `I'll help/Maybe I'll go` to add yourself to the list of those, who are ready to help.\nTo remove yourself from the group click `Remove registration`\nTo delete the group click `Delete the post`"
+            },
+            "lfgreminder": {
+                "info": "Set up a reminder functionality for LFG posts"
             }
         },
         "prefix": "Print available prefixes",
@@ -295,7 +298,8 @@
                     }
                 }
             }
-        }
+        },
+        "lfgreminder": "Set up a reminder functionality for LFG posts"
     },
     "graph": {
         "percentage": "Completion percentage",
