@@ -129,7 +129,12 @@
         "will_not_go": "Ok",
         "processing": "Processing, please wait",
         "check_embed": "Check the embed below",
-        "lfglist_long": "You have more than 25 LFGs, some of them are not shown. If the group you want to edit is not here, use a context menu command `{}` on the group's message."
+        "lfglist_long": "You have more than 25 LFGs, some of them are not shown. If the group you want to edit is not here, use a context menu command `{}` on the group's message.",
+        "reminder": "Hi, your group, {group_name}, of {server_name} is starting in {time}.",
+        "reminder_setup": "How many minutes before the start should the bot send a reminder?",
+        "reminder_set": "You'll get a direct message {} minutes before the start.",
+        "reminder_not_set": "This is available only for participants or helpers.",
+        "button_alert": "Notify me"
     },
     "lfge": {
         "roles": "Cargos",
@@ -514,6 +519,19 @@
         },
         "Edit LFG": {
             "name": "Edit LFG"
+        },
+        "lfgreminder": {
+            "description": "Set up a reminder functionality for LFG posts",
+            "options": {
+                "enable": {
+                    "name": "enable",
+                    "description": "Enable or disable LFG alerts"
+                },
+                "minutes": {
+                    "name": "minutes",
+                    "description": "Minutes before the LFG start"
+                }
+            }
         }
     },
     "overflow_error": "Invalid time input. Please try again."
