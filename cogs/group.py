@@ -60,10 +60,6 @@ class Group(commands.Cog):
 
     @commands.message_command(
         name="Edit LFG",
-        # name_localizations={
-        #     'ru': 'Редактировать сбор',
-        #     'fr': 'Editer le LFG'
-        # },
         description="Edit LFG post",
         guild_only=True
     )
