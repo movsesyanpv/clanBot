@@ -271,6 +271,9 @@
             },
             "editlfg": {
                 "info": "_** Modification d'un groupe ******\nVous pouvez appeler cette commande à partir d'un menu contextuel de message de groupe, \nou en tapant `/editlfg`. Dans le second cas, le bot vous demandera de choisir le \ngroupe que vous souhaitez modifier. Après ça, le bot vous enverra un formulaire rempli\navec les informations du groupe que vous souhaitez modifier. \nPuis le bot posera quelques questions auxquelles vous pourrez répondre en cliquant \nsur un bouton ou en sélectionnant des options dans un menu déroulant. \nPour terminer, le bot traitera les données et vous demandera de confirmer les informations.\n__**Participer et gérer des groupes**__\nCliquez sur `Je participe` pour vous ajouter à la liste des personnes souhaitant participer. \nLe bot devrait le confirmer en répondant au bouton ou en vous ajoutant à la liste.\nCliquez sur \"Peut-être\" pour vous ajouter à la liste de ceux qui seront peut être disponibles.\nPour vous retirer du groupe, cliquez sur \"Supprimer l'inscription\"\nPour supprimer le groupe, cliquez sur \"Effacer le message\"\n"
+            },
+            "lfgreminder": {
+                "info": "Set up a reminder functionality for LFG posts"
             }
         },
         "prefix": "Affichage des préfixes disponibles",
@@ -295,7 +298,8 @@
                     }
                 }
             }
-        }
+        },
+        "lfgreminder": "Set up a reminder functionality for LFG posts"
     },
     "graph": {
         "percentage": "Pourcentage d'achèvement",
