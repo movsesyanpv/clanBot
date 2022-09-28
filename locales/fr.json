@@ -409,6 +409,10 @@
         "lostsector": {
             "label": "Secteur Oublié",
             "description": "Secteur Oublié Legendaire/Maitrise Disponible"
+        },
+        "alerts": {
+            "label": "Alerts",
+            "description": "Alerts about maintenance and other stuff"
         }
     },
     "clan_info": {
