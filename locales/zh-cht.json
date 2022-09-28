@@ -409,6 +409,10 @@
         "lostsector": {
             "label": "Lost Sector",
             "description": "Available Legend/Master Lost sector"
+        },
+        "alerts": {
+            "label": "Alerts",
+            "description": "Alerts about maintenance and other stuff"
         }
     },
     "clan_info": {
