@@ -425,7 +425,7 @@ class ServerAdmin(commands.Cog):
         default_member_permissions=discord.Permissions(administrator=True)
     )
     async def lfgreminder(self, ctx, enable: Option(bool, "Enable or disable LFG alerts", required=True),
-                          minutes: Option(int, "Minutes before the LFG time", required=False, default=15)):
+                          minutes: Option(int, "Minutes before the LFG time", required=False, default=15, min_value=2)):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
 
