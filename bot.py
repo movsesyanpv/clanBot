@@ -488,7 +488,10 @@ class ClanBot(commands.Bot):
             if message.author.dm_channel is None:
                 await message.author.create_dm()
             await message.author.dm_channel.send(msg, embed=e)
-        return is_owner or (message.channel.permissions_for(message.author).administrator and admin_check)
+        if message.guild is None:
+            return is_owner
+        else:
+            return is_owner or (message.channel.permissions_for(message.author).administrator and admin_check)
 
     async def lfg_cleanup(self, days: Union[int, float], guild: discord.Guild = None) -> int:
         lfg_list = await self.raid.get_all()
