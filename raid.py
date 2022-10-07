@@ -52,7 +52,7 @@ class LFG:
         cursor = await self.conn.cursor()
         try:
             await cursor.execute('''CREATE TABLE alerts (user_id integer, user_locale text, timestamp integer, group_id integer)''')
-            await cursor.execute('''CREATE UNIQUE INDEX alert_id ON alerts(group_id)''')
+            await cursor.execute('''CREATE UNIQUE INDEX alert_id ON alerts(group_id, user_id)''')
             await self.conn.commit()
         except aiosqlite.OperationalError:
             pass
