@@ -415,7 +415,7 @@ class LFG:
             timestamp = await self.get_cell('group_id', alert[3], 'time')
             timestamp -= delta * 60
             alert_time = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-            self.bot.sched.add_job(self.send_alert, 'date', run_date=alert_time, args=[alert[3]],
+            self.bot.sched.add_job(self.send_alert, 'date', run_date=alert_time, args=[alert[3], alert[0]],
                                    misfire_grace_time=(delta - 1) * 60)
 
     async def add_alert(self, interaction: discord.Interaction) -> None:
@@ -424,7 +424,7 @@ class LFG:
         timestamp -= delta * 60
         alert_time = datetime.fromtimestamp(timestamp, tz=timezone.utc)
 
-        self.bot.sched.add_job(self.send_alert, 'date', run_date=alert_time, args=[interaction.message.id], misfire_grace_time=(delta-1)*60)
+        self.bot.sched.add_job(self.send_alert, 'date', run_date=alert_time, args=[interaction.message.id, interaction.user.id], misfire_grace_time=(delta-1)*60)
 
         cursor = await self.conn.cursor()
 
@@ -433,9 +433,9 @@ class LFG:
         await self.conn.commit()
         await cursor.close()
 
-    async def send_alert(self, group_id):
-        user_id = await self.get_cell('group_id', group_id, 'user_id', 'alerts')
-        locale = await self.get_cell('group_id', group_id, 'user_locale', 'alerts')
+    async def send_alert(self, group_id, user_id):
+        cursor = await self.conn.cursor()
+        locale = await cursor.execute('SELECT locale FROM alerts WHERE user_id=? AND group_id=?', (user_id, group_id))
         group_name = await self.get_cell('group_id', group_id, 'name')
         time = datetime.fromtimestamp(await self.get_cell('group_id', group_id, 'time'), tz=timezone.utc)
         server_name = await self.get_cell('group_id', group_id, 'server_name')
@@ -445,8 +445,7 @@ class LFG:
             await user.create_dm()
         await user.dm_channel.send(self.bot.translations[locale]['lfg']['reminder'].format(group_name=group_name, server_name=server_name, time=discord.utils.format_dt(time, 'R')))
 
-        cursor = await self.conn.cursor()
-        await cursor.execute('''DELETE FROM alerts WHERE group_id=?''', (group_id,))
+        await cursor.execute('''DELETE FROM alerts WHERE group_id=? and user_id=?''', (group_id, user_id))
         await self.conn.commit()
         await cursor.close()
 
