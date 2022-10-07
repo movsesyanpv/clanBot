@@ -436,7 +436,8 @@ class LFG:
     async def send_alert(self, group_id, user_id):
         cursor = await self.conn.cursor()
         locale = await cursor.execute('SELECT user_locale FROM alerts WHERE user_id=? AND group_id=?', (user_id, group_id))
-        locale = await locale.fetchone()[0]
+        locale = await locale.fetchone()
+        locale = locale[0]
         group_name = await self.get_cell('group_id', group_id, 'name')
         time = datetime.fromtimestamp(await self.get_cell('group_id', group_id, 'time'), tz=timezone.utc)
         server_name = await self.get_cell('group_id', group_id, 'server_name')
