@@ -1108,11 +1108,13 @@ class ClanBot(commands.Bot):
         for channel_id in channels:
             try:
                 resp = await self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id)
+                if channel_id == 1028023408044281876:
+                    await self.dm_owner('{}: {}'.format(upd_type, resp[1]))
                 responses.append(resp[1])
             except discord.HTTPException as e:
                 # responses.append([channel_id, "discord.HTTPException"])
                 responses.append("discord.HTTPException")
-                if channel_id == 1016903052667658250:
+                if channel_id == 1028023408044281876:
                     await self.dm_owner('{}: {}'.format(upd_type, "discord.HTTPException"))
                 bot_info = await self.application_info()
                 owner = bot_info.owner
@@ -1131,7 +1133,7 @@ class ClanBot(commands.Bot):
             except Exception as e:
                 # responses.append([channel_id, "Exception"])
                 responses.append("Exception")
-                if channel_id == 1016903052667658250:
+                if channel_id == 1028023408044281876:
                     await self.dm_owner('{}: {}'.format(upd_type, "Exception"))
                 traceback_str = ''
                 for line in traceback.format_exception(type(e), e, e.__traceback__):
