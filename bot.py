@@ -911,6 +911,15 @@ class ClanBot(commands.Bot):
         except discord.Forbidden:
             frameinfo = getframeinfo(currentframe())
             return [channel_id, 'unable to fetch the channel ({})'.format(frameinfo.lineno + 1)]
+        except discord.NotFound:
+            frameinfo = getframeinfo(currentframe())
+            return [channel_id, 'NotFound while fetching the channel ({})'.format(frameinfo.lineno + 1)]
+        except discord.HTTPException:
+            frameinfo = getframeinfo(currentframe())
+            return [channel_id, 'HTTPexception while fetching the channel ({})'.format(frameinfo.lineno + 1)]
+        except discord.InvalidData:
+            frameinfo = getframeinfo(currentframe())
+            return [channel_id, 'InvalidData while fetching the channel ({})'.format(frameinfo.lineno + 1)]
         if channel is None:
             frameinfo = getframeinfo(currentframe())
             return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
