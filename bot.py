@@ -905,7 +905,7 @@ class ClanBot(commands.Bot):
         # self.logger.info('ws limit status for {} in {}: {}'.format(upd_type, channel_id, self.is_ws_ratelimited()))
         cursor = await self.guild_db.cursor()
         if channel_id == 1028023408044281876:
-            self.logger.info('{} has got the db cursor')
+            self.logger.info('{} has got the db cursor'.format(upd_type))
         try:
             channel = await self.fetch_channel(channel_id)
         except discord.Forbidden:
@@ -930,7 +930,7 @@ class ClanBot(commands.Bot):
         lang = self.guild_lang(channel.guild.id)
         # print('delay is {}'.format(delay))
         if channel_id == 1028023408044281876:
-            self.logger.info('{} has got the channel')
+            self.logger.info('{} has got the channel'.format(upd_type))
 
         if not self.args.nomessage:
             if type(src_dict[lang][upd_type]) == list:
@@ -946,7 +946,7 @@ class ClanBot(commands.Bot):
                     return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
                 embed = discord.Embed.from_dict(src_dict[lang][upd_type])
         if channel_id == 1028023408044281876:
-            self.logger.info('{} has created the embed')
+            self.logger.info('{} has created the embed'.format(upd_type))
 
         hist = 0
         try:
@@ -985,7 +985,7 @@ class ClanBot(commands.Bot):
             except aiosqlite.OperationalError:
                 await self.update_history()
         if channel_id == 1028023408044281876:
-            self.logger.info('{} has got the history')
+            self.logger.info('{} has got the history'.format(upd_type))
 
         try:
             last = await cursor.execute('''SELECT {} FROM post_settings WHERE channel_id=?'''.format(upd_type),
@@ -1005,7 +1005,7 @@ class ClanBot(commands.Bot):
                 return [channel_id, 'Aborted due to post preferences ({})'.format(frameinfo.lineno + 1)]
 
         if channel_id == 1028023408044281876:
-            self.logger.info('{} fetching history')
+            self.logger.info('{} fetching history'.format(upd_type))
         if hist and not self.args.noclear:
             try:
                 if type(hist) == list:
@@ -1062,7 +1062,7 @@ class ClanBot(commands.Bot):
             except discord.Forbidden:
                 pass
         if channel_id == 1028023408044281876:
-            self.logger.info('{} deletion is complete')
+            self.logger.info('{} deletion is complete'.format(upd_type))
         if type(embed) == list:
             hist = []
             for e in embed:
@@ -1106,7 +1106,7 @@ class ClanBot(commands.Bot):
                 # await asyncio.sleep(delay)
                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
             if channel_id == 1028023408044281876:
-                self.logger.info('{} has sent the message')
+                self.logger.info('{} has sent the message'.format(upd_type))
             hist = message.id
             if channel.type == discord.ChannelType.news:
                 try:
