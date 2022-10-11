@@ -1134,6 +1134,8 @@ class ClanBot(commands.Bot):
                 if channel_id == 1028023408044281876:
                     await self.dm_owner('{}: {}'.format(upd_type, resp[1]))
                 responses.append(resp[1])
+            except discord.Forbidden:
+                responses.append("discord.Forbidden")
             except discord.HTTPException as e:
                 # responses.append([channel_id, "discord.HTTPException"])
                 responses.append("discord.HTTPException")
