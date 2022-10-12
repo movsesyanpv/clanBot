@@ -77,7 +77,7 @@ class MySelect(discord.ui.Select):
         self.view.stop()
 
 
-class ConfirmLFG(discord.ui.View):
+class ConfirmView(discord.ui.View):
     def __init__(self, cancel_line, owner, confirm='Confirm', cancel='Cancel'):
         super().__init__()
         self.owner = owner
@@ -598,8 +598,8 @@ class LFGModal(discord.ui.Modal):
         check_msg = translations['check'].format(translations['check_embed'], translations['check_embed'],
                                                  translations['check_embed'], args['size'], args['length'] / 3600,
                                                  self.at[args['is_embed']], args['group_mode'], button_inputs[3])
-        view = ConfirmLFG(translations['again'].format(translations['creation'], translations['creation'].lower()),
-                          interaction.user, translations['confirm_yes'], translations['confirm_no'])
+        view = ConfirmView(translations['again'].format(translations['creation'], translations['creation'].lower()),
+                           interaction.user, translations['confirm_yes'], translations['confirm_no'])
         view.add_item(view.confirm_button)
         view.add_item(view.cancel_button)
         check_embed = discord.Embed()

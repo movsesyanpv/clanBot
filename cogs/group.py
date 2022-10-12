@@ -5,7 +5,7 @@ from hashids import Hashids
 import dateparser
 import asyncio
 import aiosqlite
-from cogs.utils.views import GroupButtons, ActivityType, ModeLFG, RoleLFG, ConfirmLFG, MyButton, ViewLFG, LFGModal
+from cogs.utils.views import GroupButtons, ActivityType, ModeLFG, RoleLFG, ConfirmView, MyButton, ViewLFG, LFGModal
 from cogs.utils.converters import locale_2_lang, CtxLocale
 from cogs.utils.checks import message_permissions
 from babel.dates import format_datetime
