@@ -904,8 +904,8 @@ class ClanBot(commands.Bot):
         # await asyncio.sleep(delay)
         # self.logger.info('ws limit status for {} in {}: {}'.format(upd_type, channel_id, self.is_ws_ratelimited()))
         cursor = await self.guild_db.cursor()
-        if channel_id == 1028023408044281876:
-            self.logger.info('{} has got the db cursor'.format(upd_type))
+        # if channel_id == 1028023408044281876:
+        #     self.logger.info('{} has got the db cursor'.format(upd_type))
         try:
             channel = await self.fetch_channel(channel_id)
         except discord.Forbidden:
@@ -929,8 +929,8 @@ class ClanBot(commands.Bot):
             return [channel_id, 'no permission to send messages ({})'.format(frameinfo.lineno + 1)]
         lang = self.guild_lang(channel.guild.id)
         # print('delay is {}'.format(delay))
-        if channel_id == 1028023408044281876:
-            self.logger.info('{} has got the channel'.format(upd_type))
+        # if channel_id == 1028023408044281876:
+        #     self.logger.info('{} has got the channel'.format(upd_type))
 
         if not self.args.nomessage:
             if type(src_dict[lang][upd_type]) == list:
@@ -945,8 +945,8 @@ class ClanBot(commands.Bot):
                     frameinfo = getframeinfo(currentframe())
                     return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
                 embed = discord.Embed.from_dict(src_dict[lang][upd_type])
-        if channel_id == 1028023408044281876:
-            self.logger.info('{} has created the embed'.format(upd_type))
+        # if channel_id == 1028023408044281876:
+        #     self.logger.info('{} has created the embed'.format(upd_type))
 
         hist = 0
         try:
@@ -984,8 +984,8 @@ class ClanBot(commands.Bot):
                 # self.guild_db.commit()
             except aiosqlite.OperationalError:
                 await self.update_history()
-        if channel_id == 1028023408044281876:
-            self.logger.info('{} has got the history'.format(upd_type))
+        # if channel_id == 1028023408044281876:
+        #     self.logger.info('{} has got the history'.format(upd_type))
 
         try:
             last = await cursor.execute('''SELECT {} FROM post_settings WHERE channel_id=?'''.format(upd_type),
@@ -1004,8 +1004,8 @@ class ClanBot(commands.Bot):
                 frameinfo = getframeinfo(currentframe())
                 return [channel_id, 'Aborted due to post preferences ({})'.format(frameinfo.lineno + 1)]
 
-        if channel_id == 1028023408044281876:
-            self.logger.info('{} fetching history'.format(upd_type))
+        # if channel_id == 1028023408044281876:
+        #     self.logger.info('{} fetching history'.format(upd_type))
         if hist and not self.args.noclear:
             try:
                 if type(hist) == list:
@@ -1061,8 +1061,8 @@ class ClanBot(commands.Bot):
                 #                           format(upd_type, channel.name, server.name))
             except discord.Forbidden:
                 pass
-        if channel_id == 1028023408044281876:
-            self.logger.info('{} deletion is complete'.format(upd_type))
+        # if channel_id == 1028023408044281876:
+        #     self.logger.info('{} deletion is complete'.format(upd_type))
         if type(embed) == list:
             hist = []
             for e in embed:
@@ -1105,8 +1105,8 @@ class ClanBot(commands.Bot):
             else:
                 # await asyncio.sleep(delay)
                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
-            if channel_id == 1028023408044281876:
-                self.logger.info('{} has sent the message'.format(upd_type))
+            # if channel_id == 1028023408044281876:
+            #     self.logger.info('{} has sent the message'.format(upd_type))
             hist = message.id
             if channel.type == discord.ChannelType.news:
                 try:
@@ -1131,16 +1131,16 @@ class ClanBot(commands.Bot):
         for channel_id in channels:
             try:
                 resp = await self.post_embed_to_channel(upd_type, src_dict, time_to_delete, channel_id)
-                if channel_id == 1028023408044281876:
-                    await self.dm_owner('{}: {}'.format(upd_type, resp[1]))
+                # if channel_id == 1028023408044281876:
+                #     await self.dm_owner('{}: {}'.format(upd_type, resp[1]))
                 responses.append(resp[1])
             except discord.Forbidden:
                 responses.append("discord.Forbidden")
             except discord.HTTPException as e:
                 # responses.append([channel_id, "discord.HTTPException"])
                 responses.append("discord.HTTPException")
-                if channel_id == 1028023408044281876:
-                    await self.dm_owner('{}: {}'.format(upd_type, "discord.HTTPException"))
+                # if channel_id == 1028023408044281876:
+                #     await self.dm_owner('{}: {}'.format(upd_type, "discord.HTTPException"))
                 bot_info = await self.application_info()
                 owner = bot_info.owner
                 if owner.dm_channel is None:
@@ -1158,8 +1158,8 @@ class ClanBot(commands.Bot):
             except Exception as e:
                 # responses.append([channel_id, "Exception"])
                 responses.append("Exception")
-                if channel_id == 1028023408044281876:
-                    await self.dm_owner('{}: {}'.format(upd_type, "Exception"))
+                # if channel_id == 1028023408044281876:
+                #     await self.dm_owner('{}: {}'.format(upd_type, "Exception"))
                 traceback_str = ''
                 for line in traceback.format_exception(type(e), e, e.__traceback__):
                     traceback_str = '{}{}'.format(traceback_str, line)
