@@ -907,7 +907,7 @@ class ClanBot(commands.Bot):
         # if channel_id == 1028023408044281876:
         #     self.logger.info('{} has got the db cursor'.format(upd_type))
         try:
-            channel = await self.fetch_channel(channel_id)
+            channel = self.get_channel(channel_id)
         except discord.Forbidden:
             frameinfo = getframeinfo(currentframe())
             return [channel_id, 'unable to fetch the channel ({})'.format(frameinfo.lineno + 1)]
