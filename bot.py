@@ -906,23 +906,24 @@ class ClanBot(commands.Bot):
         cursor = await self.guild_db.cursor()
         # if channel_id == 1028023408044281876:
         #     self.logger.info('{} has got the db cursor'.format(upd_type))
-        try:
-            channel = self.get_channel(channel_id)
-        except discord.Forbidden:
-            frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'unable to fetch the channel ({})'.format(frameinfo.lineno + 1)]
-        except discord.NotFound:
-            frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'NotFound while fetching the channel ({})'.format(frameinfo.lineno + 1)]
-        except discord.HTTPException:
-            frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'HTTPexception while fetching the channel ({})'.format(frameinfo.lineno + 1)]
-        except discord.InvalidData:
-            frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'InvalidData while fetching the channel ({})'.format(frameinfo.lineno + 1)]
+        channel = self.get_channel(channel_id)
         if channel is None:
-            frameinfo = getframeinfo(currentframe())
-            return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
+            try:
+                channel = await self.fetch_channel(channel_id)
+            except discord.Forbidden:
+                frameinfo = getframeinfo(currentframe())
+                return [channel_id, 'unable to fetch the channel ({})'.format(frameinfo.lineno + 1)]
+            except discord.NotFound:
+                frameinfo = getframeinfo(currentframe())
+                return [channel_id, 'NotFound while fetching the channel ({})'.format(frameinfo.lineno + 1)]
+            except discord.HTTPException:
+                frameinfo = getframeinfo(currentframe())
+                return [channel_id, 'HTTPexception while fetching the channel ({})'.format(frameinfo.lineno + 1)]
+            except discord.InvalidData:
+                frameinfo = getframeinfo(currentframe())
+                return [channel_id, 'InvalidData while fetching the channel ({})'.format(frameinfo.lineno + 1)]
+            # frameinfo = getframeinfo(currentframe())
+            # return [channel_id, 'channel id None ({})'.format(frameinfo.lineno + 1)]
         server = channel.guild
         if not channel.permissions_for(server.me).send_messages:
             frameinfo = getframeinfo(currentframe())
