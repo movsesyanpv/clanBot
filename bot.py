@@ -59,11 +59,13 @@ class ClanBot(commands.Bot):
     seasonal_ch = []
     update_ch = []
 
-    raid = ''
+    raid: lfg.LFG
 
     args = ''
 
     translations = {}
+
+    i18n: I18n
 
     def __init__(self, upgrade=False, **options):
         super().__init__(**options)
@@ -78,7 +80,7 @@ class ClanBot(commands.Bot):
         self.raid = lfg.LFG(self)
         asyncio.run(self.set_up_guild_db())
 
-        self.i18n = I18n(self, de=self.translations['de'])
+        self.i18n = I18n(self)
 
         self.guild_db_sync = sqlite3.connect('guild.db')
         self.guild_cursor = self.guild_db_sync.cursor()

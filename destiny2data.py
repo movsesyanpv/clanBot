@@ -15,6 +15,10 @@ import mariadb
 import asyncio
 import tracemalloc
 
+import logging
+import logging_loki
+from multiprocessing import Queue
+
 from typing import Optional, Union, List
 
 from lstorations import lost_sector_order, loot_order
@@ -66,6 +70,10 @@ class D2data:
 
     oauth = ''
 
+    handler: logging_loki.LokiQueueHandler
+
+    logger: logging.Logger
+
     def __init__(self, translations, lang, is_oauth, prod, context, **options):
         super().__init__(**options)
         self.translations = translations
@@ -98,6 +106,17 @@ class D2data:
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
+
+        self.handler = logging_loki.LokiQueueHandler(
+            Queue(-1),
+            url="http://{}:3100/loki/api/v1/push".format(self.api_data['db_host']),
+            tags={"application": "Bungie-request"},
+            version="1",
+        )
+
+        self.logger = logging.getLogger("bungie-requests")
+        self.logger.addHandler(self.handler)
+
         asyncio.run(self.set_up_cache(lang))
         asyncio.run(self.load_data(lang))
         try:
@@ -158,6 +177,7 @@ class D2data:
         except FileNotFoundError:
             membership_url = 'https://www.bungie.net/platform/User/GetMembershipsForCurrentUser/'
             search_resp = await self.session.get(url=membership_url, headers=self.headers)
+            self.logger.info('Got chars', extra={"tags": {"service": "clanBot"}})
             search_json = await search_resp.json()
             self.char_info['membershipid'] = search_json['Response']['primaryMembershipId']
             membership_id = search_json['Response']['primaryMembershipId']
@@ -207,10 +227,12 @@ class D2data:
             'client_secret': self.api_data['secret']
         }
         r = await self.session.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
+        self.logger.info('auth token attempt', extra={"tags": {"service": "clanBot"}})
         while not r:
             print("re_token get error", json.dumps(r.json(), indent=4, sort_keys=True) + "\n")
             r = await self.session.post('https://www.bungie.net/platform/app/oauth/token/', data=params,
                                         headers=headers)
+            self.logger.info('auth token attempt', extra={"tags": {"service": "clanBot"}})
             if not r:
                 r_json = await r.json()
                 if not r_json['error_description'] == 'DestinyThrottledByGameServer':
@@ -240,13 +262,15 @@ class D2data:
 
     async def get_bungie_json(self, name: str, url: str, params: Optional[dict] = None, lang: Optional[str] = None,
                               string: Optional[str] = None, change_msg: bool = True, is_get: bool = True,
-                              body: Optional[dict] = None) -> Union[dict, None]:
+                              body: Optional[dict] = None) -> Union[dict, bool, None]:
 
         async def request(url, params, headers, is_get, json=None):
             if is_get:
                 resp = await self.session.get(url, params=params, headers=headers)
+                self.logger.info('get request', extra={"tags": {"service": "clanBot"}})
             else:
                 resp = await self.session.post(url, params=params, headers=headers, json=json)
+                self.logger.info('post request', extra={"tags": {"service": "clanBot"}})
             return resp
 
         if lang is None:
