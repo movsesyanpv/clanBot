@@ -77,6 +77,18 @@ class MySelect(discord.ui.Select):
         self.view.stop()
 
 
+class MentionableSelect(discord.ui.MentionableSelect):
+    def __init__(self, max_values, row=1):
+        super().__init__(max_values=max_values, row=row)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        self.view.value = []
+        for selected in self.values:
+            self.view.value.append(selected)
+        self.view.stop()
+
+
 class ConfirmView(discord.ui.View):
     def __init__(self, cancel_line, owner, confirm='Confirm', cancel='Cancel'):
         super().__init__()
@@ -135,7 +147,7 @@ class RoleLFG(discord.ui.View):
                  no_change='nochange', response_line='Enter names of the roles', has_custom=True):
         super().__init__()
         self.owner = owner
-        self.select = MySelect(min_values=1, max_values=max_val, options=options, row=1)
+        self.select = MentionableSelect(max_values=25, row=1)
         if has_custom:
             self.custom_button = MyButton(type='custom', label=manual, style=discord.ButtonStyle.gray, row=2,
                                           response_line=response_line)
@@ -553,7 +565,7 @@ class LFGModal(discord.ui.Modal):
             await interaction.edit_original_message(content=translations['role'], view=view)
             await view.wait()
         if view.value is None:
-            await interaction.edit_original_message(content='Timed out')
+            await interaction.edit_original_message(content='Timed out', view=None)
             return False
         elif view.value in ['-']:
             role = '-'
@@ -571,11 +583,9 @@ class LFGModal(discord.ui.Modal):
                     pass
         else:
             role = ''
-            self.roles = []
-            for role_id in view.value:
+            self.roles = view.value
+            for role_obj in view.value:
                 try:
-                    role_obj = interaction.guild.get_role(int(role_id))
-                    self.roles.append(role_obj)
                     role = '{} {};'.format(role, role_obj.name)
                 except ValueError:
                     pass
