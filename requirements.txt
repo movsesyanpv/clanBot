@@ -35,4 +35,3 @@ mariadb>=1.0.9
 topggpy
 dateparser>=1.1.0
 aiosqlite
-python-logging-loki
