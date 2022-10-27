@@ -437,16 +437,24 @@ class ClanBot(commands.Bot):
 
     async def on_guild_join(self, guild: discord.Guild) -> None:
         self.logger.info('added to {}'.format(guild.name))
+        user = guild.owner
         try:
-            if guild.owner.dm_channel is None:
-                await guild.owner.create_dm()
-            start = await guild.owner.dm_channel.send('Thank you for inviting me to your guild!\n')
+            async for entry in guild.audit_logs(action=discord.AuditLogAction.bot_add):
+                if entry.target.id == guild.me.id:
+                    user = entry.user
+                    break
+        except (discord.Forbidden, discord.HTTPException):
+            pass
+        try:
+            if user.dm_channel is None:
+                await user.create_dm()
+            start = await user.dm_channel.send('Thank you for inviting me to your guild!\n')
             prefixes = get_prefix(self, start)
             prefix = '?'
             for i in prefixes:
                 if '@' not in i:
                     prefix = i
-            await guild.owner.dm_channel.send('The `/help` command will get you the command list.\n'
+            await user.dm_channel.send('The `/help` command will get you the command list.\n'
                                               'To set up automatic Destiny 2 information updates use `/regnotifier` or `/autopost start` command in the channel you want me to post to.\n'
                                               'Please set my language for the guild with `/setlang`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.\n'
                                               'To use `/top` command you\'ll have to set up a D2 clan with the `/setclan` command.\n'
