@@ -129,12 +129,12 @@
         "will_not_go": "Ok",
         "processing": "Traitement en cours, veuillez patienter",
         "check_embed": "Vérifiez l'intégration ci-dessous",
-        "lfglist_long": "You have more than 25 LFGs, some of them are not shown. If the group you want to edit is not here, use a context menu command `{}` on the group's message.",
-        "reminder": "Hi, your group, {group_name}, of {server_name} is starting in {time}.",
-        "reminder_setup": "How many minutes before the start should the bot send a reminder?",
-        "reminder_set": "You'll get a direct message {} minutes before the start.",
-        "reminder_not_set": "This is available only for participants or helpers.",
-        "button_alert": "Notify me"
+        "lfglist_long": "Vous avez plus de 25 LFGs, certains ne sont pas affichées. Si le groupe que vous désirez éditer n'est pas dans la liste, utilisez la commande de menu déroulant `{}` sur le message du groupe.",
+        "reminder": "Rappel : Votre groupe : {group_name} sur {server_name} démarre dans {time}",
+        "reminder_setup": "Combien de minutes avant le départ le bot doit il envoyer un rappel ?",
+        "reminder_set": "Vous aurez un message privé {} minutes avant le départ.",
+        "reminder_not_set": "Ce n'est disponible que pour les participants ou les remplaçants.",
+        "button_alert": "Prévenez moi"
     },
     "lfge": {
         "roles": "Roles",
@@ -273,7 +273,7 @@
                 "info": "_** Modification d'un groupe ******\nVous pouvez appeler cette commande à partir d'un menu contextuel de message de groupe, \nou en tapant `/editlfg`. Dans le second cas, le bot vous demandera de choisir le \ngroupe que vous souhaitez modifier. Après ça, le bot vous enverra un formulaire rempli\navec les informations du groupe que vous souhaitez modifier. \nPuis le bot posera quelques questions auxquelles vous pourrez répondre en cliquant \nsur un bouton ou en sélectionnant des options dans un menu déroulant. \nPour terminer, le bot traitera les données et vous demandera de confirmer les informations.\n__**Participer et gérer des groupes**__\nCliquez sur `Je participe` pour vous ajouter à la liste des personnes souhaitant participer. \nLe bot devrait le confirmer en répondant au bouton ou en vous ajoutant à la liste.\nCliquez sur \"Peut-être\" pour vous ajouter à la liste de ceux qui seront peut être disponibles.\nPour vous retirer du groupe, cliquez sur \"Supprimer l'inscription\"\nPour supprimer le groupe, cliquez sur \"Effacer le message\"\n"
             },
             "lfgreminder": {
-                "info": "Set up a reminder functionality for LFG posts"
+                "info": "Paramétrer une fonction \"rappel\" pour les activités LFG"
             }
         },
         "prefix": "Affichage des préfixes disponibles",
@@ -299,7 +299,7 @@
                 }
             }
         },
-        "lfgreminder": "Set up a reminder functionality for LFG posts"
+        "lfgreminder": "Paramétrer une fonction \"rappel\" pour les activités LFG"
     },
     "graph": {
         "percentage": "Pourcentage d'achèvement",
@@ -411,8 +411,8 @@
             "description": "Secteur Oublié Legendaire/Maitrise Disponible"
         },
         "alerts": {
-            "label": "Alerts",
-            "description": "Alerts about maintenance and other stuff"
+            "label": "Alertes",
+            "description": "Alertes a propos de la maintenance ou autre."
         }
     },
     "clan_info": {
@@ -529,15 +529,15 @@
             "name": "Editer le LFG"
         },
         "lfgreminder": {
-            "description": "Set up a reminder functionality for LFG posts",
+            "description": "Paramétrer une fonction \"rappel\" pour les activités LFG",
             "options": {
                 "enable": {
-                    "name": "enable",
-                    "description": "Enable or disable LFG alerts"
+                    "name": "Activé",
+                    "description": "Active ou Désactive les alertes LFG"
                 },
                 "minutes": {
                     "name": "minutes",
-                    "description": "Minutes before the LFG start"
+                    "description": "Minutes avant le début de l'activité LFG"
                 }
             }
         }
