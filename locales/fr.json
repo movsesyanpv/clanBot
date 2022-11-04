@@ -532,7 +532,7 @@
             "description": "Paramétrer une fonction \"rappel\" pour les activités LFG",
             "options": {
                 "enable": {
-                    "name": "Activé",
+                    "name": "activé",
                     "description": "Active ou Désactive les alertes LFG"
                 },
                 "minutes": {
