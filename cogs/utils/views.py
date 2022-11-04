@@ -17,11 +17,11 @@ class MyButton(discord.ui.Button):
         # if interaction.user != self.view.owner:
         #     return
         if self.button_type == 'confirm':
-            await interaction.edit_original_message(content='OK', embed=None, view=None)
+            await interaction.edit_original_response(content='OK', embed=None, view=None)
             self.view.value = True
             self.view.stop()
         elif self.button_type == 'cancel':
-            await interaction.edit_original_message(content=self.view.cancel_line, embed=None, view=None)
+            await interaction.edit_original_response(content=self.view.cancel_line, embed=None, view=None)
             self.view.value = False
             self.view.stop()
         elif self.button_type == 'raid':
@@ -50,7 +50,7 @@ class MyButton(discord.ui.Button):
             self.view.stop()
         elif self.button_type == 'custom':
             self.view.value = 'custom'
-            await interaction.edit_original_message(content=self.response_line)
+            await interaction.edit_original_response(content=self.response_line)
             self.view.stop()
         elif self.button_type == 'all_upd_types':
             self.view.value = 'all'
@@ -77,9 +77,9 @@ class MySelect(discord.ui.Select):
         self.view.stop()
 
 
-class MentionableSelect(discord.ui.MentionableSelect):
+class MentionableSelect(discord.ui.Select):
     def __init__(self, max_values, row=1):
-        super().__init__(max_values=max_values, row=row)
+        super().__init__(select_type=discord.enums.ComponentType.mentionable_select, max_values=max_values, row=row)
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -143,11 +143,11 @@ class EOLButtons(discord.ui.View):
 
 
 class RoleLFG(discord.ui.View):
-    def __init__(self, max_val, options, owner, is_edit=False, manual='Enter manually', auto='Automatic',
+    def __init__(self, max_val, owner, is_edit=False, manual='Enter manually', auto='Automatic',
                  no_change='nochange', response_line='Enter names of the roles', has_custom=True):
         super().__init__()
         self.owner = owner
-        self.select = MentionableSelect(max_values=25, row=1)
+        self.select = MentionableSelect(max_values=max_val, row=1)
         if has_custom:
             self.custom_button = MyButton(type='custom', label=manual, style=discord.ButtonStyle.gray, row=2,
                                           response_line=response_line)
@@ -450,7 +450,7 @@ class LFGModal(discord.ui.Modal):
         bot_info = await self.bot_loc.bot.application_info()
         locale = await locale_2_lang(self.bot_loc)
         if isinstance(error, OverflowError):
-            await interaction.edit_original_message(content=self.bot_loc.bot.translations[locale]['overflow_error'], view=None)
+            await interaction.edit_original_response(content=self.bot_loc.bot.translations[locale]['overflow_error'], view=None)
             return
         owner = bot_info.owner
         if owner.dm_channel is None:
@@ -464,7 +464,7 @@ class LFGModal(discord.ui.Modal):
             self.bot_loc.bot.logger.exception(traceback_str)
         command_line = '/lfg is_edit:{}'.format(self.is_edit)
         await owner.dm_channel.send('{}:\n{}'.format(interaction.user, command_line))
-        await interaction.edit_original_message(content=self.bot_loc.bot.translations[locale]['error'], view=None)
+        await interaction.edit_original_response(content=self.bot_loc.bot.translations[locale]['error'], view=None)
         values = self.children
         self.bot_loc.bot.logger.info('Role LFG: \nname={}\ndescription={}\ntime={}\nsize={}\nlength={}\na_type={}\n'
                                      'mode={}\nroles={}'.
@@ -534,38 +534,38 @@ class LFGModal(discord.ui.Modal):
         await interaction.response.send_message(content=translations['type'], view=view, ephemeral=True)
         await view.wait()
         if view.value is None:
-            await interaction.edit_original_message(content='Timed out')
+            await interaction.edit_original_response(content='Timed out')
             return
         self.a_type = view.value
 
         view = ModeLFG(interaction.user, self.is_edit, basic=translations['basic_mode'],
                        manual=translations['manual_mode'], no_change=translations['button_no_change'])
-        await interaction.edit_original_message(
+        await interaction.edit_original_response(
             content=translations['mode'].format(translations['manual_mode'], translations['basic_mode']),
             view=view)
         await view.wait()
         if view.value is None:
-            await interaction.edit_original_message(content='Timed out')
+            await interaction.edit_original_response(content='Timed out')
             return
         self.mode = view.value
 
-        role_list = []
-        for role in interaction.guild.roles:
-            if role.mentionable and not role.managed:
-                role_list.append(discord.SelectOption(label=role.name, value=str(role.id)))
-        if len(role_list) > 25:
-            role_list = role_list[:25]
-        if len(role_list) == 0:
-            view.value = '-'
-        else:
-            view = RoleLFG(len(role_list), role_list, interaction.user, self.is_edit,
-                           manual=translations['manual_roles'],
-                           auto=translations['auto_roles'], has_custom=False,
-                           no_change=translations['button_no_change'])
-            await interaction.edit_original_message(content=translations['role'], view=view)
-            await view.wait()
+        # role_list = []
+        # for role in interaction.guild.roles:
+        #     if role.mentionable and not role.managed:
+        #         role_list.append(discord.SelectOption(label=role.name, value=str(role.id)))
+        # if len(role_list) > 25:
+        #     role_list = role_list[:25]
+        # if len(role_list) == 0:
+        #     view.value = '-'
+        # else:
+        view = RoleLFG(25, interaction.user, self.is_edit,
+                       manual=translations['manual_roles'],
+                       auto=translations['auto_roles'], has_custom=False,
+                       no_change=translations['button_no_change'])
+        await interaction.edit_original_response(content=translations['role'], view=view)
+        await view.wait()
         if view.value is None:
-            await interaction.edit_original_message(content='Timed out', view=None)
+            await interaction.edit_original_response(content='Timed out', view=None)
             return False
         elif view.value in ['-']:
             role = '-'
@@ -595,7 +595,7 @@ class LFGModal(discord.ui.Modal):
             role = role[:-1]
 
         values = self.children
-        await interaction.edit_original_message(content=translations['processing'], view=None)
+        await interaction.edit_original_response(content=translations['processing'], view=None)
         if self.is_edit:
             button_inputs = await self.validate_edits(self.a_type, self.mode, self.roles, role)
         else:
@@ -625,11 +625,11 @@ class LFGModal(discord.ui.Modal):
                                  args['timezone'])
         )
 
-        await interaction.edit_original_message(content=check_msg, embed=check_embed, view=view)
+        await interaction.edit_original_response(content=check_msg, embed=check_embed, view=view)
 
         await view.wait()
         if view.value is None:
-            await interaction.edit_original_message(content='Timed out')
+            await interaction.edit_original_response(content='Timed out')
             return
         elif not view.value:
             return
