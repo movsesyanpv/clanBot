@@ -304,8 +304,8 @@
             },
             "set": {
                 "subcommands": {
-                    "language": "Make the bot stop posting updates in this channel",
-                    "clan": "Choose update types to post in this channel",
+                    "language": "Tell the bot the server's language",
+                    "clan": "Set a Destiny 2 clan for the server",
                     "timezone": "Tell the bot the server's timezone"
                 }
             }
