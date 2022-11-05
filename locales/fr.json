@@ -64,7 +64,8 @@
         "timed_out": "Expiré",
         "all_upd_types": "Tout activé",
         "cancel": "Annulé",
-        "lostsector": "Secteur Oublié"
+        "lostsector": "Secteur Oublié",
+        "tz_not_found": "Unable to found the timezone `{timezone}`. Please make sure you choose one from the suggested variants. If you are unable to find your timezone, please ask for help at my support server. You can find the support server link with {support_cmd_mention}."
     },
     "lfg": {
         "go": "Go",
@@ -539,6 +540,23 @@
                     "name": "minutes",
                     "description": "Minutes avant le début de l'activité LFG"
                 }
+            }
+        },
+        "set": {
+            "clan": {
+                "description": "Définir le clan Destiny 2 sur le serveur",
+                "options": {
+                    "clan_id": {
+                        "name": "clan_id",
+                        "description": "Nom ou ID d'un clan"
+                    }
+                }
+            },
+            "language": {
+                "description": "Selectionner la langue du serveur"
+            },
+            "timezone": {
+                "description": "Tell the bot the server's timezone"
             }
         }
     },
