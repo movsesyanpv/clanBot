@@ -301,8 +301,8 @@
             },
             "set": {
                 "subcommands": {
-                    "language": "Tell the bot the server's language",
-                    "clan": "Set a Destiny 2 clan for the server",
+                    "language": "Serversprache einstellen",
+                    "clan": "Lege einen Destiny 2-Clan für den Server fest",
                     "timezone": "Tell the bot the server's timezone"
                 }
             }
@@ -552,7 +552,7 @@
         },
         "set": {
             "clan": {
-                "description": "Set a Destiny 2 clan for the server",
+                "description": "Lege einen Destiny 2-Clan für den Server fest",
                 "options": {
                     "clan_id": {
                         "name": "clan_id",
@@ -561,7 +561,7 @@
                 }
             },
             "language": {
-                "description": "Tell the bot the server's language"
+                "description": "Serversprache einstellen"
             },
             "timezone": {
                 "description": "Tell the bot the server's timezone",
