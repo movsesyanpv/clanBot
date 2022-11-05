@@ -285,6 +285,7 @@
         "online": "Get the list of online clan members.",
         "editlfg": "Edit LFG message",
         "autopost": "Autopost channel settings",
+        "set": "Set some info for the server",
         "lfgcleanup": "Delete expired LFG posts",
         "reglfg": "Register the channel as a place for LFG posts",
         "noslash": "Help with missing slash commands",
@@ -299,6 +300,13 @@
                         "rotations": "Make the bot start posting rotation updates in this channel",
                         "changelogs": "Make the bot start posting changelogs in this channel"
                     }
+                }
+            },
+            "set": {
+                "subcommands": {
+                    "language": "Make the bot stop posting updates in this channel",
+                    "clan": "Choose update types to post in this channel",
+                    "timezone": "Tell the bot the server's timezone"
                 }
             }
         }
@@ -504,7 +512,13 @@
                 "description": "Tell the bot the server's language"
             },
             "timezone": {
-                "description": "Tell the bot the server's timezone"
+                "description": "Tell the bot the server's timezone",
+                "options": {
+                    "timezone": {
+                        "name": "timezone",
+                        "description": "Default timezone for the server"
+                    }
+                }
             }
         },
         "lfgcleanup": {
