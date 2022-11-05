@@ -64,7 +64,8 @@
         "weapon_mods": "Weapon mods",
         "timed_out": "Timed out",
         "all_upd_types": "Enable all",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "tz_not_found": "Unable to found the timezone `{timezone}`. Please make sure you choose one from the suggested variants. If you are unable to find your timezone, please ask for help at my support server. You can find the support server link with {support_cmd_mention}."
     },
     "lfg": {
         "go": "Go",
