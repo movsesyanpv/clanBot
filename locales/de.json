@@ -298,9 +298,17 @@
                         "changelogs": "Make the bot start posting changelogs in this channel"
                     }
                 }
+            },
+            "set": {
+                "subcommands": {
+                    "language": "Tell the bot the server's language",
+                    "clan": "Set a Destiny 2 clan for the server",
+                    "timezone": "Tell the bot the server's timezone"
+                }
             }
         },
-        "lfgreminder": "Set up a reminder functionality for LFG posts"
+        "lfgreminder": "Set up a reminder functionality for LFG posts",
+        "set": "Set some info for the server"
     },
     "graph": {
         "percentage": "Fertiggestellt Prozent",
@@ -556,7 +564,13 @@
                 "description": "Tell the bot the server's language"
             },
             "timezone": {
-                "description": "Tell the bot the server's timezone"
+                "description": "Tell the bot the server's timezone",
+                "options": {
+                    "timezone": {
+                        "name": "timezone",
+                        "description": "Default timezone for the server"
+                    }
+                }
             }
         }
     },
