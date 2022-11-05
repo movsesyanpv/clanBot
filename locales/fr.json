@@ -298,9 +298,17 @@
                         "changelogs": "Autorisez le bot à poster les changelogs dans ce canal."
                     }
                 }
+            },
+            "set": {
+                "subcommands": {
+                    "language": "Selectionner la langue du serveur",
+                    "clan": "Définir le clan Destiny 2 sur le serveur",
+                    "timezone": "Tell the bot the server's timezone"
+                }
             }
         },
-        "lfgreminder": "Paramétrer une fonction \"rappel\" pour les activités LFG"
+        "lfgreminder": "Paramétrer une fonction \"rappel\" pour les activités LFG",
+        "set": "Set some info for the server"
     },
     "graph": {
         "percentage": "Pourcentage d'achèvement",
@@ -556,7 +564,13 @@
                 "description": "Selectionner la langue du serveur"
             },
             "timezone": {
-                "description": "Tell the bot the server's timezone"
+                "description": "Tell the bot the server's timezone",
+                "options": {
+                    "timezone": {
+                        "name": "timezone",
+                        "description": "Default timezone for the server"
+                    }
+                }
             }
         }
     },
