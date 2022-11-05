@@ -469,7 +469,7 @@ class ServerAdmin(commands.Cog):
 
         if timezone not in tz_list:
             try:  # this is for older Pycord versions
-                mention = ctx.bot.ctx.bot.get_command('support').mention
+                mention = ctx.bot.get_application_command('support').mention
             except AttributeError:
                 mention = '`/support`'
             msg = ctx.bot.translations[lang]['msg']['tz_not_found'].format(timezone=timezone, support_cmd_mention=mention)
