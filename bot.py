@@ -378,6 +378,7 @@ class ClanBot(commands.Bot):
         self.get_channels()
         await self.update_history()
         await self.update_alert_preferences()
+        await self.update_guild_timezones()
         await self.data.get_chars()
         # await self.update_metrics()
         if self.args.forceupdate:
@@ -467,6 +468,7 @@ class ClanBot(commands.Bot):
         await self.update_prefixes()
         await self.update_langs()
         await self.update_alert_preferences()
+        await self.update_guild_timezones()
 
     async def on_guild_remove(self, guild: discord.Guild) -> None:
         cursor = await self.guild_db.cursor()
@@ -478,6 +480,7 @@ class ClanBot(commands.Bot):
         await cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM prefixes WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM lfg_alerts WHERE server_id=?''', (guild.id,))
+        await cursor.execute('''DELETE FROM timezones WHERE server_id=?''', (guild.id,))
         await self.guild_db.commit()
         await self.raid.purge_guild(guild.id)
         await cursor.close()
@@ -869,6 +872,39 @@ class ClanBot(commands.Bot):
             except aiosqlite.OperationalError:
                 pass
         await cursor.close()
+
+    async def update_guild_timezones(self) -> None:
+        cursor = await self.guild_db.cursor()
+        for server in self.guilds:
+            try:
+                await cursor.execute('''CREATE TABLE timezones (server_id integer, server_name text, timezone text)''')
+                await cursor.execute('''CREATE UNIQUE INDEX timezone ON timezones(server_id)''')
+                await cursor.execute('''INSERT or IGNORE INTO timezones (server_id, server_name) VALUES (?,?)''', [server.id, server.name])
+            except aiosqlite.OperationalError:
+                pass
+            try:
+                await cursor.execute('''INSERT or IGNORE INTO timezones (server_id, server_name) VALUES (?,?)''',
+                                     [server.id, server.name])
+            except aiosqlite.OperationalError:
+                pass
+
+        await self.guild_db.commit()
+        await cursor.close()
+
+    async def get_guild_timezone(self, guild_id: int) -> str:
+        if guild_id is None:
+            return 'UTC+03:00'
+
+        cursor = await self.guild_db.cursor()
+
+        data = await cursor.execute('''SELECT timezone FROM timezones WHERE server_id=?''', (guild_id,))
+        data = await data.fetchone()
+
+        await cursor.close()
+        if data is None:
+            return 'UTC+03:00'
+        else:
+            return data[0]
 
     async def universal_update(self, getter: Callable, name: str, time_to_delete: float = None,
                                channels: List[int] = None, post: bool = True, get: bool = True,
