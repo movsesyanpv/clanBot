@@ -1,4 +1,5 @@
 import aiosqlite
+import pytz
 
 from discord.ext import commands
 from discord.commands import Option, option, SlashCommandGroup, slash_command
@@ -12,6 +13,7 @@ import os
 from cogs.utils.views import UpdateTypes, BotLangs, AutopostSettings
 from cogs.utils.converters import locale_2_lang
 from cogs.utils.checks import message_permissions
+from cogs.utils.autocomplete import timezone_picker
 import dateparser
 
 
@@ -19,6 +21,9 @@ class ServerAdmin(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    set = SlashCommandGroup("set", "Set some info for the server", guild_only=True,
+                            default_member_permissions=discord.Permissions(administrator=True))
 
     autopost = SlashCommandGroup("autopost", "Autopost channel settings", guild_only=True,
                                  default_member_permissions=discord.Permissions(administrator=True))
@@ -214,8 +219,8 @@ class ServerAdmin(commands.Cog):
         await ctx.interaction.edit_original_response(content=ctx.bot.translations[lang]['msg']['command_is_done'],
                                                     view=None)
 
-    @slash_command(
-        name='setlang',
+    @set.command(
+        name='language',
         description='Tell the bot the server\'s language',
         guild_only=True,
         default_member_permissions=discord.Permissions(administrator=True)
@@ -239,11 +244,11 @@ class ServerAdmin(commands.Cog):
             await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
         await ctx.interaction.edit_original_response(content=msg, view=None)
 
-    @slash_command(name='setclan',
-                   description='Set a Destiny 2 clan for the server',
-                   guild_only=True,
-                   default_member_permissions=discord.Permissions(administrator=True)
-                   )
+    @set.command(name='clan',
+                 description='Set a Destiny 2 clan for the server',
+                 guild_only=True,
+                 default_member_permissions=discord.Permissions(administrator=True)
+                 )
     async def sl_setclan(self, ctx, clan_id: Option(str, "Name or id of a clan", required=True)):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
@@ -444,6 +449,43 @@ class ServerAdmin(commands.Cog):
         await guild_cursor.close()
 
         await ctx.interaction.edit_original_response(content=ctx.bot.translations[lang]['msg']['command_is_done'])
+
+    @set.command(
+        name='timezone',
+        description='Tell the bot the server\'s default timezone',
+        guild_only=True,
+        default_member_permissions=discord.Permissions(administrator=True)
+    )
+    async def timezone(self, ctx, timezone: Option(str, "Timezone", required=True, autocomplete=timezone_picker)):
+        await ctx.defer(ephemeral=True)
+        lang = await locale_2_lang(ctx)
+
+        tz_list = []
+
+        for tz in pytz.all_timezones:
+            offset = pytz.timezone(tz).utcoffset(datetime.now()).total_seconds()
+            sign = '-' if offset < 0 else '+'
+            tz_list.append(f'{tz} (UTC{sign}{abs(int(offset // 3600)):02}:{abs(int(offset % 60)):02})')
+
+        if timezone not in tz_list:
+            try:  # this is for older Pycord versions
+                mention = ctx.bot.get_application_command('support').mention
+            except AttributeError:
+                mention = '`/support`'
+            msg = ctx.bot.translations[lang]['msg']['tz_not_found'].format(timezone=timezone, support_cmd_mention=mention)
+            await ctx.interaction.edit_original_message(content=msg, view=None)
+            return
+
+        arg = timezone.split('(')[-1].replace(')', '')
+
+        msg = ctx.bot.translations[lang]['msg']['command_is_done']
+
+        data_cursor = await ctx.bot.guild_db.cursor()
+        await data_cursor.execute('''UPDATE timezones SET timezone=? WHERE server_id=?''',
+                                  (arg, ctx.guild.id))
+        await ctx.bot.guild_db.commit()
+        await data_cursor.close()
+        await ctx.interaction.edit_original_message(content=msg, view=None)
 
     # @commands.slash_command(
     #     description='Register the channel as a place for LFG posts',

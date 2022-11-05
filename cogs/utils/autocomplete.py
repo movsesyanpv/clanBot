@@ -1,5 +1,8 @@
 import mariadb
 import json
+import pytz
+from zoneinfo import ZoneInfo
+from datetime import datetime
 
 
 api_data_file = open('api.json', 'r')
@@ -38,3 +41,19 @@ async def metric_picker(interaction, value):
         return metric_list[:25]
     else:
         return metric_list
+
+
+async def timezone_picker(interaction, value):
+    tz_list = []
+
+    for tz in pytz.all_timezones:
+        offset = pytz.timezone(tz).utcoffset(datetime.now()).total_seconds()
+        sign = '-' if offset < 0 else '+'
+        tz_list.append(f'{tz} (UTC{sign}{abs(int(offset//3600)):02}:{abs(int(offset%60)):02})')
+
+    matching = [tz for tz in tz_list if value.value.lower() in tz.lower()]
+
+    if len(matching) > 25:
+        return matching[:25]
+    else:
+        return matching

@@ -475,7 +475,12 @@ class LFGModal(discord.ui.Modal):
     async def send_initial_lfg(self, lang, args, channel) -> discord.Message:
         role = args['the_role']
         name = args['name']
-        time = datetime.fromtimestamp(args['time'])
+        if args['timezone'] == 'UTC':
+            tz_elements = [0, 0]
+        else:
+            tz_elements = args['timezone'].strip('UTC').split(':')
+        tz_obj = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
+        time = datetime.fromtimestamp(args['time']).astimezone(tz_obj)
         description = args['description']
 
         lang_overrides = ['pt-br']
@@ -602,9 +607,14 @@ class LFGModal(discord.ui.Modal):
             if self.a_type == '-':
                 self.a_type = 'default'
             button_inputs = [self.a_type, self.mode, self.roles, role]
-        args = self.bot_loc.bot.raid.parse_args_sl(values[0].value, values[1].value, values[2].value, values[3].value, values[4].value, button_inputs[0], button_inputs[1], button_inputs[2])
+        args = await self.bot_loc.bot.raid.parse_args_sl(values[0].value, values[1].value, values[2].value, values[3].value, values[4].value, button_inputs[0], button_inputs[1], button_inputs[2], interaction.guild_id)
         ts = datetime.now(timezone(timedelta(0))).astimezone()
-        ts = datetime.fromtimestamp(args['time']).astimezone(tz=ts.tzinfo)
+        if args['timezone'] == 'UTC':
+            tz_elements = [0, 0]
+        else:
+            tz_elements = args['timezone'].strip('UTC').split(':')
+        tz_obj = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
+        ts = datetime.fromtimestamp(args['time']).astimezone(tz=tz_obj)
         check_msg = translations['check'].format(translations['check_embed'], translations['check_embed'],
                                                  translations['check_embed'], args['size'], args['length'] / 3600,
                                                  self.at[args['is_embed']], args['group_mode'], button_inputs[3])
