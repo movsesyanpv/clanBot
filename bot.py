@@ -906,6 +906,21 @@ class ClanBot(commands.Bot):
         else:
             return data[0]
 
+    async def guild_timezone_is_set(self, guild_id: int) -> bool:
+        if guild_id is None:
+            return False
+
+        cursor = await self.guild_db.cursor()
+
+        data = await cursor.execute('''SELECT timezone FROM timezones WHERE server_id=?''', (guild_id,))
+        data = await data.fetchone()
+
+        await cursor.close()
+        if data[0] is None:
+            return False
+        else:
+            return True
+
     async def universal_update(self, getter: Callable, name: str, time_to_delete: float = None,
                                channels: List[int] = None, post: bool = True, get: bool = True,
                                forceget: bool = False) -> None:
