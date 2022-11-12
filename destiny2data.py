@@ -11,9 +11,11 @@ import aiosqlite
 import matplotlib.pyplot as plt
 import csv
 import codecs
+import aiomysql
 import mariadb
 import asyncio
 import tracemalloc
+import warnings
 
 from typing import Optional, Union, List
 
@@ -66,7 +68,9 @@ class D2data:
 
     oauth = ''
 
-    def __init__(self, translations, lang, is_oauth, prod, context, **options):
+    data_pool: aiomysql.Pool
+
+    def __init__(self, translations, lang, is_oauth, prod, context, loop=None, **options):
         super().__init__(**options)
         self.translations = translations
         self.is_oauth = is_oauth
@@ -109,14 +113,9 @@ class D2data:
         except mariadb.ProgrammingError:
             pass
         # self.cache_db.auto_reconnect = True
-        try:
-            self.data_pool = mariadb.ConnectionPool(pool_name='data', pool_size=10, pool_reset_connection=False,
-                                                    host=self.api_data['db_host'], user=self.api_data['cache_login'],
-                                                    password=self.api_data['pass'], port=self.api_data['db_port'],
-                                                    database=self.api_data['data_db'])
-            # self.data_pool.pool_reset_connection = True
-        except mariadb.ProgrammingError:
-            pass
+        warnings.filterwarnings('ignore', module=r"aiomysql")
+        self.ev_loop = asyncio.new_event_loop()
+        asyncio.run(self.set_up_data(loop))
         # self.data_db.auto_reconnect = True
 
     async def set_up_cache(self, lang: List[str]) -> None:
@@ -148,6 +147,16 @@ class D2data:
         except aiosqlite.OperationalError:
             pass
         await data_cursor.close()
+
+    async def set_up_data(self, loop) -> None:
+        try:
+            self.data_pool = await aiomysql.create_pool(maxsize=10, host=self.api_data['db_host'],
+                                                        user=self.api_data['cache_login'],
+                                                        password=self.api_data['pass'], port=self.api_data['db_port'],
+                                                        db=self.api_data['data_db'], pool_recycle=60, loop=self.ev_loop)
+            # self.data_pool.pool_reset_connection = True
+        except aiomysql.ProgrammingError:
+            pass
 
     async def get_chars(self) -> None:
         platform = 0
@@ -847,47 +856,83 @@ class D2data:
     async def write_to_db(self, lang: str, id: str, response: list, size: str = '', name: str = '',
                             template: str = 'table_items.html', order: int = 0, type: str = 'daily',
                             annotations: list = []) -> None:
-        while True:
-            try:
-                data_db = self.data_pool.get_connection()
-                data_db.auto_reconnect = True
-                break
-            except mariadb.PoolError:
-                try:
-                    conn = mariadb.connect(host=self.api_data['db_host'],
-                                           user=self.api_data['cache_login'],
-                                           password=self.api_data['pass'],
-                                           port=self.api_data['db_port'],
-                                           database=self.api_data['data_db'])
-                    self.data_pool.add_connection(conn)
-                except mariadb.PoolError:
-                    pass
-                await asyncio.sleep(0.125)
-        data_cursor = data_db.cursor()
+        # while True:
+        #     try:
+        #         data_db = self.data_pool.get_connection()
+        #         data_db.auto_reconnect = True
+        #         break
+        #     except mariadb.PoolError:
+        #         try:
+        #             conn = mariadb.connect(host=self.api_data['db_host'],
+        #                                    user=self.api_data['cache_login'],
+        #                                    password=self.api_data['pass'],
+        #                                    port=self.api_data['db_port'],
+        #                                    database=self.api_data['data_db'])
+        #             self.data_pool.add_connection(conn)
+        #         except mariadb.PoolError:
+        #             pass
+        #         await asyncio.sleep(0.125)
+        # data_cursor = data_db.cursor()
+        #
+        # try:
+        #     data_cursor.execute('''CREATE TABLE `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text, annotations text)'''.format(lang))
+        #     data_cursor.execute('''CREATE UNIQUE INDEX `data_id_{}` ON `{}`(id(256))'''.format(lang, lang))
+        # except mariadb.Error:
+        #     pass
+        #
+        # try:
+        #     data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (?,?,?,?,?,?,?,?,?,?)'''.format(lang),
+        #                         (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
+        #                          datetime.utcnow().isoformat(), size, name, template, order, type, str(annotations)))
+        #     data_db.commit()
+        # except mariadb.Error:
+        #     pass
+        #
+        # try:
+        #     data_cursor.execute('''UPDATE `{}` SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=?, annotations=? WHERE id=?'''.format(lang),
+        #                         (datetime.utcnow().timestamp(), json.dumps({'data': response}),
+        #                          datetime.utcnow().isoformat(), name, size, template, order, type, str(annotations), id))
+        #     data_db.commit()
+        # except mariadb.Error:
+        #     pass
+        # data_cursor.close()
+        # data_db.close()
 
+        conn = await aiomysql.connect(host=self.api_data['db_host'],
+                                                        user=self.api_data['cache_login'],
+                                                        password=self.api_data['pass'], port=self.api_data['db_port'],
+                                                        db=self.api_data['data_db'], loop=self.ev_loop)
+        # async with self.data_pool.acquire() as conn:
+        cur = await conn.cursor()
         try:
-            data_cursor.execute('''CREATE TABLE `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text, annotations text)'''.format(lang))
-            data_cursor.execute('''CREATE UNIQUE INDEX `data_id_{}` ON `{}`(id(256))'''.format(lang, lang))
-        except mariadb.Error:
+            await cur.execute(
+                '''CREATE TABLE IF NOT EXISTS `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text, annotations text)'''.format(
+                    lang))
+            await cur.execute('''CREATE UNIQUE INDEX IF NOT EXISTS `data_id_{}` ON `{}`(id(256))'''.format(lang, lang))
+        except aiomysql.Error:
             pass
 
         try:
-            data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (?,?,?,?,?,?,?,?,?,?)'''.format(lang),
+            await cur.execute('''INSERT IGNORE INTO `{}` VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'''.format(lang),
                                 (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
-                                 datetime.utcnow().isoformat(), size, name, template, order, type, str(annotations)))
-            data_db.commit()
-        except mariadb.Error:
+                                 datetime.utcnow().isoformat(), size, name, template, order, type,
+                                 str(annotations)))
+            await conn.commit()
+        except aiomysql.Error:
             pass
 
         try:
-            data_cursor.execute('''UPDATE `{}` SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=?, annotations=? WHERE id=?'''.format(lang),
-                                (datetime.utcnow().timestamp(), json.dumps({'data': response}),
-                                 datetime.utcnow().isoformat(), name, size, template, order, type, str(annotations), id))
-            data_db.commit()
-        except mariadb.Error:
+            await cur.execute(
+                '''UPDATE `{}` SET timestamp_int=%s, json=%s, timestamp=%s, name=%s, size=%s, template=%s, place=%s, type=%s, annotations=%s WHERE id=%s'''.format(
+                    lang),
+                (datetime.utcnow().timestamp(), json.dumps({'data': response}),
+                 datetime.utcnow().isoformat(), name, size, template, order, type, str(annotations), id))
+            await conn.commit()
+        except aiomysql.Error:
             pass
-        data_cursor.close()
-        data_db.close()
+        await conn.commit()
+        await cur.close()
+        conn.close()
 
     async def write_bot_data(self, id: str, langs: List[str]) -> None:
         cursor = await self.bot_data_db.cursor()
@@ -2509,26 +2554,40 @@ class D2data:
         await self.write_bot_data('lostsector', langs)
 
     async def drop_weekend_info(self, langs: List[str]) -> None:
-        while True:
-            try:
-                data_db = self.data_pool.get_connection()
-                data_db.auto_reconnect = True
-                break
-            except mariadb.PoolError:
-                try:
-                    self.data_pool.add_connection()
-                except mariadb.PoolError:
-                    pass
-                await asyncio.sleep(0.125)
-        data_cursor = data_db.cursor()
+        # while True:
+        #     try:
+        #         data_db = self.data_pool.get_connection()
+        #         data_db.auto_reconnect = True
+        #         break
+        #     except mariadb.PoolError:
+        #         try:
+        #             self.data_pool.add_connection()
+        #         except mariadb.PoolError:
+        #             pass
+        #         await asyncio.sleep(0.125)
+        # data_cursor = data_db.cursor()
+        #
+        # for lang in langs:
+        #     data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
+        #     data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('xur',))
+        #     data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('gambit',))
+        # data_db.commit()
+        # data_cursor.close()
+        # data_db.close()
 
+        conn = await aiomysql.connect(host=self.api_data['db_host'],
+                                      user=self.api_data['cache_login'],
+                                      password=self.api_data['pass'], port=self.api_data['db_port'],
+                                      db=self.api_data['data_db'], loop=self.ev_loop)
+
+        cur = await conn.cursor()
         for lang in langs:
-            data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
-            data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('xur',))
-            data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('gambit',))
-        data_db.commit()
-        data_cursor.close()
-        data_db.close()
+            await cur.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
+            await cur.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('xur',))
+            await cur.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('gambit',))
+        await conn.commit()
+        await cur.close()
+        conn.close()
 
     async def get_cached_json(self, cache_id: str, name: str, url: str, params: Optional[dict] = None,
                               lang: Optional[str] = None, string: Optional[str] = None, change_msg: bool = True,
