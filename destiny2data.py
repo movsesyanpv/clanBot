@@ -1089,6 +1089,8 @@ class D2data:
                 if item_def['itemType'] == 19:
                     mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
                     fields[-1]['value'] = '{}{}\n'.format(fields[-1]['value'], item_def['displayProperties']['name'])
+            for i in range(len(fields)):
+                fields[i]['value'] = fields[i]['value'][:-1]
             self.data[lang]['daily_mods']['fields'] = fields
         await self.write_bot_data('daily_mods', langs)
 
@@ -1951,11 +1953,11 @@ class D2data:
                     info = {
                         'inline': True,
                         'name': r_json['displayProperties']['name'].replace(local_types['adept'], "").
-                            replace(local_types['empire_hunt'], ""),
+                            replace(local_types['empire_hunt'], "").lstrip(),
                         'value': r_json['displayProperties']['description']
                     }
                     db_data.append({
-                        'name': info['name'].replace(local_types['empire_hunt'], '').replace('\"', ''),
+                        'name': info['name'].replace(local_types['empire_hunt'], '').replace('\"', '').lstrip(),
                         'description': info['value']
                     })
                     self.data[lang]['empire_hunts']['fields'].append(info)
