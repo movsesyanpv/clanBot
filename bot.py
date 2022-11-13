@@ -74,7 +74,7 @@ class ClanBot(commands.Bot):
         self.langs = list(set(self.langs).intersection(set(self.args.lang)))
         try:
             self.data = d2.D2data(self.translations, self.langs, self.args.oauth, self.args.production,
-                                  (self.args.cert, self.args.key))
+                                  (self.args.cert, self.args.key), self.loop)
         except RuntimeError:
             return
         self.raid = lfg.LFG(self)

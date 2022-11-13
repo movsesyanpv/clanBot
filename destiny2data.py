@@ -150,7 +150,7 @@ class D2data:
 
     async def set_up_data(self, loop) -> None:
         try:
-            self.data_pool = await aiomysql.create_pool(maxsize=10, host=self.api_data['db_host'],
+            self.data_pool = await aiomysql.create_pool(minsize=0, maxsize=0, host=self.api_data['db_host'],
                                                         user=self.api_data['cache_login'],
                                                         password=self.api_data['pass'], port=self.api_data['db_port'],
                                                         db=self.api_data['data_db'], pool_recycle=60, loop=self.ev_loop)
@@ -856,53 +856,15 @@ class D2data:
     async def write_to_db(self, lang: str, id: str, response: list, size: str = '', name: str = '',
                             template: str = 'table_items.html', order: int = 0, type: str = 'daily',
                             annotations: list = []) -> None:
-        # while True:
-        #     try:
-        #         data_db = self.data_pool.get_connection()
-        #         data_db.auto_reconnect = True
-        #         break
-        #     except mariadb.PoolError:
-        #         try:
-        #             conn = mariadb.connect(host=self.api_data['db_host'],
-        #                                    user=self.api_data['cache_login'],
-        #                                    password=self.api_data['pass'],
-        #                                    port=self.api_data['db_port'],
-        #                                    database=self.api_data['data_db'])
-        #             self.data_pool.add_connection(conn)
-        #         except mariadb.PoolError:
-        #             pass
-        #         await asyncio.sleep(0.125)
-        # data_cursor = data_db.cursor()
-        #
-        # try:
-        #     data_cursor.execute('''CREATE TABLE `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text, annotations text)'''.format(lang))
-        #     data_cursor.execute('''CREATE UNIQUE INDEX `data_id_{}` ON `{}`(id(256))'''.format(lang, lang))
-        # except mariadb.Error:
-        #     pass
-        #
-        # try:
-        #     data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (?,?,?,?,?,?,?,?,?,?)'''.format(lang),
-        #                         (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
-        #                          datetime.utcnow().isoformat(), size, name, template, order, type, str(annotations)))
-        #     data_db.commit()
-        # except mariadb.Error:
-        #     pass
-        #
-        # try:
-        #     data_cursor.execute('''UPDATE `{}` SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=?, annotations=? WHERE id=?'''.format(lang),
-        #                         (datetime.utcnow().timestamp(), json.dumps({'data': response}),
-        #                          datetime.utcnow().isoformat(), name, size, template, order, type, str(annotations), id))
-        #     data_db.commit()
-        # except mariadb.Error:
-        #     pass
-        # data_cursor.close()
-        # data_db.close()
 
-        conn = await aiomysql.connect(host=self.api_data['db_host'],
-                                                        user=self.api_data['cache_login'],
-                                                        password=self.api_data['pass'], port=self.api_data['db_port'],
-                                                        db=self.api_data['data_db'], loop=self.ev_loop)
-        # async with self.data_pool.acquire() as conn:
+        no_connection = True
+        while no_connection:
+            try:
+                conn = await self.data_pool.acquire()
+                no_connection = False
+            except aiomysql.OperationalError:
+                await asyncio.sleep(1)
+
         cur = await conn.cursor()
         try:
             await cur.execute(
@@ -932,7 +894,7 @@ class D2data:
             pass
         await conn.commit()
         await cur.close()
-        conn.close()
+        self.data_pool.release(conn)
 
     async def write_bot_data(self, id: str, langs: List[str]) -> None:
         cursor = await self.bot_data_db.cursor()
@@ -2887,28 +2849,33 @@ class D2data:
         return online_members
 
     async def iterate_clans(self, max_id: int) -> Union[int, str]:
-        while True:
-            try:
-                cache_connection = self.cache_pool.get_connection()
-                cache_connection.auto_reconnect = True
-                break
-            except mariadb.PoolError:
-                try:
-                    self.cache_pool.add_connection()
-                except mariadb.PoolError:
-                    pass
-                await asyncio.sleep(0.125)
-        clan_cursor = cache_connection.cursor()
+        # while True:
+        #     try:
+        #         cache_connection = self.cache_pool.get_connection()
+        #         cache_connection.auto_reconnect = True
+        #         break
+        #     except mariadb.PoolError:
+        #         try:
+        #             self.cache_pool.add_connection()
+        #         except mariadb.PoolError:
+        #             pass
+        #         await asyncio.sleep(0.125)
+        # clan_cursor = cache_connection.cursor()
+        cache_connection = await aiomysql.connect(host=self.api_data['db_host'],
+                                      user=self.api_data['cache_login'],
+                                      password=self.api_data['pass'], port=self.api_data['db_port'],
+                                      db=self.api_data['cache_name'], loop=self.ev_loop)
+        clan_cursor = await cache_connection.cursor()
 
         min_id = 1
         try:
-            clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
-            # clan_db.commit()
-        except mariadb.Error:
+            await clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
+            await cache_connection.commit()
+        except aiomysql.OperationalError:
             # clan_cursor = clan_db.cursor()
-            clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
-            min_id_tuple = clan_cursor.fetchall()
-            if min_id_tuple is not None:
+            await clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
+            min_id_tuple = await clan_cursor.fetchall()
+            if len(min_id_tuple) > 0:
                 min_id = min_id_tuple[0][0] + 1
         for clan_id in range(min_id, max_id+1):
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
@@ -2926,20 +2893,20 @@ class D2data:
                 # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
             except KeyError:
                 code = 0
-                clan_cursor.close()
+                await clan_cursor.close()
                 cache_connection.close()
                 return '```{}```'.format(json.dumps(clan_json))
             if code in [621, 622, 686]:
                 continue
             if code != 1:
-                clan_cursor.close()
+                await clan_cursor.close()
                 cache_connection.close()
                 return code
             # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
             if clan_json['Response']['detail']['features']['capabilities'] & 16:
-                clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
-                # clan_db.commit()
-        clan_cursor.close()
+                await clan_cursor.execute('''INSERT INTO clans VALUES (%s,%s)''', (clan_id, json.dumps(clan_json)))
+                await cache_connection.commit()
+        await clan_cursor.close()
         cache_connection.close()
         return 'Finished'
 
@@ -2958,7 +2925,11 @@ class D2data:
         #             pass
         #         await asyncio.sleep(0.125)
         # clan_cursor = cache_connection.cursor()
-        cache_connection = self.cache_db
+        # cache_connection = self.cache_db
+        cache_connection = await aiomysql.connect(host=self.api_data['db_host'],
+                                                  user=self.api_data['cache_login'],
+                                                  password=self.api_data['pass'], port=self.api_data['db_port'],
+                                                  db=self.api_data['cache_name'], loop=self.ev_loop)
         clan_cursor = await cache_connection.cursor()
 
         min_id = 1
@@ -2966,7 +2937,7 @@ class D2data:
             await clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
             # clan_db.commit()
         # except mariadb.Error:
-        except aiosqlite.OperationalError:
+        except aiomysql.OperationalError:
             # clan_cursor = clan_db.cursor()
             await clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
             min_id_tuple = await clan_cursor.fetchall()
@@ -3012,11 +2983,12 @@ class D2data:
                 # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
                 if clan_json['Response']['detail']['features']['capabilities'] & 16:
                     clan_id = clan_json['Response']['detail']['groupId']
-                    await clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
+                    await clan_cursor.execute('''INSERT INTO clans VALUES (%s,%s)''', (clan_id, json.dumps(clan_json)))
                     await cache_connection.commit()
                     # clan_db.commit()
 
         await clan_cursor.close()
+        cache_connection.close()
         # await cache_connection.close()
         # snapshot2 = tracemalloc.take_snapshot()
         # top_stats = snapshot2.compare_to(snapshot1, 'lineno')
