@@ -114,7 +114,7 @@ class D2data:
             pass
         # self.cache_db.auto_reconnect = True
         warnings.filterwarnings('ignore', module=r"aiomysql")
-        self.ev_loop = asyncio.new_event_loop()
+        self.ev_loop = loop
         asyncio.run(self.set_up_data(loop))
         # self.data_db.auto_reconnect = True
 
@@ -153,7 +153,7 @@ class D2data:
             self.data_pool = await aiomysql.create_pool(minsize=0, maxsize=0, host=self.api_data['db_host'],
                                                         user=self.api_data['cache_login'],
                                                         password=self.api_data['pass'], port=self.api_data['db_port'],
-                                                        db=self.api_data['data_db'], pool_recycle=60, loop=self.ev_loop)
+                                                        db=self.api_data['data_db'], pool_recycle=60, loop=loop)
             # self.data_pool.pool_reset_connection = True
         except aiomysql.ProgrammingError:
             pass
