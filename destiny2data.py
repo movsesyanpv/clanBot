@@ -864,6 +864,10 @@ class D2data:
                 no_connection = False
             except aiomysql.OperationalError:
                 await asyncio.sleep(1)
+            except RuntimeError:
+                await asyncio.sleep(10)
+                conn = await self.data_pool.acquire()
+                no_connection = False
 
         cur = await conn.cursor()
         try:
