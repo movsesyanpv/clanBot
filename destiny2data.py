@@ -2186,6 +2186,7 @@ class D2data:
                 self.data[lang]['events']['image'] = {
                     'url': 'attachment://events-{}.png'.format(lang)
                 }
+            await self.write_bot_data('events', langs)
 
     async def decode_modifiers(self, key: dict, lang: str) -> list:
         data = []
