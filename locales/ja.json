@@ -422,6 +422,10 @@
         "alerts": {
             "label": "Alerts",
             "description": "Alerts about maintenance and other stuff"
+        },
+        "events": {
+            "label": "Community Events",
+            "description": "Hourly updates of community event progress"
         }
     },
     "clan_info": {
