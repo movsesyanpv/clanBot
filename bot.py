@@ -41,7 +41,7 @@ class ClanBot(commands.Bot):
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']
     daily_rotations = ('strikes', 'spider', 'banshee', 'ada', 'mods', 'lostsector')
     weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire')
-    embeds_with_img = ['thelie']
+    embeds_with_img = ['events']
 
     sched = AsyncIOScheduler(timezone='UTC')
     guild_db = ''
@@ -196,6 +196,12 @@ class ClanBot(commands.Bot):
         await self.universal_update(self.data.get_global_alerts, 'alerts', 86400)
         self.logger.info('Finished updating alerts')
 
+    @tasks.loop(time=[time(hour=t, minute=0, second=0) for t in range(24)])
+    async def update_event(self):
+        self.logger.info('Updating event')
+        await self.universal_update(self.data.get_event_progress, 'events', 86400)
+        self.logger.info('Finished updating event')
+
     @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
     async def update_manifest(self):
         self.logger.info('Updating manifest')
@@ -223,6 +229,7 @@ class ClanBot(commands.Bot):
         self.update_trials.start()
 
         self.update_alerts.start()
+        self.update_event.start()
 
     async def set_up_guild_db(self):
         self.guild_db = await aiosqlite.connect('guild.db')
@@ -346,7 +353,7 @@ class ClanBot(commands.Bot):
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                # await self.universal_update(self.data.get_the_lie_progress, 'thelie', 3600, channels=channels, post=post, get=get, forceget=forceget)
+                await self.universal_update(self.data.get_event_progress, 'events', 3600, channels=channels, post=post, get=get, forceget=forceget)
                 pass
         # if 'gambit' in upd_type:
         #     if channels is None:

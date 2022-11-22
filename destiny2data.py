@@ -2088,7 +2088,7 @@ class D2data:
                                    type='weekly')
         await self.write_bot_data('cruciblerotators', langs)
 
-    async def get_the_lie_progress(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
+    async def get_event_progress(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'],
                                                                                             self.char_info[
                                                                                                 'membershipid'],
@@ -2098,10 +2098,15 @@ class D2data:
         resp_time = progression_json['timestamp']
         progress = []
 
-        if '1797229574' in progression_json['Response']['uninstancedItemComponents']['objectives']['data']:
+        steps = ['2314235473', '3765635756', '3782413343', '3832746200', '3849523787', '3866301502', '3883079057', '3899856644', '3916634359', '3950189533']
+
+        step = list(set(steps).intersection(set(progression_json['Response']['uninstancedItemComponents']['objectives']['data'])))
+
+        if len(step) > 0:
+            step = step[0]
             for lang in langs:
-                quest_def = await self.destiny.decode_hash(1797229574, 'DestinyInventoryItemDefinition', language=lang)
-                self.data[lang]['thelie'] = {
+                quest_def = await self.destiny.decode_hash(step, 'DestinyInventoryItemDefinition', language=lang)
+                self.data[lang]['events'] = {
                     'thumbnail': {
                         'url': self.icon_prefix + quest_def['displayProperties']['icon']
                     },
@@ -2114,63 +2119,51 @@ class D2data:
                 }
                 newrow = [resp_time, 0, 0, 0]
                 names = ['', '', '']
+                progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
+                    'objectives'] = [progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
+                    'objectives'][0]]
                 for place in \
-                progression_json['Response']['uninstancedItemComponents']['objectives']['data']['1797229574'][
+                progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
                     'objectives']:
                     objective_def = await self.destiny.decode_hash(place['objectiveHash'], 'DestinyObjectiveDefinition',
                                                                    language=lang)
                     if place['complete']:
-                        self.data[lang]['thelie']['fields'].append({
+                        self.data[lang]['events']['fields'].append({
                             'inline': True,
                             'name': objective_def['progressDescription'],
                             'value': self.translations[lang]['msg']['complete']
                         })
-                        if place['objectiveHash'] == 1851115127:
+                        if place['objectiveHash'] == 2697257462:
                             newrow[1] = 100
                             names[0] = objective_def['progressDescription']
-                        elif place['objectiveHash'] == 1851115126:
-                            newrow[2] = 100
-                            names[1] = objective_def['progressDescription']
-                        elif place['objectiveHash'] == 1851115125:
-                            newrow[3] = 100
-                            names[2] = objective_def['progressDescription']
                     else:
-                        self.data[lang]['thelie']['fields'].append({
+                        self.data[lang]['events']['fields'].append({
                             'inline': True,
                             'name': objective_def['progressDescription'],
                             'value': '{} ({:.2f}%)'.format(place['progress'],
                                                            place['progress'] / place['completionValue'] * 100)
                         })
-                        if place['objectiveHash'] == 1851115127:
+                        if place['objectiveHash'] == 2697257462:
                             newrow[1] = place['progress'] / place['completionValue'] * 100
                             names[0] = objective_def['progressDescription']
-                        elif place['objectiveHash'] == 1851115126:
-                            newrow[2] = place['progress'] / place['completionValue'] * 100
-                            names[1] = objective_def['progressDescription']
-                        elif place['objectiveHash'] == 1851115125:
-                            newrow[3] = place['progress'] / place['completionValue'] * 100
-                            names[2] = objective_def['progressDescription']
                 date = []
                 edz = []
-                moon = []
-                io = []
-                with open('thelie.csv', 'r') as csvfile:
-                    plots = csv.reader(csvfile, delimiter=',')
-                    for row in plots:
-                        if len(row) < 4:
-                            continue
-                        diff = datetime.fromisoformat(row[0]) - datetime.fromisoformat('2020-05-12T17:00:00')
-                        date.append(diff.total_seconds() / 86400)
-                        edz.append(float(row[1]))
-                        moon.append(float(row[2]))
-                        io.append(float(row[3]))
-                    csvfile.close()
-                diff = datetime.fromisoformat(newrow[0]) - datetime.fromisoformat('2020-05-12T17:00:00')
-                date.append(diff.total_seconds() / 86400)
-                edz.append(float(newrow[1]))
-                moon.append(float(newrow[2]))
-                io.append(float(newrow[3]))
-                with open('thelie.csv', 'a') as csvfile:
+                try:
+                    with open('rising_tide.csv', 'r') as csvfile:
+                        plots = csv.reader(csvfile, delimiter=',')
+                        for row in plots:
+                            if len(row) < 4:
+                                continue
+                            diff = datetime.fromisoformat(row[0]) - datetime.fromisoformat('2022-11-22T17:00:00')
+                            date.append(diff.total_seconds() / 86400)
+                            edz.append(float(row[1]))
+                        csvfile.close()
+                    diff = datetime.fromisoformat(newrow[0]) - datetime.fromisoformat('2022-11-22T17:00:00')
+                    date.append(diff.total_seconds() / 86400)
+                    edz.append(float(newrow[1]))
+                except FileNotFoundError:
+                    pass
+                with open('rising_tide.csv', 'a') as csvfile:
                     writer = csv.writer(csvfile, delimiter=',')
                     writer.writerow(newrow)
                     csvfile.close()
@@ -2179,8 +2172,6 @@ class D2data:
                 for spine in ax.spines.values():
                     spine.set_visible(False)
                 plt.plot(date, edz, label=names[0])
-                plt.plot(date, moon, label=names[1])
-                plt.plot(date, io, label=names[2])
                 ax.set_xlabel(self.translations[lang]['graph']['datefromstart'], color='#226197')
                 ax.set_ylabel(self.translations[lang]['graph']['percentage'], color='#226197')
                 ax.tick_params(colors='#bdbdff', direction='out')
@@ -2190,10 +2181,10 @@ class D2data:
                     tick.set_color('#226197')
                 plt.grid(color='#bdbdff', linestyle='solid', axis='y')
                 plt.legend()
-                plt.savefig('thelie-{}.png'.format(lang), format='png', transparent=True)
+                plt.savefig('events-{}.png'.format(lang), format='png', transparent=True)
                 plt.close(fig)
-                self.data[lang]['thelie']['image'] = {
-                    'url': 'attachment://thelie-{}.png'.format(lang)
+                self.data[lang]['events']['image'] = {
+                    'url': 'attachment://events-{}.png'.format(lang)
                 }
 
     async def decode_modifiers(self, key: dict, lang: str) -> list:
