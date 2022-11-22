@@ -2102,6 +2102,9 @@ class D2data:
 
         step = list(set(steps).intersection(set(progression_json['Response']['uninstancedItemComponents']['objectives']['data'])))
 
+        objectives = {'589977764': 400000000, '990898098': 260000000, '2697257462': 40000000, '2957300623': 80000000, '3453628075': 320000000, '3527414433': 200000000, '4221523416': 140000000}
+
+
         if len(step) > 0:
             step = step[0]
             for lang in langs:
@@ -2127,25 +2130,22 @@ class D2data:
                     'objectives']:
                     objective_def = await self.destiny.decode_hash(place['objectiveHash'], 'DestinyObjectiveDefinition',
                                                                    language=lang)
-                    if place['complete']:
-                        self.data[lang]['events']['fields'].append({
-                            'inline': True,
-                            'name': objective_def['progressDescription'],
-                            'value': self.translations[lang]['msg']['complete']
-                        })
-                        if place['objectiveHash'] == 2697257462:
-                            newrow[1] = 100
-                            names[0] = objective_def['progressDescription']
+                    if place['progress'] >= place['completionValue']:
+                        values = list(objectives.values())
+                        values.sort()
+                        objective = min([i for i in values if place['progress'] < i])
                     else:
-                        self.data[lang]['events']['fields'].append({
-                            'inline': True,
-                            'name': objective_def['progressDescription'],
-                            'value': '{} ({:.2f}%)'.format(place['progress'],
-                                                           place['progress'] / place['completionValue'] * 100)
-                        })
-                        if place['objectiveHash'] == 2697257462:
-                            newrow[1] = place['progress'] / place['completionValue'] * 100
-                            names[0] = objective_def['progressDescription']
+                        objective = objectives[str(place['objectiveHash'])]
+
+                    self.data[lang]['events']['fields'].append({
+                        'inline': True,
+                        'name': objective_def['progressDescription'],
+                        'value': '{} ({:.2f}%)'.format(place['progress'],
+                                                       place['progress'] / objective * 100)
+                    })
+                    if str(place['objectiveHash']) in objectives.keys():
+                        newrow[1] = place['progress'] / objective * 100
+                        names[0] = objective_def['progressDescription']
                 date = []
                 edz = []
                 try:

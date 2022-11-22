@@ -998,7 +998,7 @@ class ClanBot(commands.Bot):
             return [channel_id, 'no permission to send messages ({})'.format(frameinfo.lineno + 1)]
         lang = self.guild_lang(channel.guild.id)
         # print('delay is {}'.format(delay))
-        # if channel_id == 1028023408044281876:
+        # if channel_id == 647890554943963136:
         #     self.logger.info('{} has got the channel'.format(upd_type))
 
         if not self.args.nomessage:
@@ -1174,8 +1174,8 @@ class ClanBot(commands.Bot):
             else:
                 # await asyncio.sleep(delay)
                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
-            # if channel_id == 1028023408044281876:
-            #     self.logger.info('{} has sent the message'.format(upd_type))
+            if channel_id == 647890554943963136:
+                self.logger.info('{} has sent the message {}'.format(upd_type, message.id))
             hist = message.id
             if channel.type == discord.ChannelType.news:
                 try:
