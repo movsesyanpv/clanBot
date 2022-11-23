@@ -2095,6 +2095,13 @@ class D2data:
                                                                                             self.char_info['charid'][0])
         progression_json = await self.get_cached_json('objectives_{}'.format(self.char_info['charid'][0]),
                                                       'progressions', url, {'components': 301}, force=forceget)
+
+        vendor_url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/371367417/'.format(self.char_info['platform'],
+                                                                                                                                     self.char_info['membershipid'],
+                                                                                                                                     self.char_info['charid'][0])
+
+        vendor_json = await self.get_cached_json('event vendor', 'event vendor', vendor_url, {'components': 1200}, force=forceget)
+
         resp_time = progression_json['timestamp']
         progress = []
 
@@ -2103,7 +2110,6 @@ class D2data:
         step = list(set(steps).intersection(set(progression_json['Response']['uninstancedItemComponents']['objectives']['data'])))
 
         objectives = {'589977764': 400000000, '990898098': 260000000, '2697257462': 40000000, '2957300623': 80000000, '3453628075': 320000000, '3527414433': 200000000, '4221523416': 140000000}
-
 
         if len(step) > 0:
             step = step[0]
@@ -2122,26 +2128,31 @@ class D2data:
                 }
                 newrow = [resp_time, 0, 0, 0]
                 names = ['', '', '']
-                progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
-                    'objectives'] = [progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
-                    'objectives'][0]]
-                for place in \
-                progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
-                    'objectives']:
-                    objective_def = await self.destiny.decode_hash(place['objectiveHash'], 'DestinyObjectiveDefinition',
-                                                                   language=lang)
-                    if place['progress'] >= place['completionValue']:
-                        values = list(objectives.values())
-                        values.sort()
-                        objective = min([i for i in values if place['progress'] < i])
-                    else:
-                        objective = objectives[str(place['objectiveHash'])]
+                place = {'objectiveHash': 589977764}
+                # progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
+                #     'objectives'] = [progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
+                #     'objectives'][0]]
+                # for place in \
+                # progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
+                #     'objectives']:
+                objective_def = await self.destiny.decode_hash(place['objectiveHash'], 'DestinyObjectiveDefinition',
+                                                               language=lang)
+                #     if place['progress'] >= place['completionValue']:
+                #         values = list(objectives.values())
+                #         values.sort()
+                #         objective = min([i for i in values if place['progress'] < i])
+                #     else:
+                #         objective = objectives[str(place['objectiveHash'])]
+                objective = 400000000
+
+                try:
+                    progress = vendor_json['Response']['stringVariables']['data']['integerValuesByHash']['3077818543']
 
                     self.data[lang]['events']['fields'].append({
                         'inline': True,
                         'name': objective_def['progressDescription'],
-                        'value': '{} ({:.2f}%)'.format(place['progress'],
-                                                       place['progress'] / objective * 100)
+                        'value': '{} ({:.2f}%)'.format(progress,
+                                                       progress / objective * 100)
                     })
                     self.data[lang]['events']['fields'].append({
                         'inline': True,
@@ -2149,49 +2160,51 @@ class D2data:
                         'value': objective
                     })
                     if str(place['objectiveHash']) in objectives.keys():
-                        newrow[1] = place['progress'] / objective * 100
+                        newrow[1] = progress / objective * 100
                         names[0] = objective_def['progressDescription']
-                date = []
-                edz = []
-                try:
-                    with open('rising_tide.csv', 'r') as csvfile:
-                        plots = csv.reader(csvfile, delimiter=',')
-                        for row in plots:
-                            if len(row) < 4:
-                                continue
-                            diff = datetime.fromisoformat(row[0]) - datetime.fromisoformat('2022-11-22T17:00:00')
-                            date.append(diff.total_seconds() / 86400)
-                            edz.append(float(row[1]))
+                    date = []
+                    edz = []
+                    try:
+                        with open('rising_tide.csv', 'r') as csvfile:
+                            plots = csv.reader(csvfile, delimiter=',')
+                            for row in plots:
+                                if len(row) < 4:
+                                    continue
+                                diff = datetime.fromisoformat(row[0]) - datetime.fromisoformat('2022-11-22T17:00:00')
+                                date.append(diff.total_seconds() / 86400)
+                                edz.append(float(row[1]))
+                            csvfile.close()
+                        diff = datetime.fromisoformat(newrow[0]) - datetime.fromisoformat('2022-11-22T17:00:00')
+                        date.append(diff.total_seconds() / 86400)
+                        edz.append(float(newrow[1]))
+                    except FileNotFoundError:
+                        pass
+                    with open('rising_tide.csv', 'a') as csvfile:
+                        writer = csv.writer(csvfile, delimiter=',')
+                        writer.writerow(newrow)
                         csvfile.close()
-                    diff = datetime.fromisoformat(newrow[0]) - datetime.fromisoformat('2022-11-22T17:00:00')
-                    date.append(diff.total_seconds() / 86400)
-                    edz.append(float(newrow[1]))
-                except FileNotFoundError:
+                    fig = plt.figure()
+                    ax = plt.axes()
+                    for spine in ax.spines.values():
+                        spine.set_visible(False)
+                    plt.plot(date, edz, label=names[0])
+                    ax.set_xlabel(self.translations[lang]['graph']['datefromstart'], color='#226197')
+                    ax.set_ylabel(self.translations[lang]['graph']['percentage'], color='#226197')
+                    ax.tick_params(colors='#bdbdff', direction='out')
+                    # plt.yticks([0, 20, 40, 60, 80, 100])
+                    for tick in ax.get_xticklabels():
+                        tick.set_color('#226197')
+                    for tick in ax.get_yticklabels():
+                        tick.set_color('#226197')
+                    plt.grid(color='#bdbdff', linestyle='solid', axis='y')
+                    plt.legend()
+                    plt.savefig('events-{}.png'.format(lang), format='png', transparent=True)
+                    plt.close(fig)
+                    self.data[lang]['events']['image'] = {
+                        'url': 'attachment://events-{}.png'.format(lang)
+                    }
+                except KeyError:
                     pass
-                with open('rising_tide.csv', 'a') as csvfile:
-                    writer = csv.writer(csvfile, delimiter=',')
-                    writer.writerow(newrow)
-                    csvfile.close()
-                fig = plt.figure()
-                ax = plt.axes()
-                for spine in ax.spines.values():
-                    spine.set_visible(False)
-                plt.plot(date, edz, label=names[0])
-                ax.set_xlabel(self.translations[lang]['graph']['datefromstart'], color='#226197')
-                ax.set_ylabel(self.translations[lang]['graph']['percentage'], color='#226197')
-                ax.tick_params(colors='#bdbdff', direction='out')
-                plt.yticks([0, 20, 40, 60, 80, 100])
-                for tick in ax.get_xticklabels():
-                    tick.set_color('#226197')
-                for tick in ax.get_yticklabels():
-                    tick.set_color('#226197')
-                plt.grid(color='#bdbdff', linestyle='solid', axis='y')
-                plt.legend()
-                plt.savefig('events-{}.png'.format(lang), format='png', transparent=True)
-                plt.close(fig)
-                self.data[lang]['events']['image'] = {
-                    'url': 'attachment://events-{}.png'.format(lang)
-                }
             await self.write_bot_data('events', langs)
 
     async def decode_modifiers(self, key: dict, lang: str) -> list:
