@@ -42,7 +42,6 @@
         "empire_hunts": "Elective difficulty empire hunt",
         "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
         "daily_mods": "Ada-1 and Banshee-44 sell these",
-        "lostsector": "Lost Sector",
         "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version. If you don't see any slash commands, run `noslash` command to get instructions on how to fix this.",
         "command_is_done": "Done",
         "update_types": "Select update types",
@@ -65,8 +64,9 @@
         "timed_out": "Timed out",
         "all_upd_types": "Enable all",
         "cancel": "Cancel",
+        "lostsector": "Lost Sector",
         "tz_not_found": "Unable to found the timezone `{timezone}`. Please make sure you choose one from the suggested variants. If you are unable to find your timezone, please ask for help at my support server. You can find the support server link with {support_cmd_mention}.",
-        "next_goal": "Next stage"
+        "next_goal": "Current stage"
     },
     "lfg": {
         "go": "Go",
@@ -97,7 +97,6 @@
         "lfglist": "{}{}. {} @ {} {} in #{} of {}, ID: `{}`\n",
         "lfglist_empty": "No LFGs were found",
         "lfglist_choice_check": "Is the LFG choice correct?\n",
-        "lfglist_long": "You have more than 25 LFGs, some of them are not shown. If the group you want to edit is not here, use a context menu command `{}` on the group's message.",
         "no_change": "Not changed",
         "dm_start": "{}, check your DMs",
         "modal_title": "LFG creation",
@@ -132,6 +131,7 @@
         "will_not_go": "Ok",
         "processing": "Processing, please wait",
         "check_embed": "Check the embed below",
+        "lfglist_long": "You have more than 25 LFGs, some of them are not shown. If the group you want to edit is not here, use a context menu command `{}` on the group's message.",
         "reminder": "Hi, your group, {group_name}, of {server_name} is starting in {time}.",
         "reminder_setup": "How many minutes before the start should the bot send a reminder?",
         "reminder_set": "You'll get a direct message {} minutes before the start.",
@@ -177,7 +177,6 @@
     "LW": "Last Wish",
     "GoS": "Garden of Salvation",
     "error": "An unexpected error has occurred. The information was sent to the developer",
-    "overflow_error": "Invalid time input. Please try again.",
     "classnames": [
         "hunter",
         "warlock",
@@ -201,7 +200,6 @@
         "aliases": "Can be called with the following names:```{}```",
         "parameters": "Usage:```{}```",
         "no_command": "Command `{}` was not found. Use `help` to get the list of available commands.",
-        "lfgreminder": "Set up a reminder functionality for LFG posts",
         "commands": {
             "setclan": {
                 "info": "Set Destiny 2 clan for the server. You can use either clan's name or clan's ID. The clan's name and ID will be printed on success."
@@ -286,7 +284,6 @@
         "online": "Get the list of online clan members.",
         "editlfg": "Edit LFG message",
         "autopost": "Autopost channel settings",
-        "set": "Set some info for the server",
         "lfgcleanup": "Delete expired LFG posts",
         "reglfg": "Register the channel as a place for LFG posts",
         "noslash": "Help with missing slash commands",
@@ -310,7 +307,9 @@
                     "timezone": "Tell the bot the server's timezone"
                 }
             }
-        }
+        },
+        "lfgreminder": "Set up a reminder functionality for LFG posts",
+        "set": "Set some info for the server"
     },
     "graph": {
         "percentage": "Completion percentage",
@@ -484,45 +483,19 @@
             "context_name": "Edit LFG",
             "description": "Edit LFG post"
         },
-        "Edit LFG": {
-            "name": "Edit LFG"
-        },
         "autopost": {
+            "remove": {
+                "description": "Make the bot stop posting updates in this channel"
+            },
+            "settings": {
+                "description": "Choose update types to post in this channel"
+            },
             "start": {
                 "rotations": {
                     "description": "Make the bot start posting rotation updates in this channel"
                 },
                 "changelogs": {
                     "description": "Make the bot start posting changelogs in this channel"
-                }
-            },
-            "remove": {
-                "description": "Make the bot stop posting updates in this channel"
-            },
-            "settings": {
-                "description": "Choose update types to post in this channel"
-            }
-        },
-        "set": {
-            "clan": {
-                "description": "Set a Destiny 2 clan for the server",
-                "options": {
-                    "clan_id": {
-                        "name": "clan_id",
-                        "description": "Name or id of a clan"
-                    }
-                }
-            },
-            "language": {
-                "description": "Tell the bot the server's language"
-            },
-            "timezone": {
-                "description": "Tell the bot the server's timezone",
-                "options": {
-                    "timezone": {
-                        "name": "timezone",
-                        "description": "Default timezone for the server"
-                    }
                 }
             }
         },
@@ -566,6 +539,9 @@
         "update": {
             "description": "Get updates from Bungie"
         },
+        "Edit LFG": {
+            "name": "Edit LFG"
+        },
         "lfgreminder": {
             "description": "Set up a reminder functionality for LFG posts",
             "options": {
@@ -578,6 +554,30 @@
                     "description": "Minutes before the LFG start"
                 }
             }
+        },
+        "set": {
+            "clan": {
+                "description": "Set a Destiny 2 clan for the server",
+                "options": {
+                    "clan_id": {
+                        "name": "clan_id",
+                        "description": "Name or id of a clan"
+                    }
+                }
+            },
+            "language": {
+                "description": "Tell the bot the server's language"
+            },
+            "timezone": {
+                "description": "Tell the bot the server's timezone",
+                "options": {
+                    "timezone": {
+                        "name": "timezone",
+                        "description": "Default timezone for the server"
+                    }
+                }
+            }
         }
-    }
+    },
+    "overflow_error": "Invalid time input. Please try again."
 }
