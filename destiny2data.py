@@ -2143,6 +2143,11 @@ class D2data:
                         'value': '{} ({:.2f}%)'.format(place['progress'],
                                                        place['progress'] / objective * 100)
                     })
+                    self.data[lang]['events']['fields'].append({
+                        'inline': True,
+                        'name': self.translations[lang]['msg']['next_goal'],
+                        'value': objective
+                    })
                     if str(place['objectiveHash']) in objectives.keys():
                         newrow[1] = place['progress'] / objective * 100
                         names[0] = objective_def['progressDescription']
@@ -2175,6 +2180,7 @@ class D2data:
                 ax.set_xlabel(self.translations[lang]['graph']['datefromstart'], color='#226197')
                 ax.set_ylabel(self.translations[lang]['graph']['percentage'], color='#226197')
                 ax.tick_params(colors='#bdbdff', direction='out')
+                plt.yticks([0, 20, 40, 60, 80, 100])
                 for tick in ax.get_xticklabels():
                     tick.set_color('#226197')
                 for tick in ax.get_yticklabels():
