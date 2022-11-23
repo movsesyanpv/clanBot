@@ -65,7 +65,8 @@
         "all_upd_types": "Tout activé",
         "cancel": "Annulé",
         "lostsector": "Secteur Oublié",
-        "tz_not_found": "Impossible de trouver le fuseau horaire `{timezone}`. Assurez-vous d'en choisir une parmi les variantes suggérées. Si vous ne parvenez pas à trouver votre fuseau horaire, veuillez demander de l'aide sur mon serveur d'assistance. Vous pouvez trouver le lien du serveur de support avec {support_cmd_mention}."
+        "tz_not_found": "Impossible de trouver le fuseau horaire `{timezone}`. Assurez-vous d'en choisir une parmi les variantes suggérées. Si vous ne parvenez pas à trouver votre fuseau horaire, veuillez demander de l'aide sur mon serveur d'assistance. Vous pouvez trouver le lien du serveur de support avec {support_cmd_mention}.",
+        "next_goal": "Next stage"
     },
     "lfg": {
         "go": "Go",
