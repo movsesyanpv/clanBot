@@ -2111,10 +2111,10 @@ class D2data:
 
         objectives = {'589977764': 400000000, '990898098': 260000000, '2697257462': 40000000, '2957300623': 80000000, '3453628075': 320000000, '3527414433': 200000000, '4221523416': 140000000}
 
-        if len(step) > 0:
-            step = step[0]
+        if vendor_json:
+            # step = step[0]
             for lang in langs:
-                quest_def = await self.destiny.decode_hash(step, 'DestinyInventoryItemDefinition', language=lang)
+                quest_def = await self.destiny.decode_hash(2314235473, 'DestinyInventoryItemDefinition', language=lang)
                 self.data[lang]['events'] = {
                     'thumbnail': {
                         'url': self.icon_prefix + quest_def['displayProperties']['icon']
