@@ -234,15 +234,15 @@ class ServerAdmin(commands.Cog):
         await view.wait()
         args = view.value
 
+        if args is not None:
+            data_cursor = await ctx.bot.guild_db.cursor()
+            await data_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
+                                      (args[0].lower(), ctx.guild.id))
+            await ctx.bot.guild_db.commit()
+            await data_cursor.close()
+            if ctx.guild.me.guild_permissions.change_nickname:
+                await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
         msg = ctx.bot.translations[lang]['msg']['command_is_done']
-
-        data_cursor = await ctx.bot.guild_db.cursor()
-        await data_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
-                                  (args[0].lower(), ctx.guild.id))
-        await ctx.bot.guild_db.commit()
-        await data_cursor.close()
-        if ctx.guild.me.guild_permissions.change_nickname:
-            await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
         await ctx.interaction.edit_original_response(content=msg, view=None)
 
     @set.command(name='clan',

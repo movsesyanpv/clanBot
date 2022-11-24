@@ -643,7 +643,7 @@ class LFGModal(discord.ui.Modal):
 
         await view.wait()
         if view.value is None:
-            await interaction.edit_original_response(content='Timed out')
+            await interaction.edit_original_response(content='Timed out', view=None, embed=None)
             return
         elif not view.value:
             return
