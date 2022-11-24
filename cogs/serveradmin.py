@@ -41,7 +41,7 @@ class ServerAdmin(commands.Cog):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
         await ctx.bot.remove_channel(ctx.channel.id)
-        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
+        await ctx.interaction.edit_original_response(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
 
     @staticmethod
     async def post_selection(ctx, registration=False):
@@ -86,7 +86,7 @@ class ServerAdmin(commands.Cog):
                 notifiers.append(ch[0])
 
             if not list(set(notifiers).intersection(channels)):
-                await ctx.interaction.edit_original_message(
+                await ctx.interaction.edit_original_response(
                     content=ctx.bot.translations[lang]['msg']['no_regular_reg'], view=None)
                 await data_cursor.close()
                 return 0
@@ -97,12 +97,12 @@ class ServerAdmin(commands.Cog):
             args = view.value
 
             if args is None:
-                await ctx.interaction.edit_original_message(
+                await ctx.interaction.edit_original_response(
                     content=ctx.bot.translations[lang]['msg']['timed_out'], view=None)
                 await data_cursor.close()
                 return 1
             if args == 'cancel':
-                await ctx.interaction.edit_original_message(
+                await ctx.interaction.edit_original_response(
                     content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
                 await data_cursor.close()
                 return -1
@@ -138,7 +138,7 @@ class ServerAdmin(commands.Cog):
         status = await self.post_selection(ctx)
 
         if status is None:
-            await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
+            await ctx.interaction.edit_original_response(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
 
     @register.command(
         description='Make the bot start posting rotation updates in this channel',
@@ -154,7 +154,7 @@ class ServerAdmin(commands.Cog):
 
         await self.post_selection(ctx, True)
 
-        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
+        await ctx.interaction.edit_original_response(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
         await ctx.bot.force_update(['daily', 'weekly'], get=False, channels=[ctx.channel.id], forceget=False)
         return
 
@@ -169,7 +169,7 @@ class ServerAdmin(commands.Cog):
         if not await message_permissions(ctx, lang):
             return
         await ctx.bot.register_channel(ctx, 'updates')
-        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
+        await ctx.interaction.edit_original_response(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
         return
 
     @slash_command(name='lfgcleanup',
@@ -217,7 +217,7 @@ class ServerAdmin(commands.Cog):
         if not await message_permissions(ctx, lang):
             return
         await ctx.bot.remove_channel(ctx.channel.id)
-        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'],
+        await ctx.interaction.edit_original_response(content=ctx.bot.translations[lang]['msg']['command_is_done'],
                                                     view=None)
 
     @set.command(
@@ -234,16 +234,16 @@ class ServerAdmin(commands.Cog):
         await view.wait()
         args = view.value
 
+        if args is not None:
+            data_cursor = await ctx.bot.guild_db.cursor()
+            await data_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
+                                      (args[0].lower(), ctx.guild.id))
+            await ctx.bot.guild_db.commit()
+            await data_cursor.close()
+            if ctx.guild.me.guild_permissions.change_nickname:
+                await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
         msg = ctx.bot.translations[lang]['msg']['command_is_done']
-
-        data_cursor = await ctx.bot.guild_db.cursor()
-        await data_cursor.execute('''UPDATE language SET lang=? WHERE server_id=?''',
-                                  (args[0].lower(), ctx.guild.id))
-        await ctx.bot.guild_db.commit()
-        await data_cursor.close()
-        if ctx.guild.me.guild_permissions.change_nickname:
-            await ctx.guild.me.edit(nick=ctx.bot.translations[args[0].lower()]['nick'], reason='language change')
-        await ctx.interaction.edit_original_message(content=msg, view=None)
+        await ctx.interaction.edit_original_response(content=msg, view=None)
 
     @set.command(name='clan',
                  description='Set a Destiny 2 clan for the server',
@@ -399,7 +399,7 @@ class ServerAdmin(commands.Cog):
             args = view.value
 
             if args is None:
-                await ctx.interaction.edit_original_message(
+                await ctx.interaction.edit_original_response(
                     content=ctx.bot.translations[lang]['msg']['timed_out'], view=None)
                 return
 
@@ -414,14 +414,14 @@ class ServerAdmin(commands.Cog):
             regular_types = ctx.bot.all_types.copy()
             if not list(set(notifiers).intersection(channels)):
                 if list(set(regular_types).intersection(args)):
-                    await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['no_regular_reg'], view=None)
+                    await ctx.interaction.edit_original_response(content=ctx.bot.translations[lang]['msg']['no_regular_reg'], view=None)
                     await data_cursor.close()
                     return
             else:
                 if list(set(regular_types).intersection(args)):
                     correct_ch = True
         await ctx.bot.force_update(args, get=get, channels=channels, forceget=get)
-        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
+        await ctx.interaction.edit_original_response(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
         await data_cursor.close()
         return
 
@@ -449,7 +449,7 @@ class ServerAdmin(commands.Cog):
             pass
         await guild_cursor.close()
 
-        await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'])
+        await ctx.interaction.edit_original_response(content=ctx.bot.translations[lang]['msg']['command_is_done'])
 
     @set.command(
         name='timezone',
