@@ -65,7 +65,8 @@
         "all_upd_types": "Tout activé",
         "cancel": "Annulé",
         "lostsector": "Secteur Oublié",
-        "tz_not_found": "Unable to found the timezone `{timezone}`. Please make sure you choose one from the suggested variants. If you are unable to find your timezone, please ask for help at my support server. You can find the support server link with {support_cmd_mention}."
+        "tz_not_found": "Impossible de trouver le fuseau horaire `{timezone}`. Assurez-vous d'en choisir une parmi les variantes suggérées. Si vous ne parvenez pas à trouver votre fuseau horaire, veuillez demander de l'aide sur mon serveur d'assistance. Vous pouvez trouver le lien du serveur de support avec {support_cmd_mention}.",
+        "next_goal": "Next stage"
     },
     "lfg": {
         "go": "Go",
@@ -102,7 +103,7 @@
         "edit_modal_title": "Édition d'un LFG",
         "lfg_choice_select": "#{} de {} @ {}",
         "time_modal": "Quand allez vous démarrez ?",
-        "time_placeholder": "Le format est : `%d-%m-%Y %H:%M%z`.",
+        "time_placeholder": "Le format est : `jj-mm-aaaa hh:mmzz`.",
         "length_modal": "Durée prévue pour cette activité ?",
         "length_placeholder": "Exemple: 1h 30m pour 1 heure et 30 minutes.",
         "role_manual": "Nom des rôles à mentionner, séparé par `;`.\nTapez `-` pour un choix automatique des rôles.",
@@ -303,12 +304,12 @@
                 "subcommands": {
                     "language": "Selectionner la langue du serveur",
                     "clan": "Définir le clan Destiny 2 sur le serveur",
-                    "timezone": "Tell the bot the server's timezone"
+                    "timezone": "Indiquez au bot le fuseau horaire du serveur"
                 }
             }
         },
         "lfgreminder": "Paramétrer une fonction \"rappel\" pour les activités LFG",
-        "set": "Set some info for the server"
+        "set": "Définissez des informations pour le serveur"
     },
     "graph": {
         "percentage": "Pourcentage d'achèvement",
@@ -422,6 +423,10 @@
         "alerts": {
             "label": "Alertes",
             "description": "Alertes a propos de la maintenance ou autre."
+        },
+        "events": {
+            "label": "Community Events",
+            "description": "Hourly updates of community event progress"
         }
     },
     "clan_info": {
@@ -564,11 +569,11 @@
                 "description": "Selectionner la langue du serveur"
             },
             "timezone": {
-                "description": "Tell the bot the server's timezone",
+                "description": "Indiquez au bot le fuseau horaire du serveur",
                 "options": {
                     "timezone": {
-                        "name": "timezone",
-                        "description": "Default timezone for the server"
+                        "name": "fuseau_horaire",
+                        "description": "Fuseau horaire par défaut du serveur"
                     }
                 }
             }

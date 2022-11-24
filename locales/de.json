@@ -65,7 +65,8 @@
         "all_upd_types": "Enable all",
         "cancel": "Cancel",
         "lostsector": "Lost Sector",
-        "tz_not_found": "Unable to found the timezone `{timezone}`. Please make sure you choose one from the suggested variants. If you are unable to find your timezone, please ask for help at my support server. You can find the support server link with {support_cmd_mention}."
+        "tz_not_found": "Unable to found the timezone `{timezone}`. Please make sure you choose one from the suggested variants. If you are unable to find your timezone, please ask for help at my support server. You can find the support server link with {support_cmd_mention}.",
+        "next_goal": "Current stage"
     },
     "lfg": {
         "go": "Los",
@@ -422,6 +423,10 @@
         "alerts": {
             "label": "Alerts",
             "description": "Alerts about maintenance and other stuff"
+        },
+        "events": {
+            "label": "Community Events",
+            "description": "Hourly updates of community event progress"
         }
     },
     "clan_info": {

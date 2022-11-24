@@ -629,10 +629,14 @@ class LFGModal(discord.ui.Modal):
             loc = 'zh'
         else:
             loc = lang
+        if await self.bot_loc.bot.guild_timezone_is_set(interaction.guild_id):
+            time_str = discord.utils.format_dt(ts)
+        else:
+            time_str = '{} {}'.format(
+                format_datetime(ts, 'medium', tzinfo=ts.tzinfo, locale=Locale.parse(loc, sep='-')), args['timezone'])
         check_embed.add_field(
             name=self.bot_loc.bot.translations[lang]['lfge']['date'],
-            value='{} {}'.format(format_datetime(ts, 'medium', tzinfo=ts.tzinfo, locale=Locale.parse(loc, sep='-')),
-                                 args['timezone'])
+            value=time_str
         )
 
         await interaction.edit_original_response(content=check_msg, embed=check_embed, view=view)
