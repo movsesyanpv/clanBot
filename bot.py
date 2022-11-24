@@ -41,7 +41,7 @@ class ClanBot(commands.Bot):
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']
     daily_rotations = ('strikes', 'spider', 'banshee', 'ada', 'mods', 'lostsector')
     weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire')
-    embeds_with_img = ['thelie']
+    embeds_with_img = ['events']
 
     sched = AsyncIOScheduler(timezone='UTC')
     guild_db = ''
@@ -74,7 +74,7 @@ class ClanBot(commands.Bot):
         self.langs = list(set(self.langs).intersection(set(self.args.lang)))
         try:
             self.data = d2.D2data(self.translations, self.langs, self.args.oauth, self.args.production,
-                                  (self.args.cert, self.args.key))
+                                  (self.args.cert, self.args.key), self.loop)
         except RuntimeError:
             return
         self.raid = lfg.LFG(self)
@@ -196,6 +196,12 @@ class ClanBot(commands.Bot):
         await self.universal_update(self.data.get_global_alerts, 'alerts', 86400)
         self.logger.info('Finished updating alerts')
 
+    @tasks.loop(time=[time(hour=t, minute=0, second=0) for t in range(24)])
+    async def update_event(self):
+        self.logger.info('Updating event')
+        await self.universal_update(self.data.get_event_progress, 'events', 86400)
+        self.logger.info('Finished updating event')
+
     @tasks.loop(time=time(hour=17, minute=1, second=35), reconnect=True)
     async def update_manifest(self):
         self.logger.info('Updating manifest')
@@ -223,6 +229,7 @@ class ClanBot(commands.Bot):
         self.update_trials.start()
 
         self.update_alerts.start()
+        self.update_event.start()
 
     async def set_up_guild_db(self):
         self.guild_db = await aiosqlite.connect('guild.db')
@@ -346,7 +353,7 @@ class ClanBot(commands.Bot):
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                # await self.universal_update(self.data.get_the_lie_progress, 'thelie', 3600, channels=channels, post=post, get=get, forceget=forceget)
+                await self.universal_update(self.data.get_event_progress, 'events', 3600, channels=channels, post=post, get=get, forceget=forceget)
                 pass
         # if 'gambit' in upd_type:
         #     if channels is None:
@@ -378,6 +385,7 @@ class ClanBot(commands.Bot):
         self.get_channels()
         await self.update_history()
         await self.update_alert_preferences()
+        await self.update_guild_timezones()
         await self.data.get_chars()
         # await self.update_metrics()
         if self.args.forceupdate:
@@ -437,16 +445,24 @@ class ClanBot(commands.Bot):
 
     async def on_guild_join(self, guild: discord.Guild) -> None:
         self.logger.info('added to {}'.format(guild.name))
+        user = guild.owner
         try:
-            if guild.owner.dm_channel is None:
-                await guild.owner.create_dm()
-            start = await guild.owner.dm_channel.send('Thank you for inviting me to your guild!\n')
+            async for entry in guild.audit_logs(action=discord.AuditLogAction.bot_add):
+                if entry.target.id == guild.me.id:
+                    user = entry.user
+                    break
+        except (discord.Forbidden, discord.HTTPException):
+            pass
+        try:
+            if user.dm_channel is None:
+                await user.create_dm()
+            start = await user.dm_channel.send('Thank you for inviting me to your guild!\n')
             prefixes = get_prefix(self, start)
             prefix = '?'
             for i in prefixes:
                 if '@' not in i:
                     prefix = i
-            await guild.owner.dm_channel.send('The `/help` command will get you the command list.\n'
+            await user.dm_channel.send('The `/help` command will get you the command list.\n'
                                               'To set up automatic Destiny 2 information updates use `/regnotifier` or `/autopost start` command in the channel you want me to post to.\n'
                                               'Please set my language for the guild with `/setlang`, sent in one of the guild\'s chats. Right now it\'s `en`. Available languages are `{}`.\n'
                                               'To use `/top` command you\'ll have to set up a D2 clan with the `/setclan` command.\n'
@@ -459,6 +475,7 @@ class ClanBot(commands.Bot):
         await self.update_prefixes()
         await self.update_langs()
         await self.update_alert_preferences()
+        await self.update_guild_timezones()
 
     async def on_guild_remove(self, guild: discord.Guild) -> None:
         cursor = await self.guild_db.cursor()
@@ -470,6 +487,7 @@ class ClanBot(commands.Bot):
         await cursor.execute('''DELETE FROM notifiers WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM prefixes WHERE server_id=?''', (guild.id,))
         await cursor.execute('''DELETE FROM lfg_alerts WHERE server_id=?''', (guild.id,))
+        await cursor.execute('''DELETE FROM timezones WHERE server_id=?''', (guild.id,))
         await self.guild_db.commit()
         await self.raid.purge_guild(guild.id)
         await cursor.close()
@@ -862,6 +880,54 @@ class ClanBot(commands.Bot):
                 pass
         await cursor.close()
 
+    async def update_guild_timezones(self) -> None:
+        cursor = await self.guild_db.cursor()
+        for server in self.guilds:
+            try:
+                await cursor.execute('''CREATE TABLE timezones (server_id integer, server_name text, timezone text)''')
+                await cursor.execute('''CREATE UNIQUE INDEX timezone ON timezones(server_id)''')
+                await cursor.execute('''INSERT or IGNORE INTO timezones (server_id, server_name) VALUES (?,?)''', [server.id, server.name])
+            except aiosqlite.OperationalError:
+                pass
+            try:
+                await cursor.execute('''INSERT or IGNORE INTO timezones (server_id, server_name) VALUES (?,?)''',
+                                     [server.id, server.name])
+            except aiosqlite.OperationalError:
+                pass
+
+        await self.guild_db.commit()
+        await cursor.close()
+
+    async def get_guild_timezone(self, guild_id: int) -> str:
+        if guild_id is None:
+            return 'UTC+03:00'
+
+        cursor = await self.guild_db.cursor()
+
+        data = await cursor.execute('''SELECT timezone FROM timezones WHERE server_id=?''', (guild_id,))
+        data = await data.fetchone()
+
+        await cursor.close()
+        if data[0] is None:
+            return 'UTC+03:00'
+        else:
+            return data[0]
+
+    async def guild_timezone_is_set(self, guild_id: int) -> bool:
+        if guild_id is None:
+            return False
+
+        cursor = await self.guild_db.cursor()
+
+        data = await cursor.execute('''SELECT timezone FROM timezones WHERE server_id=?''', (guild_id,))
+        data = await data.fetchone()
+
+        await cursor.close()
+        if data[0] is None:
+            return False
+        else:
+            return True
+
     async def universal_update(self, getter: Callable, name: str, time_to_delete: float = None,
                                channels: List[int] = None, post: bool = True, get: bool = True,
                                forceget: bool = False) -> None:
@@ -906,7 +972,7 @@ class ClanBot(commands.Bot):
         # await asyncio.sleep(delay)
         # self.logger.info('ws limit status for {} in {}: {}'.format(upd_type, channel_id, self.is_ws_ratelimited()))
         cursor = await self.guild_db.cursor()
-        # if channel_id == 1028023408044281876:
+        # if channel_id == 647890554943963136:
         #     self.logger.info('{} has got the db cursor'.format(upd_type))
         channel = self.get_channel(channel_id)
         if channel is None:
@@ -932,7 +998,7 @@ class ClanBot(commands.Bot):
             return [channel_id, 'no permission to send messages ({})'.format(frameinfo.lineno + 1)]
         lang = self.guild_lang(channel.guild.id)
         # print('delay is {}'.format(delay))
-        # if channel_id == 1028023408044281876:
+        # if channel_id == 647890554943963136:
         #     self.logger.info('{} has got the channel'.format(upd_type))
 
         if not self.args.nomessage:
@@ -948,7 +1014,7 @@ class ClanBot(commands.Bot):
                     frameinfo = getframeinfo(currentframe())
                     return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
                 embed = discord.Embed.from_dict(src_dict[lang][upd_type])
-        # if channel_id == 1028023408044281876:
+        # if channel_id == 647890554943963136:
         #     self.logger.info('{} has created the embed'.format(upd_type))
 
         hist = 0
@@ -987,7 +1053,7 @@ class ClanBot(commands.Bot):
                 # self.guild_db.commit()
             except aiosqlite.OperationalError:
                 await self.update_history()
-        # if channel_id == 1028023408044281876:
+        # if channel_id == 647890554943963136:
         #     self.logger.info('{} has got the history'.format(upd_type))
 
         try:
@@ -1007,7 +1073,7 @@ class ClanBot(commands.Bot):
                 frameinfo = getframeinfo(currentframe())
                 return [channel_id, 'Aborted due to post preferences ({})'.format(frameinfo.lineno + 1)]
 
-        # if channel_id == 1028023408044281876:
+        # if channel_id == 647890554943963136:
         #     self.logger.info('{} fetching history'.format(upd_type))
         if hist and not self.args.noclear:
             try:
@@ -1064,7 +1130,7 @@ class ClanBot(commands.Bot):
                 #                           format(upd_type, channel.name, server.name))
             except discord.Forbidden:
                 pass
-        # if channel_id == 1028023408044281876:
+        # if channel_id == 647890554943963136:
         #     self.logger.info('{} deletion is complete'.format(upd_type))
         if type(embed) == list:
             hist = []
@@ -1092,6 +1158,8 @@ class ClanBot(commands.Bot):
         else:
             if channel.permissions_for(server.me).embed_links:
                 if upd_type in self.embeds_with_img:
+                    if not channel.permissions_for(server.me).attach_files:
+                        image = None
                     if channel.type != discord.ChannelType.news:
                         # await asyncio.sleep(delay)
                         message = await channel.send(file=image, embed=embed, delete_after=time_to_delete)
@@ -1108,8 +1176,8 @@ class ClanBot(commands.Bot):
             else:
                 # await asyncio.sleep(delay)
                 message = await channel.send(self.translations[lang]['msg']['no_embed_links'])
-            # if channel_id == 1028023408044281876:
-            #     self.logger.info('{} has sent the message'.format(upd_type))
+            # if channel_id == 647890554943963136:
+            #     self.logger.info('{} has sent the message {}'.format(upd_type, message.id))
             hist = message.id
             if channel.type == discord.ChannelType.news:
                 try:

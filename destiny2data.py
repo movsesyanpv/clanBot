@@ -11,13 +11,11 @@ import aiosqlite
 import matplotlib.pyplot as plt
 import csv
 import codecs
+import aiomysql
 import mariadb
 import asyncio
 import tracemalloc
-
-import logging
-import logging_loki
-from multiprocessing import Queue
+import warnings
 
 from typing import Optional, Union, List
 
@@ -70,11 +68,9 @@ class D2data:
 
     oauth = ''
 
-    handler: logging_loki.LokiQueueHandler
+    data_pool: aiomysql.Pool
 
-    logger: logging.Logger
-
-    def __init__(self, translations, lang, is_oauth, prod, context, **options):
+    def __init__(self, translations, lang, is_oauth, prod, context, loop=None, **options):
         super().__init__(**options)
         self.translations = translations
         self.is_oauth = is_oauth
@@ -106,17 +102,6 @@ class D2data:
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
-
-        self.handler = logging_loki.LokiQueueHandler(
-            Queue(-1),
-            url="http://{}:3100/loki/api/v1/push".format(self.api_data['db_host']),
-            tags={"application": "Bungie-request"},
-            version="1",
-        )
-
-        self.logger = logging.getLogger("bungie-requests")
-        self.logger.addHandler(self.handler)
-
         asyncio.run(self.set_up_cache(lang))
         asyncio.run(self.load_data(lang))
         try:
@@ -128,14 +113,9 @@ class D2data:
         except mariadb.ProgrammingError:
             pass
         # self.cache_db.auto_reconnect = True
-        try:
-            self.data_pool = mariadb.ConnectionPool(pool_name='data', pool_size=10, pool_reset_connection=False,
-                                                    host=self.api_data['db_host'], user=self.api_data['cache_login'],
-                                                    password=self.api_data['pass'], port=self.api_data['db_port'],
-                                                    database=self.api_data['data_db'])
-            # self.data_pool.pool_reset_connection = True
-        except mariadb.ProgrammingError:
-            pass
+        warnings.filterwarnings('ignore', module=r"aiomysql")
+        self.ev_loop = loop
+        asyncio.run(self.set_up_data(loop))
         # self.data_db.auto_reconnect = True
 
     async def set_up_cache(self, lang: List[str]) -> None:
@@ -168,6 +148,16 @@ class D2data:
             pass
         await data_cursor.close()
 
+    async def set_up_data(self, loop) -> None:
+        try:
+            self.data_pool = await aiomysql.create_pool(minsize=0, maxsize=0, host=self.api_data['db_host'],
+                                                        user=self.api_data['cache_login'],
+                                                        password=self.api_data['pass'], port=self.api_data['db_port'],
+                                                        db=self.api_data['data_db'], pool_recycle=60, loop=loop)
+            # self.data_pool.pool_reset_connection = True
+        except aiomysql.ProgrammingError:
+            pass
+
     async def get_chars(self) -> None:
         platform = 0
         membership_id = ''
@@ -177,7 +167,6 @@ class D2data:
         except FileNotFoundError:
             membership_url = 'https://www.bungie.net/platform/User/GetMembershipsForCurrentUser/'
             search_resp = await self.session.get(url=membership_url, headers=self.headers)
-            self.logger.info('Got chars', extra={"tags": {"service": "clanBot"}})
             search_json = await search_resp.json()
             self.char_info['membershipid'] = search_json['Response']['primaryMembershipId']
             membership_id = search_json['Response']['primaryMembershipId']
@@ -227,12 +216,10 @@ class D2data:
             'client_secret': self.api_data['secret']
         }
         r = await self.session.post('https://www.bungie.net/platform/app/oauth/token/', data=params, headers=headers)
-        self.logger.info('auth token attempt', extra={"tags": {"service": "clanBot"}})
         while not r:
             print("re_token get error", json.dumps(r.json(), indent=4, sort_keys=True) + "\n")
             r = await self.session.post('https://www.bungie.net/platform/app/oauth/token/', data=params,
                                         headers=headers)
-            self.logger.info('auth token attempt', extra={"tags": {"service": "clanBot"}})
             if not r:
                 r_json = await r.json()
                 if not r_json['error_description'] == 'DestinyThrottledByGameServer':
@@ -262,15 +249,13 @@ class D2data:
 
     async def get_bungie_json(self, name: str, url: str, params: Optional[dict] = None, lang: Optional[str] = None,
                               string: Optional[str] = None, change_msg: bool = True, is_get: bool = True,
-                              body: Optional[dict] = None) -> Union[dict, bool, None]:
+                              body: Optional[dict] = None) -> Union[dict, None]:
 
         async def request(url, params, headers, is_get, json=None):
             if is_get:
                 resp = await self.session.get(url, params=params, headers=headers)
-                self.logger.info('get request', extra={"tags": {"service": "clanBot"}})
             else:
                 resp = await self.session.post(url, params=params, headers=headers, json=json)
-                self.logger.info('post request', extra={"tags": {"service": "clanBot"}})
             return resp
 
         if lang is None:
@@ -871,47 +856,49 @@ class D2data:
     async def write_to_db(self, lang: str, id: str, response: list, size: str = '', name: str = '',
                             template: str = 'table_items.html', order: int = 0, type: str = 'daily',
                             annotations: list = []) -> None:
-        while True:
+
+        no_connection = True
+        while no_connection:
             try:
-                data_db = self.data_pool.get_connection()
-                data_db.auto_reconnect = True
-                break
-            except mariadb.PoolError:
-                try:
-                    conn = mariadb.connect(host=self.api_data['db_host'],
-                                           user=self.api_data['cache_login'],
-                                           password=self.api_data['pass'],
-                                           port=self.api_data['db_port'],
-                                           database=self.api_data['data_db'])
-                    self.data_pool.add_connection(conn)
-                except mariadb.PoolError:
-                    pass
-                await asyncio.sleep(0.125)
-        data_cursor = data_db.cursor()
+                conn = await self.data_pool.acquire()
+                no_connection = False
+            except aiomysql.OperationalError:
+                await asyncio.sleep(1)
+            except RuntimeError:
+                await asyncio.sleep(10)
+                conn = await self.data_pool.acquire()
+                no_connection = False
 
+        cur = await conn.cursor()
         try:
-            data_cursor.execute('''CREATE TABLE `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text, annotations text)'''.format(lang))
-            data_cursor.execute('''CREATE UNIQUE INDEX `data_id_{}` ON `{}`(id(256))'''.format(lang, lang))
-        except mariadb.Error:
+            await cur.execute(
+                '''CREATE TABLE IF NOT EXISTS `{}` (id text, timestamp_int integer, json json, timestamp text, size text, name text, template text, place integer, type text, annotations text)'''.format(
+                    lang))
+            await cur.execute('''CREATE UNIQUE INDEX IF NOT EXISTS `data_id_{}` ON `{}`(id(256))'''.format(lang, lang))
+        except aiomysql.Error:
             pass
 
         try:
-            data_cursor.execute('''INSERT IGNORE INTO `{}` VALUES (?,?,?,?,?,?,?,?,?,?)'''.format(lang),
+            await cur.execute('''INSERT IGNORE INTO `{}` VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'''.format(lang),
                                 (id, datetime.utcnow().timestamp(), json.dumps({'data': response}),
-                                 datetime.utcnow().isoformat(), size, name, template, order, type, str(annotations)))
-            data_db.commit()
-        except mariadb.Error:
+                                 datetime.utcnow().isoformat(), size, name, template, order, type,
+                                 str(annotations)))
+            await conn.commit()
+        except aiomysql.Error:
             pass
 
         try:
-            data_cursor.execute('''UPDATE `{}` SET timestamp_int=?, json=?, timestamp=?, name=?, size=?, template=?, place=?, type=?, annotations=? WHERE id=?'''.format(lang),
-                                (datetime.utcnow().timestamp(), json.dumps({'data': response}),
-                                 datetime.utcnow().isoformat(), name, size, template, order, type, str(annotations), id))
-            data_db.commit()
-        except mariadb.Error:
+            await cur.execute(
+                '''UPDATE `{}` SET timestamp_int=%s, json=%s, timestamp=%s, name=%s, size=%s, template=%s, place=%s, type=%s, annotations=%s WHERE id=%s'''.format(
+                    lang),
+                (datetime.utcnow().timestamp(), json.dumps({'data': response}),
+                 datetime.utcnow().isoformat(), name, size, template, order, type, str(annotations), id))
+            await conn.commit()
+        except aiomysql.Error:
             pass
-        data_cursor.close()
-        data_db.close()
+        await conn.commit()
+        await cur.close()
+        self.data_pool.release(conn)
 
     async def write_bot_data(self, id: str, langs: List[str]) -> None:
         cursor = await self.bot_data_db.cursor()
@@ -1106,6 +1093,8 @@ class D2data:
                 if item_def['itemType'] == 19:
                     mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
                     fields[-1]['value'] = '{}{}\n'.format(fields[-1]['value'], item_def['displayProperties']['name'])
+            for i in range(len(fields)):
+                fields[i]['value'] = fields[i]['value'][:-1]
             self.data[lang]['daily_mods']['fields'] = fields
         await self.write_bot_data('daily_mods', langs)
 
@@ -1968,11 +1957,11 @@ class D2data:
                     info = {
                         'inline': True,
                         'name': r_json['displayProperties']['name'].replace(local_types['adept'], "").
-                            replace(local_types['empire_hunt'], ""),
+                            replace(local_types['empire_hunt'], "").lstrip(),
                         'value': r_json['displayProperties']['description']
                     }
                     db_data.append({
-                        'name': info['name'].replace(local_types['empire_hunt'], '').replace('\"', ''),
+                        'name': info['name'].replace(local_types['empire_hunt'], '').replace('\"', '').lstrip(),
                         'description': info['value']
                     })
                     self.data[lang]['empire_hunts']['fields'].append(info)
@@ -2099,20 +2088,34 @@ class D2data:
                                    type='weekly')
         await self.write_bot_data('cruciblerotators', langs)
 
-    async def get_the_lie_progress(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
+    async def get_event_progress(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'.format(self.char_info['platform'],
                                                                                             self.char_info[
                                                                                                 'membershipid'],
                                                                                             self.char_info['charid'][0])
         progression_json = await self.get_cached_json('objectives_{}'.format(self.char_info['charid'][0]),
                                                       'progressions', url, {'components': 301}, force=forceget)
+
+        vendor_url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/371367417/'.format(self.char_info['platform'],
+                                                                                                                                     self.char_info['membershipid'],
+                                                                                                                                     self.char_info['charid'][0])
+
+        vendor_json = await self.get_cached_json('event vendor', 'event vendor', vendor_url, {'components': 1200}, force=forceget)
+
         resp_time = progression_json['timestamp']
         progress = []
 
-        if '1797229574' in progression_json['Response']['uninstancedItemComponents']['objectives']['data']:
+        steps = ['2314235473', '3765635756', '3782413343', '3832746200', '3849523787', '3866301502', '3883079057', '3899856644', '3916634359', '3950189533']
+
+        step = list(set(steps).intersection(set(progression_json['Response']['uninstancedItemComponents']['objectives']['data'])))
+
+        objectives = {'589977764': 400000000, '990898098': 260000000, '2697257462': 40000000, '2957300623': 80000000, '3453628075': 320000000, '3527414433': 200000000, '4221523416': 140000000}
+
+        if vendor_json:
+            # step = step[0]
             for lang in langs:
-                quest_def = await self.destiny.decode_hash(1797229574, 'DestinyInventoryItemDefinition', language=lang)
-                self.data[lang]['thelie'] = {
+                quest_def = await self.destiny.decode_hash(2314235473, 'DestinyInventoryItemDefinition', language=lang)
+                self.data[lang]['events'] = {
                     'thumbnail': {
                         'url': self.icon_prefix + quest_def['displayProperties']['icon']
                     },
@@ -2125,87 +2128,84 @@ class D2data:
                 }
                 newrow = [resp_time, 0, 0, 0]
                 names = ['', '', '']
-                for place in \
-                progression_json['Response']['uninstancedItemComponents']['objectives']['data']['1797229574'][
-                    'objectives']:
-                    objective_def = await self.destiny.decode_hash(place['objectiveHash'], 'DestinyObjectiveDefinition',
-                                                                   language=lang)
-                    if place['complete']:
-                        self.data[lang]['thelie']['fields'].append({
-                            'inline': True,
-                            'name': objective_def['progressDescription'],
-                            'value': self.translations[lang]['msg']['complete']
-                        })
-                        if place['objectiveHash'] == 1851115127:
-                            newrow[1] = 100
-                            names[0] = objective_def['progressDescription']
-                        elif place['objectiveHash'] == 1851115126:
-                            newrow[2] = 100
-                            names[1] = objective_def['progressDescription']
-                        elif place['objectiveHash'] == 1851115125:
-                            newrow[3] = 100
-                            names[2] = objective_def['progressDescription']
-                    else:
-                        self.data[lang]['thelie']['fields'].append({
-                            'inline': True,
-                            'name': objective_def['progressDescription'],
-                            'value': '{} ({:.2f}%)'.format(place['progress'],
-                                                           place['progress'] / place['completionValue'] * 100)
-                        })
-                        if place['objectiveHash'] == 1851115127:
-                            newrow[1] = place['progress'] / place['completionValue'] * 100
-                            names[0] = objective_def['progressDescription']
-                        elif place['objectiveHash'] == 1851115126:
-                            newrow[2] = place['progress'] / place['completionValue'] * 100
-                            names[1] = objective_def['progressDescription']
-                        elif place['objectiveHash'] == 1851115125:
-                            newrow[3] = place['progress'] / place['completionValue'] * 100
-                            names[2] = objective_def['progressDescription']
-                date = []
-                edz = []
-                moon = []
-                io = []
-                with open('thelie.csv', 'r') as csvfile:
-                    plots = csv.reader(csvfile, delimiter=',')
-                    for row in plots:
-                        if len(row) < 4:
-                            continue
-                        diff = datetime.fromisoformat(row[0]) - datetime.fromisoformat('2020-05-12T17:00:00')
+                place = {'objectiveHash': 589977764}
+                # progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
+                #     'objectives'] = [progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
+                #     'objectives'][0]]
+                # for place in \
+                # progression_json['Response']['uninstancedItemComponents']['objectives']['data'][str(step)][
+                #     'objectives']:
+                objective_def = await self.destiny.decode_hash(place['objectiveHash'], 'DestinyObjectiveDefinition',
+                                                               language=lang)
+                #     if place['progress'] >= place['completionValue']:
+                #         values = list(objectives.values())
+                #         values.sort()
+                #         objective = min([i for i in values if place['progress'] < i])
+                #     else:
+                #         objective = objectives[str(place['objectiveHash'])]
+                objective = 400000000
+
+                try:
+                    progress = vendor_json['Response']['stringVariables']['data']['integerValuesByHash']['3077818543']
+
+                    self.data[lang]['events']['fields'].append({
+                        'inline': True,
+                        'name': objective_def['progressDescription'],
+                        'value': '{} ({:.2f}%)'.format(progress,
+                                                       progress / objective * 100)
+                    })
+                    self.data[lang]['events']['fields'].append({
+                        'inline': True,
+                        'name': self.translations[lang]['msg']['next_goal'],
+                        'value': objective
+                    })
+                    if str(place['objectiveHash']) in objectives.keys():
+                        newrow[1] = progress / objective * 100
+                        names[0] = objective_def['progressDescription']
+                    date = []
+                    edz = []
+                    try:
+                        with open('rising_tide.csv', 'r') as csvfile:
+                            plots = csv.reader(csvfile, delimiter=',')
+                            for row in plots:
+                                if len(row) < 4:
+                                    continue
+                                diff = datetime.fromisoformat(row[0]) - datetime.fromisoformat('2022-11-22T17:00:00')
+                                date.append(diff.total_seconds() / 86400)
+                                edz.append(float(row[1]))
+                            csvfile.close()
+                        diff = datetime.fromisoformat(newrow[0]) - datetime.fromisoformat('2022-11-22T17:00:00')
                         date.append(diff.total_seconds() / 86400)
-                        edz.append(float(row[1]))
-                        moon.append(float(row[2]))
-                        io.append(float(row[3]))
-                    csvfile.close()
-                diff = datetime.fromisoformat(newrow[0]) - datetime.fromisoformat('2020-05-12T17:00:00')
-                date.append(diff.total_seconds() / 86400)
-                edz.append(float(newrow[1]))
-                moon.append(float(newrow[2]))
-                io.append(float(newrow[3]))
-                with open('thelie.csv', 'a') as csvfile:
-                    writer = csv.writer(csvfile, delimiter=',')
-                    writer.writerow(newrow)
-                    csvfile.close()
-                fig = plt.figure()
-                ax = plt.axes()
-                for spine in ax.spines.values():
-                    spine.set_visible(False)
-                plt.plot(date, edz, label=names[0])
-                plt.plot(date, moon, label=names[1])
-                plt.plot(date, io, label=names[2])
-                ax.set_xlabel(self.translations[lang]['graph']['datefromstart'], color='#226197')
-                ax.set_ylabel(self.translations[lang]['graph']['percentage'], color='#226197')
-                ax.tick_params(colors='#bdbdff', direction='out')
-                for tick in ax.get_xticklabels():
-                    tick.set_color('#226197')
-                for tick in ax.get_yticklabels():
-                    tick.set_color('#226197')
-                plt.grid(color='#bdbdff', linestyle='solid', axis='y')
-                plt.legend()
-                plt.savefig('thelie-{}.png'.format(lang), format='png', transparent=True)
-                plt.close(fig)
-                self.data[lang]['thelie']['image'] = {
-                    'url': 'attachment://thelie-{}.png'.format(lang)
-                }
+                        edz.append(float(newrow[1]))
+                    except FileNotFoundError:
+                        pass
+                    with open('rising_tide.csv', 'a') as csvfile:
+                        writer = csv.writer(csvfile, delimiter=',')
+                        writer.writerow(newrow)
+                        csvfile.close()
+                    fig = plt.figure()
+                    ax = plt.axes()
+                    for spine in ax.spines.values():
+                        spine.set_visible(False)
+                    plt.plot(date, edz, label=names[0])
+                    ax.set_xlabel(self.translations[lang]['graph']['datefromstart'], color='#226197')
+                    ax.set_ylabel(self.translations[lang]['graph']['percentage'], color='#226197')
+                    ax.tick_params(colors='#bdbdff', direction='out')
+                    # plt.yticks([0, 20, 40, 60, 80, 100])
+                    for tick in ax.get_xticklabels():
+                        tick.set_color('#226197')
+                    for tick in ax.get_yticklabels():
+                        tick.set_color('#226197')
+                    plt.grid(color='#bdbdff', linestyle='solid', axis='y')
+                    plt.legend()
+                    plt.savefig('events-{}.png'.format(lang), format='png', transparent=True)
+                    plt.close(fig)
+                    self.data[lang]['events']['image'] = {
+                        'url': 'attachment://events-{}.png'.format(lang)
+                    }
+                except KeyError:
+                    pass
+            await self.write_bot_data('events', langs)
 
     async def decode_modifiers(self, key: dict, lang: str) -> list:
         data = []
@@ -2533,26 +2533,40 @@ class D2data:
         await self.write_bot_data('lostsector', langs)
 
     async def drop_weekend_info(self, langs: List[str]) -> None:
-        while True:
-            try:
-                data_db = self.data_pool.get_connection()
-                data_db.auto_reconnect = True
-                break
-            except mariadb.PoolError:
-                try:
-                    self.data_pool.add_connection()
-                except mariadb.PoolError:
-                    pass
-                await asyncio.sleep(0.125)
-        data_cursor = data_db.cursor()
+        # while True:
+        #     try:
+        #         data_db = self.data_pool.get_connection()
+        #         data_db.auto_reconnect = True
+        #         break
+        #     except mariadb.PoolError:
+        #         try:
+        #             self.data_pool.add_connection()
+        #         except mariadb.PoolError:
+        #             pass
+        #         await asyncio.sleep(0.125)
+        # data_cursor = data_db.cursor()
+        #
+        # for lang in langs:
+        #     data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
+        #     data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('xur',))
+        #     data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('gambit',))
+        # data_db.commit()
+        # data_cursor.close()
+        # data_db.close()
 
+        conn = await aiomysql.connect(host=self.api_data['db_host'],
+                                      user=self.api_data['cache_login'],
+                                      password=self.api_data['pass'], port=self.api_data['db_port'],
+                                      db=self.api_data['data_db'], loop=self.ev_loop)
+
+        cur = await conn.cursor()
         for lang in langs:
-            data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
-            data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('xur',))
-            data_cursor.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('gambit',))
-        data_db.commit()
-        data_cursor.close()
-        data_db.close()
+            await cur.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
+            await cur.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('xur',))
+            await cur.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('gambit',))
+        await conn.commit()
+        await cur.close()
+        conn.close()
 
     async def get_cached_json(self, cache_id: str, name: str, url: str, params: Optional[dict] = None,
                               lang: Optional[str] = None, string: Optional[str] = None, change_msg: bool = True,
@@ -2852,28 +2866,33 @@ class D2data:
         return online_members
 
     async def iterate_clans(self, max_id: int) -> Union[int, str]:
-        while True:
-            try:
-                cache_connection = self.cache_pool.get_connection()
-                cache_connection.auto_reconnect = True
-                break
-            except mariadb.PoolError:
-                try:
-                    self.cache_pool.add_connection()
-                except mariadb.PoolError:
-                    pass
-                await asyncio.sleep(0.125)
-        clan_cursor = cache_connection.cursor()
+        # while True:
+        #     try:
+        #         cache_connection = self.cache_pool.get_connection()
+        #         cache_connection.auto_reconnect = True
+        #         break
+        #     except mariadb.PoolError:
+        #         try:
+        #             self.cache_pool.add_connection()
+        #         except mariadb.PoolError:
+        #             pass
+        #         await asyncio.sleep(0.125)
+        # clan_cursor = cache_connection.cursor()
+        cache_connection = await aiomysql.connect(host=self.api_data['db_host'],
+                                      user=self.api_data['cache_login'],
+                                      password=self.api_data['pass'], port=self.api_data['db_port'],
+                                      db=self.api_data['cache_name'], loop=self.ev_loop)
+        clan_cursor = await cache_connection.cursor()
 
         min_id = 1
         try:
-            clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
-            # clan_db.commit()
-        except mariadb.Error:
+            await clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
+            await cache_connection.commit()
+        except aiomysql.OperationalError:
             # clan_cursor = clan_db.cursor()
-            clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
-            min_id_tuple = clan_cursor.fetchall()
-            if min_id_tuple is not None:
+            await clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
+            min_id_tuple = await clan_cursor.fetchall()
+            if len(min_id_tuple) > 0:
                 min_id = min_id_tuple[0][0] + 1
         for clan_id in range(min_id, max_id+1):
             url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
@@ -2891,20 +2910,20 @@ class D2data:
                 # print('{} ec {}'.format(clan_id, clan_json['ErrorCode']))
             except KeyError:
                 code = 0
-                clan_cursor.close()
+                await clan_cursor.close()
                 cache_connection.close()
                 return '```{}```'.format(json.dumps(clan_json))
             if code in [621, 622, 686]:
                 continue
             if code != 1:
-                clan_cursor.close()
+                await clan_cursor.close()
                 cache_connection.close()
                 return code
             # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
             if clan_json['Response']['detail']['features']['capabilities'] & 16:
-                clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
-                # clan_db.commit()
-        clan_cursor.close()
+                await clan_cursor.execute('''INSERT INTO clans VALUES (%s,%s)''', (clan_id, json.dumps(clan_json)))
+                await cache_connection.commit()
+        await clan_cursor.close()
         cache_connection.close()
         return 'Finished'
 
@@ -2923,7 +2942,11 @@ class D2data:
         #             pass
         #         await asyncio.sleep(0.125)
         # clan_cursor = cache_connection.cursor()
-        cache_connection = self.cache_db
+        # cache_connection = self.cache_db
+        cache_connection = await aiomysql.connect(host=self.api_data['db_host'],
+                                                  user=self.api_data['cache_login'],
+                                                  password=self.api_data['pass'], port=self.api_data['db_port'],
+                                                  db=self.api_data['cache_name'], loop=self.ev_loop)
         clan_cursor = await cache_connection.cursor()
 
         min_id = 1
@@ -2931,7 +2954,7 @@ class D2data:
             await clan_cursor.execute('''CREATE TABLE clans (id INTEGER, json JSON)''')
             # clan_db.commit()
         # except mariadb.Error:
-        except aiosqlite.OperationalError:
+        except aiomysql.OperationalError:
             # clan_cursor = clan_db.cursor()
             await clan_cursor.execute('''SELECT id FROM clans ORDER by id DESC''')
             min_id_tuple = await clan_cursor.fetchall()
@@ -2977,11 +3000,12 @@ class D2data:
                 # print('{} {}'.format(clan_id, clan_json['Response']['detail']['features']['capabilities'] & 16))
                 if clan_json['Response']['detail']['features']['capabilities'] & 16:
                     clan_id = clan_json['Response']['detail']['groupId']
-                    await clan_cursor.execute('''INSERT INTO clans VALUES (?,?)''', (clan_id, json.dumps(clan_json)))
+                    await clan_cursor.execute('''INSERT INTO clans VALUES (%s,%s)''', (clan_id, json.dumps(clan_json)))
                     await cache_connection.commit()
                     # clan_db.commit()
 
         await clan_cursor.close()
+        cache_connection.close()
         # await cache_connection.close()
         # snapshot2 = tracemalloc.take_snapshot()
         # top_stats = snapshot2.compare_to(snapshot1, 'lineno')

@@ -139,3 +139,5 @@ dmypy.json
 /*.db
 /*.content
 /data.json
+/*.png
+/*.csv

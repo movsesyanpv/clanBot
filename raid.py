@@ -237,33 +237,43 @@ class LFG:
             args['the_role'] = self.find_roles(is_init, message.guild, roles)
         return args
 
-    def parse_date(self, time):
+    async def parse_date(self, time, guild_id):
         try:
             time_t = datetime.strptime(time, "%d-%m-%Y %H:%M%z")
         except ValueError:
+            tz = await self.bot.get_guild_timezone(guild_id)
+            tz_elements = tz.strip('UTC').split(':')
+            tz_obj = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
             try:
                 time_t = datetime.strptime(time, "%d-%m-%Y %H:%M")
+                time = '{}{}{}'.format(time, tz_elements[0], tz_elements[1])
             except ValueError:
                 try:
                     ts = dateparser.parse(time)
-                    time = ts.strftime('%d-%m-%Y %H:%M%z')
+                    if ts.tzinfo is None:
+                        #time = ts.astimezone(tz_obj).strftime('%d-%m-%Y %H:%M%z')
+                        time = '{}{}{}'.format(ts.strftime('%d-%m-%Y %H:%M'), tz_elements[0], tz_elements[1])
+                    else:
+                        time = ts.strftime('%d-%m-%Y %H:%M%z')
                 except AttributeError:
                     time = datetime.now().strftime("%d-%m-%Y %H:%M")
         return time
 
-    def parse_args_sl(self, name: str, description: str, time: str, size: str = None, length: str = None,
-                      a_type: str = None, mode: str = 'basic', roles: List[discord.Role] = None) -> dict:
+    async def parse_args_sl(self, name: str, description: str, time: str, size: str = None, length: str = None,
+                      a_type: str = None, mode: str = 'basic', roles: List[discord.Role] = None,
+                      guild_id: int = None) -> dict:
         args = {
             'group_mode': mode,
             'name': name,
             'size': 1,
-            'time': self.parse_date(time),
-            'timezone': 'UTC+03:00',
+            'time': await self.parse_date(time, guild_id),
+            'timezone': await self.bot.get_guild_timezone(guild_id),
             'description': description,
             'the_role': '',
             'is_embed': self.at.index(a_type),
             'length': timedelta(seconds=0)
         }
+
         try:
             args['time'] = datetime.strptime(args['time'].lstrip(), "%d-%m-%Y %H:%M%z")
             args['timezone'] = str(args['time'].tzinfo)
@@ -667,12 +677,14 @@ class LFG:
 
         if lang == 'zh-cht':
             lang = 'zh'
+        if await self.bot.guild_timezone_is_set(message.guild.id):
+            time_str = discord.utils.format_dt(time)
+        else:
+            time_str = '{} {}'.format(format_datetime(time, 'medium', tzinfo=ts, locale=Locale.parse(lang, sep='-')), tz)
         embed['fields'].append({
             "inline": True,
             "name": translations['lfge']['date'],
-            # "value": '{} {}'.format(time.strftime('%d-%m-%Y %H:%M'), tz)
-            "value": '{} {}'.format(format_datetime(time, 'medium', tzinfo=ts, locale=Locale.parse(lang, sep='-')), tz)
-            # "value": '{}'.format(discord.utils.format_dt(time))
+            "value": time_str
         })
         embed_length = embed_length + len(embed['fields'][-1]['name']) + len(embed['fields'][-1]['value'])
 

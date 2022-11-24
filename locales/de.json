@@ -64,7 +64,9 @@
         "timed_out": "Timed out",
         "all_upd_types": "Enable all",
         "cancel": "Cancel",
-        "lostsector": "Lost Sector"
+        "lostsector": "Lost Sector",
+        "tz_not_found": "Unable to found the timezone `{timezone}`. Please make sure you choose one from the suggested variants. If you are unable to find your timezone, please ask for help at my support server. You can find the support server link with {support_cmd_mention}.",
+        "next_goal": "Current stage"
     },
     "lfg": {
         "go": "Los",
@@ -297,9 +299,17 @@
                         "changelogs": "Make the bot start posting changelogs in this channel"
                     }
                 }
+            },
+            "set": {
+                "subcommands": {
+                    "language": "Serversprache einstellen",
+                    "clan": "Lege einen Destiny 2-Clan für den Server fest",
+                    "timezone": "Tell the bot the server's timezone"
+                }
             }
         },
-        "lfgreminder": "Set up a reminder functionality for LFG posts"
+        "lfgreminder": "Set up a reminder functionality for LFG posts",
+        "set": "Set some info for the server"
     },
     "graph": {
         "percentage": "Fertiggestellt Prozent",
@@ -413,6 +423,10 @@
         "alerts": {
             "label": "Alerts",
             "description": "Alerts about maintenance and other stuff"
+        },
+        "events": {
+            "label": "Community Events",
+            "description": "Hourly updates of community event progress"
         }
     },
     "clan_info": {
@@ -538,6 +552,29 @@
                 "minutes": {
                     "name": "minutes",
                     "description": "Minutes before the LFG start"
+                }
+            }
+        },
+        "set": {
+            "clan": {
+                "description": "Lege einen Destiny 2-Clan für den Server fest",
+                "options": {
+                    "clan_id": {
+                        "name": "clan_id",
+                        "description": "Name or id of a clan"
+                    }
+                }
+            },
+            "language": {
+                "description": "Serversprache einstellen"
+            },
+            "timezone": {
+                "description": "Tell the bot the server's timezone",
+                "options": {
+                    "timezone": {
+                        "name": "timezone",
+                        "description": "Default timezone for the server"
+                    }
                 }
             }
         }
