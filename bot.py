@@ -229,7 +229,7 @@ class ClanBot(commands.Bot):
         self.update_trials.start()
 
         self.update_alerts.start()
-        self.update_event.start()
+        # self.update_event.start()
 
     async def set_up_guild_db(self):
         self.guild_db = await aiosqlite.connect('guild.db')
