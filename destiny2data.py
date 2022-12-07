@@ -1055,6 +1055,8 @@ class D2data:
         banshee_resp = await self.get_cached_json('banshee', 'banshee', banshee_url, self.vendor_params, force=forceget)
 
         if not(ada_resp and banshee_resp):
+            for lang in langs:
+                self.data[lang]['daily_mods'] = self.data[lang]['api_is_down']
             return False
 
         ada_cats = ada_resp['Response']['categories']['data']['categories']

@@ -77,6 +77,19 @@ lost_sector_order = {
         3253890607,
         548616653,  # day 11
     ],
+    19: [
+        567131519,
+        184186578,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ],
 }
 
 loot_order_s13 = [
@@ -100,4 +113,5 @@ loot_order = {
     16: loot_order_s14,
     17: loot_order_s14,
     18: loot_order_s14,
+    19: loot_order_s14
 }
