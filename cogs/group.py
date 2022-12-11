@@ -111,7 +111,12 @@ class Group(commands.Cog):
         i = 0
         for lfg in lfg_list:
             label = ' ' if not lfg[1] else lfg[1]
-            lfg_options.append(discord.SelectOption(label=label, value=str(i), description=translations['lfg_choice_select'].format(lfg[3], lfg[4], datetime.fromtimestamp(lfg[2]))))
+            if len(label) > 100:
+                label = '{}...'.format(label[:97])
+            description = translations['lfg_choice_select'].format(lfg[3], lfg[4], datetime.fromtimestamp(lfg[2]))
+            if len(description) > 100:
+                description = '{}...'.format(description[:97])
+            lfg_options.append(discord.SelectOption(label=label, value=str(i), description=description))
             i += 1
         view = ViewLFG(lfg_options, ctx.author, lfg_list, ctx, translations)
         await cursor.close()
