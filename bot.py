@@ -38,8 +38,8 @@ class ClanBot(commands.Bot):
     version = ''
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht', 'zh-chs']
-    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'spider', 'banshee', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']
-    daily_rotations = ('strikes', 'spider', 'banshee', 'ada', 'mods', 'lostsector')
+    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'banshee', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']  # 'spider'
+    daily_rotations = ('strikes', 'banshee', 'ada', 'mods', 'lostsector')  # 'spider',
     weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire')
     embeds_with_img = ['events']
 
@@ -215,7 +215,7 @@ class ClanBot(commands.Bot):
 
         self.update_manifest.start()
         self.update_strikes.start()
-        self.update_materials.start()
+        # self.update_materials.start()
         self.update_daily_mods.start()
         self.update_lost_sector.start()
 

@@ -52,7 +52,7 @@ class ServerAdmin(commands.Cog):
             'ordeal': 'ordeal',
             'empire': 'empire_hunts',
             'strikes': 'vanguardstrikes',
-            'spider': 'spider',
+            # 'spider': 'spider',
             'mods': 'daily_mods',
             'xur': 'xur',
             'osiris': 'osiris',
