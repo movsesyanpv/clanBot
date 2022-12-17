@@ -417,16 +417,21 @@ class LFG:
         alert_list = await cursor.execute('SELECT * FROM alerts ')
         alert_list = await alert_list.fetchall()
         alert_list = alert_list
-        await cursor.close()
 
         for alert in alert_list:
             guild_id = await self.get_cell('group_id', alert[3], 'server_id')
-            delta = await self.bot.get_lfg_alert(guild_id)
-            timestamp = await self.get_cell('group_id', alert[3], 'time')
-            timestamp -= delta * 60
-            alert_time = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-            self.bot.sched.add_job(self.send_alert, 'date', run_date=alert_time, args=[alert[3], alert[0]],
-                                   misfire_grace_time=(delta - 1) * 60)
+            if guild_id is not None:
+                delta = await self.bot.get_lfg_alert(guild_id)
+                timestamp = await self.get_cell('group_id', alert[3], 'time')
+                timestamp -= delta * 60
+                alert_time = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                self.bot.sched.add_job(self.send_alert, 'date', run_date=alert_time, args=[alert[3], alert[0]],
+                                       misfire_grace_time=(delta - 1) * 60)
+            else:
+                await cursor.execute('DELETE FROM alerts WHERE group_id=? and user_id=?', (alert[3], alert[0]))
+                await self.conn.commit()
+
+        await cursor.close()
 
     async def add_alert(self, interaction: discord.Interaction) -> None:
         delta = await self.bot.get_lfg_alert(interaction.guild.id)
