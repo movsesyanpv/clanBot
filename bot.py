@@ -1006,7 +1006,7 @@ class ClanBot(commands.Bot):
                 embed = []
                 for field in src_dict[lang][upd_type]:
                     if field['thumbnail']['url'] == '':
-                        field['thumbnail'].pop('url')
+                        field.pop('thumbnail')
                     embed.append(discord.Embed.from_dict(field))
             else:
                 if upd_type in self.embeds_with_img:
@@ -1016,7 +1016,7 @@ class ClanBot(commands.Bot):
                     frameinfo = getframeinfo(currentframe())
                     return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
                 if src_dict[lang][upd_type]['thumbnail']['url'] == '':
-                    src_dict[lang][upd_type]['thumbnail'].pop('url')
+                    src_dict[lang][upd_type].pop('thumbnail')
                 embed = discord.Embed.from_dict(src_dict[lang][upd_type])
         # if channel_id == 647890554943963136:
         #     self.logger.info('{} has created the embed'.format(upd_type))
