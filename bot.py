@@ -1005,8 +1005,11 @@ class ClanBot(commands.Bot):
             if type(src_dict[lang][upd_type]) == list:
                 embed = []
                 for field in src_dict[lang][upd_type]:
-                    if field['thumbnail']['url'] == '':
-                        field.pop('thumbnail')
+                    try:
+                        if field['thumbnail']['url'] == '':
+                            field.pop('thumbnail')
+                    except KeyError:
+                        pass
                     embed.append(discord.Embed.from_dict(field))
             else:
                 if upd_type in self.embeds_with_img:
@@ -1015,8 +1018,11 @@ class ClanBot(commands.Bot):
                 if len(src_dict[lang][upd_type]['fields']) == 0:
                     frameinfo = getframeinfo(currentframe())
                     return [channel_id, 'no need to post ({})'.format(frameinfo.lineno + 1)]
-                if src_dict[lang][upd_type]['thumbnail']['url'] == '':
-                    src_dict[lang][upd_type].pop('thumbnail')
+                try:
+                    if src_dict[lang][upd_type]['thumbnail']['url'] == '':
+                        src_dict[lang][upd_type].pop('thumbnail')
+                except KeyError:
+                    pass
                 embed = discord.Embed.from_dict(src_dict[lang][upd_type])
         # if channel_id == 647890554943963136:
         #     self.logger.info('{} has created the embed'.format(upd_type))
