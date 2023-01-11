@@ -602,11 +602,14 @@ class D2data:
 
     async def get_global_alerts(self, langs: List[str], forceget: bool = False) -> None:
         alert_url = 'https://www.bungie.net/Platform/GlobalAlerts/'
-        alert_json = await self.get_bungie_json('alerts', alert_url, {}, '')
-        if not alert_json:
-            return
+        # alert_json = await self.get_bungie_json('alerts', alert_url, {}, '')
+        # if not alert_json:
+        #     return
 
         for lang in langs:
+            alert_json = await self.get_bungie_json('alerts', alert_url, {'lc': lang}, '')
+            if not alert_json:
+                continue
             self.data[lang]['alerts'].clear()
             for alert in alert_json['Response']:
                 alert_embed = {
