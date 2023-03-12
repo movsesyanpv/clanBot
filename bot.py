@@ -39,8 +39,8 @@ class ClanBot(commands.Bot):
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht', 'zh-chs']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'banshee', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']  # 'spider'
-    daily_rotations = ('strikes', 'banshee', 'ada', 'mods', 'lostsector')  # 'spider',
-    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire')
+    daily_rotations = ('strikes', 'banshee', 'ada', 'lostsector')  # 'spider',
+    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'mods')
     embeds_with_img = ['events']
 
     sched = AsyncIOScheduler(timezone='UTC')
@@ -121,11 +121,12 @@ class ClanBot(commands.Bot):
         self.logger.info('Finished updating material exchange')
 
     @tasks.loop(time=time(hour=17, minute=0, second=35), reconnect=True)
-    async def update_daily_mods(self):
-        await self.wait_for('manifest ready')
-        self.logger.info('Updating daily mods')
-        await self.universal_update(self.data.get_daily_mods, 'daily_mods', 86400)
-        self.logger.info('Finished updating daily mods')
+    async def update_weekly_shaders(self):
+        if datetime.today().weekday() == 1:
+            await self.wait_for('manifest ready')
+            self.logger.info('Updating daily mods')
+            await self.universal_update(self.data.get_weekly_shaders, 'daily_mods', 86400)
+            self.logger.info('Finished updating daily mods')
 
     @tasks.loop(time=time(hour=17, minute=0, second=35), reconnect=True)
     async def update_lost_sector(self):
@@ -216,7 +217,7 @@ class ClanBot(commands.Bot):
         self.update_manifest.start()
         self.update_strikes.start()
         # self.update_materials.start()
-        self.update_daily_mods.start()
+        self.update_weekly_shaders.start()
         self.update_lost_sector.start()
 
         self.update_nightmares.start()
@@ -336,7 +337,7 @@ class ClanBot(commands.Bot):
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_daily_mods, 'daily_mods', 345600, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_weekly_shaders, 'daily_mods', 345600, post=post, get=get, channels=channels, forceget=forceget)
         if 'tess' in upd_type:
             if channels is None:
                 channels = self.notifiers

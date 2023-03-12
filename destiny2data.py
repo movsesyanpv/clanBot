@@ -1051,25 +1051,21 @@ class D2data:
             await self.write_to_db(locale, 'ada_mods', sales, name=ada_def['displayProperties']['name'], order=5,
                                    template='vendor_items.html', annotations=[], size='tall')
 
-    async def get_daily_mods(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
+    async def get_weekly_shaders(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         char_info = self.char_info
 
         ada_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/350061650/'.\
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
-        banshee_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/672118013/'. \
-            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
 
         ada_resp = await self.get_cached_json('ada_{}'.format(char_info['charid'][0]), 'ada', ada_url, self.vendor_params, force=forceget)
-        banshee_resp = await self.get_cached_json('banshee', 'banshee', banshee_url, self.vendor_params, force=forceget)
 
-        if not(ada_resp and banshee_resp):
+        if not ada_resp:
             for lang in langs:
                 self.data[lang]['daily_mods'] = self.data[lang]['api_is_down']
             return False
 
         ada_cats = ada_resp['Response']['categories']['data']['categories']
-        banshee_cats = banshee_resp['Response']['categories']['data']['categories']
-        resp_time = banshee_resp['timestamp']
+        resp_time = ada_resp['timestamp']
 
         for lang in langs:
             self.data[lang]['daily_mods'] = {
@@ -1082,7 +1078,6 @@ class D2data:
             }
 
             ada_def = await self.destiny.decode_hash(350061650, 'DestinyVendorDefinition', language=lang)
-            banshee_def = await self.destiny.decode_hash(672118013, 'DestinyVendorDefinition', language=lang)
 
             mods = []
             items_to_get = ada_cats[1]['itemIndexes']
@@ -1095,14 +1090,6 @@ class D2data:
                     mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
                     fields[-1]['value'] = '{}{}\n'.format(fields[-1]['value'], item_def['displayProperties']['name'])
 
-            items_to_get = banshee_cats[2]['itemIndexes']
-            banshee_sales = await self.get_vendor_sales(lang, banshee_resp, items_to_get, [1812969468, 2731650749])
-            fields.append({'inline': True, 'name': self.translations[lang]['msg']['weapon_mods'], 'value': ''})
-            for item in banshee_sales[1]:
-                item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
-                if item_def['itemType'] == 19:
-                    mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
-                    fields[-1]['value'] = '{}{}\n'.format(fields[-1]['value'], item_def['displayProperties']['name'])
             for i in range(len(fields)):
                 fields[i]['value'] = fields[i]['value'][:-1]
             self.data[lang]['daily_mods']['fields'] = fields
