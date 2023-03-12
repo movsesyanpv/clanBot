@@ -2669,6 +2669,8 @@ class D2data:
         await cache_cursor.close()
         await cache_connection.commit()
         # await cache_connection.close()
+        if 'responseMintedTimestamp' in response_json['Response'].keys():
+            timestamp = response_json['Response']['responseMintedTimestamp']
         response_json['timestamp'] = timestamp
         return response_json
 
