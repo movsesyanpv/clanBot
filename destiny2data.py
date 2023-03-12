@@ -16,6 +16,7 @@ import mariadb
 import asyncio
 import tracemalloc
 import warnings
+import re
 
 from typing import Optional, Union, List
 
@@ -52,6 +53,10 @@ class D2data:
 
     activities_params = {
         'components': '204'
+    }
+
+    string_vars = {
+        'components': '1200'
     }
 
     record_params = {
@@ -2221,16 +2226,38 @@ class D2data:
             mod = {
                 'inline': True,
                 "name": mod_json['displayProperties']['name'],
-                "value": mod_json['displayProperties']['description']
+                "value": await self.expand_string_vars(mod_json['displayProperties']['description'])
             }
             data.append(mod)
             db_data.append({
                 "name": mod_json['displayProperties']['name'],
-                "description": mod_json['displayProperties']['description'],
+                "description": await self.expand_string_vars(mod_json['displayProperties']['description']),
                 "icon": mod_json['displayProperties']['icon']
             })
 
         return [data, db_data]
+
+    async def expand_string_vars(self, string):
+        char_info = self.char_info
+        profile_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/'. \
+            format(char_info['platform'], char_info['membershipid'])
+        profile_resp = await self.get_cached_json('string_variables', 'string vars', profile_url,
+                                                  self.string_vars, 'string vars')
+        search_pattern = re.search('\{var:[0-9]+\}', string)
+        if search_pattern is None:
+            return string
+        else:
+            search_pattern = search_pattern.group(0)
+        variable = search_pattern.strip('\{var:\}')
+
+        try:
+            if variable in profile_resp['Response']['profileStringVariables']['data']['integerValuesByHash']:
+                value = profile_resp['Response']['profileStringVariables']['data']['integerValuesByHash'][variable]
+                string = string.replace(search_pattern, str(value))
+        except KeyError:
+            pass
+
+        return string
 
     async def get_activities_response(self, name: str, lang: Optional[str] = None, string: Optional[str] = None,
                                       force: bool = False) -> Union[bool, dict]:
