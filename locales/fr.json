@@ -8,16 +8,16 @@
         "spider": "Échange de consommables",
         "xur": "Offres de Xur",
         "weapon": "Armes",
-        "heroicstory": "L'histoire des missions heroiques",
-        "forge": "La forge active",
+        "heroicstory": "L'histoire des missions héroïques",
+        "forge": "La forge disponible est",
         "strikesmods": "Modificateurs des assauts",
         "reckoningmods": "Justice",
-        "nightfalls820": "Les Nuits Noires 820 disponible",
+        "nightfalls820": "Les Nuits Noires 820 disponibles",
         "guidedgamenightfall": "Nuit Noire Guidée disponible",
         "ordeal": "Nuit Noire de la semaine",
         "nightmares": "Chasses aux cauchemars disponibles",
         "reckoningboss": "Le Boss de Justice est",
-        "cruciblerotators": "Les rotations de l’épreuve sont",
+        "cruciblerotators": "Les modes de l’épreuve sont",
         "xurloc": "Emplacement",
         "cost": "Coût",
         "xurtitle": "Xur",
@@ -41,7 +41,7 @@
         "osiris": "Jugement d'Osiris",
         "empire_hunts": "Chasse de l'Empire maitrise de la semaine",
         "clan_search_error": "Le clan demandé n'a pas été trouvé. Vous pouvez réessayer avec le nom du clan précisément ( Majuscule - Minuscule - Caractère spécial - etc ). Si cela ne fonctionne toujours pas, essayez d'entrer l'ID de votre clan. L'ID peut être trouvé sur la page bungie.net du clan après la chaîne `groupId=` (vous trouverez les chiffres dans l'adresse http). Si cela ne fonctionne pas, vous pouvez toujours demander de l'aide, le lien peut être trouvé avec la commande `support`.",
-        "daily_mods": "Offres d'Ada-1 et de Banshee-44",
+        "daily_mods": "Offres d'Ada-1",
         "deprecation_warning": "Cette commande est obsolète et ne fonctionne plus <t:1650574800:D>. \nMerci d'utiliser la version avec le slash (/). Si vous ne voyez aucunes commandes avec le slash, tapez la commande `noslash` pour avoir des informations afin de résoudre le problème.",
         "command_is_done": "Terminé.",
         "update_types": "Choisissez le type de mise a jour.",
@@ -66,7 +66,7 @@
         "cancel": "Annulé",
         "lostsector": "Secteur Oublié",
         "tz_not_found": "Impossible de trouver le fuseau horaire `{timezone}`. Assurez-vous d'en choisir une parmi les variantes suggérées. Si vous ne parvenez pas à trouver votre fuseau horaire, veuillez demander de l'aide sur mon serveur d'assistance. Vous pouvez trouver le lien du serveur de support avec {support_cmd_mention}.",
-        "next_goal": "Next stage"
+        "next_goal": "Objectif de l'étape en cours"
     },
     "lfg": {
         "go": "Go",
@@ -341,7 +341,7 @@
         "7win": "7 victoires",
         "flawless": "Flawless",
         "helmet": "Casque",
-        "gloves": "Gant",
+        "gloves": "Bras",
         "chest": "Torse",
         "boots": "Botte",
         "class": "Elément de classe",
@@ -405,8 +405,8 @@
             "description": "Échange de consommables chez Rahol "
         },
         "mods": {
-            "label": "Mods proposés par Ada et Banshee",
-            "description": "Mods disponibles chez Ada et Banshee"
+            "label": "Revêtements proposés par Ada-1",
+            "description": "Revêtements disponibles chez Ada-1"
         },
         "xur": {
             "label": "Xur",
@@ -425,8 +425,8 @@
             "description": "Alertes a propos de la maintenance ou autre."
         },
         "events": {
-            "label": "Community Events",
-            "description": "Hourly updates of community event progress"
+            "label": "Événements Communautaire",
+            "description": "Mises à jour toutes les heures de la progression de l'événement communautaire"
         }
     },
     "clan_info": {
