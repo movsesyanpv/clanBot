@@ -1083,7 +1083,7 @@ class D2data:
             items_to_get = ada_cats[1]['itemIndexes']
             ada_sales = await self.get_vendor_sales(lang, ada_resp, items_to_get, [1812969468])
 
-            fields = [{'inline': True, 'name': self.translations[lang]['msg']['armor_mods'], 'value': ''}]
+            fields = [{'inline': True, 'name': ada_def['displayCategories'][2]['displayProperties']['name'], 'value': ''}]
             for item in ada_sales[1]:
                 item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
                 if item_def['itemType'] == 19:
@@ -2407,7 +2407,7 @@ class D2data:
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
         week_n = int(week_n.days / 7)
 
-        saint_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/765357505/'.\
+        saint_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/502095006/'.\
             format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
         saint_resp = await self.get_cached_json('saint', 'saint', saint_url, self.vendor_params, force=forceget)
 
