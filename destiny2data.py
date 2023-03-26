@@ -17,10 +17,37 @@ import asyncio
 import tracemalloc
 import warnings
 import re
+import threading
 
 from typing import Optional, Union, List
 
 from lstorations import lost_sector_order, loot_order
+
+
+class RunThread(threading.Thread):
+    def __init__(self, func, args, kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        self.result = None
+        super().__init__()
+
+    def run(self):
+        self.result = asyncio.run(self.func(*self.args, **self.kwargs))
+
+
+def run_async(func, *args, **kwargs):
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop and loop.is_running():
+        thread = RunThread(func, args, kwargs)
+        thread.start()
+        thread.join()
+        return thread.result
+    else:
+        return asyncio.run(func(*args, **kwargs))
 
 
 class D2data:
@@ -107,8 +134,8 @@ class D2data:
         else:
             self.oauth = BungieOAuth(self.api_data['id'], self.api_data['secret'], host='localhost', port='4200')
         self.session = aiohttp.ClientSession()
-        asyncio.run(self.set_up_cache(lang))
-        asyncio.run(self.load_data(lang))
+        run_async(self.set_up_cache, lang)
+        run_async(self.load_data, lang)
         try:
             self.cache_pool = mariadb.ConnectionPool(pool_name='cache', pool_size=10, pool_reset_connection=False,
                                                      host=self.api_data['db_host'], user=self.api_data['cache_login'],
@@ -120,7 +147,7 @@ class D2data:
         # self.cache_db.auto_reconnect = True
         warnings.filterwarnings('ignore', module=r"aiomysql")
         self.ev_loop = loop
-        asyncio.run(self.set_up_data(loop))
+        run_async(self.set_up_data, loop)
         # self.data_db.auto_reconnect = True
 
     async def set_up_cache(self, lang: List[str]) -> None:
