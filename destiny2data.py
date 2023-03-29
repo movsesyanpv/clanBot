@@ -1786,7 +1786,7 @@ class D2data:
                 #         'description': info['value'].replace('\n', '<br>')
                 #     })
                 #     self.data[lang]['raids']['fields'].append(info)
-                if r_json['hash'] in [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663] and 'modifierHashes' in key.keys():
+                if r_json['hash'] in [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764] and 'modifierHashes' in key.keys():
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
