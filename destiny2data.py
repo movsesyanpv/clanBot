@@ -2404,7 +2404,7 @@ class D2data:
                             'value': value
                         })
                         try:
-                            await cursor.execute('''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric), (value, membership_id))
+                            await cursor.execute('''UPDATE playermetrics SET '{}'=?, timestamp=? WHERE membershipId=?'''.format(metric), (value, datetime.utcnow().isoformat(), membership_id))
                             # await self.bot_data_db.commit()
                         except aiosqlite.OperationalError:
                             pass
