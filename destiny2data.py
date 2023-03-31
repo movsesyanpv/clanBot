@@ -2332,45 +2332,52 @@ class D2data:
         await self.update_player_metrics(member_type, member_id, '{} [{}]'.format(name, tag))
         return [player, await self.get_player_metric(member_type, member_id, metric, is_global)]
 
-    async def update_clan_metrics(self, clan_ids: list) -> None:
+    async def update_clan_metrics(self, clan_ids: list) -> int:
+        tasks = []
         for clan_id in clan_ids:
-            url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
+            task = asyncio.ensure_future(self.update_clan_wrapper(clan_id))
+            tasks.append(task)
+        results = await asyncio.gather(*tasks)
+        return sum(results)
 
-            clan_members_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url, change_msg=False)
+    async def update_clan_wrapper(self, clan_id: int) -> int:
+        result = 0
+        url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
 
-            url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
-            clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), 'clan info', url)
-            clan_json = clan_resp
+        clan_members_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url,
+                                                       change_msg=False)
+
+        url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
+        clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), 'clan info', url)
+        clan_json = clan_resp
+        try:
+            code = clan_json['ErrorCode']
+        except KeyError:
+            code = 0
+        except TypeError:
+            code = 0
+        if code == 1:
+            tag = clan_json['Response']['detail']['clanInfo']['clanCallsign']
+        else:
+            tag = ''
+
+        if clan_members_resp and type(clan_json) == dict:
+            clan_json = clan_members_resp
             try:
-                code = clan_json['ErrorCode']
+                tasks = []
+                # member = clan_json['Response']['results'][0]
+                # name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
+                # await self.update_player_metrics(member['destinyUserInfo']['membershipType'],
+                #                                  member['destinyUserInfo']['membershipId'], name)
+                for member in clan_json['Response']['results']:
+                    name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
+                    result += await self.update_player_metrics(member['destinyUserInfo']['membershipType'],
+                                                               member['destinyUserInfo']['membershipId'], name)
             except KeyError:
-                code = 0
-            except TypeError:
-                code = 0
-            if code == 1:
-                tag = clan_json['Response']['detail']['clanInfo']['clanCallsign']
-            else:
-                tag = ''
+                pass
+        return result
 
-            if clan_members_resp and type(clan_json) == dict:
-                clan_json = clan_members_resp
-                try:
-                    tasks = []
-                    # member = clan_json['Response']['results'][0]
-                    # name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
-                    # await self.update_player_metrics(member['destinyUserInfo']['membershipType'],
-                    #                                  member['destinyUserInfo']['membershipId'], name)
-                    for member in clan_json['Response']['results']:
-                        name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
-                        task = asyncio.ensure_future(self.update_player_metrics(
-                            member['destinyUserInfo']['membershipType'], member['destinyUserInfo']['membershipId'],
-                            name))
-                        tasks.append(task)
-                    results = await asyncio.gather(*tasks)
-                except KeyError:
-                    pass
-
-    async def update_player_metrics(self, membership_type: str, membership_id: str, name: str) -> None:
+    async def update_player_metrics(self, membership_type: str, membership_id: str, name: str) -> int:
         cursor = await self.bot_data_db.cursor()
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
         member = await self.get_cached_json('playermetrics_{}'.format(membership_id),
@@ -2410,7 +2417,10 @@ class D2data:
                             pass
                 await self.bot_data_db.commit()
         await cursor.close()
-        return
+        if member:
+            return 1
+        else:
+            return 0
 
     async def get_osiris_predictions(self, langs: List[str], forceget: bool = False, force_info: Optional[list] = None):
         win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
