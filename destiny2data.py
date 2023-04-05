@@ -312,7 +312,7 @@ class D2data:
                               string: Optional[str] = None, change_msg: bool = True, is_get: bool = True,
                               body: Optional[dict] = None) -> Union[dict, None]:
 
-        @Limiter(calls_limit=25, period=1)
+        @Limiter(calls_limit=10, period=1)
         async def request(url, params, headers, is_get, json=None):
             if is_get:
                 resp = await self.session.get(url, params=params, headers=headers)
