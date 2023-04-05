@@ -1,3 +1,4 @@
+import itertools
 import json
 import time
 from urllib.parse import quote
@@ -309,7 +310,7 @@ class D2data:
                               string: Optional[str] = None, change_msg: bool = True, is_get: bool = True,
                               body: Optional[dict] = None) -> Union[dict, None]:
 
-        @Limiter(calls_limit=20, period=1)
+        @Limiter(calls_limit=25, period=1)
         async def request(url, params, headers, is_get, json=None):
             if is_get:
                 resp = await self.session.get(url, params=params, headers=headers)
@@ -2365,10 +2366,35 @@ class D2data:
             task = asyncio.ensure_future(self.update_clan_wrapper(clan_id))
             tasks.append(task)
         results = await asyncio.gather(*tasks)
-        return sum(results)
+        metric_list = list(itertools.chain.from_iterable(results))
 
-    async def update_clan_wrapper(self, clan_id: int) -> int:
-        result = 0
+        await self.write_metric_data(metric_list)
+
+        return len(metric_list)
+
+    async def write_metric_data(self, metric_list: list):
+        cursor = await self.bot_data_db.cursor()
+
+        for metric in metric_list[0]['metrics'].keys():
+            try:
+                await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN '{}' INTEGER'''.format(metric))
+            except aiosqlite.OperationalError:
+                pass
+
+        for member in metric_list:
+            await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
+                                 (member['membershipId'], member['timestamp']))
+            await cursor.execute('''UPDATE playermetrics SET name=? WHERE membershipId=?''',
+                                 (member['name'], member['membershipId']))
+            for metric_hash in member['metrics'].keys():
+                await cursor.execute(
+                    '''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric_hash),
+                    (member['metrics'][metric_hash], member['membershipId']))
+        await self.bot_data_db.commit()
+        await cursor.close()
+
+    async def update_clan_wrapper(self, clan_id: int) -> list:
+        result = []
         url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
 
         clan_members_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url,
@@ -2398,11 +2424,31 @@ class D2data:
                 #                                  member['destinyUserInfo']['membershipId'], name)
                 for member in clan_json['Response']['results']:
                     name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
-                    result += await self.update_player_metrics(member['destinyUserInfo']['membershipType'],
-                                                               member['destinyUserInfo']['membershipId'], name)
+                    result.append(await self.fetch_player_metrics(member['destinyUserInfo']['membershipType'],
+                                                                  member['destinyUserInfo']['membershipId'], name))
             except KeyError:
                 pass
         return result
+
+    async def fetch_player_metrics(self, membership_type: str, membership_id: str, name: str):
+        url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
+        member = await self.get_cached_json('playermetrics_{}'.format(membership_id),
+                                            'metrics for {}'.format(membership_id), url, params=self.metric_params,
+                                            change_msg=False, force=True)
+        player = {
+            'membershipId': membership_id,
+            'timestamp': datetime.utcnow().isoformat(),
+            'name': name
+        }
+        metrics = {}
+        if member:
+            if 'data' in member['Response']['metrics'].keys():
+                for metric in member['Response']['metrics']['data']['metrics'].keys():
+                    if 'objectiveProgress' in member['Response']['metrics']['data']['metrics'][metric].keys():
+                        value = member['Response']['metrics']['data']['metrics'][metric]['objectiveProgress']['progress']
+                        metrics[metric] = value
+        player['metrics'] = metrics
+        return player
 
     async def update_player_metrics(self, membership_type: str, membership_id: str, name: str) -> int:
         cursor = await self.bot_data_db.cursor()
@@ -2414,7 +2460,7 @@ class D2data:
         try:
             await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
                                  (membership_id, datetime.utcnow().isoformat()))
-            # await self.bot_data_db.commit()
+            await self.bot_data_db.commit()
         except aiosqlite.OperationalError:
             pass
         try:
@@ -2428,7 +2474,7 @@ class D2data:
                 for metric in member['Response']['metrics']['data']['metrics'].keys():
                     try:
                         await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN '{}' INTEGER'''.format(metric))
-                        # await self.bot_data_db.commit()
+                        await self.bot_data_db.commit()
                     except aiosqlite.OperationalError:
                         pass
                     if 'objectiveProgress' in member['Response']['metrics']['data']['metrics'][metric].keys():
@@ -2439,7 +2485,7 @@ class D2data:
                         })
                         try:
                             await cursor.execute('''UPDATE playermetrics SET '{}'=?, timestamp=? WHERE membershipId=?'''.format(metric), (value, datetime.utcnow().isoformat(), membership_id))
-                            # await self.bot_data_db.commit()
+                            await self.bot_data_db.commit()
                         except aiosqlite.OperationalError:
                             pass
                 await self.bot_data_db.commit()
