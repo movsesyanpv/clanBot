@@ -1,3 +1,5 @@
+import sys
+
 import itertools
 import json
 import time
@@ -2373,6 +2375,7 @@ class D2data:
         return len(metric_list)
 
     async def write_metric_data(self, metric_list: list):
+        print('Writing metrics data')
         cursor = await self.bot_data_db.cursor()
 
         for metric in metric_list[0]['metrics'].keys():
@@ -2428,6 +2431,8 @@ class D2data:
                                                                   member['destinyUserInfo']['membershipId'], name))
             except KeyError:
                 pass
+        else:
+            print('clan {} fail: {}'.format(clan_id, clan_members_resp), file=sys.stderr)
         return result
 
     async def fetch_player_metrics(self, membership_type: str, membership_id: str, name: str):
@@ -2447,6 +2452,8 @@ class D2data:
                     if 'objectiveProgress' in member['Response']['metrics']['data']['metrics'][metric].keys():
                         value = member['Response']['metrics']['data']['metrics'][metric]['objectiveProgress']['progress']
                         metrics[metric] = value
+        else:
+            print('member {} fail: {}'.format(membership_id, member), file=sys.stderr)
         player['metrics'] = metrics
         return player
 
