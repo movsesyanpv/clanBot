@@ -23,12 +23,13 @@ async def update_metrics(args: argparse.Namespace):
         member_number = await data.update_clan_metrics(clan_ids)
         # await self.data.get_clan_leaderboard(clan_ids, 1572939289, 10)
         await cursor.close()
-        await data.session.close()
-        await data.bot_data_db.close()
         print('Updated users: {}'.format(member_number))
 
         member_number = await data.update_members_without_tracked_clans()
         print('Updated users without a clan: {}'.format(member_number))
+
+        await data.session.close()
+        await data.bot_data_db.close()
     except (Exception, KeyboardInterrupt) as e:
         print('ERROR', str(e))
         exit()
