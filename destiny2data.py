@@ -22,6 +22,7 @@ import warnings
 import re
 import threading
 from aiolimiter import AsyncLimiter
+from collections import OrderedDict
 
 from typing import Optional, Union, List
 
@@ -2397,21 +2398,26 @@ class D2data:
                 pass
         await self.bot_data_db.commit()
 
+        trans_string = ''
+        global_params = []
         for member in metric_list:
             await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
                                  (member['membershipId'], member['timestamp']))
             await cursor.execute('''UPDATE playermetrics SET name=?, timestamp=?, membershipType=? WHERE membershipId=?''',
                                  (member['name'], member['timestamp'], member['membershipType'], member['membershipId']))
-            trans_string = 'UPDATE playermetrics SET '
-            metric_values = []
-            for metric_hash in member['metrics'].keys():
-                trans_string = '{} \'{}\'=?,'.format(trans_string, metric_hash)
-                metric_values.append(member['metrics'][metric_hash])
-            trans_string = '{} WHERE membershipId=?'.format(trans_string[:-1])
-            await cursor.execute(trans_string, (*metric_values, member['membershipId']))
-                # await cursor.execute(
-                #     '''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric_hash),
-                #     (member['metrics'][metric_hash], member['membershipId']))
+            if len(member['metrics'].keys()) > 0:
+                trans_string = 'UPDATE playermetrics SET '
+                metric_values = []
+                for metric_hash in member['metrics'].keys():
+                    trans_string = '{} \'{}\'=?,'.format(trans_string, metric_hash)
+                    metric_values.append(member['metrics'][metric_hash])
+                trans_string = '{} WHERE membershipId=?'.format(trans_string[:-1])
+                global_params.append((*metric_values, member['membershipId']))
+                # await cursor.execute(trans_string, (*metric_values, member['membershipId']))
+                    # await cursor.execute(
+                    #     '''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric_hash),
+                    #     (member['metrics'][metric_hash], member['membershipId']))
+        await cursor.executemany(trans_string, global_params)
         await self.bot_data_db.commit()
         await cursor.close()
 
@@ -2466,6 +2472,8 @@ class D2data:
 
         await cursor.close()
 
+        if len(member_list) == 0:
+            return 0
         tasks = []
         for member in member_list:
             task = asyncio.ensure_future(self.fetch_player_metrics(member[1], member[0], None))
@@ -2507,7 +2515,7 @@ class D2data:
                         metrics[metric] = value
         else:
             print('member {} fail: {}'.format(membership_id, member), file=sys.stderr)
-        player['metrics'] = metrics
+        player['metrics'] = OrderedDict(sorted(metrics.items()))
         return player
 
     async def update_player_metrics(self, membership_type: str, membership_id: str, name: str) -> int:
