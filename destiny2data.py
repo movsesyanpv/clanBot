@@ -21,6 +21,7 @@ import tracemalloc
 import warnings
 import re
 import threading
+from aiolimiter import AsyncLimiter
 
 from typing import Optional, Union, List
 
@@ -130,6 +131,8 @@ class D2data:
     oauth = ''
 
     data_pool: aiomysql.Pool
+
+    limiter = AsyncLimiter(20, 1)
 
     def __init__(self, translations, lang, is_oauth, prod, context, loop=None, **options):
         super().__init__(**options)
@@ -310,15 +313,20 @@ class D2data:
 
     async def get_bungie_json(self, name: str, url: str, params: Optional[dict] = None, lang: Optional[str] = None,
                               string: Optional[str] = None, change_msg: bool = True, is_get: bool = True,
-                              body: Optional[dict] = None) -> Union[dict, None]:
+                              body: Optional[dict] = None) -> Union[dict, bool]:
 
-        @Limiter(calls_limit=10, period=1)
+        # @Limiter(calls_limit=10, period=1)
         async def request(url, params, headers, is_get, json=None):
-            if is_get:
-                resp = await self.session.get(url, params=params, headers=headers)
-            else:
-                resp = await self.session.post(url, params=params, headers=headers, json=json)
-            return resp
+            async with self.limiter:
+                if is_get:
+                    resp = await self.session.get(url, params=params, headers=headers)
+                else:
+                    resp = await self.session.post(url, params=params, headers=headers, json=json)
+                return resp
+
+        def false(string, resp):
+            print('{}\n{}'.format(string, resp), file=sys.stderr)
+            return False
 
         if lang is None:
             lang = list(self.data.keys())
@@ -333,7 +341,7 @@ class D2data:
             if change_msg:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
-            return False
+            return false(url, 'exception in initial request')
         try:
             resp_code = await resp.json()
             resp_code = resp_code['ErrorCode']
@@ -344,13 +352,13 @@ class D2data:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
             resp.close()
-            return False
+            return false(url, resp_code)
         except aiohttp.ContentTypeError:
             if change_msg:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
             resp.close()
-            return False
+            return false(url, resp_code)
         print('getting fresh {} {}'.format(string, lang_str))
         curr_try = 2
         while resp_code in self.wait_codes and curr_try <= self.max_retries:
@@ -376,20 +384,20 @@ class D2data:
                     for locale in lang:
                         self.data[locale][name] = self.data[locale]['api_is_down']
                 resp.close()
-                return False
+                return false(url, resp_code)
             resp_code = resp_code['ErrorCode']
             if resp_code in [5, 1618]:
                 if change_msg:
                     for locale in lang:
                         self.data[locale][name] = self.data[locale]['api_maintenance']
                 resp.close()
-                return False
+                return false(url, resp_code)
             print("{} get error".format(name), json.dumps(resp.json(), indent=4, sort_keys=True) + "\n")
             if change_msg:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
             resp.close()
-            return False
+            return false(url, resp_code)
         else:
             try:
                 resp_code = await resp.json()
@@ -398,7 +406,7 @@ class D2data:
                     for locale in lang:
                         self.data[locale][name] = self.data[locale]['api_is_down']
                 resp.close()
-                return False
+                return false(url, resp_code)
             if 'ErrorCode' in resp_code.keys():
                 resp_code = resp_code['ErrorCode']
                 if resp_code == 5:
@@ -406,7 +414,7 @@ class D2data:
                         for locale in lang:
                             self.data[locale][name] = self.data[locale]['api_maintenance']
                     resp.close()
-                    return False
+                    return false(url, resp_code)
             else:
                 for suspected_season in resp_code:
                     if 'seasonNumber' in resp_code[suspected_season].keys():
@@ -418,7 +426,7 @@ class D2data:
                     for locale in lang:
                         self.data[locale][name] = self.data[locale]['api_is_down']
                 resp.close()
-                return False
+                return false(url, resp_code)
         resp_json = await resp.json()
         resp.close()
         return resp_json
@@ -2427,6 +2435,10 @@ class D2data:
                 #                                  member['destinyUserInfo']['membershipId'], name)
                 for member in clan_json['Response']['results']:
                     name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
+                    # if member['destinyUserInfo']['crossSaveOverride'] != 0:
+                    #     m_type = member['destinyUserInfo']['crossSaveOverride']
+                    # else:
+                    #     m_type = member['destinyUserInfo']['membershipType']
                     result.append(await self.fetch_player_metrics(member['destinyUserInfo']['membershipType'],
                                                                   member['destinyUserInfo']['membershipId'], name))
             except KeyError:

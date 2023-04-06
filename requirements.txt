@@ -37,3 +37,4 @@ topggpy
 dateparser>=1.1.0
 aiosqlite
 pytz
+aiolimiter
