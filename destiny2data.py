@@ -2395,16 +2395,23 @@ class D2data:
                 await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN '{}' INTEGER'''.format(metric))
             except aiosqlite.OperationalError:
                 pass
+        await self.bot_data_db.commit()
 
         for member in metric_list:
             await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
                                  (member['membershipId'], member['timestamp']))
             await cursor.execute('''UPDATE playermetrics SET name=?, timestamp=?, membershipType=? WHERE membershipId=?''',
                                  (member['name'], member['timestamp'], member['membershipType'], member['membershipId']))
+            trans_string = 'UPDATE playermetrics SET '
+            metric_values = []
             for metric_hash in member['metrics'].keys():
-                await cursor.execute(
-                    '''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric_hash),
-                    (member['metrics'][metric_hash], member['membershipId']))
+                trans_string = '{} \'{}\'=?,'.format(trans_string, metric_hash)
+                metric_values.append(member['metrics'][metric_hash])
+            trans_string = '{} WHERE membershipId=?'.format(trans_string[:-1])
+            await cursor.execute(trans_string, (*metric_values, member['membershipId']))
+                # await cursor.execute(
+                #     '''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric_hash),
+                #     (member['metrics'][metric_hash], member['membershipId']))
         await self.bot_data_db.commit()
         await cursor.close()
 
@@ -2470,7 +2477,7 @@ class D2data:
         return len(results)
 
     async def fetch_player_metrics(self, membership_type: str, membership_id: str, name: str):
-        if membership_type is None:
+        if name is None:
             url = 'https://www.bungie.net/Platform/User/GetMembershipsById/{}/-1'.format(membership_id)
             profile = await self.get_cached_json('playermemberships_{}'.format(membership_id),
                                                  'memberships for {}'.format(membership_id), url,
