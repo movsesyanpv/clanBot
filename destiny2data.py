@@ -2385,6 +2385,10 @@ class D2data:
     async def write_metric_data(self, metric_list: list):
         print('Writing metrics data')
         cursor = await self.bot_data_db.cursor()
+        try:
+            await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN membershipType INTEGER''')
+        except aiosqlite.OperationalError:
+            pass
 
         for metric in metric_list[0]['metrics'].keys():
             try:
@@ -2395,8 +2399,8 @@ class D2data:
         for member in metric_list:
             await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
                                  (member['membershipId'], member['timestamp']))
-            await cursor.execute('''UPDATE playermetrics SET name=? WHERE membershipId=?''',
-                                 (member['name'], member['membershipId']))
+            await cursor.execute('''UPDATE playermetrics SET name=?, timestamp=?, membershipType=? WHERE membershipId=?''',
+                                 (member['name'], member['timestamp'], member['membershipType'], member['membershipId']))
             for metric_hash in member['metrics'].keys():
                 await cursor.execute(
                     '''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric_hash),
@@ -2447,13 +2451,43 @@ class D2data:
             print('clan {} fail: {}'.format(clan_id, clan_members_resp), file=sys.stderr)
         return result
 
+    async def update_members_without_tracked_clans(self):
+        cursor = await self.bot_data_db.cursor()
+
+        member_list = await cursor.execute('''select membershipId, membershipType from playermetrics WHERE timestamp<\'{}\''''.format(datetime.utcnow().strftime('%Y-%m-%d')))
+        member_list = await member_list.fetchall()
+
+        await cursor.close()
+
+        tasks = []
+        for member in member_list:
+            task = asyncio.ensure_future(self.fetch_player_metrics(member[1], member[0], None))
+            tasks.append(task)
+        results = await asyncio.gather(*tasks)
+
+        await self.write_metric_data(list(results))
+
+        return len(results)
+
     async def fetch_player_metrics(self, membership_type: str, membership_id: str, name: str):
+        if membership_type is None:
+            url = 'https://www.bungie.net/Platform/User/GetMembershipsById/{}/-1'.format(membership_id)
+            profile = await self.get_cached_json('playermemberships_{}'.format(membership_id),
+                                                 'memberships for {}'.format(membership_id), url,
+                                                 params=self.metric_params, change_msg=False, force=True)
+            for membership in profile['Response']['destinyMemberships']:
+                if membership['crossSaveOverride'] == membership['membershipType']:
+                    name = membership['bungieGlobalDisplayName']
+                    membership_type = membership['crossSaveOverride']
+
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
         member = await self.get_cached_json('playermetrics_{}'.format(membership_id),
                                             'metrics for {}'.format(membership_id), url, params=self.metric_params,
                                             change_msg=False, force=True)
+
         player = {
             'membershipId': membership_id,
+            'membershipType': membership_type,
             'timestamp': datetime.utcnow().isoformat(),
             'name': name
         }

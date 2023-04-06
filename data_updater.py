@@ -26,6 +26,9 @@ async def update_metrics(args: argparse.Namespace):
         await data.session.close()
         await data.bot_data_db.close()
         print('Updated users: {}'.format(member_number))
+
+        member_number = await data.update_members_without_tracked_clans()
+        print('Updated users without a clan: {}'.format(member_number))
     except (Exception, KeyboardInterrupt) as e:
         print('ERROR', str(e))
         exit()
