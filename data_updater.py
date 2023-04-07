@@ -7,7 +7,29 @@ import destiny2data as d2
 import argparse
 import threading
 import os
+from datetime import datetime, timedelta
+import time
 
+
+def timeit(func):
+    async def process(func, *args, **params):
+        if asyncio.iscoroutinefunction(func):
+            return await func(*args, **params)
+        else:
+            return func(*args, **params)
+
+    async def helper(*args, **params):
+        print('{}.time'.format(func.__name__))
+        start = time.time()
+        result = await process(func, *args, **params)
+
+        print('Execution time is ', time.time() - start)
+        return result
+
+    return helper
+
+
+@timeit
 async def update_metrics(args: argparse.Namespace):
     try:
         data = d2.D2data(None, [], args.oauth, args.production,
