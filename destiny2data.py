@@ -2421,11 +2421,11 @@ class D2data:
         result = []
         url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
 
-        clan_members_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url,
-                                                       change_msg=False)
+        clan_members_resp = await self.get_bungie_json('clan members', url,
+                                                       change_msg=False, string='clanmembers_{}'.format(clan_id), )
 
         url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
-        clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), 'clan info', url)
+        clan_resp = await self.get_bungie_json('clan info', url, string='clan_{}'.format(clan_id))
         clan_json = clan_resp
         try:
             code = clan_json['ErrorCode']
@@ -2489,9 +2489,8 @@ class D2data:
         }
         if name is None:
             url = 'https://www.bungie.net/Platform/User/GetMembershipsById/{}/-1'.format(membership_id)
-            profile = await self.get_cached_json('playermemberships_{}'.format(membership_id),
-                                                 'memberships for {}'.format(membership_id), url,
-                                                 params=self.metric_params, change_msg=False, force=True)
+            profile = await self.get_bungie_json('memberships for {}'.format(membership_id), url,
+                                                 params=self.metric_params, change_msg=False)
             if not profile:
                 player['metrics'] = {}
                 print('profile {} fail: {}'.format(membership_id, profile), file=sys.stderr)
@@ -2503,9 +2502,8 @@ class D2data:
                     membership_type = membership['crossSaveOverride']
 
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
-        member = await self.get_cached_json('playermetrics_{}'.format(membership_id),
-                                            'metrics for {}'.format(membership_id), url, params=self.metric_params,
-                                            change_msg=False, force=True)
+        member = await self.get_bungie_json('metrics for {}'.format(membership_id), url, params=self.metric_params,
+                                            change_msg=False)
 
         metrics = {}
         if member:
