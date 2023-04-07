@@ -353,13 +353,13 @@ class D2data:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
             resp.close()
-            return false(url, resp_code)
+            return false(url, 'json.decoder.JSONDecodeError')
         except aiohttp.ContentTypeError:
             if change_msg:
                 for locale in lang:
                     self.data[locale][name] = self.data[locale]['api_is_down']
             resp.close()
-            return false(url, resp_code)
+            return false(url, 'aiohttp.ContentTypeError')
         print('getting fresh {} {}'.format(string, lang_str))
         curr_try = 2
         while resp_code in self.wait_codes and curr_try <= self.max_retries:
@@ -2413,10 +2413,6 @@ class D2data:
                     metric_values.append(member['metrics'][metric_hash])
                 trans_string = '{} WHERE membershipId=?'.format(trans_string[:-1])
                 global_params.append((*metric_values, member['membershipId']))
-                # await cursor.execute(trans_string, (*metric_values, member['membershipId']))
-                    # await cursor.execute(
-                    #     '''UPDATE playermetrics SET '{}'=? WHERE membershipId=?'''.format(metric_hash),
-                    #     (member['metrics'][metric_hash], member['membershipId']))
         await cursor.executemany(trans_string, global_params)
         await self.bot_data_db.commit()
         await cursor.close()
