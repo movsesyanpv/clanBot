@@ -344,7 +344,7 @@ class D2data:
                     self.data[locale][name] = self.data[locale]['api_is_down']
             return false(url, 'exception in initial request')
         try:
-            resp_code = await resp.json()
+            resp_code = await resp.json(content_type=None)
             resp_code = resp_code['ErrorCode']
         except KeyError:
             resp_code = 1
