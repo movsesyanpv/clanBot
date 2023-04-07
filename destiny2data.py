@@ -2447,7 +2447,10 @@ class D2data:
                 # await self.update_player_metrics(member['destinyUserInfo']['membershipType'],
                 #                                  member['destinyUserInfo']['membershipId'], name)
                 for member in clan_json['Response']['results']:
-                    name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
+                    if member['destinyUserInfo']['bungieGlobalDisplayName'] != '':
+                        name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
+                    else:
+                        name = '{} [{}]'.format(member['destinyUserInfo']['LastSeenDisplayName'], tag)
                     # if member['destinyUserInfo']['crossSaveOverride'] != 0:
                     #     m_type = member['destinyUserInfo']['crossSaveOverride']
                     # else:
@@ -2500,6 +2503,10 @@ class D2data:
                 if membership['crossSaveOverride'] == membership['membershipType']:
                     name = membership['bungieGlobalDisplayName']
                     membership_type = membership['crossSaveOverride']
+                elif membership['crossSaveOverride'] == 0:
+                    name = membership['bungieGlobalDisplayName']
+                    membership_type = membership['membershipType']
+            player['name'] = name
 
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
         member = await self.get_bungie_json('metrics for {}'.format(membership_id), url, params=self.metric_params,
