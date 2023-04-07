@@ -2485,11 +2485,22 @@ class D2data:
         return len(results)
 
     async def fetch_player_metrics(self, membership_type: str, membership_id: str, name: str):
+        player = {
+            'membershipId': membership_id,
+            'membershipType': membership_type,
+            'timestamp': datetime.utcnow().isoformat(),
+            'name': name
+        }
         if name is None:
             url = 'https://www.bungie.net/Platform/User/GetMembershipsById/{}/-1'.format(membership_id)
             profile = await self.get_cached_json('playermemberships_{}'.format(membership_id),
                                                  'memberships for {}'.format(membership_id), url,
                                                  params=self.metric_params, change_msg=False, force=True)
+            if not profile:
+                player['metrics'] = {}
+                print('profile {} fail: {}'.format(membership_id, profile), file=sys.stderr)
+                return player
+
             for membership in profile['Response']['destinyMemberships']:
                 if membership['crossSaveOverride'] == membership['membershipType']:
                     name = membership['bungieGlobalDisplayName']
@@ -2500,12 +2511,6 @@ class D2data:
                                             'metrics for {}'.format(membership_id), url, params=self.metric_params,
                                             change_msg=False, force=True)
 
-        player = {
-            'membershipId': membership_id,
-            'membershipType': membership_type,
-            'timestamp': datetime.utcnow().isoformat(),
-            'name': name
-        }
         metrics = {}
         if member:
             if 'data' in member['Response']['metrics'].keys():
