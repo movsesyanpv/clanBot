@@ -2501,12 +2501,19 @@ class D2data:
 
             for membership in profile['Response']['destinyMemberships']:
                 if membership['crossSaveOverride'] == membership['membershipType']:
-                    name = membership['bungieGlobalDisplayName']
+                    if membership['bungieGlobalDisplayName'] != '':
+                        name = membership['bungieGlobalDisplayName']
+                    else:
+                        name = membership['LastSeenDisplayName']
                     membership_type = membership['crossSaveOverride']
                 elif membership['crossSaveOverride'] == 0:
-                    name = membership['bungieGlobalDisplayName']
+                    if membership['bungieGlobalDisplayName'] != '':
+                        name = membership['bungieGlobalDisplayName']
+                    else:
+                        name = membership['LastSeenDisplayName']
                     membership_type = membership['membershipType']
             player['name'] = name
+            player['membershipType'] = membership_type
 
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
         member = await self.get_bungie_json('metrics for {}'.format(membership_id), url, params=self.metric_params,
