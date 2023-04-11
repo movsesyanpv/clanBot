@@ -158,21 +158,34 @@ class WantButton(discord.ui.Button):
         await interaction.response.defer()
         await self.view.bot.raid.add_people(interaction.message.id, interaction.user)
         lang = self.view.bot.guild_lang(interaction.message.guild.id)
-        await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
         mode = await self.view.bot.raid.get_cell('group_id', interaction.message.id, 'group_mode')
         owner = self.view.bot.get_user(await self.view.bot.raid.get_cell('group_id', interaction.message.id, 'owner'))
+        locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
+        overlap = await self.view.bot.raid.check_overlaps(interaction.message.id, interaction.user.id)
+        if len(overlap) == 0:
+            embed = None
+        else:
+            embed = await make_overlap_embed(self.view.bot, overlap, locale)
         if mode == 'manual' and owner.id != interaction.user.id:
             if interaction.user.nick is not None:
                 nick = interaction.user.nick
             else:
                 nick = interaction.user.name
             locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
-            await interaction.followup.send(content=self.view.bot.translations[locale]['lfg']['gotcha'].format(nick), ephemeral=True)
+            await interaction.followup.send(content=self.view.bot.translations[locale]['lfg']['gotcha'].format(nick), embed=embed, ephemeral=True)
             await self.view.bot.raid.upd_dm(owner, interaction.message.id, self.view.bot.translations[lang])
+        else:
+            if embed is not None:
+                await interaction.followup.send(content=None, embed=embed, ephemeral=True)
+            else:
+                await interaction.followup.send(content=self.view.bot.translations[locale]['lfg']['will_not_go'],
+                                                ephemeral=True)
+        await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
 
 
-async def make_overlap_embed(bot, overlap, lang) -> discord.Embed:
-    translations = bot.translations[lang]['lfg']
+
+async def make_overlap_embed(bot, overlap, locale) -> discord.Embed:
+    translations = bot.translations[locale]['lfg']
     table_list = []
     for group in overlap:
         o_type = translations['overlap_actual']
@@ -186,7 +199,7 @@ async def make_overlap_embed(bot, overlap, lang) -> discord.Embed:
         else:
             tz_elements = tz.strip('UTC+').split(':')
         ts = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
-        time = '{} {}'.format(format_datetime(group[0][0], 'short', tzinfo=ts, locale=Locale.parse(lang, sep='-')), tz)
+        time = '{} {}'.format(format_datetime(group[0][0], 'short', tzinfo=ts, locale=Locale.parse(locale, sep='-')), tz)
         table_list.append([translations['overlap_group'].format(group_name=group[0][3], server_name=group[0][4], time=time), o_type])
     table = tabulate(tabular_data=table_list, headers=[translations['overlap_table_group'], translations['overlap_table_type']])
     if len(table) > 4090:
@@ -207,11 +220,12 @@ class MaybeButton(discord.ui.Button):
         await interaction.response.defer()
         await self.view.bot.raid.add_mb_goers(interaction.message.id, interaction.user)
         lang = self.view.bot.guild_lang(interaction.message.guild.id)
+        locale = await locale_2_lang(CtxLocale(self.view.bot, interaction.locale))
         overlap = await self.view.bot.raid.check_overlaps(interaction.message.id, interaction.user.id)
         if len(overlap) == 0:
-            await interaction.followup.send(content='Ok', ephemeral=True)
+            await interaction.followup.send(content=self.view.bot.translations[locale]['lfg']['will_not_go'], ephemeral=True)
         else:
-            embed = await make_overlap_embed(self.view.bot, overlap, locale_2_lang(interaction))
+            embed = await make_overlap_embed(self.view.bot, overlap, locale)
             await interaction.followup.send(content=None, embed=embed, ephemeral=True)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
 
