@@ -1087,7 +1087,7 @@ class LFG:
             else:
                 potential = False
             group_frame = self.group_frame(group[0], group[1])
-            if group_frame * current_frame:
+            if (group_frame * current_frame).duration > 0:
                 overlaps.append((group, potential))
 
         await cursor.close()
