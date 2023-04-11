@@ -66,7 +66,7 @@
         "cancel": "Cancel",
         "lostsector": "Lost Sector",
         "tz_not_found": "Unable to found the timezone `{timezone}`. Please make sure you choose one from the suggested variants. If you are unable to find your timezone, please ask for help at my support server. You can find the support server link with {support_cmd_mention}.",
-        "next_goal": "Current stage"
+        "next_goal": "Current stage goal"
     },
     "lfg": {
         "go": "Los",
@@ -136,7 +136,13 @@
         "reminder_setup": "How many minutes before the start should the bot send a reminder?",
         "reminder_set": "You'll get a direct message {} minutes before the start.",
         "reminder_not_set": "This is available only for participants or helpers.",
-        "button_alert": "Notify me"
+        "button_alert": "Notify me",
+        "overlap_title": "Overlapping groups were detected",
+        "overlap_group": "{group_name} of {server_name}\n{time}",
+        "overlap_potential": "Potential",
+        "overlap_actual": "Actual",
+        "overlap_table_group": "Group",
+        "overlap_table_type": "Overlap type"
     },
     "lfge": {
         "roles": "Rollen",
@@ -405,8 +411,8 @@
             "description": "Rahools's material exchange"
         },
         "mods": {
-            "label": "Ada's and Banshee's mods",
-            "description": "Currently available mods that Ada and Banshee sell"
+            "label": "Ada's shaders",
+            "description": "Currently available shaders that Ada sells"
         },
         "xur": {
             "label": "Xur",
