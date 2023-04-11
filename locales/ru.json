@@ -136,7 +136,13 @@
         "reminder_setup": "За сколько минут до начала боту следует отправлять напоминание?",
         "reminder_set": "Вы получите личное сообщение за {} минут до старта.",
         "reminder_not_set": "Это доступно только участникам или помогающим.",
-        "button_alert": "Напомнить мне"
+        "button_alert": "Напомнить мне",
+        "overlap_title": "Были обнаружены пересекающиеся сборы",
+        "overlap_group": "{group_name} сервера {server_name}\n{time}",
+        "overlap_potential": "Потенциальное",
+        "overlap_actual": "Реальное",
+        "overlap_table_group": "Сбор",
+        "overlap_table_type": "Тип пересечения"
     },
     "lfge": {
         "roles": "Роли",
