@@ -136,7 +136,13 @@
         "reminder_setup": "Combien de minutes avant le départ le bot doit il envoyer un rappel ?",
         "reminder_set": "Vous aurez un message privé {} minutes avant le départ.",
         "reminder_not_set": "Ce n'est disponible que pour les participants ou les remplaçants.",
-        "button_alert": "Prévenez moi"
+        "button_alert": "Prévenez moi",
+        "overlap_title": "Overlapping groups were detected",
+        "overlap_group": "{group_name} of {server_name}\n{time}",
+        "overlap_potential": "Potential",
+        "overlap_actual": "Actual",
+        "overlap_table_group": "Group",
+        "overlap_table_type": "Overlap type"
     },
     "lfge": {
         "roles": "Roles",
