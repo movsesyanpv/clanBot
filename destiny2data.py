@@ -2492,8 +2492,7 @@ class D2data:
         }
         if name is None:
             url = 'https://www.bungie.net/Platform/User/GetMembershipsById/{}/-1'.format(membership_id)
-            profile = await self.get_bungie_json('memberships for {}'.format(membership_id), url,
-                                                 params=self.metric_params, change_msg=False)
+            profile = await self.get_bungie_json('memberships for {}'.format(membership_id), url, change_msg=False)
             if not profile:
                 player['metrics'] = {}
                 print('profile {} fail: {}'.format(membership_id, profile), file=sys.stderr)

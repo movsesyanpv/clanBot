@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from babel.dates import format_datetime
 from babel import Locale
 import traceback
+from tabulate import tabulate
 
 
 class MyButton(discord.ui.Button):
@@ -170,6 +171,34 @@ class WantButton(discord.ui.Button):
             await self.view.bot.raid.upd_dm(owner, interaction.message.id, self.view.bot.translations[lang])
 
 
+async def make_overlap_embed(bot, overlap, lang) -> discord.Embed:
+    translations = bot.translations[lang]['lfg']
+    table_list = []
+    for group in overlap:
+        o_type = translations['overlap_actual']
+        if group[1]:
+            o_type = translations['overlap_potential']
+        tz = group[0][2]
+        if tz is None:
+            tz = 'UTC+03:00'
+        if tz == 'UTC':
+            tz_elements = [0, 0]
+        else:
+            tz_elements = tz.strip('UTC+').split(':')
+        ts = timezone(timedelta(hours=int(tz_elements[0]), minutes=int(tz_elements[1])))
+        time = '{} {}'.format(format_datetime(group[0][0], 'short', tzinfo=ts, locale=Locale.parse(lang, sep='-')), tz)
+        table_list.append([translations['overlap_group'].format(group_name=group[0][3], server_name=group[0][4], time=time), o_type])
+    table = tabulate(tabular_data=table_list, headers=[translations['overlap_table_group'], translations['overlap_table_type']])
+    if len(table) > 4090:
+        table = ''
+        table_tmp = tabulate(tabular_data=table_list, headers=['Group', 'Overlap type']).splitlines()
+        for line in table_tmp:
+            if len(table) + len(line) + 1 <= 4090:
+                table = '{}{}\n'.format(table, line)
+
+    return discord.Embed(title=translations['overlap_title'], description='```{}```'.format(table))
+
+
 class MaybeButton(discord.ui.Button):
     def __init__(self, label, style, custom_id, row=1):
         super().__init__(style=style, label=label, row=row, custom_id=custom_id)
@@ -178,6 +207,12 @@ class MaybeButton(discord.ui.Button):
         await interaction.response.defer()
         await self.view.bot.raid.add_mb_goers(interaction.message.id, interaction.user)
         lang = self.view.bot.guild_lang(interaction.message.guild.id)
+        overlap = await self.view.bot.raid.check_overlaps(interaction.message.id, interaction.user.id)
+        if len(overlap) == 0:
+            await interaction.followup.send(content='Ok', ephemeral=True)
+        else:
+            embed = await make_overlap_embed(self.view.bot, overlap, locale_2_lang(interaction))
+            await interaction.followup.send(content=None, embed=embed, ephemeral=True)
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
 
 

@@ -9,6 +9,7 @@ from hashids import Hashids
 from babel.dates import format_datetime, get_timezone_name, get_timezone, get_timezone_gmt
 from babel import Locale
 from cogs.utils.views import LFGModal, DMSelectLFG
+from timeframe import TimeFrame
 
 from typing import List, Union
 
@@ -1060,3 +1061,34 @@ class LFG:
         goers = eval(goers[0])
 
         return user.mention in goers
+
+    @staticmethod
+    def group_frame(start, length):
+        if length == 0:
+            group_frame = TimeFrame(datetime.fromtimestamp(start), datetime.fromtimestamp(start + 3600))
+        else:
+            group_frame = TimeFrame(datetime.fromtimestamp(start), datetime.fromtimestamp(start + length))
+        return group_frame
+
+    async def check_overlaps(self, group_id: int, user_id: int) -> list:
+        cursor = await self.conn.cursor()
+        persons_groups = await cursor.execute('''SELECT time, length, timezone, name, server_name FROM raid WHERE going LIKE '%{}%' or wanters like '%{}%' or maybe_goers like '%{}%' and group_id!=? '''.format(user_id, user_id, user_id), (group_id,))
+        persons_groups = await persons_groups.fetchall()
+
+        current_group = await cursor.execute('''SELECT time, length FROM raid WHERE group_id=?''', (group_id,))
+        current_group = await current_group.fetchone()
+
+        current_frame = self.group_frame(current_group[0], current_group[1])
+
+        overlaps = []
+        for group in persons_groups:
+            if group[1] == 0 or current_group[1] == 0:
+                potential = True
+            else:
+                potential = False
+            group_frame = self.group_frame(group[0], group[1])
+            if group_frame * current_frame:
+                overlaps.append((group, potential))
+
+        await cursor.close()
+        return overlaps
