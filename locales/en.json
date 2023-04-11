@@ -136,7 +136,13 @@
         "reminder_setup": "How many minutes before the start should the bot send a reminder?",
         "reminder_set": "You'll get a direct message {} minutes before the start.",
         "reminder_not_set": "This is available only for participants or helpers.",
-        "button_alert": "Notify me"
+        "button_alert": "Notify me",
+        "overlap_title": "Overlapping groups were detected",
+        "overlap_group": "{} of {}\n{}",
+        "overlap_potential": "Potential",
+        "overlap_actual": "Actual",
+        "overlap_table_group": "Group",
+        "overlap_table_type": "Overlap type"
     },
     "lfge": {
         "roles": "Roles",
