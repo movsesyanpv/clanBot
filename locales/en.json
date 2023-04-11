@@ -138,7 +138,7 @@
         "reminder_not_set": "This is available only for participants or helpers.",
         "button_alert": "Notify me",
         "overlap_title": "Overlapping groups were detected",
-        "overlap_group": "{} of {}\n{}",
+        "overlap_group": "{group_name} of {server_name}\n{time}",
         "overlap_potential": "Potential",
         "overlap_actual": "Actual",
         "overlap_table_group": "Group",
