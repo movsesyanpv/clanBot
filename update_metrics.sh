@@ -2,4 +2,4 @@
 
 cd ~/clanBot
 
-python3.9 ./data_updater.py --oauth
+/usr/local/bin/python3.9 ./data_updater.py --oauth
