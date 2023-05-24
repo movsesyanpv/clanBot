@@ -424,7 +424,7 @@ class ClanBot(commands.Bot):
                                            support_alerts=await self.lfg_alerts_enabled(lfg[3]))
                     try:
                         await group_msg.edit(view=buttons)
-                    except discord.Forbidden:
+                    except discord.HTTPException:
                         continue
                     self.persistent_views.pop(self.persistent_views.index(buttons))  # This bs is a workaround for a pycord broken persistent view processing
                     self.add_view(buttons)
