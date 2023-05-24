@@ -422,7 +422,10 @@ class ClanBot(commands.Bot):
                                            label_delete=self.translations[lang]['lfg']['button_delete'],
                                            label_alert=self.translations[lang]['lfg']['button_alert'],
                                            support_alerts=await self.lfg_alerts_enabled(lfg[3]))
-                    await group_msg.edit(view=buttons)
+                    try:
+                        await group_msg.edit(view=buttons)
+                    except discord.Forbidden:
+                        continue
                     self.persistent_views.pop(self.persistent_views.index(buttons))  # This bs is a workaround for a pycord broken persistent view processing
                     self.add_view(buttons)
                 except discord.NotFound:
