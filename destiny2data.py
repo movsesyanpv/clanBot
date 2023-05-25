@@ -1053,7 +1053,7 @@ class D2data:
                     'name': self.translations[locale]['msg']['error'],
                     'description': self.translations[locale]['msg']['noapi']
                 }
-                await self.write_to_db(locale, 'spider_mats', [db_data], name=banshee_def['displayProperties']['name'])
+                await self.write_to_db(locale, 'banshee_mods', [db_data], name=banshee_def['displayProperties']['name'])
             return False
         banshee_json = banshee_resp
         banshee_cats = banshee_json['Response']['categories']['data']['categories']
@@ -1095,7 +1095,7 @@ class D2data:
                         'name': self.translations[locale]['msg']['error'],
                         'description': self.translations[locale]['msg']['noapi']
                     }
-                    await self.write_to_db(locale, 'spider_mats', [db_data], name=ada_def['displayProperties']['name'])
+                    await self.write_to_db(locale, 'ada_mods', [db_data], name=ada_def['displayProperties']['name'])
                 return False
         ada_json = ada_resps[0]
         ada_cats = ada_json['Response']['categories']['data']['categories']
@@ -1472,7 +1472,7 @@ class D2data:
                 if self.translations[lang]['strikes'] in r_json['displayProperties']['name']:
                     self.data[lang]['vanguardstrikes']['thumbnail']['url'] = self.icon_prefix + \
                                                                              r_json['displayProperties']['icon']
-            await self.write_to_db(lang, 'strike_modifiers', db_data, size='wide',
+            await self.write_to_db(lang, 'strike_modifiers', db_data, size='wide tall',
                                    name=self.translations[lang]['msg']['strikesmods'], order=1)
         await self.write_bot_data('vanguardstrikes', langs)
 
@@ -1852,7 +1852,7 @@ class D2data:
                         })
                         self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
-            await self.write_to_db(lang, 'raid_challenges', db_data, '',
+            await self.write_to_db(lang, 'raid_challenges', db_data, 'tall',
                                    self.translations[lang]['msg']['raids'], order=1, type='weekly')
         await self.write_bot_data('raids', langs)
 
@@ -2770,9 +2770,9 @@ class D2data:
 
         cur = await conn.cursor()
         for lang in langs:
-            await cur.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('trials_of_osiris',))
-            await cur.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('xur',))
-            await cur.execute('''DELETE FROM `{}` WHERE id=?'''.format(lang), ('gambit',))
+            await cur.execute('''DELETE FROM `{}` WHERE id="trials_of_osiris"'''.format(lang))
+            await cur.execute('''DELETE FROM `{}` WHERE id="xur"'''.format(lang))
+            await cur.execute('''DELETE FROM `{}` WHERE id="gambit"'''.format(lang))
         await conn.commit()
         await cur.close()
         conn.close()
