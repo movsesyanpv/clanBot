@@ -903,29 +903,77 @@ class D2data:
 
     async def get_weekly_eververse(self, langs: List[str]) -> None:
         data = []
-        start = await self.get_season_start()
-        week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
-        week_n = int(week_n.days / 7)
-        for lang in langs:
-            data.clear()
-            bd = await self.get_seasonal_bd([lang], start)
-            featured_bd = await self.get_seasonal_featured_bd([lang], start)
-            # await self.get_seasonal_consumables(langs, start)
-            silver = await self.get_seasonal_featured_silver([lang], start)
-            for i in range(0, len(bd)):
-                data.append({
-                    'items': [*bd[i]]
-                })
-            if len(bd) == len(featured_bd):
-                for i in range(0, len(bd)):
-                    data[i]['items'] = [*data[i]['items'], *featured_bd[i]]
-            if len(bd) == len(silver):
-                for i in range(0, len(bd)):
-                    data[i]['items'] = [*data[i]['items'], *silver[i]]
 
-            await self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'],
-                                   name=self.translations[lang]['site']['bd'],
-                                   template='hover_items.html', order=0, type='weekly', size='tall')
+        char_info = self.char_info
+        tess_resps = []
+        for char in char_info['charid']:
+            tess_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3361454721/'. \
+                format(char_info['platform'], char_info['membershipid'], char)
+            tess_resps.append(await self.get_cached_json('tess_{}'.format(char), 'tess', tess_url, self.vendor_params))
+
+        for tess_resp in tess_resps:
+            if not tess_resp:
+                for locale in langs:
+                    ada_def = await self.destiny.decode_hash(350061650, 'DestinyVendorDefinition', language=locale)
+                    db_data = {
+                        'name': self.translations[locale]['msg']['error'],
+                        'description': self.translations[locale]['msg']['noapi']
+                    }
+                    await self.write_to_db(locale, 'ada_mods', [db_data], name=ada_def['displayProperties']['name'])
+                return False
+        tess_json = tess_resps[0]
+        tess_cats = tess_json['Response']['categories']['data']['categories']
+        resp_time = tess_json['timestamp']
+        for locale in langs:
+            tess_def = await self.destiny.decode_hash(350061650, 'DestinyVendorDefinition', language=locale)
+            sales = []
+
+            cat_sales = []
+            for tess_resp in tess_resps:
+                items_to_get = tess_resp['Response']['categories']['data']['categories'][10]['itemIndexes']
+                ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468])
+                cat_sales += ada_sales[1]
+                # cat_sales = list(set(cat_sales))
+            cat_sales = list(dict((item["id"], item) for item in cat_sales).values())
+            sales += cat_sales
+            cat_sales = []
+            for tess_resp in tess_resps:
+                items_to_get = tess_resp['Response']['categories']['data']['categories'][2]['itemIndexes']
+                ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468])
+                cat_sales += ada_sales[1]
+            cat_sales = list(dict((item["id"], item) for item in cat_sales).values())
+            sales += cat_sales
+            items_to_get = tess_cats[12]['itemIndexes']
+            ada_sales = await self.get_vendor_sales(locale, tess_resps[0], items_to_get, [1812969468, 2979281381])
+            # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
+            sales += ada_sales[1]
+            sales = [{'name': "", "items": sales, "template": 'contract_item.html'}]
+            await self.write_to_db(locale, 'weekly_eververse', sales, name=self.translations[locale]['site']['bd'], order=0,
+                                   template='vendor_items.html', annotations=[], size='tall', type='weekly')
+
+        # start = await self.get_season_start()
+        # week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
+        # week_n = int(week_n.days / 7)
+        # for lang in langs:
+        #     data.clear()
+        #     bd = await self.get_seasonal_bd([lang], start)
+        #     featured_bd = await self.get_seasonal_featured_bd([lang], start)
+        #     # await self.get_seasonal_consumables(langs, start)
+        #     silver = await self.get_seasonal_featured_silver([lang], start)
+        #     for i in range(0, len(bd)):
+        #         data.append({
+        #             'items': [*bd[i]]
+        #         })
+        #     if len(bd) == len(featured_bd):
+        #         for i in range(0, len(bd)):
+        #             data[i]['items'] = [*data[i]['items'], *featured_bd[i]]
+        #     if len(bd) == len(silver):
+        #         for i in range(0, len(bd)):
+        #             data[i]['items'] = [*data[i]['items'], *silver[i]]
+        #
+        #     await self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'],
+        #                            name=self.translations[lang]['site']['bd'],
+        #                            template='hover_items.html', order=0, type='weekly', size='tall')
 
     async def write_to_db(self, lang: str, id: str, response: list, size: str = '', name: str = '',
                             template: str = 'table_items.html', order: int = 0, type: str = 'daily',
