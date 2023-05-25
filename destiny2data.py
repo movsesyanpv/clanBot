@@ -1147,14 +1147,14 @@ class D2data:
 
             mods = []
             items_to_get = ada_cats[1]['itemIndexes']
-            ada_sales = await self.get_vendor_sales(lang, ada_resp, items_to_get, [1812969468])
+            ada_sales = await self.get_vendor_sales(lang, ada_resp, items_to_get, [2979281381])
 
             fields = [{'inline': True, 'name': ada_def['displayCategories'][2]['displayProperties']['name'], 'value': ''}]
             for item in ada_sales[1]:
                 item_def = await self.destiny.decode_hash(item['hash'], 'DestinyInventoryItemDefinition', language=lang)
-                if item_def['itemType'] == 19:
-                    mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
-                    fields[-1]['value'] = '{}{}\n'.format(fields[-1]['value'], item_def['displayProperties']['name'])
+                # if item_def['itemType'] == 19:
+                mods.append({'inline': True, 'name': item_def['displayProperties']['name'], 'value': item_def['itemTypeDisplayName']})
+                fields[-1]['value'] = '{}{}\n'.format(fields[-1]['value'], item_def['displayProperties']['name'])
 
             for i in range(len(fields)):
                 fields[i]['value'] = fields[i]['value'][:-1]
