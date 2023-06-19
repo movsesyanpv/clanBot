@@ -92,7 +92,7 @@ class ClanBot(commands.Bot):
         self.sched.add_job(self.data.get_banshee, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
         self.sched.add_job(self.data.get_ada, 'cron', hour='17', minute='1', second='35', misfire_grace_time=86300, args=[self.langs])
 
-        self.sched.add_job(self.data.drop_weekend_info, 'cron', day_of_week='thu', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.langs])
+        self.sched.add_job(self.data.drop_weekend_info, 'cron', day_of_week='tue', hour='17', minute='0', second='0', misfire_grace_time=86300, args=[self.langs])
         self.sched.add_job(self.data.get_weekly_eververse, 'cron', day_of_week='tue', hour='17', minute='1', second='40', misfire_grace_time=86300, args=[self.langs])
 
         # self.sched.add_job(self.universal_update, 'cron', day_of_week='fri', hour='17', minute='5', second='0', misfire_grace_time=86300, args=[self.data.get_xur, 'xur', 345600])
