@@ -919,7 +919,7 @@ class D2data:
                         'name': self.translations[locale]['msg']['error'],
                         'description': self.translations[locale]['msg']['noapi']
                     }
-                    await self.write_to_db(locale, 'ada_mods', [db_data], name=ada_def['displayProperties']['name'])
+                    await self.write_to_db(locale, 'weekly_eververse', [db_data], name=ada_def['displayProperties']['name'])
                 return False
         tess_json = tess_resps[0]
         tess_cats = tess_json['Response']['categories']['data']['categories']
@@ -930,8 +930,8 @@ class D2data:
 
             cat_sales = []
             for tess_resp in tess_resps:
-                items_to_get = tess_resp['Response']['categories']['data']['categories'][10]['itemIndexes']
-                ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468])
+                items_to_get = tess_resp['Response']['categories']['data']['categories'][11]['itemIndexes']
+                ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468, 353932628, 3187955025])
                 cat_sales += ada_sales[1]
                 # cat_sales = list(set(cat_sales))
             cat_sales = list(dict((item["id"], item) for item in cat_sales).values())
@@ -939,12 +939,12 @@ class D2data:
             cat_sales = []
             for tess_resp in tess_resps:
                 items_to_get = tess_resp['Response']['categories']['data']['categories'][2]['itemIndexes']
-                ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468])
+                ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468, 353932628, 3187955025])
                 cat_sales += ada_sales[1]
             cat_sales = list(dict((item["id"], item) for item in cat_sales).values())
             sales += cat_sales
-            items_to_get = tess_cats[12]['itemIndexes']
-            ada_sales = await self.get_vendor_sales(locale, tess_resps[0], items_to_get, [1812969468, 2979281381])
+            items_to_get = tess_cats[13]['itemIndexes']
+            ada_sales = await self.get_vendor_sales(locale, tess_resps[0], items_to_get, [1812969468, 2979281381, 353932628, 3187955025])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
             sales += ada_sales[1]
             sales = [{'name': "", "items": sales, "template": 'contract_item.html'}]
@@ -2164,7 +2164,7 @@ class D2data:
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 if r_json['destinationHash'] == 4088006058:
-                    if item_hash in [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349, 1689094744, 2056796644, 3254496172, 1214397515]:
+                    if item_hash in [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349, 1689094744, 2056796644, 3254496172, 1214397515, 3124504147]:
                         if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
                             if 'icon' in r_json['displayProperties']:
                                 self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
