@@ -25,19 +25,19 @@ class LFG:
         'null': {},
         'default': {},
         'vanguard': {
-            "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/f2154b781b36b19760efcb23695c66fe.png",
+            "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/3642cf9e2acd174dcab5b5f9e3a3a45d.png",
             "color": 7506394
         },
         'raid': {
-            "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/8b1bfd1c1ce1cab51d23c78235a6e067.png",
+            "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_bfe80e3dafe6686a9dc42df0606bdc9b.png",
             "color": 0xF1C40F
         },
         'crucible': {
-            "thumbnail": "https://www.bungie.net//common/destiny2_content/icons/cc8e6eea2300a1e27832d52e9453a227.png",
+            "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/d87bb6dbf6d9c5c851e1f06ef807b7d4.png",
             "color": 6629649
         },
         'gambit': {
-            "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/fc31e8ede7cc15908d6e2dfac25d78ff.png",
+            "thumbnail": "https://www.bungie.net/common/destiny2_content/icons/DestinyActivityModeDefinition_96f7e9009d4f26e30cfd60564021925e.png",
             "color": 1332799
         }
     }
