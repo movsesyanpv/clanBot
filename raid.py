@@ -315,6 +315,8 @@ class LFG:
         args['the_role'] = roles[0].mention
         for role in roles[1:]:
             args['the_role'] = '{}, {}'.format(args['the_role'], role.mention)
+        if str(guild_id) in args['the_role']:
+            args['the_role'] = args['the_role'].replace('<@&{}>'.format(guild_id), '@everyone')
         return args
 
     def find_roles(self, is_init: bool, guild: discord.Guild, roles: List[str]) -> str:
@@ -330,7 +332,9 @@ class LFG:
                 roles.clear()
         if len(the_role) == 0:
             the_role.append(guild.default_role)
-        the_role_str = the_role[0].mention
+            the_role_str = '@everyone'
+        else:
+            the_role_str = the_role[0].mention
         for i in the_role[1:]:
             if len("{}, {}".format(the_role_str, i.mention)) < 2000:
                 the_role_str = "{}, {}".format(the_role_str, i.mention)

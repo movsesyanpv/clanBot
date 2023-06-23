@@ -618,14 +618,20 @@ class LFGModal(discord.ui.Modal):
             self.roles = []
             for role_mention in role_str.split(', '):
                 try:
-                    role_obj = interaction.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
-                    self.roles.append(role_obj)
-                    role = '{} {};'.format(role, role_obj.name)
+                    if role_mention != '@everyone':
+                        role_obj = interaction.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
+                        self.roles.append(role_obj)
+                        role = '{} {};'.format(role, role_obj.name)
+                    else:
+                        role_obj = interaction.guild.default_role
+                        self.roles.append(role_obj)
+                        role = '{} {};'.format(role, 'everyone')
                 except ValueError:
                     pass
         else:
             role = ''
             self.roles = []
+            print(view.value)
             for role_id in view.value:
                 try:
                     role_obj = interaction.guild.get_role(int(role_id))
