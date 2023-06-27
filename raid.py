@@ -319,7 +319,7 @@ class LFG:
             args['the_role'] = args['the_role'].replace('<@&{}>'.format(guild_id), '@everyone')
         return args
 
-    def find_roles(self, is_init: bool, guild: discord.Guild, roles: List[str]) -> str:
+    def find_roles(self, is_init: bool, guild: discord.Guild, roles: List[str], group_id: discord.Message) -> str:
         roles = [i.lower() for i in roles]
         for i in [0, 1]:
             the_role = []
@@ -338,6 +338,9 @@ class LFG:
         for i in the_role[1:]:
             if len("{}, {}".format(the_role_str, i.mention)) < 2000:
                 the_role_str = "{}, {}".format(the_role_str, i.mention)
+        if is_init and roles == '--':
+            if group_id is not None:
+                the_role_str = self.get_cell('group_id', group_id, 'the_role')
         return the_role_str
 
     async def del_entry(self, group_id: int) -> None:
