@@ -610,10 +610,10 @@ class LFGModal(discord.ui.Modal):
             await interaction.edit_original_message(content='Timed out')
             return False
         elif view.value in ['-', '--']:
-            role = '-'
-            role_raw = '-'
+            role = view.value
+            role_raw = view.value
 
-            role_str = self.bot_loc.bot.raid.find_roles(not self.is_edit, interaction.guild, [r.strip() for r in role.split(';')], self.old_group)
+            role_str = await self.bot_loc.bot.raid.find_roles(not self.is_edit, interaction.guild, [r.strip() for r in role.split(';')], self.old_group)
             role = ''
             self.roles = []
             for role_mention in role_str.split(', '):
