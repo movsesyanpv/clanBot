@@ -233,9 +233,9 @@ class LFG:
                 return args
 
         if type(message) != discord.Message and guild is not None:
-            args['the_role'] = self.find_roles(is_init, guild, roles)
+            args['the_role'] = await self.find_roles(is_init, guild, roles)
         else:
-            args['the_role'] = self.find_roles(is_init, message.guild, roles)
+            args['the_role'] = await self.find_roles(is_init, message.guild, roles)
         return args
 
     async def parse_date(self, time, guild_id):
@@ -315,25 +315,33 @@ class LFG:
         args['the_role'] = roles[0].mention
         for role in roles[1:]:
             args['the_role'] = '{}, {}'.format(args['the_role'], role.mention)
+        if str(guild_id) in args['the_role']:
+            args['the_role'] = args['the_role'].replace('<@&{}>'.format(guild_id), '@everyone')
         return args
 
-    def find_roles(self, is_init: bool, guild: discord.Guild, roles: List[str]) -> str:
-        roles = [i.lower() for i in roles]
-        for i in [0, 1]:
-            the_role = []
-            if len(roles) == 0 and is_init or len(the_role) > 0:
-                roles = ['guardian', 'recruit', 'destiny', 'friend sot']
-            for role in guild.roles:
-                if role.name.lower() in roles:
-                    the_role.append(role)
+    async def find_roles(self, is_init: bool, guild: discord.Guild, roles: List[str], group_id: discord.Message) -> str:
+        if not is_init and roles[0] == '--':
+            if group_id is not None:
+                the_role_str = await self.get_cell('group_id', group_id.id, 'the_role')
+        else:
+            roles = [i.lower() for i in roles]
+            for i in [0, 1]:
+                the_role = []
+                if len(roles) == 0 and is_init or len(the_role) > 0:
+                    roles = ['guardian', 'recruit', 'destiny', 'friend sot']
+                for role in guild.roles:
+                    if role.name.lower() in roles:
+                        the_role.append(role)
+                if len(the_role) == 0:
+                    roles.clear()
             if len(the_role) == 0:
-                roles.clear()
-        if len(the_role) == 0:
-            the_role.append(guild.default_role)
-        the_role_str = the_role[0].mention
-        for i in the_role[1:]:
-            if len("{}, {}".format(the_role_str, i.mention)) < 2000:
-                the_role_str = "{}, {}".format(the_role_str, i.mention)
+                the_role.append(guild.default_role)
+                the_role_str = '@everyone'
+            else:
+                the_role_str = the_role[0].mention
+            for i in the_role[1:]:
+                if len("{}, {}".format(the_role_str, i.mention)) < 2000:
+                    the_role_str = "{}, {}".format(the_role_str, i.mention)
         return the_role_str
 
     async def del_entry(self, group_id: int) -> None:

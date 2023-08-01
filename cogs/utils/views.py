@@ -609,23 +609,29 @@ class LFGModal(discord.ui.Modal):
         if view.value is None:
             await interaction.edit_original_message(content='Timed out')
             return False
-        elif view.value in ['-']:
-            role = '-'
-            role_raw = '-'
+        elif view.value in ['-', '--']:
+            role = view.value
+            role_raw = view.value
 
-            role_str = self.bot_loc.bot.raid.find_roles(True, interaction.guild, [r.strip() for r in role.split(';')])
+            role_str = await self.bot_loc.bot.raid.find_roles(not self.is_edit, interaction.guild, [r.strip() for r in role.split(';')], self.old_group)
             role = ''
             self.roles = []
             for role_mention in role_str.split(', '):
                 try:
-                    role_obj = interaction.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
-                    self.roles.append(role_obj)
-                    role = '{} {};'.format(role, role_obj.name)
+                    if role_mention != '@everyone':
+                        role_obj = interaction.guild.get_role(int(role_mention.replace('<@', '').replace('!', '').replace('>', '').replace('&', '')))
+                        self.roles.append(role_obj)
+                        role = '{} {};'.format(role, role_obj.name)
+                    else:
+                        role_obj = interaction.guild.default_role
+                        self.roles.append(role_obj)
+                        role = '{} {};'.format(role, 'everyone')
                 except ValueError:
                     pass
         else:
             role = ''
             self.roles = []
+            print(view.value)
             for role_id in view.value:
                 try:
                     role_obj = interaction.guild.get_role(int(role_id))
