@@ -115,6 +115,19 @@ lost_sector_order = {
         660710120,
         3094493727,
         2936791995
+    ],
+    22: [
+        480864721,  # sepulcher
+        145221020,  # extraction
+        '?',
+        '?',
+        '?',
+        '?',
+        '?',
+        '?',
+        '?',
+        '?',
+        '?',
     ]
 }
 
@@ -141,5 +154,6 @@ loot_order = {
     18: loot_order_s14,
     19: loot_order_s14,
     20: loot_order_s14,
-    21: loot_order_s14
+    21: loot_order_s14,
+    22: loot_order_s14
 }

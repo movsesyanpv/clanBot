@@ -925,12 +925,12 @@ class D2data:
         tess_cats = tess_json['Response']['categories']['data']['categories']
         resp_time = tess_json['timestamp']
         for locale in langs:
-            tess_def = await self.destiny.decode_hash(350061650, 'DestinyVendorDefinition', language=locale)
+            tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=locale)
             sales = []
 
             cat_sales = []
             for tess_resp in tess_resps:
-                items_to_get = tess_resp['Response']['categories']['data']['categories'][11]['itemIndexes']
+                items_to_get = tess_resp['Response']['categories']['data']['categories'][10]['itemIndexes']
                 ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468, 353932628, 3187955025])
                 cat_sales += ada_sales[1]
                 # cat_sales = list(set(cat_sales))
@@ -943,7 +943,7 @@ class D2data:
                 cat_sales += ada_sales[1]
             cat_sales = list(dict((item["id"], item) for item in cat_sales).values())
             sales += cat_sales
-            items_to_get = tess_cats[13]['itemIndexes']
+            items_to_get = tess_cats[12]['itemIndexes']
             ada_sales = await self.get_vendor_sales(locale, tess_resps[0], items_to_get, [1812969468, 2979281381, 353932628, 3187955025])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
             sales += ada_sales[1]
@@ -1514,7 +1514,7 @@ class D2data:
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
 
                 if item_hash == 743628305:
-                    mods = await self.decode_modifiers(key, lang)
+                    mods = await self.decode_modifiers(key, lang, [1783825372])  # ignoring shielded foes
                     self.data[lang]['vanguardstrikes']['fields'] = mods[0]
                     db_data = mods[1]
                 if self.translations[lang]['strikes'] in r_json['displayProperties']['name']:
@@ -2318,23 +2318,26 @@ class D2data:
                     pass
             await self.write_bot_data('events', langs)
 
-    async def decode_modifiers(self, key: dict, lang: str) -> list:
+    async def decode_modifiers(self, key: dict, lang: str, exceptions=None) -> list:
+        if exceptions is None:
+            exceptions = []
         data = []
         db_data = []
         for mod_key in key['modifierHashes']:
-            mod_def = 'DestinyActivityModifierDefinition'
-            mod_json = await self.destiny.decode_hash(mod_key, mod_def, lang)
-            mod = {
-                'inline': True,
-                "name": mod_json['displayProperties']['name'],
-                "value": await self.expand_string_vars(mod_json['displayProperties']['description'])
-            }
-            data.append(mod)
-            db_data.append({
-                "name": mod_json['displayProperties']['name'],
-                "description": await self.expand_string_vars(mod_json['displayProperties']['description']),
-                "icon": mod_json['displayProperties']['icon']
-            })
+            if mod_key not in exceptions:
+                mod_def = 'DestinyActivityModifierDefinition'
+                mod_json = await self.destiny.decode_hash(mod_key, mod_def, lang)
+                mod = {
+                    'inline': True,
+                    "name": mod_json['displayProperties']['name'],
+                    "value": await self.expand_string_vars(mod_json['displayProperties']['description'])
+                }
+                data.append(mod)
+                db_data.append({
+                    "name": mod_json['displayProperties']['name'],
+                    "description": await self.expand_string_vars(mod_json['displayProperties']['description']),
+                    "icon": mod_json['displayProperties']['icon']
+                })
 
         return [data, db_data]
 
