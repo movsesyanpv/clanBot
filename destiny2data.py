@@ -938,7 +938,7 @@ class D2data:
             sales += cat_sales
             cat_sales = []
             for tess_resp in tess_resps:
-                items_to_get = tess_resp['Response']['categories']['data']['categories'][2]['itemIndexes']
+                items_to_get = tess_resp['Response']['categories']['data']['categories'][3]['itemIndexes']
                 ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468, 353932628, 3187955025])
                 cat_sales += ada_sales[1]
             cat_sales = list(dict((item["id"], item) for item in cat_sales).values())
