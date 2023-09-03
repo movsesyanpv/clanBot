@@ -120,14 +120,14 @@ lost_sector_order = {
         480864721,   # sepulcher
         145221020,   # extraction
         3678847134,  # metamorphosis
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
+        3911969238,  # k1 revelation
+        2829206720,  # k1 communion
+        184186578,   # k1 crew quarters
+        912873274,   # concealed void
+        1648125538,  # bunker e15
+        660710120,   # bay of drowned wishes
+        3094493727,  # veles labyrinth
+        2936791995   # exodus garden 2a
     ]
 }
 
