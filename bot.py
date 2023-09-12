@@ -909,7 +909,9 @@ class ClanBot(commands.Bot):
         data = await data.fetchone()
 
         await cursor.close()
-        if data[0] is None:
+        if data is None:
+            return 'UTC+03:00'
+        elif data[0] is None:
             return 'UTC+03:00'
         else:
             return data[0]
