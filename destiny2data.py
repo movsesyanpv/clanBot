@@ -930,7 +930,9 @@ class D2data:
 
             cat_sales = []
             for tess_resp in tess_resps:
-                items_to_get = tess_resp['Response']['categories']['data']['categories'][10]['itemIndexes']
+                for cat in tess_resp['Response']['categories']['data']['categories']:
+                    if cat['displayCategoryIndex'] == 2:
+                        items_to_get = cat['itemIndexes']
                 ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468, 353932628, 3187955025])
                 cat_sales += ada_sales[1]
                 # cat_sales = list(set(cat_sales))
@@ -938,12 +940,16 @@ class D2data:
             sales += cat_sales
             cat_sales = []
             for tess_resp in tess_resps:
-                items_to_get = tess_resp['Response']['categories']['data']['categories'][3]['itemIndexes']
+                for cat in tess_resp['Response']['categories']['data']['categories']:
+                    if cat['displayCategoryIndex'] == 9:
+                        items_to_get = cat['itemIndexes']
                 ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468, 353932628, 3187955025])
                 cat_sales += ada_sales[1]
             cat_sales = list(dict((item["id"], item) for item in cat_sales).values())
             sales += cat_sales
-            items_to_get = tess_cats[12]['itemIndexes']
+            for cat in tess_cats:
+                if cat['displayCategoryIndex'] == 10:
+                    items_to_get = cat['itemIndexes']
             ada_sales = await self.get_vendor_sales(locale, tess_resps[0], items_to_get, [1812969468, 2979281381, 353932628, 3187955025])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
             sales += ada_sales[1]
