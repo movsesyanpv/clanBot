@@ -137,12 +137,12 @@
         "reminder_set": "Vous aurez un message privé {} minutes avant le départ.",
         "reminder_not_set": "Ce n'est disponible que pour les participants ou les remplaçants.",
         "button_alert": "Prévenez moi",
-        "overlap_title": "Overlapping groups were detected",
-        "overlap_group": "{group_name} of {server_name}\n{time}",
-        "overlap_potential": "Potential",
-        "overlap_actual": "Actual",
-        "overlap_table_group": "Group",
-        "overlap_table_type": "Overlap type"
+        "overlap_title": "Des groupes qui se chevauchent ont été détectés",
+        "overlap_group": "{group_name} de {server_name}\n{time}",
+        "overlap_potential": "Potentiel",
+        "overlap_actual": "Actuellement",
+        "overlap_table_group": "Groupe",
+        "overlap_table_type": "Type de chevauchement"
     },
     "lfge": {
         "roles": "Roles",
