@@ -1316,6 +1316,8 @@ class D2data:
 
                     for key in sorted(xur_sales.keys()):
                         item_hash = xur_sales[key]['itemHash']
+                        if xur_def['itemList'][int(key)]['displayCategoryIndex'] != 0:
+                            continue
                         if item_hash not in [4285666432, 2293314698, 2125848607, 3875551374]:
                             definition = 'DestinyInventoryItemDefinition'
                             item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
