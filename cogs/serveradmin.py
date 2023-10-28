@@ -464,8 +464,8 @@ class ServerAdmin(commands.Cog):
         tz_list = []
 
         for tz in pytz.all_timezones:
-            offset = pytz.timezone(tz).utcoffset(datetime.now()).total_seconds()
-            sign = '-' if offset < 0 else '+'
+            offset = datetime.utcnow().replace(tzinfo=pytz.utc).astimezone(pytz.timezone(tz)).utcoffset().total_seconds()
+            sign = '-' if offset < 0 or 'GMT-' in tz else '+'
             tz_list.append(f'{tz} (UTC{sign}{abs(int(offset // 3600)):02}:{abs(int(offset % 60)):02})')
 
         if timezone not in tz_list:
