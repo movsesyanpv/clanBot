@@ -433,6 +433,10 @@
         "events": {
             "label": "Коммьюнити-эвенты",
             "description": "Ежечасные обновления прогресса сообщества"
+        },
+        "wsummary": {
+            "label": "Weekly rotation summary",
+            "description": "Summary of weekly rotations"
         }
     },
     "clan_info": {
