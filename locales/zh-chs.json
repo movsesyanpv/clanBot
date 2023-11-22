@@ -166,22 +166,22 @@
         "noxur": "Only the Nine know",
         "copyright": "Location is provided by paracausal.science."
     },
-    "forge": "鍛爐",
-    "heroicstory": "每日英雄主線任務: ",
-    "ordeal": "日暮任務：磨難",
-    "nightmare": "夢魘狩獵：",
-    "adept": ": 大師",
+    "forge": "Forge",
+    "heroicstory": "Daily Heroic Story Mission: ",
+    "ordeal": "Nightfall: The Ordeal",
+    "nightmare": "Nightmare Hunt:",
+    "adept": ": Master",
     "Warlock": "Warlock",
     "Titan": "Titan",
     "Hunter": "Hunter",
     "rotator": "Rotator",
     "strikes": "Heroic Strikes Playlist",
-    "reckoning": "清算之地: 階段III",
+    "reckoning": "The Reckoning: Tier III",
     "oryx": "Likeness of Oryx",
     "swords": "The Swords",
     "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers.",
-    "LW": "最後遺願",
-    "GoS": "救贖之園",
+    "LW": "Last Wish",
+    "GoS": "Garden of Salvation",
     "error": "An unexpected error has occurred. The information was sent to the developer",
     "classnames": [
         "hunter",
@@ -372,7 +372,7 @@
         "1391900891": "Grenade Launcher",
         "1604869479": "Sword"
     },
-    "vanguard_strikes": "先鋒突擊任務",
+    "vanguard_strikes": "Vanguard Strikes",
     "empire_hunt": "Empire Hunt:",
     "online": {
         "nick": "Nickname",
@@ -433,6 +433,10 @@
         "events": {
             "label": "Community Events",
             "description": "Hourly updates of community event progress"
+        },
+        "wsummary": {
+            "label": "Weekly rotation summary",
+            "description": "Summary of weekly rotations"
         }
     },
     "clan_info": {
