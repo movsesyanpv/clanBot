@@ -40,6 +40,7 @@
         "no_send_messages": "{}, ich darf in diesem Kanal nicht antworten.",
         "osiris": "Prüfung von Osiris",
         "empire_hunts": "Schwierigkeiten Wahl Imperium Jagten",
+        "wsummary": "Weekly rotations",
         "clan_search_error": "Der angeforderte Clan wurde nicht gefunden. Sie können es erneut versuchen, wobei beim Namen des Clans die Groß-/Kleinschreibung beachtet wird. Wenn das nicht hilft, versuchen Sie, die ID Ihres Clans einzugeben. Die ID finden Sie auf der bungie.net-Seite des Clans nach der Zeichenfolge `groupId=` (Sie wollen die Zahlen danach). Wenn das nicht funktioniert, können Sie jederzeit auf meinem Support-Server um Hilfe bitten, den Link zu dem Sie mit dem Befehl `support` finden.",
         "daily_mods": "Ada-1 und Bansher-44 verkaufen dies",
         "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version. If you don't see any slash commands, run `noslash` command to get instructions on how to fix this.",
