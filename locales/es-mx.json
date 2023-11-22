@@ -168,19 +168,19 @@
     },
     "forge": "Fragua",
     "heroicstory": "Misión de historia heroica diaria: ",
-    "ordeal": "Ocaso: El tormento",
-    "nightmare": "Cacería de Pesadillas:",
+    "ordeal": "Ocaso: El suplicio",
+    "nightmare": "Caza de Pesadillas:",
     "adept": ": Maestro",
     "Warlock": "Warlock",
     "Titan": "Titan",
     "Hunter": "Hunter",
     "rotator": "Rotator",
     "strikes": "Heroic Strikes Playlist",
-    "reckoning": "La decisión: Nivel III",
+    "reckoning": "La decisión: Nivel 3",
     "oryx": "Likeness of Oryx",
     "swords": "The Swords",
     "r_desc": "Venture into the mysterious Haul that the Drifter tows behind his ship to reckon with greater powers.",
-    "LW": "Ultimo deseo",
+    "LW": "Último deseo",
     "GoS": "Jardín de la Salvación",
     "error": "An unexpected error has occurred. The information was sent to the developer",
     "classnames": [
@@ -433,6 +433,10 @@
         "events": {
             "label": "Community Events",
             "description": "Hourly updates of community event progress"
+        },
+        "wsummary": {
+            "label": "Weekly rotation summary",
+            "description": "Summary of weekly rotations"
         }
     },
     "clan_info": {
