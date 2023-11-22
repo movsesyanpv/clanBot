@@ -1,10 +1,10 @@
-![Discord Bots](https://top.gg/api/widget/servers/677145368894373965.svg)
+![Discord Bots](https://top.gg/api/widget/servers/677145368894373965.svg)[![Crowdin](https://badges.crowdin.net/indeedstor/localized.svg)](https://crowdin.com/project/indeedstor)
 
 It would be awesome if you just add the bot to your server, and not actually self-host it. Anyways, the instructions for self-hosting are below.
 
 # Translations
 
-If you speak a language other than English that Destiny supports, a huge help with the development is to provide translations. To help with the translations, go to [POEditor](https://poeditor.com/join/project/r0GBXOfyqt) and join the project.
+If you speak a language other than English that Destiny supports, a huge help with the development is to provide translations. To help with the translations, go to [Crowdin](https://crowdin.com/project/indeedstor) and join the project.
 
 # Prerequisites
 
