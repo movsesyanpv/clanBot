@@ -40,7 +40,7 @@ class ClanBot(commands.Bot):
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht', 'zh-chs']
     all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'banshee', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']  # 'spider'
     daily_rotations = ('strikes', 'banshee', 'ada', 'lostsector')  # 'spider',
-    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'mods')
+    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'mods', 'wsummary')
     embeds_with_img = ['events']
 
     sched = AsyncIOScheduler(timezone='UTC')
