@@ -176,7 +176,7 @@
     "nightmare": "Albtraumjagd:",
     "adept": ": Großmeister",
     "Warlock": "Warlock",
-    "Titan": "Titan",
+    "Titan": "Titab",
     "Hunter": "Jäger",
     "rotator": "Rotator",
     "strikes": "Heroische Strike Playliste",
@@ -223,7 +223,7 @@
                 "gambitmetrics": "Gambit",
                 "raidsmetrics": "Raid",
                 "strikesmetrics": "Strike",
-                "trialsofosirismetrics": "Trials of Osiris",
+                "trialsofosirismetrics": "Prüfung von Osiris",
                 "cat_list": "Verfügbare Kategorien. Um die Metrikliste der Kategorie zu erhalten, senden Sie `{}help top category`. Die Kategorien sind in der folgenden Tabelle aufgelistet (linke Spalte), rechte Spalte enthält die Beschreibungen der oben genannten Kategorien. Die Kategorien entsprechen denen im Spiel.",
                 "unavailable": {
                     "displayProperties": {
@@ -292,7 +292,7 @@
         "setprefix": "Verfügbare Präfixe festlegen",
         "support": "Der link zum Support Server",
         "online": "Zeig die Liste der Clan Member.",
-        "editlfg": "Edit LFG message",
+        "editlfg": "Bearbeite eine LFG Nachricht",
         "autopost": "Autopost channel settings",
         "lfgcleanup": "Delete expired LFG posts",
         "reglfg": "Register the channel as a place for LFG posts",
@@ -387,7 +387,7 @@
     },
     "update_types": {
         "nightmares": {
-            "label": "Nightmare hunts",
+            "label": "Albtraum Jagten",
             "description": "Currently available nightmare hunts"
         },
         "crucible": {
@@ -399,7 +399,7 @@
             "description": "Current week's raid challenges"
         },
         "ordeal": {
-            "label": "Nightfall: The Ordeal",
+            "label": "Dämmerung: Die Feuerprobe",
             "description": "Current nightfall"
         },
         "empire": {
@@ -407,7 +407,7 @@
             "description": "Current empire hunt"
         },
         "strikes": {
-            "label": "Strikes",
+            "label": "Strike",
             "description": "Daily vanguard strike playlist modifiers"
         },
         "spider": {
@@ -423,7 +423,7 @@
             "description": "Xur's location and exotics"
         },
         "osiris": {
-            "label": "Trials of Osiris",
+            "label": "Prüfung von Osiris",
             "description": "Current ToO info"
         },
         "lostsector": {

@@ -333,7 +333,7 @@
     },
     "site": {
         "spider": "Material exchange",
-        "forge": "Forge",
+        "forge": "の炉",
         "heroicstory": "Heroic story missions",
         "reckoningboss": "The Reckoning boss",
         "nightfalls820": "Nightfalls",
@@ -399,7 +399,7 @@
             "description": "Current week's raid challenges"
         },
         "ordeal": {
-            "label": "Nightfall: The Ordeal",
+            "label": "ナイトフォール「試練」",
             "description": "Current nightfall"
         },
         "empire": {

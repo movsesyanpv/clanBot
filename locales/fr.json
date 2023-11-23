@@ -40,10 +40,10 @@
         "no_send_messages": "{}, Je ne suis pas autorisé a répondre dans ce canal.",
         "osiris": "Jugement d'Osiris",
         "empire_hunts": "Chasse de l'Empire maitrise de la semaine",
-        "wsummary": "Weekly rotations",
-        "exotic": "Exotic mission",
-        "raid&dungeon": "Featured Raid & Dungeon",
-        "bonuses": "Playlist bonuses",
+        "wsummary": "Rotations hebdomadaires",
+        "exotic": "Mission exotique",
+        "raid&dungeon": "Raid & Donjon de la semaine",
+        "bonuses": "Bonus de la playlist",
         "clan_search_error": "Le clan demandé n'a pas été trouvé. Vous pouvez réessayer avec le nom du clan précisément ( Majuscule - Minuscule - Caractère spécial - etc ). Si cela ne fonctionne toujours pas, essayez d'entrer l'ID de votre clan. L'ID peut être trouvé sur la page bungie.net du clan après la chaîne `groupId=` (vous trouverez les chiffres dans l'adresse http). Si cela ne fonctionne pas, vous pouvez toujours demander de l'aide, le lien peut être trouvé avec la commande `support`.",
         "daily_mods": "Offres d'Ada-1",
         "deprecation_warning": "Cette commande est obsolète et ne fonctionne plus <t:1650574800:D>. \nMerci d'utiliser la version avec le slash (/). Si vous ne voyez aucunes commandes avec le slash, tapez la commande `noslash` pour avoir des informations afin de résoudre le problème.",
@@ -149,10 +149,10 @@
         "overlap_table_type": "Type de chevauchement"
     },
     "lfge": {
-        "roles": "Roles",
+        "roles": "Rôles",
         "description": "Description",
         "goers": "Participants",
-        "wanters": "Reserve",
+        "wanters": "Disponibles",
         "mb_goers": "Rejoindra si besoin",
         "length": "Durée",
         "total_goers": "Participants",
@@ -221,7 +221,7 @@
                 "cruciblemetrics": "Epreuve",
                 "destinationmetrics": "Destinations",
                 "gambitmetrics": "Gambit",
-                "raidsmetrics": "Raids",
+                "raidsmetrics": "Raids et Défis de Raids",
                 "strikesmetrics": "Assauts",
                 "trialsofosirismetrics": "Jugement d'Osiris",
                 "cat_list": "Liste des catégories disponibles :\nPour avoir la liste des critères de chaque catégorie taper `{}help top category`. \nDans La colonne de gauche vous retrouvez les catégories. La colonne de droite contient la description des catégories mentionnées.\nLes catégories correspondent à celles du jeu.",
@@ -439,8 +439,8 @@
             "description": "Mises à jour toutes les heures de la progression de l'événement communautaire"
         },
         "wsummary": {
-            "label": "Weekly rotation summary",
-            "description": "Summary of weekly rotations"
+            "label": "Résumé de la rotation hebdomadaire",
+            "description": "Résumé de la rotation hebdomadaire"
         }
     },
     "clan_info": {
