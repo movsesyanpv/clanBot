@@ -105,6 +105,11 @@ class D2data:
     wait_codes = [1672]
     max_retries = 10
 
+    crucible_rotators = [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349,
+                         1689094744, 2056796644, 3254496172, 1214397515, 3124504147, 2424021445, 2461220411, 3374318171,
+                         3876264582]
+    raids = [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764, 4179289725, 1042180643]
+
     vendor_params = {
         'components': '400,401,402,302,304,306,310,305'
     }
@@ -1881,7 +1886,7 @@ class D2data:
                 #         'description': info['value'].replace('\n', '<br>')
                 #     })
                 #     self.data[lang]['raids']['fields'].append(info)
-                if r_json['hash'] in [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764, 4179289725, 1042180643] and 'modifierHashes' in key.keys():
+                if r_json['hash'] in self.raids and 'modifierHashes' in key.keys():
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
@@ -2172,7 +2177,7 @@ class D2data:
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 if r_json['destinationHash'] == 4088006058:
-                    if item_hash in [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349, 1689094744, 2056796644, 3254496172, 1214397515, 3124504147]:
+                    if item_hash in self.crucible_rotators:
                         if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
                             if 'icon' in r_json['displayProperties']:
                                 self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
@@ -2181,12 +2186,12 @@ class D2data:
                                                                                               'icon']
                             else:
                                 self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
-                                                                                          '/common/destiny2_content/icons/' \
-                                                                                          'cc8e6eea2300a1e27832d52e9453a227.png'
+                                                                                          '/common/destiny2_content/' \
+                                                                                          'icons/193fcaaf80f97c83eb10568dbe514cf1.png'
                         if 'icon' in r_json['displayProperties']:
                             icon = r_json['displayProperties']['icon']
                         else:
-                            icon = '/common/destiny2_content/icons/cc8e6eea2300a1e27832d52e9453a227.png'
+                            icon = '/common/destiny2_content/icons/193fcaaf80f97c83eb10568dbe514cf1.png'
                         info = {
                             'inline': True,
                             "name": r_json['displayProperties']['name'],
@@ -2799,6 +2804,122 @@ class D2data:
             await self.write_to_db(lang, 'lost_sector', db_data, order=6,
                                    name=self.translations[lang]['site']['lostsector'])
         await self.write_bot_data('lostsector', langs)
+
+    async def get_wsummary(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
+        activities_resp = await self.get_activities_response('wsummary', string='weekly summary',
+                                                             force=forceget)
+        if not activities_resp:
+            return False
+        resp_time = activities_resp['timestamp']
+        for lang in langs:
+            translation = self.translations[lang]
+            self.data[lang]['wsummary'] = {
+                'thumbnail': {
+                    'url': 'https://www.bungie.net/common/destiny2_content/icons/10f3f605b9813d0f83f508f49a6756a5.png'
+                },
+                'fields': [{
+                    'name': translation['msg']['exotic'],
+                    'value': '',
+                    'inline': True
+                },
+                {
+                    'name': translation['msg']['ordeal'],
+                    'value': '',
+                    'inline': True
+                },
+                {
+                    'name': translation['msg']['raid&dungeon'],
+                    'value': '',
+                    'inline': True
+                },
+                {
+                    'name': translation['msg']['bonuses'],
+                    'value': '',
+                    'inline': True
+                },
+                {
+                    'name': translation['msg']['cruciblerotators'],
+                    'value': '',
+                    'inline': True
+                },
+                {
+                    'name': translation['msg']['raids'],
+                    'value': '',
+                    'inline': False
+                },
+                ],
+                'color': 000000,
+                'type': 'rich',
+                'title': translation['msg']['wsummary'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
+            }
+            for activity in activities_resp['Response']['activities']['data']['availableActivities']:
+                if 'challenges' in activity.keys():
+                    if activity['challenges'][0]['objective']['objectiveHash'] == 1320261963:
+                        activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition', language=lang)
+                        if activity_def['originalDisplayProperties']['name'] != activity_def['displayProperties']['name']:
+                            self.data[lang]['wsummary']['fields'][0]['value'] = activity_def['originalDisplayProperties']['name']
+                    elif activity['challenges'][0]['objective']['objectiveHash'] in [3211393925, 1633394671]:
+                        activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition', language=lang)
+                        if activity_def['originalDisplayProperties']['name'] not in self.data[lang]['wsummary']['fields'][2]['value']:
+                            self.data[lang]['wsummary']['fields'][2]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][2]['value'], activity_def['originalDisplayProperties']['name']).lstrip('\n')
+                activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition',
+                                                              language=lang)
+                if activity_def['activityTypeHash'] == 575572995 and translation['adept'] in activity_def['displayProperties']['name']:
+                    self.data[lang]['wsummary']['fields'][1]['name'] = translation['ordeal']
+                    self.data[lang]['wsummary']['fields'][1]['value'] = activity_def['originalDisplayProperties']['description']
+                    if 1171597537 in activity['modifierHashes']:  # Check for double rewards and rank
+                        mod_info = await self.destiny.decode_hash(1171597537, 'DestinyActivityModifierDefinition', language=lang)
+                        self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
+                    if 745014575 in activity['modifierHashes']:
+                        mod_info = await self.destiny.decode_hash(745014575, 'DestinyActivityModifierDefinition',
+                                                                  language=lang)
+                        self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
+                if 'modifierHashes' in activity.keys():
+                    if 3228023383 in activity['modifierHashes']:  # Check for double gambit rank
+                            mod_info = await self.destiny.decode_hash(3228023383, 'DestinyActivityModifierDefinition', language=lang)
+                            self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
+                    if 3874605433 in activity['modifierHashes']:  # Check for double crucible rank
+                            mod_info = await self.destiny.decode_hash(3874605433, 'DestinyActivityModifierDefinition', language=lang)
+                            if mod_info['displayProperties']['name'] not in self.data[lang]['wsummary']['fields'][3]['value']:
+                                self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
+
+                    if activity_def['hash'] in self.raids:
+                        info = {
+                            'inline': True,
+                            'name': activity_def['originalDisplayProperties']['name'],
+                            'value': u"\u2063"
+                        }
+                        intersection = list(set(activity['modifierHashes']).intersection(set([1783825372])))
+                        valid_mods = []
+                        for mod in activity['modifierHashes']:
+                            if mod not in intersection:
+                                valid_mods.append(mod)
+                        mods = await self.destiny.decode_hash(valid_mods[0], 'DestinyActivityModifierDefinition', lang)
+                        resp_time = datetime.utcnow().isoformat()
+                        if mods:
+                            if len(valid_mods) > 2:
+                                for mod in valid_mods:
+                                    mod_def = await self.destiny.decode_hash(mod, 'DestinyActivityModifierDefinition',
+                                                                             lang)
+                                    info['value'] = '{}; {}'.format(info['value'],
+                                                                    mod_def['displayProperties']['name']).lstrip('; ')
+                            else:
+                                info['value'] = mods['displayProperties']['name']
+                        else:
+                            info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                        self.data[lang]['wsummary']['fields'][5]['value'] = '{}\n**{}**: {}'.\
+                            format(self.data[lang]['wsummary']['fields'][5]['value'],
+                                   activity_def['originalDisplayProperties']['name'],
+                                   info['value']).lstrip('\n')
+                if activity_def['destinationHash'] == 4088006058:
+                    if activity_def['hash'] in self.crucible_rotators:
+                        self.data[lang]['wsummary']['fields'][4]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][4]['value'], activity_def['displayProperties']['name']).lstrip('\n')
+
+            if not self.data[lang]['wsummary']['fields'][3]['value']:
+                self.data[lang]['wsummary']['fields'].pop(3)
+        await self.write_bot_data('wsummary', langs)
 
     async def drop_weekend_info(self, langs: List[str]) -> None:
         # while True:
