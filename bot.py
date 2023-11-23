@@ -176,6 +176,14 @@ class ClanBot(commands.Bot):
             self.logger.info('Finished updating raid challenges')
 
     @tasks.loop(time=time(hour=17, minute=0, second=40), reconnect=True)
+    async def update_wsummary(self):
+        if datetime.today().weekday() == 1:
+            await self.wait_for('manifest ready')
+            self.logger.info('Updating weekly summary')
+            await self.universal_update(self.data.get_wsummary, 'wsummary', 604800)
+            self.logger.info('Finished updating weekly summary')
+
+    @tasks.loop(time=time(hour=17, minute=0, second=40), reconnect=True)
     async def update_xur(self):
         if datetime.today().weekday() == 4:
             await self.wait_for('manifest ready')
@@ -225,6 +233,7 @@ class ClanBot(commands.Bot):
         self.update_empire_hunt.start()
         self.update_crucible.start()
         self.update_raids.start()
+        self.update_wsummary.start()
 
         self.update_xur.start()
         self.update_trials.start()
