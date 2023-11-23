@@ -51,6 +51,7 @@ class ServerAdmin(commands.Cog):
             'raids': 'raids',
             'ordeal': 'ordeal',
             'empire': 'empire_hunts',
+            'wsummary': 'wsummary',
             'strikes': 'vanguardstrikes',
             # 'spider': 'spider',
             'mods': 'daily_mods',
