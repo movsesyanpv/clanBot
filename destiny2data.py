@@ -2904,7 +2904,8 @@ class D2data:
                                     mod_def = await self.destiny.decode_hash(mod, 'DestinyActivityModifierDefinition',
                                                                              lang)
                                     info['value'] = '{}; {}'.format(info['value'],
-                                                                    mod_def['displayProperties']['name']).lstrip('; ')
+                                                                    mod_def['displayProperties']['name']).\
+                                        lstrip('\u2063; ')
                             else:
                                 info['value'] = mods['displayProperties']['name']
                         else:
