@@ -1255,7 +1255,7 @@ class D2data:
             await self.write_bot_data('xur', langs)
             return False
         resp_time = xur_resp['timestamp']
-        xur_loc = await self.get_xur_loc()
+        xur_loc_3p = await self.get_xur_loc()
         for lang in langs:
 
             xur_def = await self.destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
@@ -1286,16 +1286,17 @@ class D2data:
 
                 annotations = []
 
-                if xur_loc:
+                if xur_loc_3p:
                     self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
                     annotations = [self.translations[lang]['xur']['copyright']]
                 else:
+                    self.data[lang]['xur']['footer']['text'] = self.translations[lang]['msg']['resp_time']
                     xur_loc = {}
 
                 if xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']] != 2961497387:
                     xur_loc['destinationHash'] = xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']]['destinationHash']
                     xur_loc['placeHash'] = place_hashes[str(xur_loc['destinationHash'])]
-                    self.data[lang]['xur'].pop('footer')
+                    # self.data[lang]['xur'].pop('footer')
                     annotations = []
 
                 sales = []
