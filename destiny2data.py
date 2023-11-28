@@ -107,7 +107,7 @@ class D2data:
 
     crucible_rotators = [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349,
                          1689094744, 2056796644, 3254496172, 1214397515, 3124504147, 2424021445, 2461220411, 3374318171,
-                         3876264582]
+                         3876264582, 1373352554, 37347215, 1478171612, 1957660400, 2000775487]
     raids = [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764, 4179289725, 1042180643]
 
     vendor_params = {
@@ -2857,11 +2857,11 @@ class D2data:
             }
             for activity in activities_resp['Response']['activities']['data']['availableActivities']:
                 if 'challenges' in activity.keys():
-                    if activity['challenges'][0]['objective']['objectiveHash'] == 1320261963:
+                    if activity['challenges'][0]['objective']['objectiveHash'] == 3726310377:
                         activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition', language=lang)
                         if activity_def['originalDisplayProperties']['name'] != activity_def['displayProperties']['name']:
                             self.data[lang]['wsummary']['fields'][0]['value'] = activity_def['originalDisplayProperties']['name']
-                    elif activity['challenges'][0]['objective']['objectiveHash'] in [3211393925, 1633394671]:
+                    elif activity['challenges'][0]['objective']['objectiveHash'] in [3039545165, 406803827]:
                         activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition', language=lang)
                         if activity_def['originalDisplayProperties']['name'] not in self.data[lang]['wsummary']['fields'][2]['value']:
                             self.data[lang]['wsummary']['fields'][2]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][2]['value'], activity_def['originalDisplayProperties']['name']).lstrip('\n')

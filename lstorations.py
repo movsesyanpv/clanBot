@@ -128,6 +128,19 @@ lost_sector_order = {
         660710120,   # bay of drowned wishes
         3094493727,  # veles labyrinth
         2936791995   # exodus garden 2a
+    ],
+    23: [
+        1898610131,   # aphelion's rest
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
     ]
 }
 
@@ -155,5 +168,6 @@ loot_order = {
     19: loot_order_s14,
     20: loot_order_s14,
     21: loot_order_s14,
-    22: loot_order_s14
+    22: loot_order_s14,
+    23: loot_order_s14
 }
