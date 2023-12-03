@@ -2675,7 +2675,10 @@ class D2data:
             flawless = find_adept(saint_resp)
 
         modifiers = {}
-        trials_are_active = True
+        if flawless == '?':
+            trials_are_active = False
+        else:
+            trials_are_active = True
         # activities = await self.get_activities_response('activities')
         # for activity in activities['Response']['activities']['data']['availableActivities']:
         #     if activity['activityHash'] in [588019350, 2431109627, 4150051058]:
