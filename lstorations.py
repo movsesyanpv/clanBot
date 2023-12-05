@@ -130,14 +130,14 @@ lost_sector_order = {
         2936791995   # exodus garden 2a
     ],
     23: [
-        1898610131,   # aphelion's rest
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
+        1898610131,  # aphelion's rest
+        660710120,   # bay of drowned wishes
+        4206916276,  # chamber of starlight
+        1070981425,  # perdition
+        1648125538,  # bunker e15
+        912873274,   # concealed void
+        584726931,   # thrilladrome
+        2983905030,  # gilded precept
         0,
         0,
         0
