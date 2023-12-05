@@ -2860,11 +2860,11 @@ class D2data:
             }
             for activity in activities_resp['Response']['activities']['data']['availableActivities']:
                 if 'challenges' in activity.keys():
-                    if activity['challenges'][0]['objective']['objectiveHash'] == 3726310377:
+                    if activity['challenges'][0]['objective']['objectiveHash'] in [3726310377, 1320261963, 1510063869]:
                         activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition', language=lang)
                         if activity_def['originalDisplayProperties']['name'] != activity_def['displayProperties']['name']:
                             self.data[lang]['wsummary']['fields'][0]['value'] = activity_def['originalDisplayProperties']['name']
-                    elif activity['challenges'][0]['objective']['objectiveHash'] in [3039545165, 406803827]:
+                    elif activity['challenges'][0]['objective']['objectiveHash'] in [1283234589, 1288508599, 2039792527, 2697564403, 3039545165, 3211393925, 3838169295, 406803827, 897950155, 1633394671, 1863972407, 2398860795, 3180884403, 3826130187]:
                         activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition', language=lang)
                         if activity_def['originalDisplayProperties']['name'] not in self.data[lang]['wsummary']['fields'][2]['value']:
                             self.data[lang]['wsummary']['fields'][2]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][2]['value'], activity_def['originalDisplayProperties']['name']).lstrip('\n')
