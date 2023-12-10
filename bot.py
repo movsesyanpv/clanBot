@@ -922,13 +922,15 @@ class ClanBot(commands.Bot):
         data = await cursor.execute('''SELECT timezone FROM timezones WHERE server_id=?''', (guild_id,))
         data = await data.fetchone()
 
-        await cursor.close()
         if data is None:
-            return 'UTC+03:00'
+            data = 'UTC+03:00'
         elif data[0] is None:
-            return 'UTC+03:00'
+            data = 'UTC+03:00'
         else:
-            return data[0]
+            data = data[0]
+
+        await cursor.close()
+        return data
 
     async def guild_timezone_is_set(self, guild_id: int) -> bool:
         if guild_id is None:
