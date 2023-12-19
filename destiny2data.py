@@ -108,7 +108,7 @@ class D2data:
     crucible_rotators = [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349,
                          1689094744, 2056796644, 3254496172, 1214397515, 3124504147, 2424021445, 2461220411, 3374318171,
                          3876264582, 1373352554, 37347215, 1478171612, 1957660400, 2000775487, 1826469369, 2014552458,
-                         4212882650, 2955009825]
+                         4212882650, 2955009825, 917887719, 1746163491, 1921003985, 2081353834, 3124504147, 3780095688]
     raids = [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764, 4179289725, 1042180643]
 
     vendor_params = {
@@ -1932,6 +1932,9 @@ class D2data:
             await self.write_bot_data('ordeal', langs)
             return False
         resp_time = activities_resp['timestamp']
+
+        weapon_hash = await self.get_nightfall_weapon_hash(forceget)
+
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -1989,6 +1992,18 @@ class D2data:
                         self.data[lang]['ordeal']['fields'][0]['value'] = strike['description']
                         db_data[0]['description'] = strike['description']
                         break
+
+            if weapon_hash != 0:
+                weapon_def = await self.destiny.decode_hash(weapon_hash, 'DestinyInventoryItemDefinition',
+                                                            language=lang)
+                self.data[lang]['ordeal']['fields'].append({'name': local_types['nf_weapon'],
+                                                            'value': '{} ({})'.format(weapon_def['displayProperties']['name'].split('(')[0].rstrip(), weapon_def['itemTypeDisplayName'])})
+                self.data[lang]['ordeal']['thumbnail']['url'] = 'https://www.bungie.net{}'.format(weapon_def['displayProperties']['icon'])
+                db_data.append({
+                    'name': '{} ({})'.format(weapon_def['displayProperties']['name'].split('(')[0].rstrip(), weapon_def['itemTypeDisplayName']),
+                    'icon': weapon_def['displayProperties']['icon']
+                })
+
             await self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'], order=3,
                                    type='weekly')
         await self.write_bot_data('ordeal', langs)
@@ -2813,9 +2828,13 @@ class D2data:
     async def get_wsummary(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('wsummary', string='weekly summary',
                                                              force=forceget)
+
         if not activities_resp:
             return False
         resp_time = activities_resp['timestamp']
+
+        nf_weapon_hash = await self.get_nightfall_weapon_hash(forceget)
+
         for lang in langs:
             translation = self.translations[lang]
             self.data[lang]['wsummary'] = {
@@ -2923,9 +2942,29 @@ class D2data:
                     if activity_def['hash'] in self.crucible_rotators:
                         self.data[lang]['wsummary']['fields'][4]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][4]['value'], activity_def['displayProperties']['name']).lstrip('\n')
 
+            if nf_weapon_hash != 0:
+                nf_weapon_def = await self.destiny.decode_hash(nf_weapon_hash, 'DestinyInventoryItemDefinition', language=lang)
+                self.data[lang]['wsummary']['fields'][1]['value'] = '{}\n{} ({})'.format(self.data[lang]['wsummary']['fields'][1]['value'], nf_weapon_def['displayProperties']['name'].split('(')[0].rstrip(), nf_weapon_def['itemTypeDisplayName'])
+
             if not self.data[lang]['wsummary']['fields'][3]['value']:
                 self.data[lang]['wsummary']['fields'].pop(3)
         await self.write_bot_data('wsummary', langs)
+
+    async def get_nightfall_weapon_hash(self, forceget: bool = False) -> int:
+        vanguard_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2232145065/'. \
+            format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
+        vanguard_resp = await self.get_cached_json('vanguard', 'vanguard', vanguard_url, self.vendor_params, force=forceget)
+
+        for cat in vanguard_resp['Response']['categories']['data']['categories']:
+            if cat['displayCategoryIndex'] == 1:
+                pass
+                sales = set(vanguard_resp['Response']['sales']['data'].keys()).intersection(set(map(str, cat['itemIndexes'])))
+                for item in sales:
+                    for cost in vanguard_resp['Response']['sales']['data'][item]['costs']:
+                        if cost['itemHash'] == 3643918802:
+                            return vanguard_resp['Response']['sales']['data'][item]['itemHash']
+
+        return 0
 
     async def drop_weekend_info(self, langs: List[str]) -> None:
         # while True:
