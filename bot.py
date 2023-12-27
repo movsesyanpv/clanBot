@@ -125,7 +125,7 @@ class ClanBot(commands.Bot):
         if datetime.today().weekday() == 1:
             await self.wait_for('manifest ready')
             self.logger.info('Updating daily mods')
-            await self.universal_update(self.data.get_weekly_shaders, 'daily_mods', 86400)
+            await self.universal_update(self.data.get_weekly_shaders, 'daily_mods', 604800)
             self.logger.info('Finished updating daily mods')
 
     @tasks.loop(time=time(hour=17, minute=0, second=35), reconnect=True)
