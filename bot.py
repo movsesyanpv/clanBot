@@ -346,7 +346,7 @@ class ClanBot(commands.Bot):
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_weekly_shaders, 'daily_mods', 345600, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_weekly_shaders, 'daily_mods', 604800, post=post, get=get, channels=channels, forceget=forceget)
         if 'tess' in upd_type:
             if channels is None:
                 channels = self.notifiers
