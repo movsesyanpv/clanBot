@@ -84,7 +84,7 @@ def run_async(func, *args, **kwargs):
 class D2data:
     api_data_file = open('api.json', 'r')
     api_data = json.loads(api_data_file.read())
-    destiny = ''
+    destiny = pydest.Pydest(api_data['key'])
 
     cache_db = ''
 
@@ -310,7 +310,6 @@ class D2data:
             }
         except KeyError:
             pass
-        self.destiny = pydest.Pydest(self.api_data['key'])
 
     async def get_bungie_json(self, name: str, url: str, params: Optional[dict] = None, lang: Optional[str] = None,
                               string: Optional[str] = None, change_msg: bool = True, is_get: bool = True,
@@ -733,99 +732,131 @@ class D2data:
                     return 0
                 pass
 
-    async def get_seasonal_featured_bd(self, langs: List[str], start: datetime) -> list:
+    async def get_seasonal_featured_bd(self, lang: str, start: datetime) -> list:
         tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
-        bd = []
+        classnames = ["охотник", "варлок", "титан", "hunter", "warlock", "titan"]
 
-        for lang in langs:
-            classnames = self.translations[lang]['classnames']
-            n_items = 0
+        # for lang in langs:
+        bd = []
+        nweeks = 0
+        n_items = 0
+        curr_week = []
+        i_week = 1
+        class_items = 0
+        n_order = 0
+        for i, item in enumerate(tess_def['itemList']):
+            if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                              3187955025, 2638689062]:
+                definition = 'DestinyInventoryItemDefinition'
+                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                if 'item.ghost_hologram' in item_def['traitIds']:
+                    nweeks += 1
+                if len(item['currencies']) > 0:
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                   language=lang)
+                else:
+                    currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
+                    item['currencies'] = [{'quantity': ''}]
+                cat_number = 4
+                if 'screenshot' in item_def.keys():
+                    screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
+                                 'loading="lazy">'.format(item_def['screenshot'])
+                else:
+                    screenshot = ''
+                curr_week.append({
+                    'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
+                    'icon': item_def['displayProperties']['icon'],
+                    'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
+                    'hash': item['itemHash'],
+                    'name': item_def['displayProperties']['name'],
+                    'screenshot': screenshot,
+                    'costs': [
+                        {
+                            'currency_icon': currency_resp['displayProperties']['icon'],
+                            'cost': item['currencies'][0]['quantity'],
+                            'currency_name': currency_resp['displayProperties']['name']
+                        }],
+                    'classType': item_def['classType'],
+                    'itemTypeDisplayName': item_def['itemTypeDisplayName'].lower()
+                })
+                n_order += 1
+                n_items = n_items + 1
+                if item_def['classType'] < 3 or any(
+                        class_name in item_def['itemTypeDisplayName'].lower() for class_name in classnames):
+                    class_items = class_items + 1
+        slots = []
+        curr_slot = []
+        n_items = 0
+        i_week = 0
+        class_items = 0
+        for item in curr_week:
+            if n_items >= nweeks and n_items - class_items / 3 * 2 >= nweeks:
+                i_week = i_week + 1
+                slots.append(list.copy(curr_slot))
+                n_items = 0
+                curr_slot = []
+                class_items = 0
+            if item['classType'] < 3 or any(
+                        class_name in item['itemTypeDisplayName'].lower() for class_name in classnames):
+                class_items = class_items + 1
+            curr_slot.append(item)
+            n_items += 1
+        slots.append(list.copy(curr_slot))
+        indexes = [0] * len(slots)
+        for i in range(0, nweeks):
             curr_week = []
-            i_week = 1
-            class_items = 0
-            n_order = 0
-            for i, item in enumerate(tess_def['itemList']):
-                if n_items >= 4 and n_items - class_items / 3 * 2 >= 4:
-                    i_week = i_week + 1
-                    bd.append(list.copy(curr_week))
-                    n_items = 0
-                    curr_week = []
-                    class_items = 0
-                if item['displayCategoryIndex'] == 2 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                                  3187955025, 2638689062]:
-                    definition = 'DestinyInventoryItemDefinition'
-                    item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    if len(item['currencies']) > 0:
-                        currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
-                                                                       language=lang)
-                    else:
-                        currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
-                        item['currencies'] = [{'quantity': ''}]
-                    cat_number = 2
-                    if 'screenshot' in item_def.keys():
-                        screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
-                                     'loading="lazy">'.format(item_def['screenshot'])
-                    else:
-                        screenshot = ''
-                    curr_week.append({
-                        'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
-                        'icon': item_def['displayProperties']['icon'],
-                        'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
-                        'hash': item['itemHash'],
-                        'name': item_def['displayProperties']['name'],
-                        'screenshot': screenshot,
-                        'costs': [
-                            {
-                                'currency_icon': currency_resp['displayProperties']['icon'],
-                                'cost': item['currencies'][0]['quantity'],
-                                'currency_name': currency_resp['displayProperties']['name']
-                            }]
-                    })
-                    n_order += 1
-                    n_items = n_items + 1
-                    if item_def['classType'] < 3 or any(
-                            class_name in item_def['itemTypeDisplayName'].lower() for class_name in classnames):
-                        class_items = class_items + 1
+            for slot in slots:
+                if slot[indexes[slots.index(slot)]]['classType'] < 3 or any(class_name in slot[indexes[slots.index(slot)]]['itemTypeDisplayName'].lower() for class_name in classnames):
+                    curr_week = [*curr_week, *slot[indexes[slots.index(slot)]:indexes[slots.index(slot)] + 3]]
+                    indexes[slots.index(slot)] += 3
+                else:
+                    curr_week.append(slot[indexes[slots.index(slot)]])
+                    indexes[slots.index(slot)] += 1
+            bd.append(list.copy(curr_week))
         return bd
 
-    async def get_seasonal_bd(self, langs: List[str], start: datetime) -> list:
+    async def get_seasonal_bd(self, lang: str, start: datetime) -> list:
         tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
+        classnames = ["охотник", "варлок", "титан", "hunter", "warlock", "titan"]
+
+        # for lang in langs:
         bd = []
-
-        for lang in langs:
-            classnames = self.translations[lang]['classnames']
-
-            n_items = 0
-            curr_week = []
-            i_week = 1
-            class_items = 0
-            n_order = 0
-            for i, item in enumerate(tess_def['itemList']):
-                if n_items >= 7 and n_items - class_items / 3 * 2 >= 7:
-                    i_week = i_week + 1
-                    bd.append(list.copy(curr_week))
-                    n_items = 0
-                    curr_week = []
-                    class_items = 0
-                if item['displayCategoryIndex'] == 8 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                                  3187955025, 2638689062]:
-                    definition = 'DestinyInventoryItemDefinition'
-                    item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    if len(item['currencies']) > 0:
-                        currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
-                                                                       language=lang)
-                    else:
-                        currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
-                        item['currencies'] = [{'quantity': ''}]
-                    cat_number = 8
-                    if 'screenshot' in item_def.keys():
-                        screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}" ' \
-                                     'loading="lazy">'.format(item_def['screenshot'])
-                    else:
-                        screenshot = ''
-                    curr_week.append({
+        nweeks = 0
+        n_items = 0
+        curr_week = []
+        i_week = 1
+        class_items = 0
+        n_order = 0
+        for i, item in enumerate(tess_def['itemList']):
+            # if n_items >= 5 and n_items - class_items/3*2 >= 5:
+            #     i_week = i_week + 1
+            #     bd.append(list.copy(curr_week))
+            #     n_items = 0
+            #     curr_week = []
+            #     class_items = 0
+            if item['displayCategoryIndex'] == 2 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                              3187955025, 2638689062]:
+                definition = 'DestinyInventoryItemDefinition'
+                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                if 'item.spawnfx' in item_def['traitIds']:
+                    nweeks += 1
+                if len(item['currencies']) > 0:
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                   language=lang)
+                else:
+                    currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
+                    item['currencies'] = [{'quantity': ''}]
+                cat_number = 2
+                if 'screenshot' in item_def.keys():
+                    screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}" ' \
+                                 'loading="lazy">'.format(item_def['screenshot'])
+                else:
+                    screenshot = ''
+                curr_week.append({
                         'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
                         'icon': item_def['displayProperties']['icon'],
                         'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
@@ -837,13 +868,43 @@ class D2data:
                                 'currency_icon': currency_resp['displayProperties']['icon'],
                                 'cost': item['currencies'][0]['quantity'],
                                 'currency_name': currency_resp['displayProperties']['name']
-                            }]
+                            }],
+                        'classType': item_def['classType'],
+                        'itemTypeDisplayName': item_def['itemTypeDisplayName']
                     })
-                    n_order += 1
-                    n_items = n_items + 1
-                    if item_def['classType'] < 3 or any(
-                            class_name in item_def['itemTypeDisplayName'].lower() for class_name in classnames):
-                        class_items = class_items + 1
+                n_order += 1
+                n_items = n_items + 1
+                if item_def['classType'] < 3 or any(
+                        class_name in item_def['itemTypeDisplayName'].lower() for class_name in classnames):
+                    class_items = class_items + 1
+        slots = []
+        curr_slot = []
+        n_items = 0
+        i_week = 0
+        for item in curr_week:
+            if n_items >= nweeks and n_items - class_items / 3 * 2 >= nweeks:
+                i_week = i_week + 1
+                slots.append(list.copy(curr_slot))
+                n_items = 0
+                curr_slot = []
+                class_items = 0
+            if item['classType'] < 3 or any(
+                    class_name in item['itemTypeDisplayName'].lower() for class_name in classnames):
+                class_items = class_items + 1
+            curr_slot.append(item)
+            n_items += 1
+        slots.append(list.copy(curr_slot))
+        indexes = [0] * len(slots)
+        for i in range(0, nweeks):
+            curr_week = []
+            for slot in slots:
+                if slot[indexes[slots.index(slot)]]['classType'] < 3 or any(class_name in slot[indexes[slots.index(slot)]]['itemTypeDisplayName'].lower() for class_name in classnames):
+                    curr_week = [*curr_week, *slot[indexes[slots.index(slot)]:indexes[slots.index(slot)] + 3]]
+                    indexes[slots.index(slot)] += 3
+                else:
+                    curr_week.append(slot[indexes[slots.index(slot)]])
+                    indexes[slots.index(slot)] += 1
+            bd.append(list.copy(curr_week))
         return bd
 
     async def get_seasonal_featured_silver(self, langs: List[str], start: datetime) -> list:
@@ -901,8 +962,114 @@ class D2data:
                         class_items = class_items + 1
         return bd
 
+    async def make_ev_predictions(self, langs: List[str], start: datetime) -> None:
+        week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
+        week_n = int(week_n.days / 7) - 14
+        for locale in langs:
+            data = []
+            bd = await self.get_seasonal_bd(locale, start)
+            featured_bd = await self.get_seasonal_featured_bd(locale, start)
+
+            for i in range(0, len(bd)):
+                if week_n == i:
+                    week_str = 'Неделя {} (текущая)'.format(i + 1)
+                else:
+                    week_str = 'Неделя {}'.format(i + 1)
+                data.append({
+                    'name': week_str,
+                    'items': [*bd[i]]
+                })
+            if len(bd) == len(featured_bd):
+                for i in range(0, len(bd)):
+                    data[i]['items'] = [*data[i]['items'], *featured_bd[i]]
+
+            await self.write_to_db(locale, 'weekly_eververse', data, name=self.translations[locale]['site']['bd'], order=0,
+                                   template='evweekly.html', annotations=[], size='', type='weekly_ev')
+
+    async def make_seasonal_ev(self, langs: List[str]) -> None:
+        tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
+
+        data = [
+            {
+                'name': 'Популярные предметы за яркую пыль',
+                'items': []
+            },
+            {
+                'name': 'Предметы за яркую пыль',
+                'items': []
+            },
+            {
+                'name': 'Потребляемые предметы за яркую пыль',
+                'items': []
+            },
+            # {
+            #     'name': 'Яркие энграммы',
+            #     'items': []
+            # },
+            {
+                'name': 'Популярные предметы за серебро',
+                'items': []
+            }]
+
+        lang = 'ru'
+        n_order = 0
+        for i, item in enumerate(tess_def['itemList']):
+            definition = 'DestinyInventoryItemDefinition'
+            item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+            if 'screenshot' in item_def.keys():
+                screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
+                             'loading="lazy">'.format(item_def['screenshot'])
+            else:
+                screenshot = ''
+            is_interesting = False
+            if item['displayCategoryIndex'] == 2 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                              3187955025, 2638689062]:
+                is_interesting = True
+                cat_number = 2
+                data_index = 0
+            elif item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                                3187955025, 2638689062]:
+                is_interesting = True
+                cat_number = 7
+                data_index = 1
+            elif item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                                 3187955025, 2638689062]:
+                is_interesting = True
+                cat_number = 9
+                data_index = 2
+            elif item['displayCategoryIndex'] == 1 and item['itemHash'] != 827183327:
+                is_interesting = True
+                cat_number = 1
+                data_index = 3
+            if is_interesting:
+                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                if len(item['currencies']) > 0:
+                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                   language=lang)
+                else:
+                    currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
+                    item['currencies'] = [{'quantity': ''}]
+                data[data_index]['items'].append({
+                    'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
+                    'icon': item_def['displayProperties']['icon'],
+                    'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
+                    'hash': item['itemHash'],
+                    'name': item_def['displayProperties']['name'],
+                    'screenshot': screenshot,
+                    'costs': [
+                        {
+                            'currency_icon': currency_resp['displayProperties']['icon'],
+                            'cost': item['currencies'][0]['quantity'],
+                            'currency_name': currency_resp['displayProperties']['name']
+                        }]
+                })
+                n_order += 1
+        await self.write_to_db(lang, 'seasonal_eververse', data, name=self.translations[lang]['site']['bd'], order=0,
+                               template='ev.html', annotations=[], size='', type='season_ev')
+
     async def get_weekly_eververse(self, langs: List[str]) -> None:
         data = []
+        start = await self.get_season_start()
 
         char_info = self.char_info
         tess_resps = []
@@ -951,29 +1118,8 @@ class D2data:
             await self.write_to_db(locale, 'weekly_eververse', sales, name=self.translations[locale]['site']['bd'], order=0,
                                    template='vendor_items.html', annotations=[], size='tall', type='weekly')
 
-        # start = await self.get_season_start()
-        # week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
-        # week_n = int(week_n.days / 7)
-        # for lang in langs:
-        #     data.clear()
-        #     bd = await self.get_seasonal_bd([lang], start)
-        #     featured_bd = await self.get_seasonal_featured_bd([lang], start)
-        #     # await self.get_seasonal_consumables(langs, start)
-        #     silver = await self.get_seasonal_featured_silver([lang], start)
-        #     for i in range(0, len(bd)):
-        #         data.append({
-        #             'items': [*bd[i]]
-        #         })
-        #     if len(bd) == len(featured_bd):
-        #         for i in range(0, len(bd)):
-        #             data[i]['items'] = [*data[i]['items'], *featured_bd[i]]
-        #     if len(bd) == len(silver):
-        #         for i in range(0, len(bd)):
-        #             data[i]['items'] = [*data[i]['items'], *silver[i]]
-        #
-        #     await self.write_to_db(lang, 'weekly_eververse', data[week_n]['items'],
-        #                            name=self.translations[lang]['site']['bd'],
-        #                            template='hover_items.html', order=0, type='weekly', size='tall')
+        await self.make_ev_predictions(langs, start)
+        await self.make_seasonal_ev(langs)
 
     async def write_to_db(self, lang: str, id: str, response: list, size: str = '', name: str = '',
                             template: str = 'table_items.html', order: int = 0, type: str = 'daily',

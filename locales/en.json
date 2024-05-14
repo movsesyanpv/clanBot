@@ -337,7 +337,13 @@
         "bd": "Eververse",
         "osiris": "Trials of Osiris",
         "empire_hunts": "Empire hunts",
-        "lostsector": "Lost Sector"
+        "lostsector": "Lost Sector",
+        "curr_week": "Week {} (current)",
+        "week": "Week {}",
+        "featured_bd": "Featured Bright Dust Items",
+        "bright_dust": "Bright Dust Items",
+        "featured_silver": "Featured Silver Items",
+        "consumables": "Consumable Bright Dust Items"
     },
     "osiris": {
         "map": "Map",
