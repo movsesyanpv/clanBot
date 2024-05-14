@@ -342,12 +342,12 @@
         "osiris": "Испытания Осириса",
         "empire_hunts": "Имперская охота",
         "lostsector": "Затерянный Сектор",
-        "curr_week": "Week {} (current)",
-        "week": "Week {}",
-        "featured_bd": "Featured Bright Dust Items",
-        "bright_dust": "Bright Dust Items",
-        "featured_silver": "Featured Silver Items",
-        "consumables": "Consumable Bright Dust Items"
+        "curr_week": "Неделя {} (текущая)",
+        "week": "Неделя {}",
+        "featured_bd": "Популярные предметы за яркую пыль",
+        "bright_dust": "Предметы за яркую пыль",
+        "featured_silver": "Популярные предметы за серебро",
+        "consumables": "Потребляемые предметы за яркую пыль"
     },
     "osiris": {
         "map": "Карта",
