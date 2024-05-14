@@ -5,7 +5,8 @@ from hashids import Hashids
 import dateparser
 import asyncio
 import aiosqlite
-from cogs.utils.views import GroupButtons, ActivityType, ModeLFG, RoleLFG, ConfirmView, MyButton, ViewLFG, LFGModal
+from cogs.utils.views import GroupButtons, ActivityType, ModeLFG, RoleLFG, ConfirmView, MyButton, ViewLFG, LFGModal,\
+    PrioritySelection
 from cogs.utils.converters import locale_2_lang, CtxLocale
 from cogs.utils.checks import message_permissions
 from babel.dates import format_datetime
@@ -57,6 +58,35 @@ class Group(commands.Cog):
 
         modal = LFGModal(ctx.bot, ctx.interaction.locale, translations)
         await ctx.interaction.response.send_modal(modal)
+
+    @commands.message_command(
+        name="Set low priority",
+        guild_only=True
+    )
+    async def set_low_priority(self, ctx, message: discord.Message):
+        lang = await locale_2_lang(ctx)
+        translations = ctx.bot.translations[lang]['lfg']
+
+        await ctx.defer(ephemeral=True)
+
+        if await ctx.bot.raid.is_raid(message.id):
+            people = await ctx.bot.raid.get_everyone(message.id, ctx.author.id)
+
+            options = []
+            async for member in ctx.guild.fetch_members(limit=None):
+                for person in people:
+                    if str(member.id) in person:
+                        options.append(discord.SelectOption(label=member.display_name, value=member.mention))
+            if len(options) > 0:
+                view = PrioritySelection(options, ctx.bot.translations[lang], "Ok")
+                await ctx.respond("Select users to make them low priority in your LFGs:", view=view, ephemeral=True)
+                await view.wait()
+                await ctx.bot.raid.add_low_priority(ctx.author.id, view.value)
+                await ctx.interaction.edit_original_message(content="OK", view=None)
+            else:
+                await ctx.respond("No eligible users in this group", ephemeral=True)
+        else:
+            await ctx.respond(ctx.bot.translations[lang]['lfg']['not_a_post'], ephemeral=True)
 
     @commands.message_command(
         name="Edit LFG",
