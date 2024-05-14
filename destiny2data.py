@@ -989,7 +989,7 @@ class D2data:
                 for i in range(0, len(bd)):
                     data[i]['items'] = [*data[i]['items'], *featured_bd[i]]
 
-            await self.write_to_db(locale, 'weekly_eververse', data, name=self.translations[locale]['site']['bd'], order=0,
+            await self.write_to_db(locale, 'weekly_ev', data, name=self.translations[locale]['site']['bd'], order=0,
                                    template='evweekly.html', annotations=[], size='', type='weekly_ev')
 
     async def make_seasonal_ev(self, langs: List[str]) -> None:
