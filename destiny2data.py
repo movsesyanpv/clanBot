@@ -978,9 +978,9 @@ class D2data:
 
             for i in range(0, len(bd)):
                 if week_n == i:
-                    week_str = 'Неделя {} (текущая)'.format(i + 1)
+                    week_str = self.translations[locale]['site']['curr_week'].format(i + 1)
                 else:
-                    week_str = 'Неделя {}'.format(i + 1)
+                    week_str = self.translations[locale]['site']['week'].format(i + 1)
                 data.append({
                     'name': week_str,
                     'items': [*bd[i]]
@@ -995,83 +995,85 @@ class D2data:
     async def make_seasonal_ev(self, langs: List[str]) -> None:
         tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
 
-        data = [
-            {
-                'name': 'Популярные предметы за яркую пыль',
-                'items': []
-            },
-            {
-                'name': 'Предметы за яркую пыль',
-                'items': []
-            },
-            {
-                'name': 'Потребляемые предметы за яркую пыль',
-                'items': []
-            },
-            # {
-            #     'name': 'Яркие энграммы',
-            #     'items': []
-            # },
-            {
-                'name': 'Популярные предметы за серебро',
-                'items': []
-            }]
+        for lang in langs:
+            data = [
+                {
+                    'name': self.translations[lang]['site']['featured_bd'],
+                    'items': []
+                },
+                {
+                    'name': self.translations[lang]['site']['bright_dust'],
+                    'items': []
+                },
+                {
+                    'name': self.translations[lang]['site']['consumables'],
+                    'items': []
+                },
+                # {
+                #     'name': 'Яркие энграммы',
+                #     'items': []
+                # },
+                {
+                    'name': self.translations[lang]['site']['featured_silver'],
+                    'items': []
+                }]
 
-        lang = 'ru'
-        n_order = 0
-        for i, item in enumerate(tess_def['itemList']):
-            definition = 'DestinyInventoryItemDefinition'
-            item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-            if 'screenshot' in item_def.keys():
-                screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
-                             'loading="lazy">'.format(item_def['screenshot'])
-            else:
-                screenshot = ''
-            is_interesting = False
-            if item['displayCategoryIndex'] == 2 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                              3187955025, 2638689062]:
-                is_interesting = True
-                cat_number = 2
-                data_index = 0
-            elif item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                                3187955025, 2638689062]:
-                is_interesting = True
-                cat_number = 7
-                data_index = 1
-            elif item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                                 3187955025, 2638689062]:
-                is_interesting = True
-                cat_number = 9
-                data_index = 2
-            elif item['displayCategoryIndex'] == 1 and item['itemHash'] != 827183327:
-                is_interesting = True
-                cat_number = 1
-                data_index = 3
-            if is_interesting:
+            # lang = 'ru'
+            n_order = 0
+            for i, item in enumerate(tess_def['itemList']):
+                definition = 'DestinyInventoryItemDefinition'
+                print(item)
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                if len(item['currencies']) > 0:
-                    currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
-                                                                   language=lang)
+                if 'screenshot' in item_def.keys():
+                    screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
+                                 'loading="lazy">'.format(item_def['screenshot'])
                 else:
-                    currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
-                    item['currencies'] = [{'quantity': ''}]
-                data[data_index]['items'].append({
-                    'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
-                    'icon': item_def['displayProperties']['icon'],
-                    'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
-                    'hash': item['itemHash'],
-                    'name': item_def['displayProperties']['name'],
-                    'screenshot': screenshot,
-                    'costs': [
-                        {
-                            'currency_icon': currency_resp['displayProperties']['icon'],
-                            'cost': item['currencies'][0]['quantity'],
-                            'currency_name': currency_resp['displayProperties']['name']
-                        }]
-                })
-                n_order += 1
-        await self.write_to_db(lang, 'seasonal_eververse', data, name=self.translations[lang]['site']['bd'], order=0,
-                               template='ev.html', annotations=[], size='', type='season_ev')
+                    screenshot = ''
+                is_interesting = False
+                if item['displayCategoryIndex'] == 2 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                                  3187955025, 2638689062]:
+                    is_interesting = True
+                    cat_number = 2
+                    data_index = 0
+                elif item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                                    3187955025, 2638689062]:
+                    is_interesting = True
+                    cat_number = 7
+                    data_index = 1
+                elif item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                                     3187955025, 2638689062]:
+                    is_interesting = True
+                    cat_number = 9
+                    data_index = 2
+                elif item['displayCategoryIndex'] == 1 and item['itemHash'] not in [827183327, 2125251645]:
+                    is_interesting = True
+                    cat_number = 1
+                    data_index = 3
+                if is_interesting:
+                    item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                    if len(item['currencies']) > 0:
+                        currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                       language=lang)
+                    else:
+                        currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
+                        item['currencies'] = [{'quantity': ''}]
+                    data[data_index]['items'].append({
+                        'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
+                        'icon': item_def['displayProperties']['icon'],
+                        'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
+                        'hash': item['itemHash'],
+                        'name': item_def['displayProperties']['name'],
+                        'screenshot': screenshot,
+                        'costs': [
+                            {
+                                'currency_icon': currency_resp['displayProperties']['icon'],
+                                'cost': item['currencies'][0]['quantity'],
+                                'currency_name': currency_resp['displayProperties']['name']
+                            }]
+                    })
+                    n_order += 1
+            await self.write_to_db(lang, 'seasonal_eververse', data, name=self.translations[lang]['site']['bd'], order=0,
+                                   template='ev.html', annotations=[], size='', type='season_ev')
 
     async def get_weekly_eververse(self, langs: List[str]) -> None:
         data = []
