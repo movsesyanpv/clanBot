@@ -1022,7 +1022,6 @@ class D2data:
             n_order = 0
             for i, item in enumerate(tess_def['itemList']):
                 definition = 'DestinyInventoryItemDefinition'
-                print(item)
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                 if 'screenshot' in item_def.keys():
                     screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
