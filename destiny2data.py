@@ -756,7 +756,6 @@ class D2data:
                                                                               3187955025, 2638689062]:
                 definition = 'DestinyInventoryItemDefinition'
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                 if 'item.ghost_hologram' in item_def['traitIds']:
                     nweeks += 1
                 if len(item['currencies']) > 0:
@@ -1131,8 +1130,9 @@ class D2data:
             await self.write_to_db(locale, 'weekly_eververse', sales, name=self.translations[locale]['site']['bd'], order=0,
                                    template='vendor_items.html', annotations=[], size='tall', type='weekly')
 
-        await self.make_ev_predictions(langs, start)
-        await self.make_seasonal_ev(langs)
+        site_langs = list(set(langs).intersection({'ru', 'en'}))
+        await self.make_ev_predictions(site_langs, start)
+        await self.make_seasonal_ev(site_langs)
 
     async def write_to_db(self, lang: str, id: str, response: list, size: str = '', name: str = '',
                             template: str = 'table_items.html', order: int = 0, type: str = 'daily',
