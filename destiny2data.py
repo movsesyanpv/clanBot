@@ -105,6 +105,12 @@ class D2data:
     wait_codes = [1672]
     max_retries = 10
 
+    crucible_rotators = [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349,
+                         1689094744, 2056796644, 3254496172, 1214397515, 3124504147, 2424021445, 2461220411, 3374318171,
+                         3876264582, 1373352554, 37347215, 1478171612, 1957660400, 2000775487, 1826469369, 2014552458,
+                         4212882650, 2955009825, 917887719, 1746163491, 1921003985, 2081353834, 3124504147, 3780095688]
+    raids = [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764, 4179289725, 1042180643]
+
     vendor_params = {
         'components': '400,401,402,302,304,306,310,305'
     }
@@ -1092,12 +1098,14 @@ class D2data:
         tess_cats = tess_json['Response']['categories']['data']['categories']
         resp_time = tess_json['timestamp']
         for locale in langs:
-            tess_def = await self.destiny.decode_hash(350061650, 'DestinyVendorDefinition', language=locale)
+            tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition', language=locale)
             sales = []
 
             cat_sales = []
             for tess_resp in tess_resps:
-                items_to_get = tess_resp['Response']['categories']['data']['categories'][11]['itemIndexes']
+                for cat in tess_resp['Response']['categories']['data']['categories']:
+                    if cat['displayCategoryIndex'] == 2:
+                        items_to_get = cat['itemIndexes']
                 ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468, 353932628, 3187955025])
                 cat_sales += ada_sales[1]
                 # cat_sales = list(set(cat_sales))
@@ -1105,12 +1113,16 @@ class D2data:
             sales += cat_sales
             cat_sales = []
             for tess_resp in tess_resps:
-                items_to_get = tess_resp['Response']['categories']['data']['categories'][3]['itemIndexes']
+                for cat in tess_resp['Response']['categories']['data']['categories']:
+                    if cat['displayCategoryIndex'] == 9:
+                        items_to_get = cat['itemIndexes']
                 ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468, 353932628, 3187955025])
                 cat_sales += ada_sales[1]
             cat_sales = list(dict((item["id"], item) for item in cat_sales).values())
             sales += cat_sales
-            items_to_get = tess_cats[13]['itemIndexes']
+            for cat in tess_cats:
+                if cat['displayCategoryIndex'] == 10:
+                    items_to_get = cat['itemIndexes']
             ada_sales = await self.get_vendor_sales(locale, tess_resps[0], items_to_get, [1812969468, 2979281381, 353932628, 3187955025])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
             sales += ada_sales[1]
@@ -1390,7 +1402,7 @@ class D2data:
             await self.write_bot_data('xur', langs)
             return False
         resp_time = xur_resp['timestamp']
-        xur_loc = await self.get_xur_loc()
+        xur_loc_3p = await self.get_xur_loc()
         for lang in langs:
 
             xur_def = await self.destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
@@ -1421,16 +1433,17 @@ class D2data:
 
                 annotations = []
 
-                if xur_loc:
+                if xur_loc_3p:
                     self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
                     annotations = [self.translations[lang]['xur']['copyright']]
                 else:
+                    self.data[lang]['xur']['footer']['text'] = self.translations[lang]['msg']['resp_time']
                     xur_loc = {}
 
                 if xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']] != 2961497387:
                     xur_loc['destinationHash'] = xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']]['destinationHash']
                     xur_loc['placeHash'] = place_hashes[str(xur_loc['destinationHash'])]
-                    self.data[lang]['xur'].pop('footer')
+                    # self.data[lang]['xur'].pop('footer')
                     annotations = []
 
                 sales = []
@@ -1456,6 +1469,8 @@ class D2data:
 
                     for key in sorted(xur_sales.keys()):
                         item_hash = xur_sales[key]['itemHash']
+                        if xur_def['itemList'][int(key)]['displayCategoryIndex'] != 0:
+                            continue
                         if item_hash not in [4285666432, 2293314698, 2125848607, 3875551374]:
                             definition = 'DestinyInventoryItemDefinition'
                             item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
@@ -1660,7 +1675,7 @@ class D2data:
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
 
                 if item_hash == 743628305:
-                    mods = await self.decode_modifiers(key, lang)
+                    mods = await self.decode_modifiers(key, lang, [1783825372])  # ignoring shielded foes
                     self.data[lang]['vanguardstrikes']['fields'] = mods[0]
                     db_data = mods[1]
                 if self.translations[lang]['strikes'] in r_json['displayProperties']['name']:
@@ -2019,7 +2034,7 @@ class D2data:
                 #         'description': info['value'].replace('\n', '<br>')
                 #     })
                 #     self.data[lang]['raids']['fields'].append(info)
-                if r_json['hash'] in [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764] and 'modifierHashes' in key.keys():
+                if r_json['hash'] in self.raids and 'modifierHashes' in key.keys():
                     info = {
                         'inline': True,
                         'name': r_json['originalDisplayProperties']['name'],
@@ -2063,6 +2078,9 @@ class D2data:
             await self.write_bot_data('ordeal', langs)
             return False
         resp_time = activities_resp['timestamp']
+
+        weapon_hash = await self.get_nightfall_weapon_hash(forceget)
+
         for lang in langs:
             local_types = self.translations[lang]
 
@@ -2120,6 +2138,18 @@ class D2data:
                         self.data[lang]['ordeal']['fields'][0]['value'] = strike['description']
                         db_data[0]['description'] = strike['description']
                         break
+
+            if weapon_hash != 0:
+                weapon_def = await self.destiny.decode_hash(weapon_hash, 'DestinyInventoryItemDefinition',
+                                                            language=lang)
+                self.data[lang]['ordeal']['fields'].append({'name': local_types['nf_weapon'],
+                                                            'value': '{} ({})'.format(weapon_def['displayProperties']['name'].split('(')[0].rstrip(), weapon_def['itemTypeDisplayName'])})
+                self.data[lang]['ordeal']['thumbnail']['url'] = 'https://www.bungie.net{}'.format(weapon_def['displayProperties']['icon'])
+                db_data.append({
+                    'name': '{} ({})'.format(weapon_def['displayProperties']['name'].split('(')[0].rstrip(), weapon_def['itemTypeDisplayName']),
+                    'icon': weapon_def['displayProperties']['icon']
+                })
+
             await self.write_to_db(lang, 'ordeal', db_data, name=self.translations[lang]['msg']['ordeal'], order=3,
                                    type='weekly')
         await self.write_bot_data('ordeal', langs)
@@ -2310,7 +2340,7 @@ class D2data:
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 if r_json['destinationHash'] == 4088006058:
-                    if item_hash in [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349, 1689094744, 2056796644, 3254496172, 1214397515, 3124504147]:
+                    if item_hash in self.crucible_rotators:
                         if not self.data[lang]['cruciblerotators']['thumbnail']['url']:
                             if 'icon' in r_json['displayProperties']:
                                 self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
@@ -2319,12 +2349,12 @@ class D2data:
                                                                                               'icon']
                             else:
                                 self.data[lang]['cruciblerotators']['thumbnail']['url'] = self.icon_prefix + \
-                                                                                          '/common/destiny2_content/icons/' \
-                                                                                          'cc8e6eea2300a1e27832d52e9453a227.png'
+                                                                                          '/common/destiny2_content/' \
+                                                                                          'icons/193fcaaf80f97c83eb10568dbe514cf1.png'
                         if 'icon' in r_json['displayProperties']:
                             icon = r_json['displayProperties']['icon']
                         else:
-                            icon = '/common/destiny2_content/icons/cc8e6eea2300a1e27832d52e9453a227.png'
+                            icon = '/common/destiny2_content/icons/193fcaaf80f97c83eb10568dbe514cf1.png'
                         info = {
                             'inline': True,
                             "name": r_json['displayProperties']['name'],
@@ -2464,23 +2494,26 @@ class D2data:
                     pass
             await self.write_bot_data('events', langs)
 
-    async def decode_modifiers(self, key: dict, lang: str) -> list:
+    async def decode_modifiers(self, key: dict, lang: str, exceptions=None) -> list:
+        if exceptions is None:
+            exceptions = []
         data = []
         db_data = []
         for mod_key in key['modifierHashes']:
-            mod_def = 'DestinyActivityModifierDefinition'
-            mod_json = await self.destiny.decode_hash(mod_key, mod_def, lang)
-            mod = {
-                'inline': True,
-                "name": mod_json['displayProperties']['name'],
-                "value": await self.expand_string_vars(mod_json['displayProperties']['description'])
-            }
-            data.append(mod)
-            db_data.append({
-                "name": mod_json['displayProperties']['name'],
-                "description": await self.expand_string_vars(mod_json['displayProperties']['description']),
-                "icon": mod_json['displayProperties']['icon']
-            })
+            if mod_key not in exceptions:
+                mod_def = 'DestinyActivityModifierDefinition'
+                mod_json = await self.destiny.decode_hash(mod_key, mod_def, lang)
+                mod = {
+                    'inline': True,
+                    "name": mod_json['displayProperties']['name'],
+                    "value": await self.expand_string_vars(mod_json['displayProperties']['description'])
+                }
+                data.append(mod)
+                db_data.append({
+                    "name": mod_json['displayProperties']['name'],
+                    "description": await self.expand_string_vars(mod_json['displayProperties']['description']),
+                    "icon": mod_json['displayProperties']['icon']
+                })
 
         return [data, db_data]
 
@@ -2804,7 +2837,10 @@ class D2data:
             flawless = find_adept(saint_resp)
 
         modifiers = {}
-        trials_are_active = True
+        if flawless == '?':
+            trials_are_active = False
+        else:
+            trials_are_active = True
         # activities = await self.get_activities_response('activities')
         # for activity in activities['Response']['activities']['data']['availableActivities']:
         #     if activity['activityHash'] in [588019350, 2431109627, 4150051058]:
@@ -2934,6 +2970,147 @@ class D2data:
             await self.write_to_db(lang, 'lost_sector', db_data, order=6,
                                    name=self.translations[lang]['site']['lostsector'])
         await self.write_bot_data('lostsector', langs)
+
+    async def get_wsummary(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
+        activities_resp = await self.get_activities_response('wsummary', string='weekly summary',
+                                                             force=forceget)
+
+        if not activities_resp:
+            return False
+        resp_time = activities_resp['timestamp']
+
+        nf_weapon_hash = await self.get_nightfall_weapon_hash(forceget)
+
+        for lang in langs:
+            translation = self.translations[lang]
+            self.data[lang]['wsummary'] = {
+                'thumbnail': {
+                    'url': 'https://www.bungie.net/common/destiny2_content/icons/10f3f605b9813d0f83f508f49a6756a5.png'
+                },
+                'fields': [{
+                    'name': translation['msg']['exotic'],
+                    'value': '',
+                    'inline': True
+                },
+                {
+                    'name': translation['msg']['ordeal'],
+                    'value': '',
+                    'inline': True
+                },
+                {
+                    'name': translation['msg']['raid&dungeon'],
+                    'value': '',
+                    'inline': True
+                },
+                {
+                    'name': translation['msg']['bonuses'],
+                    'value': '',
+                    'inline': True
+                },
+                {
+                    'name': translation['msg']['cruciblerotators'],
+                    'value': '',
+                    'inline': True
+                },
+                {
+                    'name': translation['msg']['raids'],
+                    'value': '',
+                    'inline': False
+                },
+                ],
+                'color': 000000,
+                'type': 'rich',
+                'title': translation['msg']['wsummary'],
+                'footer': {'text': self.translations[lang]['msg']['resp_time']},
+                'timestamp': resp_time
+            }
+            for activity in activities_resp['Response']['activities']['data']['availableActivities']:
+                if 'challenges' in activity.keys():
+                    if activity['challenges'][0]['objective']['objectiveHash'] in [3726310377, 1320261963, 1510063869]:
+                        activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition', language=lang)
+                        if activity_def['originalDisplayProperties']['name'] != activity_def['displayProperties']['name']:
+                            self.data[lang]['wsummary']['fields'][0]['value'] = activity_def['originalDisplayProperties']['name']
+                    elif activity['challenges'][0]['objective']['objectiveHash'] in [1283234589, 1288508599, 2039792527, 2697564403, 3039545165, 3211393925, 3838169295, 406803827, 897950155, 1633394671, 1863972407, 2398860795, 3180884403, 3826130187]:
+                        activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition', language=lang)
+                        if activity_def['originalDisplayProperties']['name'] not in self.data[lang]['wsummary']['fields'][2]['value']:
+                            self.data[lang]['wsummary']['fields'][2]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][2]['value'], activity_def['originalDisplayProperties']['name']).lstrip('\n')
+                activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition',
+                                                              language=lang)
+                if activity_def['activityTypeHash'] == 575572995 and translation['adept'] in activity_def['displayProperties']['name']:
+                    self.data[lang]['wsummary']['fields'][1]['name'] = translation['ordeal']
+                    self.data[lang]['wsummary']['fields'][1]['value'] = activity_def['originalDisplayProperties']['description']
+                    if 1171597537 in activity['modifierHashes']:  # Check for double rewards and rank
+                        mod_info = await self.destiny.decode_hash(1171597537, 'DestinyActivityModifierDefinition', language=lang)
+                        self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
+                    if 745014575 in activity['modifierHashes']:
+                        mod_info = await self.destiny.decode_hash(745014575, 'DestinyActivityModifierDefinition',
+                                                                  language=lang)
+                        self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
+                if 'modifierHashes' in activity.keys():
+                    if 3228023383 in activity['modifierHashes']:  # Check for double gambit rank
+                            mod_info = await self.destiny.decode_hash(3228023383, 'DestinyActivityModifierDefinition', language=lang)
+                            self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
+                    if 3874605433 in activity['modifierHashes']:  # Check for double crucible rank
+                            mod_info = await self.destiny.decode_hash(3874605433, 'DestinyActivityModifierDefinition', language=lang)
+                            if mod_info['displayProperties']['name'] not in self.data[lang]['wsummary']['fields'][3]['value']:
+                                self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
+
+                    if activity_def['hash'] in self.raids:
+                        info = {
+                            'inline': True,
+                            'name': activity_def['originalDisplayProperties']['name'],
+                            'value': u"\u2063"
+                        }
+                        intersection = list(set(activity['modifierHashes']).intersection(set([1783825372])))
+                        valid_mods = []
+                        for mod in activity['modifierHashes']:
+                            if mod not in intersection:
+                                valid_mods.append(mod)
+                        mods = await self.destiny.decode_hash(valid_mods[0], 'DestinyActivityModifierDefinition', lang)
+                        resp_time = datetime.utcnow().isoformat()
+                        if mods:
+                            if len(valid_mods) > 2:
+                                for mod in valid_mods:
+                                    mod_def = await self.destiny.decode_hash(mod, 'DestinyActivityModifierDefinition',
+                                                                             lang)
+                                    info['value'] = '{}; {}'.format(info['value'],
+                                                                    mod_def['displayProperties']['name']).\
+                                        lstrip('\u2063; ')
+                            else:
+                                info['value'] = mods['displayProperties']['name']
+                        else:
+                            info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                        self.data[lang]['wsummary']['fields'][5]['value'] = '{}\n**{}**: {}'.\
+                            format(self.data[lang]['wsummary']['fields'][5]['value'],
+                                   activity_def['originalDisplayProperties']['name'],
+                                   info['value']).lstrip('\n')
+                if activity_def['destinationHash'] == 4088006058:
+                    if activity_def['hash'] in self.crucible_rotators:
+                        self.data[lang]['wsummary']['fields'][4]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][4]['value'], activity_def['displayProperties']['name']).lstrip('\n')
+
+            if nf_weapon_hash != 0:
+                nf_weapon_def = await self.destiny.decode_hash(nf_weapon_hash, 'DestinyInventoryItemDefinition', language=lang)
+                self.data[lang]['wsummary']['fields'][1]['value'] = '{}\n{} ({})'.format(self.data[lang]['wsummary']['fields'][1]['value'], nf_weapon_def['displayProperties']['name'].split('(')[0].rstrip(), nf_weapon_def['itemTypeDisplayName'])
+
+            if not self.data[lang]['wsummary']['fields'][3]['value']:
+                self.data[lang]['wsummary']['fields'].pop(3)
+        await self.write_bot_data('wsummary', langs)
+
+    async def get_nightfall_weapon_hash(self, forceget: bool = False) -> int:
+        vanguard_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2232145065/'. \
+            format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
+        vanguard_resp = await self.get_cached_json('vanguard', 'vanguard', vanguard_url, self.vendor_params, force=forceget)
+
+        for cat in vanguard_resp['Response']['categories']['data']['categories']:
+            if cat['displayCategoryIndex'] == 1:
+                pass
+                sales = set(vanguard_resp['Response']['sales']['data'].keys()).intersection(set(map(str, cat['itemIndexes'])))
+                for item in sales:
+                    for cost in vanguard_resp['Response']['sales']['data'][item]['costs']:
+                        if cost['itemHash'] == 3643918802:
+                            return vanguard_resp['Response']['sales']['data'][item]['itemHash']
+
+        return 0
 
     async def drop_weekend_info(self, langs: List[str]) -> None:
         # while True:

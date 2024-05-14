@@ -40,6 +40,10 @@
         "no_send_messages": "{}, I'm not allowed to respond in that channel.",
         "osiris": "Trials of Osiris",
         "empire_hunts": "Elective difficulty empire hunt",
+        "wsummary": "Weekly rotations",
+        "exotic": "Exotic mission",
+        "raid&dungeon": "Featured Raid & Dungeon",
+        "bonuses": "Playlist bonuses",
         "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
         "daily_mods": "Ada-1 sells these",
         "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version. If you don't see any slash commands, run `noslash` command to get instructions on how to fix this.",
@@ -329,7 +333,7 @@
     },
     "site": {
         "spider": "Material exchange",
-        "forge": "Forge",
+        "forge": "Kuźnia",
         "heroicstory": "Heroic story missions",
         "reckoningboss": "The Reckoning boss",
         "nightfalls820": "Nightfalls",
@@ -373,6 +377,7 @@
         "1604869479": "Sword"
     },
     "vanguard_strikes": "Szturmy Straży Przedniej",
+    "nf_weapon": "Weapon Reward",
     "empire_hunt": "Empire Hunt:",
     "online": {
         "nick": "Nickname",
@@ -395,7 +400,7 @@
             "description": "Current week's raid challenges"
         },
         "ordeal": {
-            "label": "Nightfall: The Ordeal",
+            "label": "Nocny szturm: Męka",
             "description": "Current nightfall"
         },
         "empire": {
@@ -433,6 +438,10 @@
         "events": {
             "label": "Community Events",
             "description": "Hourly updates of community event progress"
+        },
+        "wsummary": {
+            "label": "Weekly rotation summary",
+            "description": "Summary of weekly rotations"
         }
     },
     "clan_info": {

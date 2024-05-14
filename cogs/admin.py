@@ -144,11 +144,18 @@ class Admin(commands.Cog):
         description='Set Trials of Osiris info'
     )
     async def osiris(self, ctx, curr_map, flawless='?'):
+        banned_maps = [1699058902, 3734723183, 265600452]
         url = 'https://bungie.net/Platform/Destiny2/Armory/Search/{}/{}'
         map_resp = await self.bot.data.get_bungie_json('too map', url.format('DestinyActivityDefinition', curr_map),
                                                        change_msg=False)
         if len(map_resp['Response']['results']['results']) > 0:
-            curr_map = map_resp['Response']['results']['results'][0]['hash']
+            if map_resp['Response']['results']['results'][0]['hash'] not in banned_maps:
+                curr_map = map_resp['Response']['results']['results'][0]['hash']
+            else:
+                for activity in map_resp['Response']['results']['results']:
+                    if activity['hash'] not in banned_maps:
+                        curr_map = activity['hash']
+                        break
         if flawless not in self.bot.translations['en']['osiris'].keys() and flawless != '?':
             flawless_resp = await self.bot.data.get_bungie_json('flawless', url.format('DestinyInventoryItemDefinition', flawless),
                                                             change_msg=False)

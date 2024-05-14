@@ -40,6 +40,10 @@
         "no_send_messages": "{}, ich darf in diesem Kanal nicht antworten.",
         "osiris": "Prüfung von Osiris",
         "empire_hunts": "Schwierigkeiten Wahl Imperium Jagten",
+        "wsummary": "Weekly rotations",
+        "exotic": "Exotic mission",
+        "raid&dungeon": "Featured Raid & Dungeon",
+        "bonuses": "Playlist bonuses",
         "clan_search_error": "Der angeforderte Clan wurde nicht gefunden. Sie können es erneut versuchen, wobei beim Namen des Clans die Groß-/Kleinschreibung beachtet wird. Wenn das nicht hilft, versuchen Sie, die ID Ihres Clans einzugeben. Die ID finden Sie auf der bungie.net-Seite des Clans nach der Zeichenfolge `groupId=` (Sie wollen die Zahlen danach). Wenn das nicht funktioniert, können Sie jederzeit auf meinem Support-Server um Hilfe bitten, den Link zu dem Sie mit dem Befehl `support` finden.",
         "daily_mods": "Ada-1 und Bansher-44 verkaufen dies",
         "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version. If you don't see any slash commands, run `noslash` command to get instructions on how to fix this.",
@@ -172,7 +176,7 @@
     "nightmare": "Albtraumjagd:",
     "adept": ": Großmeister",
     "Warlock": "Warlock",
-    "Titan": "Titan",
+    "Titan": "Titab",
     "Hunter": "Jäger",
     "rotator": "Rotator",
     "strikes": "Heroische Strike Playliste",
@@ -219,7 +223,7 @@
                 "gambitmetrics": "Gambit",
                 "raidsmetrics": "Raid",
                 "strikesmetrics": "Strike",
-                "trialsofosirismetrics": "Trials of Osiris",
+                "trialsofosirismetrics": "Prüfung von Osiris",
                 "cat_list": "Verfügbare Kategorien. Um die Metrikliste der Kategorie zu erhalten, senden Sie `{}help top category`. Die Kategorien sind in der folgenden Tabelle aufgelistet (linke Spalte), rechte Spalte enthält die Beschreibungen der oben genannten Kategorien. Die Kategorien entsprechen denen im Spiel.",
                 "unavailable": {
                     "displayProperties": {
@@ -288,7 +292,7 @@
         "setprefix": "Verfügbare Präfixe festlegen",
         "support": "Der link zum Support Server",
         "online": "Zeig die Liste der Clan Member.",
-        "editlfg": "Edit LFG message",
+        "editlfg": "Bearbeite eine LFG Nachricht",
         "autopost": "Autopost channel settings",
         "lfgcleanup": "Delete expired LFG posts",
         "reglfg": "Register the channel as a place for LFG posts",
@@ -373,6 +377,7 @@
         "1604869479": "Schwert"
     },
     "vanguard_strikes": "Vorhut-Strikes",
+    "nf_weapon": "Weapon Reward",
     "empire_hunt": "Imperium Jagt:",
     "online": {
         "nick": "Nickname",
@@ -383,7 +388,7 @@
     },
     "update_types": {
         "nightmares": {
-            "label": "Nightmare hunts",
+            "label": "Albtraum Jagten",
             "description": "Currently available nightmare hunts"
         },
         "crucible": {
@@ -395,7 +400,7 @@
             "description": "Current week's raid challenges"
         },
         "ordeal": {
-            "label": "Nightfall: The Ordeal",
+            "label": "Dämmerung: Die Feuerprobe",
             "description": "Current nightfall"
         },
         "empire": {
@@ -403,7 +408,7 @@
             "description": "Current empire hunt"
         },
         "strikes": {
-            "label": "Strikes",
+            "label": "Strike",
             "description": "Daily vanguard strike playlist modifiers"
         },
         "spider": {
@@ -419,7 +424,7 @@
             "description": "Xur's location and exotics"
         },
         "osiris": {
-            "label": "Trials of Osiris",
+            "label": "Prüfung von Osiris",
             "description": "Current ToO info"
         },
         "lostsector": {
@@ -433,6 +438,10 @@
         "events": {
             "label": "Community Events",
             "description": "Hourly updates of community event progress"
+        },
+        "wsummary": {
+            "label": "Weekly rotation summary",
+            "description": "Summary of weekly rotations"
         }
     },
     "clan_info": {

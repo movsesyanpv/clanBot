@@ -593,7 +593,7 @@ class LFGModal(discord.ui.Modal):
 
         role_list = []
         for role in interaction.guild.roles:
-            if role.mentionable and not role.managed:
+            if role.mentionable and not role.managed and len(role.name) > 0:
                 role_list.append(discord.SelectOption(label=role.name, value=str(role.id)))
         if len(role_list) > 25:
             role_list = role_list[:25]
