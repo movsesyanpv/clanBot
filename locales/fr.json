@@ -341,7 +341,13 @@
         "bd": "Everversum",
         "osiris": "Jugement d'Osiris",
         "empire_hunts": "Chasses de l'Empire",
-        "lostsector": "Secteur Oublié"
+        "lostsector": "Secteur Oublié",
+        "curr_week": "Week {} (current)",
+        "week": "Week {}",
+        "featured_bd": "Featured Bright Dust Items",
+        "bright_dust": "Bright Dust Items",
+        "featured_silver": "Featured Silver Items",
+        "consumables": "Consumable Bright Dust Items"
     },
     "osiris": {
         "map": "Carte",
