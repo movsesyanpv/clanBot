@@ -2629,18 +2629,21 @@ class D2data:
         trans_string = ''
         global_params = []
         for member in metric_list:
-            await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
-                                 (member['membershipId'], member['timestamp']))
-            await cursor.execute('''UPDATE playermetrics SET name=?, timestamp=?, membershipType=? WHERE membershipId=?''',
-                                 (member['name'], member['timestamp'], member['membershipType'], member['membershipId']))
-            if len(member['metrics'].keys()) > 0:
-                trans_string = 'UPDATE playermetrics SET '
-                metric_values = []
-                for metric_hash in member['metrics'].keys():
-                    trans_string = '{} \'{}\'=?,'.format(trans_string, metric_hash)
-                    metric_values.append(member['metrics'][metric_hash])
-                trans_string = '{} WHERE membershipId=?'.format(trans_string[:-1])
-                global_params.append((*metric_values, member['membershipId']))
+            if member['valid']:
+                await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
+                                     (member['membershipId'], member['timestamp']))
+                await cursor.execute('''UPDATE playermetrics SET name=?, timestamp=?, membershipType=? WHERE membershipId=?''',
+                                     (member['name'], member['timestamp'], member['membershipType'], member['membershipId']))
+                if len(member['metrics'].keys()) > 0:
+                    trans_string = 'UPDATE playermetrics SET '
+                    metric_values = []
+                    for metric_hash in member['metrics'].keys():
+                        trans_string = '{} \'{}\'=?,'.format(trans_string, metric_hash)
+                        metric_values.append(member['metrics'][metric_hash])
+                    trans_string = '{} WHERE membershipId=?'.format(trans_string[:-1])
+                    global_params.append((*metric_values, member['membershipId']))
+            else:
+                await cursor.execute('''DELETE FROM playermetrics WHERE membershipId=?''', (member['membershipId']))
         await cursor.executemany(trans_string, global_params)
         await self.bot_data_db.commit()
         await cursor.close()
@@ -2716,7 +2719,8 @@ class D2data:
             'membershipId': membership_id,
             'membershipType': membership_type,
             'timestamp': datetime.utcnow().isoformat(),
-            'name': name
+            'name': name,
+            'valid': True
         }
         if name is None:
             url = 'https://www.bungie.net/Platform/User/GetMembershipsById/{}/-1'.format(membership_id)
@@ -2741,8 +2745,6 @@ class D2data:
                     membership_type = membership['membershipType']
             player['name'] = name
             player['membershipType'] = membership_type
-            if player['name'] is None:
-                player['name'] = 'NULL'
 
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
         member = await self.get_bungie_json('metrics for {}'.format(membership_id), url, params=self.metric_params,
@@ -2755,6 +2757,8 @@ class D2data:
                     if 'objectiveProgress' in member['Response']['metrics']['data']['metrics'][metric].keys():
                         value = member['Response']['metrics']['data']['metrics'][metric]['objectiveProgress']['progress']
                         metrics[metric] = value
+            if member['Response']['ErrorCode'] == 1601:
+                player['valid'] = False
         else:
             print('member {} fail: {}'.format(membership_id, member), file=sys.stderr)
         player['metrics'] = OrderedDict(sorted(metrics.items()))
