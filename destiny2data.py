@@ -2757,7 +2757,7 @@ class D2data:
                     if 'objectiveProgress' in member['Response']['metrics']['data']['metrics'][metric].keys():
                         value = member['Response']['metrics']['data']['metrics'][metric]['objectiveProgress']['progress']
                         metrics[metric] = value
-            if member['Response']['ErrorCode'] == 1601:
+            if member['ErrorCode'] == 1601:
                 player['valid'] = False
         else:
             print('member {} fail: {}'.format(membership_id, member), file=sys.stderr)
