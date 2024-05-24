@@ -2741,6 +2741,8 @@ class D2data:
                     membership_type = membership['membershipType']
             player['name'] = name
             player['membershipType'] = membership_type
+            if player['name'] is None:
+                player['name'] = 'NULL'
 
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
         member = await self.get_bungie_json('metrics for {}'.format(membership_id), url, params=self.metric_params,
