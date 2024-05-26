@@ -139,7 +139,7 @@ class D2data:
 
     data_pool: aiomysql.Pool
 
-    limiter = AsyncLimiter(20, 1)
+    limiter = AsyncLimiter(10, 1)
 
     def __init__(self, translations, lang, is_oauth, prod, context, loop=None, **options):
         super().__init__(**options)
@@ -325,7 +325,7 @@ class D2data:
         async def request(url, params, headers, is_get, json=None):
             async with self.limiter:
                 if is_get:
-                    resp = await self.session.get(url, params=params, headers=headers)
+                    resp = await self.session.get(url, params=params, headers=headers, timeout=60)
                 else:
                     resp = await self.session.post(url, params=params, headers=headers, json=json)
                 return resp
@@ -343,6 +343,11 @@ class D2data:
             string = str(name)
         try:
             resp = await request(url, params, self.headers, is_get, body)
+        except asyncio.TimeoutError:
+            if change_msg:
+                for locale in lang:
+                    self.data[locale][name] = self.data[locale]['api_is_down']
+            return false(url, 'Timeout exception in initial request')
         except:
             if change_msg:
                 for locale in lang:
@@ -3249,7 +3254,7 @@ class D2data:
         leaderboard = []
 
         if is_time or is_ranking:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}` FROM playermetrics WHERE `{}`>0 ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_time:
@@ -3261,7 +3266,7 @@ class D2data:
                     index = raw_leaderboard.index(place)
                     leaderboard.append([raw_leaderboard[index][0], raw_leaderboard[index][1]])
         else:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}` FROM playermetrics WHERE `{}`>0 ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_kda:
