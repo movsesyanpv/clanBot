@@ -2634,9 +2634,9 @@ class D2data:
         trans_string = ''
         global_params = []
         for member in metric_list:
+            await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
+                                 (member['membershipId'], member['timestamp']))
             if member['valid']:
-                await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
-                                     (member['membershipId'], member['timestamp']))
                 await cursor.execute('''UPDATE playermetrics SET name=?, timestamp=?, membershipType=? WHERE membershipId=?''',
                                      (member['name'], member['timestamp'], member['membershipType'], member['membershipId']))
                 if len(member['metrics'].keys()) > 0:
@@ -2647,8 +2647,8 @@ class D2data:
                         metric_values.append(member['metrics'][metric_hash])
                     trans_string = '{} WHERE membershipId=?'.format(trans_string[:-1])
                     global_params.append((*metric_values, member['membershipId']))
-            else:
-                await cursor.execute('''DELETE FROM playermetrics WHERE membershipId=?''', (member['membershipId']))
+            # else:
+            #     await cursor.execute('''DELETE FROM playermetrics WHERE membershipId=?''', (member['membershipId']))
         await cursor.executemany(trans_string, global_params)
         await self.bot_data_db.commit()
         await cursor.close()
@@ -2702,7 +2702,7 @@ class D2data:
     async def update_members_without_tracked_clans(self):
         cursor = await self.bot_data_db.cursor()
 
-        member_list = await cursor.execute('''select membershipId, membershipType from playermetrics WHERE timestamp<\'{}\''''.format(datetime.utcnow().strftime('%Y-%m-%d')))
+        member_list = await cursor.execute('''select membershipId, membershipType, name from playermetrics WHERE timestamp<\'{}\''''.format(datetime.utcnow().strftime('%Y-%m-%d')))
         member_list = await member_list.fetchall()
 
         await cursor.close()
@@ -2711,7 +2711,7 @@ class D2data:
             return 0
         tasks = []
         for member in member_list:
-            task = asyncio.ensure_future(self.fetch_player_metrics(member[1], member[0], None))
+            task = asyncio.ensure_future(self.fetch_player_metrics(member[1], member[0], member[2], False))
             tasks.append(task)
         results = await asyncio.gather(*tasks)
 
@@ -2744,7 +2744,7 @@ class D2data:
 
         return len(results) - unfixed
 
-    async def fetch_player_metrics(self, membership_type: str, membership_id: str, name: str):
+    async def fetch_player_metrics(self, membership_type: str, membership_id: str, name: str, from_clan: bool = False):
         player = {
             'membershipId': membership_id,
             'membershipType': membership_type,
@@ -2752,27 +2752,28 @@ class D2data:
             'name': name,
             'valid': True
         }
-        if name is None:
+        if name is None and not from_clan:
             url = 'https://www.bungie.net/Platform/User/GetMembershipsById/{}/-1'.format(membership_id)
             profile = await self.get_bungie_json('memberships for {}'.format(membership_id), url, change_msg=False)
-            if not profile:
+            if not profile and name is None:
                 player['metrics'] = {}
                 print('profile {} fail: {}'.format(membership_id, profile), file=sys.stderr)
+                player['valid'] = False
                 return player
-
-            for membership in profile['Response']['destinyMemberships']:
-                if membership['crossSaveOverride'] == membership['membershipType']:
-                    if membership['bungieGlobalDisplayName'] != '':
-                        name = membership['bungieGlobalDisplayName']
-                    else:
-                        name = membership['LastSeenDisplayName']
-                    membership_type = membership['crossSaveOverride']
-                elif membership['crossSaveOverride'] == 0:
-                    if membership['bungieGlobalDisplayName'] != '':
-                        name = membership['bungieGlobalDisplayName']
-                    else:
-                        name = membership['LastSeenDisplayName']
-                    membership_type = membership['membershipType']
+            elif profile:
+                for membership in profile['Response']['destinyMemberships']:
+                    if membership['crossSaveOverride'] == membership['membershipType']:
+                        if membership['bungieGlobalDisplayName'] != '':
+                            name = membership['bungieGlobalDisplayName']
+                        else:
+                            name = membership['LastSeenDisplayName']
+                        membership_type = membership['crossSaveOverride']
+                    elif membership['crossSaveOverride'] == 0:
+                        if membership['bungieGlobalDisplayName'] != '':
+                            name = membership['bungieGlobalDisplayName']
+                        else:
+                            name = membership['LastSeenDisplayName']
+                        membership_type = membership['membershipType']
             player['name'] = name
             player['membershipType'] = membership_type
 
@@ -2791,6 +2792,7 @@ class D2data:
                 player['valid'] = False
         else:
             print('member {} fail: {}'.format(membership_id, member), file=sys.stderr)
+            player['valid'] = False
         player['metrics'] = OrderedDict(sorted(metrics.items()))
         return player
 
