@@ -36,6 +36,9 @@ async def update_metrics(args: argparse.Namespace):
                          (args.cert, args.key))
         await data.token_update()
         cursor = await data.bot_data_db.cursor()
+
+        nullmember_number = await data.try_fix_null_members()
+
         clan_ids_c = await cursor.execute('''SELECT clan_id FROM clans''')
         clan_ids_c = await clan_ids_c.fetchall()
         clan_ids = []
@@ -49,6 +52,7 @@ async def update_metrics(args: argparse.Namespace):
 
         print('Updated users: {}'.format(member_number))
         print('Updated users without a clan: {}'.format(nonmember_number))
+        print('Updated users with NULL names: {}'.format(nullmember_number))
         print('Total users updated: {}'.format(member_number+nonmember_number))
 
         await data.session.close()

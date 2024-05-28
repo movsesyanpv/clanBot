@@ -2719,6 +2719,31 @@ class D2data:
 
         return len(results)
 
+    async def try_fix_null_members(self):
+        cursor = await self.bot_data_db.cursor()
+
+        none_memberships = await cursor.execute('''SELECT membershipId, membershipType FROM playermetrics WHERE name is NULL''')
+        none_memberships = await none_memberships.fetchall()
+
+        await cursor.close()
+
+        if len(none_memberships) == 0:
+            return 0
+        tasks = []
+        for member in none_memberships:
+            task = asyncio.ensure_future(self.fetch_player_metrics(member[1], member[0], None))
+            tasks.append(task)
+        results = await asyncio.gather(*tasks)
+
+        unfixed = 0
+        for result in results:
+            if result['name'] is None:
+                unfixed += 1
+
+        await self.write_metric_data(list(results))
+
+        return len(results) - unfixed
+
     async def fetch_player_metrics(self, membership_type: str, membership_id: str, name: str):
         player = {
             'membershipId': membership_id,
