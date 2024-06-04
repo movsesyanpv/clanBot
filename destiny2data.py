@@ -974,7 +974,7 @@ class D2data:
 
     async def make_ev_predictions(self, langs: List[str], start: datetime) -> None:
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
-        week_n = int(week_n.days / 7) - 14
+        week_n = int(week_n.days / 7)
         for locale in langs:
             data = []
             bd = await self.get_seasonal_bd(locale, start)
