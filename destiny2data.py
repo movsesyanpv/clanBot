@@ -761,8 +761,11 @@ class D2data:
                                                                               3187955025, 2638689062]:
                 definition = 'DestinyInventoryItemDefinition'
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                if 'item.ghost_hologram' in item_def['traitIds']:
-                    nweeks += 1
+                try:
+                    if 'item.ghost_hologram' in item_def['traitIds']:
+                        nweeks += 1
+                except KeyError:
+                    pass
                 if len(item['currencies']) > 0:
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
                                                                    language=lang)
@@ -775,6 +778,10 @@ class D2data:
                                  'loading="lazy">'.format(item_def['screenshot'])
                 else:
                     screenshot = ''
+                if 'itemTypeDisplayName' in item_def.keys():
+                    itemTypeDisplayName = item_def['itemTypeDisplayName'].lower()
+                else:
+                    itemTypeDisplayName = 'none'
                 curr_week.append({
                     'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
                     'icon': item_def['displayProperties']['icon'],
@@ -789,7 +796,8 @@ class D2data:
                             'currency_name': currency_resp['displayProperties']['name']
                         }],
                     'classType': item_def['classType'],
-                    'itemTypeDisplayName': item_def['itemTypeDisplayName'].lower()
+                    'itemTypeDisplayName': itemTypeDisplayName,
+                    'is_redacted': int(item_def['redacted'])
                 })
                 n_order += 1
                 n_items = n_items + 1
@@ -808,8 +816,8 @@ class D2data:
                 n_items = 0
                 curr_slot = []
                 class_items = 0
-            if item['classType'] < 3 or any(
-                        class_name in item['itemTypeDisplayName'].lower() for class_name in classnames):
+            if (item['classType'] < 3 or any(
+                    class_name in item['itemTypeDisplayName'].lower() for class_name in classnames)) and not item['is_redacted']:
                 class_items = class_items + 1
             curr_slot.append(item)
             n_items += 1
@@ -818,7 +826,7 @@ class D2data:
         for i in range(0, nweeks):
             curr_week = []
             for slot in slots:
-                if slot[indexes[slots.index(slot)]]['classType'] < 3 or any(class_name in slot[indexes[slots.index(slot)]]['itemTypeDisplayName'].lower() for class_name in classnames):
+                if (slot[indexes[slots.index(slot)]]['classType'] < 3 or any(class_name in slot[indexes[slots.index(slot)]]['itemTypeDisplayName'].lower() for class_name in classnames)) and not slot[indexes[slots.index(slot)]]['is_redacted']:
                     curr_week = [*curr_week, *slot[indexes[slots.index(slot)]:indexes[slots.index(slot)] + 3]]
                     indexes[slots.index(slot)] += 3
                 else:
@@ -852,7 +860,7 @@ class D2data:
                 definition = 'DestinyInventoryItemDefinition'
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                if 'item.spawnfx' in item_def['traitIds']:
+                if 'item.ghost_hologram' in item_def['traitIds'] or 'item.spawnfx' in item_def['traitIds']:
                     nweeks += 1
                 if len(item['currencies']) > 0:
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
@@ -891,6 +899,7 @@ class D2data:
         curr_slot = []
         n_items = 0
         i_week = 0
+        class_items = 0
         for item in curr_week:
             if n_items >= nweeks and n_items - class_items / 3 * 2 >= nweeks:
                 i_week = i_week + 1
@@ -1083,8 +1092,8 @@ class D2data:
         start = await self.get_season_start()
 
         site_langs = list(set(langs).intersection({'ru', 'en'}))
-        await self.make_ev_predictions(site_langs, start)
         await self.make_seasonal_ev(site_langs)
+        await self.make_ev_predictions(site_langs, start)
 
         char_info = self.char_info
         tess_resps = []
