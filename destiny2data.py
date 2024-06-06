@@ -110,6 +110,7 @@ class D2data:
                          3876264582, 1373352554, 37347215, 1478171612, 1957660400, 2000775487, 1826469369, 2014552458,
                          4212882650, 2955009825, 917887719, 1746163491, 1921003985, 2081353834, 3124504147, 3780095688]
     raids = [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764, 4179289725, 1042180643]
+    raid_mods = [1783825372, 2691200658, 426976067, 3196075844, 3809788899, 3810297122, 1009404927, 3282103678]
 
     vendor_params = {
         'components': '400,401,402,302,304,306,310,305'
@@ -2056,7 +2057,7 @@ class D2data:
                         'name': r_json['originalDisplayProperties']['name'],
                         'value': u"\u2063"
                     }
-                    intersection = list(set(key['modifierHashes']).intersection(set([1783825372])))
+                    intersection = list(set(key['modifierHashes']).intersection(set(self.raid_mods)))
                     valid_mods = []
                     for mod in key['modifierHashes']:
                         if mod not in intersection:
@@ -3110,7 +3111,7 @@ class D2data:
                             'name': activity_def['originalDisplayProperties']['name'],
                             'value': u"\u2063"
                         }
-                        intersection = list(set(activity['modifierHashes']).intersection(set([1783825372])))
+                        intersection = list(set(activity['modifierHashes']).intersection(set(self.raid_mods)))
                         valid_mods = []
                         for mod in activity['modifierHashes']:
                             if mod not in intersection:
@@ -3150,14 +3151,15 @@ class D2data:
             format(self.char_info['platform'], self.char_info['membershipid'], self.char_info['charid'][0])
         vanguard_resp = await self.get_cached_json('vanguard', 'vanguard', vanguard_url, self.vendor_params, force=forceget)
 
-        for cat in vanguard_resp['Response']['categories']['data']['categories']:
-            if cat['displayCategoryIndex'] == 1:
-                pass
-                sales = set(vanguard_resp['Response']['sales']['data'].keys()).intersection(set(map(str, cat['itemIndexes'])))
-                for item in sales:
-                    for cost in vanguard_resp['Response']['sales']['data'][item]['costs']:
-                        if cost['itemHash'] == 3643918802:
-                            return vanguard_resp['Response']['sales']['data'][item]['itemHash']
+        if vanguard_resp:
+            for cat in vanguard_resp['Response']['categories']['data']['categories']:
+                if cat['displayCategoryIndex'] == 1:
+                    pass
+                    sales = set(vanguard_resp['Response']['sales']['data'].keys()).intersection(set(map(str, cat['itemIndexes'])))
+                    for item in sales:
+                        for cost in vanguard_resp['Response']['sales']['data'][item]['costs']:
+                            if cost['itemHash'] == 3643918802:
+                                return vanguard_resp['Response']['sales']['data'][item]['itemHash']
 
         return 0
 
