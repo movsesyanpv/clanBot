@@ -1418,6 +1418,9 @@ class D2data:
                                        name=self.translations[lang]['msg']['xur'])
             await self.write_bot_data('xur', langs)
             return False
+        gear_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/3751514131/'. \
+            format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
+        gear_resp = await self.get_cached_json('xur_weapons', 'xur_weapons', gear_url, self.vendor_params, force=forceget)
         resp_time = xur_resp['timestamp']
         xur_loc_3p = await self.get_xur_loc()
         for lang in langs:
@@ -1476,14 +1479,16 @@ class D2data:
                              {'name': 'Броня', 'items': [], 'template': cat_templates['4']}]
 
                     xur_cats = xur_resp['Response']['categories']['data']['categories']
-                    cat_sales = await self.get_vendor_sales(lang, xur_resp, xur_cats[0]['itemIndexes'], [3875551374])
+                    cat_sales = await self.get_vendor_sales(lang, xur_resp, xur_cats[0]['itemIndexes'], [3875551374, 3670668729, 1617663696])
                     xur_sales = xur_json['Response']['sales']['data']
 
-                    weapons = await self.get_vendor_sales(lang, xur_resp, xur_cats[1]['itemIndexes'], [3875551374])
+                    gear_cats = gear_resp['Response']['categories']['data']['categories']
+                    weapons = await self.get_vendor_sales(lang, gear_resp, gear_cats[0]['itemIndexes'], [903043774, 3856705927])
                     cat_sales[0] = [*cat_sales[0], *weapons[0]]
                     cat_sales[1] = [*cat_sales[1], *weapons[1]]
                     self.data[lang]['xur']['fields'].append(weapon)
 
+                    gear_sales = gear_resp['Response']['sales']['data']
                     for key in sorted(xur_sales.keys()):
                         item_hash = xur_sales[key]['itemHash']
                         if xur_def['itemList'][int(key)]['displayCategoryIndex'] != 0:
@@ -1519,16 +1524,31 @@ class D2data:
                                         if item['hash'] == item_hash:
                                             sales[2]['items'].append(item)
                             else:
-                                if item_resp['summaryItemHash'] in [715326750, 2673424576]:
-                                    i = 0
-                                    for item in self.data[lang]['xur']['fields']:
-                                        if item['name'] == self.translations[lang]['msg']['weapon'] and item_hash not in [3654674561, 3856705927]:
-                                            self.data[lang]['xur']['fields'][i]['value'] = item_name
-                                        i += 1
-                                    for item in cat_sales[1]:
-                                        if item['hash'] == item_hash:
-                                            sales[1]['items'].append(item)
-
+                                if item_resp['itemType'] not in [1, 19]:
+                                    if item_resp['summaryItemHash'] in [715326750, 2673424576]:
+                                        i = 0
+                                        for item in self.data[lang]['xur']['fields']:
+                                            if item['name'] == self.translations[lang]['msg']['weapon'] and item_hash not in [3654674561, 3856705927]:
+                                                self.data[lang]['xur']['fields'][i]['value'] = item_name
+                                            i += 1
+                                        for item in cat_sales[1]:
+                                            if item['hash'] == item_hash:
+                                                sales[1]['items'].append(item)
+                    for key in sorted(gear_sales.keys()):
+                        item_hash = gear_sales[key]['itemHash']
+                        definition = 'DestinyInventoryItemDefinition'
+                        item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
+                        item_name = item_resp['displayProperties']['name']
+                        if item_resp['itemType'] not in [0, 1, 8, 19]:
+                            if item_resp['summaryItemHash'] in [715326750, 2673424576]:
+                                i = 0
+                                for item in self.data[lang]['xur']['fields']:
+                                    if item['name'] == self.translations[lang]['msg']['weapon'] and item_hash not in [3654674561, 3856705927]:
+                                        self.data[lang]['xur']['fields'][i]['value'] = '{}\n{}'.format(self.data[lang]['xur']['fields'][i]['value'], item_name)
+                                    i += 1
+                                for item in cat_sales[1]:
+                                    if item['hash'] == item_hash:
+                                        sales[1]['items'].append(item)
                 else:
                     loc_field = {
                         "inline": False,
