@@ -141,6 +141,19 @@ lost_sector_order = {
         144485117,   # scavenger's den
         55186256,    # skydock iv
         1344654779   # the quarry
+    ],
+    24: [
+        1070981425,  # perdition
+        1648125538,  # bunker e15
+        912873274,   # concealed void
+        1163502296,  # conflux
+        584726931,   # thrilladrome
+        1869786719,  # hydroponics delta
+        3094493727,  # veles labyrinth
+        2936791995,  # exodus garden 2a
+        2875391879,  # the broken deep
+        3995113183,  # the blooming deep
+        699527783    # the forgotten deep
     ]
 }
 

@@ -3004,7 +3004,7 @@ class D2data:
         day_n = datetime.now(tz=timezone.utc) - season_start
         if season_number in lost_sector_order.keys():
             ls_hash = lost_sector_order[season_number][int(day_n.days % len(lost_sector_order[season_number]))]
-            ls_loot = loot_order[season_number][day_n.days % len(loot_order[season_number])]
+            ls_loot = '?'  # loot_order[season_number][day_n.days % len(loot_order[season_number])]
         else:
             ls_hash = 0
             ls_loot = '?'
@@ -3032,10 +3032,12 @@ class D2data:
                 dest_str = '?'
             loot_str = self.translations[lang]['osiris'][ls_loot]
 
-            self.data[lang]['lostsector']['fields'].append({'name': ls_def['displayProperties']['name'].split(':')[0], 'value': '{}\n{}'.format(loot_str, dest_str)})
+            # self.data[lang]['lostsector']['fields'].append({'name': ls_def['displayProperties']['name'].split(':')[0], 'value': '{}\n{}'.format(loot_str, dest_str)})
+            self.data[lang]['lostsector']['fields'].append({'name': ls_def['displayProperties']['name'].split(':')[0], 'value': '{}'.format(dest_str)})
             db_data.append({
                 'name': ls_def['displayProperties']['name'].split(':')[0],
-                'description': '{}<br>{}'.format(loot_str, dest_str)
+                # 'description': '{}<br>{}'.format(loot_str, dest_str)
+                'description': '{}'.format(dest_str)
             })
             await self.write_to_db(lang, 'lost_sector', db_data, order=6,
                                    name=self.translations[lang]['site']['lostsector'])
