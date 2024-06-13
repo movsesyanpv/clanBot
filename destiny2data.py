@@ -3313,7 +3313,7 @@ class D2data:
         leaderboard = []
 
         if is_time or is_ranking:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_time:
@@ -3325,7 +3325,7 @@ class D2data:
                     index = raw_leaderboard.index(place)
                     leaderboard.append([raw_leaderboard[index][0], raw_leaderboard[index][1]])
         else:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_kda:
