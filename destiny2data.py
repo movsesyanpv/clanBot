@@ -1193,6 +1193,15 @@ class D2data:
             await conn.commit()
         except aiomysql.Error:
             pass
+
+        if len(response) == 0:
+            try:
+                await cur.execute(
+                    '''DELETE FROM `{}` WHERE id=%s'''.format(lang), (id, ))
+                await conn.commit()
+            except aiomysql.Error:
+                pass
+
         await conn.commit()
         await cur.close()
         self.data_pool.release(conn)
