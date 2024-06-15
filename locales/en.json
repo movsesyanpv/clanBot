@@ -8,6 +8,7 @@
         "spider": "Material exchange",
         "xur": "Xur sells this",
         "weapon": "Weapons",
+        "armor": "Armor",
         "heroicstory": "Current heroic story missions are",
         "forge": "Current forge is",
         "strikesmods": "Current Vanguard strikes modifiers",
@@ -348,8 +349,7 @@
         "featured_bd": "Featured Bright Dust Items",
         "bright_dust": "Bright Dust Items",
         "featured_silver": "Featured Silver Items",
-        "consumables": "Consumable Bright Dust Items",
-        "armor": "Armor"
+        "consumables": "Consumable Bright Dust Items"
     },
     "osiris": {
         "map": "Map",
