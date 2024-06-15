@@ -19,6 +19,7 @@
         "reckoningboss": "The Reckoning boss is",
         "cruciblerotators": "Crucible rotators are",
         "xurloc": "Location",
+        "catalyst": "Exotic catalysts",
         "cost": "Cost",
         "xurtitle": "Xur",
         "raids": "Raids",
@@ -347,7 +348,8 @@
         "featured_bd": "Featured Bright Dust Items",
         "bright_dust": "Bright Dust Items",
         "featured_silver": "Featured Silver Items",
-        "consumables": "Consumable Bright Dust Items"
+        "consumables": "Consumable Bright Dust Items",
+        "armor": "Armor"
     },
     "osiris": {
         "map": "Map",
