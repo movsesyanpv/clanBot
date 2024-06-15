@@ -1427,6 +1427,7 @@ class D2data:
         resp_time = xur_resp['timestamp']
         for lang in langs:
 
+            size = 'tall'
             xur_def = await self.destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
             self.data[lang]['xur'] = {
                 'thumbnail': {
@@ -1532,8 +1533,9 @@ class D2data:
                 self.data[lang]['xur']['fields'].append(loc_field)
                 sales = [{'name': self.translations[lang]['xur']['noxur'],
                           'items': [], 'template': cat_templates['6']}]
+                size = ''
             await self.write_to_db(lang, 'xur', sales, template='vendor_items.html', order=7,
-                                   name=xur_def['displayProperties']['name'])
+                                   name=xur_def['displayProperties']['name'], size='tall')
         await self.write_bot_data('xur', langs)
 
     async def get_heroic_story(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
