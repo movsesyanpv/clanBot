@@ -129,7 +129,20 @@ class D2data:
     }
 
     metric_params = {
-        "components": "1100"
+        "components": "100,1100"
+    }
+
+    membershipTypes = {
+        "None": 0,
+        "TigerXbox": 1,
+        "TigerPsn": 2,
+        "TigerSteam": 3,
+        "TigerBlizzard": 4,
+        "TigerStadia": 5,
+        "TigerEgs": 6,
+        "TigerDemon": 10,
+        "BungieNext": 254,
+        "All": -1,
     }
 
     is_oauth = False
@@ -140,7 +153,7 @@ class D2data:
 
     data_pool: aiomysql.Pool
 
-    limiter = AsyncLimiter(10, 1)
+    limiter = AsyncLimiter(15, 1)
 
     def __init__(self, translations, lang, is_oauth, prod, context, loop=None, **options):
         super().__init__(**options)
@@ -320,7 +333,7 @@ class D2data:
 
     async def get_bungie_json(self, name: str, url: str, params: Optional[dict] = None, lang: Optional[str] = None,
                               string: Optional[str] = None, change_msg: bool = True, is_get: bool = True,
-                              body: Optional[dict] = None) -> Union[dict, bool]:
+                              body: Optional[dict] = None, parameter_check: bool = False) -> Union[dict, bool]:
 
         # @Limiter(calls_limit=10, period=1)
         async def request(url, params, headers, is_get, json=None):
@@ -434,6 +447,9 @@ class D2data:
                         return resp_code
             resp_code = await resp.json()
             if 'Response' not in resp_code.keys():
+                if resp_code['ErrorCode'] == 18 and parameter_check:
+                    resp.close()
+                    return resp_code
                 if change_msg:
                     for locale in lang:
                         self.data[locale][name] = self.data[locale]['api_is_down']
@@ -2620,6 +2636,10 @@ class D2data:
             await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN membershipType INTEGER''')
         except aiosqlite.OperationalError:
             pass
+        try:
+            await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN lastSeen TEXT''')
+        except aiosqlite.OperationalError:
+            pass
 
         for metric in metric_list[0]['metrics'].keys():
             try:
@@ -2634,8 +2654,8 @@ class D2data:
             await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
                                  (member['membershipId'], member['timestamp']))
             if member['valid']:
-                await cursor.execute('''UPDATE playermetrics SET name=?, timestamp=?, membershipType=? WHERE membershipId=?''',
-                                     (member['name'], member['timestamp'], member['membershipType'], member['membershipId']))
+                await cursor.execute('''UPDATE playermetrics SET name=?, timestamp=?, membershipType=?, lastSeen=? WHERE membershipId=?''',
+                                     (member['name'], member['timestamp'], member['membershipType'], member['lastSeen'], member['membershipId']))
                 if len(member['metrics'].keys()) > 0:
                     trans_string = 'UPDATE playermetrics SET '
                     metric_values = []
@@ -2746,6 +2766,7 @@ class D2data:
             'membershipId': membership_id,
             'membershipType': membership_type,
             'timestamp': datetime.utcnow().isoformat(),
+            'lastSeen': '',
             'name': name,
             'valid': True
         }
@@ -2776,10 +2797,17 @@ class D2data:
 
         url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(membership_type, membership_id)
         member = await self.get_bungie_json('metrics for {}'.format(membership_id), url, params=self.metric_params,
-                                            change_msg=False)
+                                            change_msg=False, parameter_check=True)
+        if member:
+            if member['ErrorCode'] == 18:
+                player['membershipType'] = self.membershipTypes[member['MessageData']['membershipInfo.membershipType']]
+                url = 'https://www.bungie.net/Platform/Destiny2/{}/Profile/{}/'.format(player['membershipType'], membership_id)
+                member = await self.get_bungie_json('metrics for {} new membershipType'.format(membership_id), url, params=self.metric_params,
+                                                    change_msg=False)
 
         metrics = {}
         if member:
+            player['lastSeen'] = datetime.fromisoformat(member['Response']['profile']['data']['dateLastPlayed'][:-1]).isoformat()
             if 'data' in member['Response']['metrics'].keys():
                 for metric in member['Response']['metrics']['data']['metrics'].keys():
                     if 'objectiveProgress' in member['Response']['metrics']['data']['metrics'][metric].keys():
@@ -3281,7 +3309,7 @@ class D2data:
         leaderboard = []
 
         if is_time or is_ranking:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND lastSeen>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_time:
@@ -3293,7 +3321,7 @@ class D2data:
                     index = raw_leaderboard.index(place)
                     leaderboard.append([raw_leaderboard[index][0], raw_leaderboard[index][1]])
         else:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND lastSeen>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_kda:
