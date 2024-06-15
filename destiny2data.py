@@ -1462,7 +1462,7 @@ class D2data:
                 xur_sales = xur_json['Response']['sales']['data']
 
                 gear_cats = gear_resp['Response']['categories']['data']['categories']
-                weapons = await self.get_vendor_sales(lang, gear_resp, gear_cats[0]['itemIndexes'], [903043774, 3856705927])
+                weapons = await self.get_vendor_sales(lang, gear_resp, gear_cats[0]['itemIndexes'], [903043774])
                 cat_sales[0] = [*cat_sales[0], *weapons[0]]
                 cat_sales[1] = [*cat_sales[1], *weapons[1]]
                 self.data[lang]['xur']['fields'].append(weapon)
