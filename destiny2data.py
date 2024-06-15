@@ -1399,12 +1399,6 @@ class D2data:
             '4': 'armor_item.html'
         }
 
-        place_hashes = {
-            '1737926756': 3747705955,
-            '3607432451': 3607432451,
-            '697502628': 3747705955
-        }
-
         xur_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2190858386/'. \
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         xur_resp = await self.get_cached_json('xur', 'xur', xur_url, self.vendor_params, force=forceget)
@@ -1422,7 +1416,6 @@ class D2data:
             format(char_info['platform'], char_info['membershipid'], char_info['charid'][0])
         gear_resp = await self.get_cached_json('xur_weapons', 'xur_weapons', gear_url, self.vendor_params, force=forceget)
         resp_time = xur_resp['timestamp']
-        xur_loc_3p = await self.get_xur_loc()
         for lang in langs:
 
             xur_def = await self.destiny.decode_hash(2190858386, 'DestinyVendorDefinition', language=lang)
@@ -1440,124 +1433,87 @@ class D2data:
 
             xur_json = xur_resp
             if not xur_json['ErrorCode'] == 1627:
-                loc_field = {
-                    "inline": False,
-                    "name": self.translations[lang]['msg']['xurloc'],
-                    "value": self.translations[lang]['xur']['NULL']
+                catalyst_field = {
+                    "inline": True,
+                    "name": self.translations[lang]['msg']['catalyst'],
+                    "value": ''
                 }
                 weapon = {
-                    'inline': False,
+                    'inline': True,
                     'name': self.translations[lang]['msg']['weapon'],
                     'value': ''
                 }
+                exotic = {
+                    'inline': True,
+                    'name': self.translations[lang]['msg']['armor'],
+                    'value': ''
+                }
 
-                annotations = []
+                self.data[lang]['xur']['fields'].append(catalyst_field)
+                sales = [{'name': self.translations[lang]['msg']['catalyst'], 'items': [],
+                          'template': cat_templates['6']},
+                         {'name': self.translations[lang]['msg']['weapon'], 'items': [],
+                          'template': cat_templates['0']},
+                         {'name': self.translations[lang]['msg']['armor'], 'items': [],
+                          'template': cat_templates['4']}]
 
-                if xur_loc_3p:
-                    self.data[lang]['xur']['footer']['text'] = self.translations[lang]['xur']['copyright']
-                    annotations = [self.translations[lang]['xur']['copyright']]
-                else:
-                    self.data[lang]['xur']['footer']['text'] = self.translations[lang]['msg']['resp_time']
-                    xur_loc = {}
+                xur_cats = xur_resp['Response']['categories']['data']['categories']
+                cat_sales = await self.get_vendor_sales(lang, xur_resp, xur_cats[0]['itemIndexes'], [3875551374, 3670668729, 1617663696])
+                xur_sales = xur_json['Response']['sales']['data']
 
-                if xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']] != 2961497387:
-                    xur_loc['destinationHash'] = xur_def['locations'][xur_json['Response']['vendor']['data']['vendorLocationIndex']]['destinationHash']
-                    xur_loc['placeHash'] = place_hashes[str(xur_loc['destinationHash'])]
-                    # self.data[lang]['xur'].pop('footer')
-                    annotations = []
+                gear_cats = gear_resp['Response']['categories']['data']['categories']
+                weapons = await self.get_vendor_sales(lang, gear_resp, gear_cats[0]['itemIndexes'], [903043774, 3856705927])
+                cat_sales[0] = [*cat_sales[0], *weapons[0]]
+                cat_sales[1] = [*cat_sales[1], *weapons[1]]
+                self.data[lang]['xur']['fields'].append(weapon)
 
-                sales = []
-                if xur_loc:
-                    xur_place_name = await self.destiny.decode_hash(xur_loc['placeHash'], 'DestinyPlaceDefinition', language=lang)
-                    xur_destination_name = await self.destiny.decode_hash(xur_loc['destinationHash'], 'DestinyDestinationDefinition', language=lang)
-                    loc_field['value'] = '{}, {}'.format(xur_place_name['displayProperties']['name'], xur_destination_name['displayProperties']['name'])
-                    self.data[lang]['xur']['fields'].append(loc_field)
-                    sales = [{'name': '{}, {}'.format(xur_place_name['displayProperties']['name'],
-                                                      xur_destination_name['displayProperties']['name']),
-                              'items': [], 'template': cat_templates['6']},
-                             {'name': 'Оружие', 'items': [], 'template': cat_templates['0']},
-                             {'name': 'Броня', 'items': [], 'template': cat_templates['4']}]
-
-                    xur_cats = xur_resp['Response']['categories']['data']['categories']
-                    cat_sales = await self.get_vendor_sales(lang, xur_resp, xur_cats[0]['itemIndexes'], [3875551374, 3670668729, 1617663696])
-                    xur_sales = xur_json['Response']['sales']['data']
-
-                    gear_cats = gear_resp['Response']['categories']['data']['categories']
-                    weapons = await self.get_vendor_sales(lang, gear_resp, gear_cats[0]['itemIndexes'], [903043774, 3856705927])
-                    cat_sales[0] = [*cat_sales[0], *weapons[0]]
-                    cat_sales[1] = [*cat_sales[1], *weapons[1]]
-                    self.data[lang]['xur']['fields'].append(weapon)
-
-                    gear_sales = gear_resp['Response']['sales']['data']
-                    for key in sorted(xur_sales.keys()):
-                        item_hash = xur_sales[key]['itemHash']
-                        if xur_def['itemList'][int(key)]['displayCategoryIndex'] != 0:
-                            continue
-                        if item_hash not in [4285666432, 2293314698, 2125848607, 3875551374]:
-                            definition = 'DestinyInventoryItemDefinition'
-                            item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
-                            item_name = item_resp['displayProperties']['name']
-                            if item_resp['itemType'] == 2:
-                                item_sockets = item_resp['sockets']['socketEntries']
-                                plugs = []
-                                for s in item_sockets:
-                                    if len(s['reusablePlugItems']) > 0 and s['plugSources'] == 2:
-                                        plugs.append(s['reusablePlugItems'][0]['plugItemHash'])
-
-                                exotic = {
-                                    'inline': True,
-                                    'name': '',
-                                    'value': item_name
-                                }
-
-                                if item_resp['summaryItemHash'] in [715326750, 2673424576]:
-                                    if item_resp['classType'] == 0:
-                                        exotic['name'] = self.translations[lang]['Titan']
-                                    elif item_resp['classType'] == 1:
-                                        exotic['name'] = self.translations[lang]['Hunter']
-                                    elif item_resp['classType'] == 2:
-                                        exotic['name'] = self.translations[lang]['Warlock']
-
-                                    if item_hash not in [3654674561, 3856705927]:
-                                        self.data[lang]['xur']['fields'].append(exotic)
-                                    for item in cat_sales[1]:
-                                        if item['hash'] == item_hash:
-                                            sales[2]['items'].append(item)
-                            else:
-                                if item_resp['itemType'] not in [1, 19]:
-                                    if item_resp['summaryItemHash'] in [715326750, 2673424576]:
-                                        i = 0
-                                        for item in self.data[lang]['xur']['fields']:
-                                            if item['name'] == self.translations[lang]['msg']['weapon'] and item_hash not in [3654674561, 3856705927]:
-                                                self.data[lang]['xur']['fields'][i]['value'] = item_name
-                                            i += 1
-                                        for item in cat_sales[1]:
-                                            if item['hash'] == item_hash:
-                                                sales[1]['items'].append(item)
-                    for key in sorted(gear_sales.keys()):
-                        item_hash = gear_sales[key]['itemHash']
+                gear_sales = gear_resp['Response']['sales']['data']
+                for key in sorted(xur_sales.keys()):
+                    item_hash = xur_sales[key]['itemHash']
+                    if xur_def['itemList'][int(key)]['displayCategoryIndex'] != 0:
+                        continue
+                    if item_hash not in [4285666432, 2293314698, 2125848607, 3875551374]:
                         definition = 'DestinyInventoryItemDefinition'
                         item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
                         item_name = item_resp['displayProperties']['name']
-                        if item_resp['itemType'] not in [0, 1, 8, 19]:
+                        if item_resp['itemType'] == 2:
+                            item_sockets = item_resp['sockets']['socketEntries']
+                            plugs = []
+                            for s in item_sockets:
+                                if len(s['reusablePlugItems']) > 0 and s['plugSources'] == 2:
+                                    plugs.append(s['reusablePlugItems'][0]['plugItemHash'])
+
                             if item_resp['summaryItemHash'] in [715326750, 2673424576]:
-                                i = 0
-                                for item in self.data[lang]['xur']['fields']:
-                                    if item['name'] == self.translations[lang]['msg']['weapon'] and item_hash not in [3654674561, 3856705927]:
-                                        self.data[lang]['xur']['fields'][i]['value'] = '{}\n{}'.format(self.data[lang]['xur']['fields'][i]['value'], item_name)
-                                    i += 1
+                                if item_hash not in [3654674561, 3856705927]:
+                                    exotic['value'] = '{}\n{}'.format(exotic['value'], item_name)
                                 for item in cat_sales[1]:
                                     if item['hash'] == item_hash:
-                                        sales[1]['items'].append(item)
-                else:
-                    loc_field = {
-                        "inline": False,
-                        "name": self.translations[lang]['msg']['xurloc'],
-                        "value": self.translations[lang]['xur']['noxur']
-                    }
-                    self.data[lang]['xur']['fields'].append(loc_field)
-                    sales = [{'name': self.translations[lang]['xur']['noxur'],
-                              'items': [], 'template': cat_templates['6']}]
+                                        sales[2]['items'].append(item)
+                        elif item_resp['itemType'] == 19:
+                            i = 0
+                            for item in self.data[lang]['xur']['fields']:
+                                if item['name'] == self.translations[lang]['msg']['catalyst'] and item_hash not in [3654674561, 3856705927]:
+                                    self.data[lang]['xur']['fields'][i]['value'] = '{}\n{}'.format(self.data[lang]['xur']['fields'][i]['value'], item_name)
+                                i += 1
+                            for item in cat_sales[1]:
+                                if item['hash'] == item_hash:
+                                    sales[0]['items'].append(item)
+                for key in sorted(gear_sales.keys()):
+                    item_hash = gear_sales[key]['itemHash']
+                    definition = 'DestinyInventoryItemDefinition'
+                    item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
+                    item_name = item_resp['displayProperties']['name']
+                    if item_resp['itemType'] not in [0, 1, 8, 19]:
+                        if item_resp['summaryItemHash'] in [715326750, 2673424576]:
+                            i = 0
+                            for item in self.data[lang]['xur']['fields']:
+                                if item['name'] == self.translations[lang]['msg']['weapon'] and item_hash not in [3654674561, 3856705927]:
+                                    self.data[lang]['xur']['fields'][i]['value'] = '{}\n{}'.format(self.data[lang]['xur']['fields'][i]['value'], item_name)
+                                i += 1
+                            for item in cat_sales[1]:
+                                if item['hash'] == item_hash:
+                                    sales[1]['items'].append(item)
+                self.data[lang]['xur']['fields'].append(exotic)
             else:
                 loc_field = {
                     "inline": False,
@@ -1568,8 +1524,7 @@ class D2data:
                 sales = [{'name': self.translations[lang]['xur']['noxur'],
                           'items': [], 'template': cat_templates['6']}]
             await self.write_to_db(lang, 'xur', sales, template='vendor_items.html', order=7,
-                                   name=xur_def['displayProperties']['name'],
-                                   annotations=annotations)
+                                   name=xur_def['displayProperties']['name'])
         await self.write_bot_data('xur', langs)
 
     async def get_heroic_story(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
