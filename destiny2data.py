@@ -2807,8 +2807,9 @@ class D2data:
 
         metrics = {}
         if member:
-            player['lastSeen'] = datetime.fromisoformat(member['Response']['profile']['data']['dateLastPlayed'][:-1]).isoformat()
             if 'data' in member['Response']['metrics'].keys():
+                player['lastSeen'] = datetime.fromisoformat(
+                    member['Response']['profile']['data']['dateLastPlayed'][:-1]).isoformat()
                 for metric in member['Response']['metrics']['data']['metrics'].keys():
                     if 'objectiveProgress' in member['Response']['metrics']['data']['metrics'][metric].keys():
                         value = member['Response']['metrics']['data']['metrics'][metric]['objectiveProgress']['progress']
