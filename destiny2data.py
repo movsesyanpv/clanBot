@@ -108,8 +108,10 @@ class D2data:
     crucible_rotators = [540869524, 3847433434, 142028034, 1683791010, 3787302650, 935998519, 1683791010, 2393304349,
                          1689094744, 2056796644, 3254496172, 1214397515, 3124504147, 2424021445, 2461220411, 3374318171,
                          3876264582, 1373352554, 37347215, 1478171612, 1957660400, 2000775487, 1826469369, 2014552458,
-                         4212882650, 2955009825, 917887719, 1746163491, 1921003985, 2081353834, 3124504147, 3780095688]
-    raids = [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764, 4179289725, 1042180643]
+                         4212882650, 2955009825, 917887719, 1746163491, 1921003985, 2081353834, 3124504147, 3780095688,
+                         3964389183, 740456878, 872557219, 1373352554, 2985031550, 2808746390]
+    raids = [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764, 4179289725, 1042180643,
+             1541433876]
     raid_mods = [1783825372, 2691200658, 426976067, 3196075844, 3809788899, 3810297122, 1009404927, 3282103678]
 
     vendor_params = {
@@ -3119,6 +3121,10 @@ class D2data:
                             self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
                     if 3874605433 in activity['modifierHashes']:  # Check for double crucible rank
                             mod_info = await self.destiny.decode_hash(3874605433, 'DestinyActivityModifierDefinition', language=lang)
+                            if mod_info['displayProperties']['name'] not in self.data[lang]['wsummary']['fields'][3]['value']:
+                                self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
+                    if 3619879173 in activity['modifierHashes']:  # Check for double crucible drops
+                            mod_info = await self.destiny.decode_hash(3619879173, 'DestinyActivityModifierDefinition', language=lang)
                             if mod_info['displayProperties']['name'] not in self.data[lang]['wsummary']['fields'][3]['value']:
                                 self.data[lang]['wsummary']['fields'][3]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][3]['value'], mod_info['displayProperties']['name']).lstrip('\n')
 
