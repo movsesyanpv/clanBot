@@ -112,7 +112,9 @@ class D2data:
                          3964389183, 740456878, 872557219, 1373352554, 2985031550, 2808746390]
     raids = [910380154, 3881495763, 1441982566, 2122313384, 3458480158, 1374392663, 2381413764, 4179289725, 1042180643,
              1541433876]
-    raid_mods = [1783825372, 2691200658, 426976067, 3196075844, 3809788899, 3810297122, 1009404927, 3282103678]
+    raid_mods = [1783825372, 2691200658, 426976067, 3196075844, 3809788899, 3810297122, 1009404927, 3282103678,
+                 3119075764, 3076996298, 3958417570, 1377274412]
+    exotic_rotator = [509188661, 2668737148, 3883295757, 1221538367, 196691221]
 
     vendor_params = {
         'components': '400,401,402,302,304,306,310,305'
@@ -2066,21 +2068,22 @@ class D2data:
                     for mod in key['modifierHashes']:
                         if mod not in intersection:
                             valid_mods.append(mod)
-                    mods = await self.destiny.decode_hash(valid_mods[0], 'DestinyActivityModifierDefinition', lang)
-                    resp_time = datetime.utcnow().isoformat()
-                    if mods:
-                        if len(valid_mods) > 2:
-                            info['value'] = local_types['msg']['featured_raid']
+                    if len(valid_mods) >= 1:
+                        mods = await self.destiny.decode_hash(valid_mods[0], 'DestinyActivityModifierDefinition', lang)
+                        resp_time = datetime.utcnow().isoformat()
+                        if mods:
+                            if len(valid_mods) > 2:
+                                info['value'] = local_types['msg']['featured_raid']
+                            else:
+                                info['value'] = mods['displayProperties']['name']
                         else:
-                            info['value'] = mods['displayProperties']['name']
-                    else:
-                        info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
-                    if mods['displayProperties']['name']:
-                        db_data.append({
-                            'name': info['name'],
-                            'description': info['value'].replace('\n', '<br>').replace('**', '')
-                        })
-                        self.data[lang]['raids']['fields'].append(info)
+                            info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                        if mods['displayProperties']['name']:
+                            db_data.append({
+                                'name': info['name'],
+                                'description': info['value'].replace('\n', '<br>').replace('**', '')
+                            })
+                            self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
             await self.write_to_db(lang, 'raid_challenges', db_data, 'tall',
                                    self.translations[lang]['msg']['raids'], order=1, type='weekly')
@@ -3095,16 +3098,17 @@ class D2data:
             }
             for activity in activities_resp['Response']['activities']['data']['availableActivities']:
                 if 'challenges' in activity.keys():
-                    if activity['challenges'][0]['objective']['objectiveHash'] in [3726310377, 1320261963, 1510063869]:
-                        activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition', language=lang)
-                        if activity_def['originalDisplayProperties']['name'] != activity_def['displayProperties']['name']:
-                            self.data[lang]['wsummary']['fields'][0]['value'] = activity_def['originalDisplayProperties']['name']
-                    elif activity['challenges'][0]['objective']['objectiveHash'] in [1283234589, 1288508599, 2039792527, 2697564403, 3039545165, 3211393925, 3838169295, 406803827, 897950155, 1633394671, 1863972407, 2398860795, 3180884403, 3826130187]:
+                    if activity['challenges'][0]['objective']['objectiveHash'] in [1283234589, 1288508599, 2039792527, 2697564403, 3039545165, 3211393925, 3838169295, 406803827, 897950155, 1633394671, 1863972407, 2398860795, 3180884403, 3826130187]:
                         activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition', language=lang)
                         if activity_def['originalDisplayProperties']['name'] not in self.data[lang]['wsummary']['fields'][2]['value']:
                             self.data[lang]['wsummary']['fields'][2]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][2]['value'], activity_def['originalDisplayProperties']['name']).lstrip('\n')
                 activity_def = await self.destiny.decode_hash(activity['activityHash'], 'DestinyActivityDefinition',
                                                               language=lang)
+                if activity['activityHash'] in self.exotic_rotator:
+                    self.data[lang]['wsummary']['fields'][0]['value'] = activity_def['originalDisplayProperties']['name']
+                    if activity_def['originalDisplayProperties']['name'] != activity_def['displayProperties']['name']:
+                        self.data[lang]['wsummary']['fields'][0]['value'] = activity_def['originalDisplayProperties'][
+                            'name']
                 if activity_def['activityTypeHash'] == 575572995 and translation['adept'] in activity_def['displayProperties']['name']:
                     self.data[lang]['wsummary']['fields'][1]['name'] = translation['ordeal']
                     self.data[lang]['wsummary']['fields'][1]['value'] = activity_def['originalDisplayProperties']['description']
@@ -3139,24 +3143,25 @@ class D2data:
                         for mod in activity['modifierHashes']:
                             if mod not in intersection:
                                 valid_mods.append(mod)
-                        mods = await self.destiny.decode_hash(valid_mods[0], 'DestinyActivityModifierDefinition', lang)
-                        resp_time = datetime.utcnow().isoformat()
-                        if mods:
-                            if len(valid_mods) > 2:
-                                for mod in valid_mods:
-                                    mod_def = await self.destiny.decode_hash(mod, 'DestinyActivityModifierDefinition',
-                                                                             lang)
-                                    info['value'] = '{}; {}'.format(info['value'],
-                                                                    mod_def['displayProperties']['name']).\
-                                        lstrip('\u2063; ')
+                        if len(valid_mods) >= 1:
+                            mods = await self.destiny.decode_hash(valid_mods[0], 'DestinyActivityModifierDefinition', lang)
+                            resp_time = datetime.utcnow().isoformat()
+                            if mods:
+                                if len(valid_mods) > 2:
+                                    for mod in valid_mods:
+                                        mod_def = await self.destiny.decode_hash(mod, 'DestinyActivityModifierDefinition',
+                                                                                 lang)
+                                        info['value'] = '{}; {}'.format(info['value'],
+                                                                        mod_def['displayProperties']['name']).\
+                                            lstrip('\u2063; ')
+                                else:
+                                    info['value'] = mods['displayProperties']['name']
                             else:
-                                info['value'] = mods['displayProperties']['name']
-                        else:
-                            info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
-                        self.data[lang]['wsummary']['fields'][5]['value'] = '{}\n**{}**: {}'.\
-                            format(self.data[lang]['wsummary']['fields'][5]['value'],
-                                   activity_def['originalDisplayProperties']['name'],
-                                   info['value']).lstrip('\n')
+                                info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
+                            self.data[lang]['wsummary']['fields'][5]['value'] = '{}\n**{}**: {}'.\
+                                format(self.data[lang]['wsummary']['fields'][5]['value'],
+                                       activity_def['originalDisplayProperties']['name'],
+                                       info['value']).lstrip('\n')
                 if activity_def['destinationHash'] == 4088006058:
                     if activity_def['hash'] in self.crucible_rotators:
                         self.data[lang]['wsummary']['fields'][4]['value'] = '{}\n{}'.format(self.data[lang]['wsummary']['fields'][4]['value'], activity_def['displayProperties']['name']).lstrip('\n')
