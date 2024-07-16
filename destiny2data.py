@@ -2568,6 +2568,7 @@ class D2data:
         char_info = self.char_info
         activities = []
         hashes = set()
+        interhashes = set()
 
         for char in char_info['charid']:
             activities_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/'. \
@@ -2580,6 +2581,7 @@ class D2data:
                                                      activities_url, self.activities_params, lang, string, force=force)
         if activities_json:
             activities_json['Response']['activities']['data']['availableActivities'].clear()
+            activities_json['Response']['activities']['data']['availableActivityInteractables'].clear()
 
         if len(activities) == 0:
             return False
@@ -2590,6 +2592,9 @@ class D2data:
                         if activity['activityHash'] not in hashes and activities_json:
                             activities_json['Response']['activities']['data']['availableActivities'].append(activity)
                             hashes.add(activity['activityHash'])
+                    for activity in char_activities['Response']['activities']['data']['availableActivityInteractables']:
+                        activities_json['Response']['activities']['data']['availableActivityInteractables'].append(activity)
+                        interhashes.add(activity['activityInteractableHash'])
             return activities_json
 
     async def get_player_metric(self, membership_type: int, membership_id: int, metric: int,
@@ -2999,15 +3004,24 @@ class D2data:
         await self.write_bot_data('osiris', langs)
 
     async def get_lost_sector(self, langs: List[str], forceget: bool = False, force_info: Optional[list] = None) -> None:
+        ls_hash = 0
+        ls_loot = '?'
+
+        ls_resp = await self.get_activities_response('lostsector', string='lost sector', force=forceget)
+        for activity in ls_resp['Response']['activities']['data']['availableActivityInteractables']:
+            interactable_def = await self.destiny.decode_hash(activity['activityInteractableHash'], 'DestinyActivityInteractableDefinition', 'en')
+            activity_def = await self.destiny.decode_hash(interactable_def['entries'][0]['activityHash'], 'DestinyActivityDefinition', 'en')
+            if activity_def['activityTypeHash'] == 103143560:
+                ls_hash = activity_def['hash']
+                break
+
         season_start = await self.get_season_start()
         season_number = await self.get_season_number()
         day_n = datetime.now(tz=timezone.utc) - season_start
-        if season_number in lost_sector_order.keys():
-            ls_hash = lost_sector_order[season_number][int(day_n.days % len(lost_sector_order[season_number]))]
-            ls_loot = '?'  # loot_order[season_number][day_n.days % len(loot_order[season_number])]
-        else:
-            ls_hash = 0
-            ls_loot = '?'
+        if ls_hash == 0:
+            if season_number in lost_sector_order.keys():
+                ls_hash = lost_sector_order[season_number][int(day_n.days % len(lost_sector_order[season_number]))]
+                ls_loot = '?'  # loot_order[season_number][day_n.days % len(loot_order[season_number])]
 
         for lang in langs:
             db_data = []
