@@ -633,8 +633,18 @@ class LFG:
         else:
             if user.mention not in wanters and user.mention not in goers:
                 # wanters.append(user.mention)
-                wanters = await self.add_with_priority(wanters, user, group_id)
-                w_dm.append(user.display_name)
+                if group_mode == 'basic':
+                    goers = await self.add_with_priority(goers, user, group_id)
+                    if len(goers) > size:
+                        dropped = goers[-1]
+                        goers = goers[:-1]
+                        if dropped != user.mention:
+                            wanters = await self.add_with_priority(wanters, dropped, group_id, is_dropped=True)
+                        else:
+                            wanters = await self.add_with_priority(wanters, user, group_id)
+                else:
+                    wanters = await self.add_with_priority(wanters, user, group_id)
+                    w_dm.append(user.display_name)
 
         await cursor.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
         await cursor.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
@@ -643,7 +653,7 @@ class LFG:
         await self.conn.commit()
         await cursor.close()
 
-    async def add_with_priority(self, users: list, member: discord.Member, group_id: int) -> list:
+    async def add_with_priority(self, users: list, member: discord.Member, group_id: int, is_dropped: bool = False) -> list:
         owner = await self.get_cell('group_id', group_id, 'owner')
         guild_id = await self.get_cell('group_id', group_id, 'server_id')
         low_priority_user = await self.get_cell('host_id', owner, 'low_priority', 'priorities')
@@ -659,15 +669,21 @@ class LFG:
         else:
             low_priority_user = eval(low_priority_user)
 
-        if member.mention in low_priority_user:
-            users.append(member.mention)
+        if type(member) == str:
+            mention = member
         else:
-            if len(users) == 0:
-                users.append(member.mention)
-            for user in users:
-                if user in low_priority_user:
-                    users.insert(users.index(user), member.mention)
-                    break
+            mention = member.mention
+
+        if mention in low_priority_user and not is_dropped:
+            users.append(mention)
+        else:
+            if len(users) == 0 or len(list(set(users).intersection(set(low_priority_user)))) == 0:
+                users.append(mention)
+            else:
+                for user in users:
+                    if user in low_priority_user:
+                        users.insert(users.index(user), mention)
+                        break
         return users
 
     async def rm_people(self, group_id: int, user: discord.Member, emoji: str = '') -> None:
