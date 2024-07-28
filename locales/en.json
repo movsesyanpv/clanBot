@@ -148,7 +148,11 @@
         "overlap_potential": "Potential",
         "overlap_actual": "Actual",
         "overlap_table_group": "Group",
-        "overlap_table_type": "Overlap type"
+        "overlap_table_type": "Overlap type",
+        "prio_rm_msg": "Select users to remove them from your low priority list:",
+        "prio_no_users": "You have no low priority users",
+        "prio_add_msg": "Select users to make them low priority in your LFGs:",
+        "prio_no_add": "No eligible users in this group"
     },
     "lfge": {
         "roles": "Roles",
@@ -600,6 +604,12 @@
                     }
                 }
             }
+        },
+        "editlowprio": {
+            "description": "Edit your low priority list"
+        },
+        "Set low priority": {
+            "description": "Add users to your low priority list"
         }
     },
     "overflow_error": "Invalid time input. Please try again."

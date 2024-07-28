@@ -5,7 +5,8 @@ from hashids import Hashids
 import dateparser
 import asyncio
 import aiosqlite
-from cogs.utils.views import GroupButtons, ActivityType, ModeLFG, RoleLFG, ConfirmView, MyButton, ViewLFG, LFGModal
+from cogs.utils.views import GroupButtons, ActivityType, ModeLFG, RoleLFG, ConfirmView, MyButton, ViewLFG, LFGModal,\
+    PrioritySelection
 from cogs.utils.converters import locale_2_lang, CtxLocale
 from cogs.utils.checks import message_permissions
 from babel.dates import format_datetime
@@ -57,6 +58,73 @@ class Group(commands.Cog):
 
         modal = LFGModal(ctx.bot, ctx.interaction.locale, translations)
         await ctx.interaction.response.send_modal(modal)
+
+    @commands.message_command(
+        name="Set low priority",
+        guild_only=True
+    )
+    async def set_low_priority(self, ctx, message: discord.Message):
+        lang = await locale_2_lang(ctx)
+        translations = ctx.bot.translations[lang]['lfg']
+
+        await ctx.defer(ephemeral=True)
+
+        if await ctx.bot.raid.is_raid(message.id):
+            people = await ctx.bot.raid.get_everyone(message.id, ctx.author.id)
+
+            options = []
+            async for member in ctx.guild.fetch_members(limit=None):
+                for person in people:
+                    if str(member.id) in person and member.id != ctx.author.id:
+                        options.append(discord.SelectOption(label=member.display_name, value=member.mention))
+            if len(options) > 0:
+                view = PrioritySelection(options, ctx.bot.translations[lang], "Ok")
+                await ctx.respond(translations['prio_add_msg'], view=view, ephemeral=True)
+                await view.wait()
+                if view.value:
+                    await ctx.bot.raid.add_low_priority(ctx.author.id, view.value)
+                await ctx.interaction.edit_original_message(content="OK", view=None)
+            else:
+                await ctx.respond(translations['prio_no_add'], ephemeral=True)
+        else:
+            await ctx.respond(ctx.bot.translations[lang]['lfg']['not_a_post'], ephemeral=True)
+
+    @commands.slash_command(
+        name="editlowprio",
+        description='Edit low priority list',
+        guild_only=True
+    )
+    async def edit_low_prio(self, ctx):
+        await ctx.defer(ephemeral=True)
+        lang = await locale_2_lang(ctx)
+        translations = ctx.bot.translations[lang]['lfg']
+
+        cursor = await ctx.bot.raid.conn.cursor()
+
+        low_prio_list = await cursor.execute('SELECT low_priority FROM priorities WHERE host_id=?', (ctx.author.id,))
+        low_prio_list = await low_prio_list.fetchone()
+
+        if low_prio_list is None:
+            low_prio_list = []
+        else:
+            low_prio_list = eval(low_prio_list[0])
+            if low_prio_list is None:
+                low_prio_list = []
+
+        options = []
+        async for member in ctx.guild.fetch_members(limit=None):
+            for person in low_prio_list:
+                if str(member.mention) in person:
+                    options.append(discord.SelectOption(label=member.display_name, value=member.mention))
+        if len(options) > 0:
+            view = PrioritySelection(options, ctx.bot.translations[lang], "Ok")
+            await ctx.respond(translations['prio_rm_msg'], view=view, ephemeral=True)
+            await view.wait()
+            if view.value:
+                await ctx.bot.raid.rm_low_priority(ctx.author.id, view.value)
+            await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
+        else:
+            await ctx.respond(translations['prio_no_users'], ephemeral=True)
 
     @commands.message_command(
         name="Edit LFG",

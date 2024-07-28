@@ -183,7 +183,6 @@ class WantButton(discord.ui.Button):
         await self.view.bot.raid.update_group_msg(interaction.message, self.view.bot.translations[lang], lang)
 
 
-
 async def make_overlap_embed(bot, overlap, locale) -> discord.Embed:
     translations = bot.translations[locale]['lfg']
     table_list = []
@@ -357,7 +356,7 @@ class AutopostSettings(UpdateTypes):
         super().__init__(ctx, lang)
         self.add_item(MyButton('all_upd_types', self.translations['msg']['all_upd_types'], discord.ButtonStyle.gray, row=2))
         if not registration:
-            self.add_item(MyButton('all_upd_types', self.translations['msg']['cancel'], discord.ButtonStyle.red, row=2))
+            self.add_item(MyButton('cancel', self.translations['msg']['cancel'], discord.ButtonStyle.red, row=2))
 
 
 class BotLangs(discord.ui.View):
@@ -418,6 +417,14 @@ class ViewLFG(discord.ui.View):
         self.select = SelectLFG(min_values=1, max_values=1, options=options, row=1, ctx=ctx, translations=translations)
         self.add_item(self.select)
         self.groups = lfg_list
+
+
+class PrioritySelection(discord.ui.View):
+    def __init__(self, options, translations, cancel_line):
+        super().__init__()
+        self.add_item(MySelect(min_values=1, max_values=len(options), options=options))
+        self.add_item(MyButton('cancel', translations['msg']['cancel'], discord.ButtonStyle.red, row=2))
+        self.cancel_line = cancel_line
 
 
 class LFGModal(discord.ui.Modal):

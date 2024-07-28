@@ -57,6 +57,13 @@ class LFG:
             await self.conn.commit()
         except aiosqlite.OperationalError:
             pass
+
+        try:
+            await cursor.execute('''CREATE TABLE priorities (host_id integer, low_priority text)''')
+            await cursor.execute('''CREATE UNIQUE INDEX host_id ON priorities(host_id)''')
+            await self.conn.commit()
+        except aiosqlite.OperationalError:
+            pass
         await cursor.close()
 
     async def add(self, message: discord.Message, lfg_string: str = None, args: dict = None) -> None:
@@ -77,7 +84,8 @@ class LFG:
                      (group_id integer, size integer, name text, time integer, description text, owner integer, 
                      wanters text, going text, the_role text, group_mode text, dm_message integer, 
                      lfg_channel integer, channel_name text, server_name text, want_dm text, is_embed integer, 
-                     length integer, server_id integer, group_role integer, group_channel integer, maybe_goers text, timezone text, owner_nick text)''')
+                     length integer, server_id integer, group_role integer, group_channel integer, maybe_goers text, 
+                     timezone text, owner_nick text, low_priority text)''')
         except aiosqlite.OperationalError:
             try:
                 await cursor.execute('''ALTER TABLE raid ADD COLUMN is_embed integer''')
@@ -101,12 +109,16 @@ class LFG:
                                     try:
                                         await cursor.execute('''ALTER TABLE raid ADD COLUMN owner_nick text''')
                                     except aiosqlite.OperationalError:
-                                        pass
+                                        try:
+                                            await cursor.execute('''ALTER TABLE raid ADD COLUMN low_priority text''')
+                                        except aiosqlite.OperationalError:
+                                            pass
 
         newlfg = [(group_id, args['size'], args['name'], args['time'], args['description'],
                    owner, '[]', '[]', args['the_role'], args['group_mode'], 0, message.channel.id, message.channel.name,
-                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id, 0, 0, '[]', args['timezone'], nick)]
-        await cursor.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
+                   message.guild.name, '[]', args['is_embed'], args['length'], message.guild.id, 0, 0, '[]',
+                   args['timezone'], nick, '[]')]
+        await cursor.executemany("INSERT INTO raid VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", newlfg)
         await self.conn.commit()
         await cursor.close()
 
@@ -421,6 +433,82 @@ class LFG:
         await cursor.close()
         return arr
 
+    async def add_low_priority(self, host_id: int, new_mentions: List) -> None:
+        cursor = await self.conn.cursor()
+
+        old_list = await cursor.execute('SELECT low_priority FROM priorities WHERE host_id=?', (host_id,))
+        old_list = await old_list.fetchone()
+        if old_list is None:
+            old_list = []
+        else:
+            old_list = eval(old_list[0])
+            if old_list is None:
+                old_list = []
+        new_list = [*old_list, *new_mentions]
+        new_list = list(set(new_list))
+
+        try:
+            await cursor.execute('''INSERT INTO priorities VALUES (?,?)''', (host_id, str(new_list)))
+        except aiosqlite.IntegrityError:
+            await cursor.execute('''UPDATE priorities SET low_priority=? WHERE host_id=?''', (str(new_list), host_id))
+        await self.conn.commit()
+        await cursor.close()
+
+    async def rm_low_priority(self, host_id: int, mentions: List) -> None:
+        cursor = await self.conn.cursor()
+
+        old_list = await cursor.execute('SELECT low_priority FROM priorities WHERE host_id=?', (host_id,))
+        old_list = await old_list.fetchone()
+        if old_list is None:
+            old_list = []
+        else:
+            old_list = eval(old_list[0])
+            if old_list is None:
+                old_list = []
+        new_list = list(set(old_list) - set(mentions))
+
+        try:
+            await cursor.execute('''INSERT INTO priorities VALUES (?,?)''', (host_id, str(new_list)))
+        except aiosqlite.IntegrityError:
+            await cursor.execute('''UPDATE priorities SET low_priority=? WHERE host_id=?''', (str(new_list), host_id))
+        await self.conn.commit()
+        await cursor.close()
+
+    async def get_everyone(self, group_id: int, user_id: int) -> List:
+        cursor = await self.conn.cursor()
+        owner = await self.get_cell('group_id', group_id, 'owner')
+
+        mb_goers = await cursor.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (group_id,))
+        mb_goers = await mb_goers.fetchone()
+        mb_goers = eval(mb_goers[0])
+        if mb_goers is None:
+            mb_goers = []
+
+        goers = await cursor.execute('SELECT going FROM raid WHERE group_id=?', (group_id,))
+        goers = await goers.fetchone()
+        goers = eval(goers[0])
+        if goers is None:
+            goers = []
+
+        low_prio = await cursor.execute('SELECT low_priority FROM raid WHERE group_id=?', (group_id,))
+        low_prio = await low_prio.fetchone()
+        try:
+            low_prio = eval(low_prio[0])
+        except TypeError:
+            low_prio = None
+        if low_prio is None:
+            low_prio = []
+
+        wanters = await cursor.execute('SELECT wanters FROM raid WHERE group_id=?', (group_id,))
+        wanters = await wanters.fetchone()
+        wanters = eval(wanters[0])
+        if wanters is None or owner != user_id:
+            wanters = []
+
+        await cursor.close()
+
+        return [*mb_goers, *goers, *wanters, *low_prio]
+
     async def add_alert_jobs(self):
         cursor = await self.conn.cursor()
         alert_list = await cursor.execute('SELECT * FROM alerts ')
@@ -560,11 +648,23 @@ class LFG:
 
         if len(goers) < size and group_mode == 'basic':
             if user.mention not in goers:
-                goers.append(user.mention)
+                # goers.append(user.mention)
+                goers = await self.add_with_priority(goers, user, group_id)
         else:
             if user.mention not in wanters and user.mention not in goers:
-                wanters.append(user.mention)
-                w_dm.append(user.display_name)
+                # wanters.append(user.mention)
+                if group_mode == 'basic':
+                    goers = await self.add_with_priority(goers, user, group_id)
+                    if len(goers) > size:
+                        dropped = goers[-1]
+                        goers = goers[:-1]
+                        if dropped != user.mention:
+                            wanters = await self.add_with_priority(wanters, dropped, group_id, is_dropped=True)
+                        else:
+                            wanters = await self.add_with_priority(wanters, user, group_id)
+                else:
+                    wanters = await self.add_with_priority(wanters, user, group_id)
+                    w_dm.append(user.display_name)
 
         await cursor.execute('''UPDATE raid SET maybe_goers=? WHERE group_id=?''', (str(mb_goers), group_id))
         await cursor.execute('''UPDATE raid SET wanters=? WHERE group_id=?''', (str(wanters), group_id))
@@ -572,6 +672,39 @@ class LFG:
         await cursor.execute('''UPDATE raid SET going=? WHERE group_id=?''', (str(goers), group_id))
         await self.conn.commit()
         await cursor.close()
+
+    async def add_with_priority(self, users: list, member: discord.Member, group_id: int, is_dropped: bool = False) -> list:
+        owner = await self.get_cell('group_id', group_id, 'owner')
+        guild_id = await self.get_cell('group_id', group_id, 'server_id')
+        low_priority_user = await self.get_cell('host_id', owner, 'low_priority', 'priorities')
+        low_priority_guild = await self.get_cell('group_id', guild_id, 'low_priority', 'priorities')
+
+        if low_priority_guild is None:
+            low_priority_guild = []
+        else:
+            low_priority_guild = eval(low_priority_guild)
+
+        if low_priority_user is None:
+            low_priority_user = []
+        else:
+            low_priority_user = eval(low_priority_user)
+
+        if type(member) == str:
+            mention = member
+        else:
+            mention = member.mention
+
+        if mention in low_priority_user and not is_dropped:
+            users.append(mention)
+        else:
+            if len(users) == 0 or len(list(set(users).intersection(set(low_priority_user)))) == 0:
+                users.append(mention)
+            else:
+                for user in users:
+                    if user in low_priority_user:
+                        users.insert(users.index(user), mention)
+                        break
+        return users
 
     async def rm_people(self, group_id: int, user: discord.Member, emoji: str = '') -> None:
         cursor = await self.conn.cursor()
@@ -634,6 +767,7 @@ class LFG:
         description = await self.get_cell('group_id', message.id, 'description')
         dm_id = await self.get_cell('group_id', message.id, 'dm_message')
         size = await self.get_cell('group_id', message.id, 'size')
+        group_mode = await self.get_cell('group_id', message.id, 'group_mode')
         goers = await cursor.execute('SELECT going FROM raid WHERE group_id=?', (message.id,))
         goers = await goers.fetchone()
         goers = eval(goers[0])
@@ -643,8 +777,21 @@ class LFG:
         mb_goers = await cursor.execute('SELECT maybe_goers FROM raid WHERE group_id=?', (message.id,))
         mb_goers = await mb_goers.fetchone()
         mb_goers = eval(mb_goers[0])
+        low_prio = await cursor.execute('SELECT low_priority FROM raid WHERE group_id=?', (message.id,))
+        low_prio = await low_prio.fetchone()
+        try:
+            low_prio = eval(low_prio[0])
+        except TypeError:
+            low_prio = None
+        if low_prio is None:
+            low_prio = []
+        low_prio_goers = 0
+        if len(goers) < size and group_mode == 'basic':
+            low_prio_goers = size - len(goers)
+            goers = [*goers, *low_prio[:low_prio_goers]]
+        wanters = [*wanters, *low_prio[low_prio_goers:]]
+
         length = await self.get_cell('group_id', message.id, 'length')
-        group_mode = await self.get_cell('group_id', message.id, 'group_mode')
         owner = await self.get_cell('group_id', message.id, 'owner_nick')
         # owner = await message.guild.fetch_member(owner)
         if owner is None:
@@ -1069,6 +1216,14 @@ class LFG:
         goers = eval(goers[0])
 
         return user.mention in goers
+
+    async def is_low_priority(self, message: discord.Message, user: discord.Member) -> bool:
+        cursor = await self.conn.cursor()
+        low_prio = await cursor.execute('SELECT low_priority FROM raid WHERE group_id=?', (message.id,))
+        low_prio = await low_prio.fetchone()
+        low_prio = eval(low_prio[0])
+
+        return user.mention in low_prio
 
     @staticmethod
     def group_frame(start, length):
