@@ -454,6 +454,26 @@ class LFG:
         await self.conn.commit()
         await cursor.close()
 
+    async def rm_low_priority(self, host_id: int, mentions: List) -> None:
+        cursor = await self.conn.cursor()
+
+        old_list = await cursor.execute('SELECT low_priority FROM priorities WHERE host_id=?', (host_id,))
+        old_list = await old_list.fetchone()
+        if old_list is None:
+            old_list = []
+        else:
+            old_list = eval(old_list[0])
+            if old_list is None:
+                old_list = []
+        new_list = list(set(old_list) - set(mentions))
+
+        try:
+            await cursor.execute('''INSERT INTO priorities VALUES (?,?)''', (host_id, str(new_list)))
+        except aiosqlite.IntegrityError:
+            await cursor.execute('''UPDATE priorities SET low_priority=? WHERE host_id=?''', (str(new_list), host_id))
+        await self.conn.commit()
+        await cursor.close()
+
     async def get_everyone(self, group_id: int, user_id: int) -> List:
         cursor = await self.conn.cursor()
         owner = await self.get_cell('group_id', group_id, 'owner')

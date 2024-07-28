@@ -88,6 +88,41 @@ class Group(commands.Cog):
         else:
             await ctx.respond(ctx.bot.translations[lang]['lfg']['not_a_post'], ephemeral=True)
 
+    @commands.slash_command(
+        name="editlowprio",
+        description='Edit low priority list',
+        guild_only=True
+    )
+    async def edit_low_prio(self, ctx):
+        await ctx.defer(ephemeral=True)
+        lang = await locale_2_lang(ctx)
+
+        cursor = await ctx.bot.raid.conn.cursor()
+
+        low_prio_list = await cursor.execute('SELECT low_priority FROM priorities WHERE host_id=?', (ctx.author.id,))
+        low_prio_list = await low_prio_list.fetchone()
+
+        if low_prio_list is None:
+            low_prio_list = []
+        else:
+            low_prio_list = eval(low_prio_list[0])
+            if low_prio_list is None:
+                low_prio_list = []
+
+        options = []
+        async for member in ctx.guild.fetch_members(limit=None):
+            for person in low_prio_list:
+                if str(member.mention) in person:
+                    options.append(discord.SelectOption(label=member.display_name, value=member.mention))
+        if len(options) > 0:
+            view = PrioritySelection(options, ctx.bot.translations[lang], "Ok")
+            await ctx.respond("Select users to remove them from your low priority list:", view=view, ephemeral=True)
+            await view.wait()
+            await ctx.bot.raid.rm_low_priority(ctx.author.id, view.value)
+            await ctx.interaction.edit_original_message(content="OK", view=None)
+        else:
+            await ctx.respond("You have no low priority users", ephemeral=True)
+
     @commands.message_command(
         name="Edit LFG",
         description="Edit LFG post",
