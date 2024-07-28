@@ -75,16 +75,17 @@ class Group(commands.Cog):
             options = []
             async for member in ctx.guild.fetch_members(limit=None):
                 for person in people:
-                    if str(member.id) in person:
+                    if str(member.id) in person and member.id != ctx.author.id:
                         options.append(discord.SelectOption(label=member.display_name, value=member.mention))
             if len(options) > 0:
                 view = PrioritySelection(options, ctx.bot.translations[lang], "Ok")
-                await ctx.respond("Select users to make them low priority in your LFGs:", view=view, ephemeral=True)
+                await ctx.respond(translations['prio_add_msg'], view=view, ephemeral=True)
                 await view.wait()
-                await ctx.bot.raid.add_low_priority(ctx.author.id, view.value)
+                if view.value:
+                    await ctx.bot.raid.add_low_priority(ctx.author.id, view.value)
                 await ctx.interaction.edit_original_message(content="OK", view=None)
             else:
-                await ctx.respond("No eligible users in this group", ephemeral=True)
+                await ctx.respond(translations['prio_no_add'], ephemeral=True)
         else:
             await ctx.respond(ctx.bot.translations[lang]['lfg']['not_a_post'], ephemeral=True)
 
@@ -96,6 +97,7 @@ class Group(commands.Cog):
     async def edit_low_prio(self, ctx):
         await ctx.defer(ephemeral=True)
         lang = await locale_2_lang(ctx)
+        translations = ctx.bot.translations[lang]['lfg']
 
         cursor = await ctx.bot.raid.conn.cursor()
 
@@ -116,12 +118,13 @@ class Group(commands.Cog):
                     options.append(discord.SelectOption(label=member.display_name, value=member.mention))
         if len(options) > 0:
             view = PrioritySelection(options, ctx.bot.translations[lang], "Ok")
-            await ctx.respond("Select users to remove them from your low priority list:", view=view, ephemeral=True)
+            await ctx.respond(translations['prio_rm_msg'], view=view, ephemeral=True)
             await view.wait()
-            await ctx.bot.raid.rm_low_priority(ctx.author.id, view.value)
-            await ctx.interaction.edit_original_message(content="OK", view=None)
+            if view.value:
+                await ctx.bot.raid.rm_low_priority(ctx.author.id, view.value)
+            await ctx.interaction.edit_original_message(content=ctx.bot.translations[lang]['msg']['command_is_done'], view=None)
         else:
-            await ctx.respond("You have no low priority users", ephemeral=True)
+            await ctx.respond(translations['prio_no_users'], ephemeral=True)
 
     @commands.message_command(
         name="Edit LFG",
