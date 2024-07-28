@@ -7,7 +7,8 @@
         "later": "A informação será atualizada mais tarde",
         "spider": "O Aranha vende isso",
         "xur": "O Xur vende isso",
-        "weapon": "Arma",
+        "weapon": "Weapons",
+        "armor": "Armor",
         "heroicstory": "Missões de história heroicos atuais são",
         "forge": "A forja atual é",
         "strikesmods": "modificadores da Vanguarda atuais",
@@ -19,6 +20,7 @@
         "reckoningboss": "The Reckoning boss is",
         "cruciblerotators": "Rotação do crisol é",
         "xurloc": "Local",
+        "catalyst": "Exotic catalysts",
         "cost": "Custo",
         "xurtitle": "Xur",
         "raids": "Incursões",
@@ -40,6 +42,10 @@
         "no_send_messages": "{}, I'm not allowed to respond in that channel.",
         "osiris": "Trials of Osiris",
         "empire_hunts": "Elective difficulty empire hunt",
+        "wsummary": "Weekly rotations",
+        "exotic": "Exotic mission",
+        "raid&dungeon": "Featured Raid & Dungeon",
+        "bonuses": "Playlist bonuses",
         "clan_search_error": "The requested clan was not found. You can try again with the clan's name being case-sensitive. If that doesn't help, try entering your clan's ID. The ID can be found on the clan's bungie.net page after the string `groupId=` (you want the numbers after that). If that doesn't work, you can always ask for help at my support server, the link to which can be found with the `support` command.",
         "daily_mods": "Ada-1 sells these",
         "deprecation_warning": "This command is deprecated and will stop working <t:1650574800:D>. Please use it's slash version. If you don't see any slash commands, run `noslash` command to get instructions on how to fix this.",
@@ -217,7 +223,7 @@
                 "cruciblemetrics": "Crucible",
                 "destinationmetrics": "Destinations",
                 "gambitmetrics": "Gambit",
-                "raidsmetrics": "Raids",
+                "raidsmetrics": "Incursões",
                 "strikesmetrics": "Strikes",
                 "trialsofosirismetrics": "Trials of Osiris",
                 "cat_list": "Available categories. To get the category's metric list send `{}help top category`. The categories are listed in the table below (left column), right column contains the descriptions of the aforementioned categories. The categories match in-game ones.",
@@ -328,8 +334,8 @@
         "no_data": "No data for the metric."
     },
     "site": {
-        "spider": "Material exchange",
-        "forge": "Forge",
+        "spider": "O Aranha vende isso",
+        "forge": "Forja",
         "heroicstory": "Heroic story missions",
         "reckoningboss": "The Reckoning boss",
         "nightfalls820": "Nightfalls",
@@ -337,7 +343,13 @@
         "bd": "Eververse",
         "osiris": "Trials of Osiris",
         "empire_hunts": "Empire hunts",
-        "lostsector": "Lost Sector"
+        "lostsector": "Lost Sector",
+        "curr_week": "Week {} (current)",
+        "week": "Week {}",
+        "featured_bd": "Featured Bright Dust Items",
+        "bright_dust": "Bright Dust Items",
+        "featured_silver": "Featured Silver Items",
+        "consumables": "Consumable Bright Dust Items"
     },
     "osiris": {
         "map": "Map",
@@ -373,11 +385,12 @@
         "1604869479": "Sword"
     },
     "vanguard_strikes": "Assaltos da Vanguarda",
+    "nf_weapon": "Weapon Reward",
     "empire_hunt": "Empire Hunt:",
     "online": {
         "nick": "Nickname",
         "since": "Last activity",
-        "error": "Error",
+        "error": "Erro",
         "error_t": "Unable to fetch the clan",
         "title": "Online clan members"
     },
@@ -395,7 +408,7 @@
             "description": "Current week's raid challenges"
         },
         "ordeal": {
-            "label": "Nightfall: The Ordeal",
+            "label": "Anoitecer: A Provação",
             "description": "Current nightfall"
         },
         "empire": {
@@ -433,6 +446,10 @@
         "events": {
             "label": "Community Events",
             "description": "Hourly updates of community event progress"
+        },
+        "wsummary": {
+            "label": "Weekly rotation summary",
+            "description": "Summary of weekly rotations"
         }
     },
     "clan_info": {

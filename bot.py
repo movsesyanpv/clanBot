@@ -38,9 +38,9 @@ class ClanBot(commands.Bot):
     version = ''
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht', 'zh-chs']
-    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'daily', 'strikes', 'banshee', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']  # 'spider'
+    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'wsummary', 'daily', 'strikes', 'banshee', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']  # 'spider'
     daily_rotations = ('strikes', 'banshee', 'ada', 'lostsector')  # 'spider',
-    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'mods')
+    weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'mods', 'wsummary')
     embeds_with_img = ['events']
 
     sched = AsyncIOScheduler(timezone='UTC')
@@ -125,7 +125,7 @@ class ClanBot(commands.Bot):
         if datetime.today().weekday() == 1:
             await self.wait_for('manifest ready')
             self.logger.info('Updating daily mods')
-            await self.universal_update(self.data.get_weekly_shaders, 'daily_mods', 86400)
+            await self.universal_update(self.data.get_weekly_shaders, 'daily_mods', 604800)
             self.logger.info('Finished updating daily mods')
 
     @tasks.loop(time=time(hour=17, minute=0, second=35), reconnect=True)
@@ -174,6 +174,14 @@ class ClanBot(commands.Bot):
             self.logger.info('Updating raid challenges')
             await self.universal_update(self.data.get_raids, 'raids', 604800)
             self.logger.info('Finished updating raid challenges')
+
+    @tasks.loop(time=time(hour=17, minute=0, second=40), reconnect=True)
+    async def update_wsummary(self):
+        if datetime.today().weekday() == 1:
+            await self.wait_for('manifest ready')
+            self.logger.info('Updating weekly summary')
+            await self.universal_update(self.data.get_wsummary, 'wsummary', 604800)
+            self.logger.info('Finished updating weekly summary')
 
     @tasks.loop(time=time(hour=17, minute=0, second=40), reconnect=True)
     async def update_xur(self):
@@ -225,6 +233,7 @@ class ClanBot(commands.Bot):
         self.update_empire_hunt.start()
         self.update_crucible.start()
         self.update_raids.start()
+        self.update_wsummary.start()
 
         self.update_xur.start()
         self.update_trials.start()
@@ -337,7 +346,7 @@ class ClanBot(commands.Bot):
             if channels is None:
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
-                await self.universal_update(self.data.get_weekly_shaders, 'daily_mods', 345600, post=post, get=get, channels=channels, forceget=forceget)
+                await self.universal_update(self.data.get_weekly_shaders, 'daily_mods', 604800, post=post, get=get, channels=channels, forceget=forceget)
         if 'tess' in upd_type:
             if channels is None:
                 channels = self.notifiers
@@ -366,6 +375,11 @@ class ClanBot(commands.Bot):
                 channels = self.notifiers
             if (post and list(set(channels).intersection(self.notifiers))) or get:
                 await self.universal_update(self.data.get_lost_sector, 'lostsector', 86400, post=post, get=get, channels=channels, forceget=forceget)
+        if 'wsummary' in upd_type:
+            if channels is None:
+                channels = self.notifiers
+            if (post and list(set(channels).intersection(self.notifiers))) or get:
+                await self.universal_update(self.data.get_wsummary, 'wsummary', 604800, post=post, get=get, channels=channels, forceget=forceget)
         if self.args.forceupdate:
             await self.data.destiny.close()
             await self.logout()
@@ -535,10 +549,7 @@ class ClanBot(commands.Bot):
                     await lfg_msg.delete()
                     await self.raid.del_entry(lfg[0])
                     i = i + 1
-            except discord.NotFound:
-                await self.raid.del_entry(lfg[0])
-                i = i + 1
-            except discord.Forbidden:
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
                 await self.raid.del_entry(lfg[0])
                 i = i + 1
         return i
@@ -911,11 +922,15 @@ class ClanBot(commands.Bot):
         data = await cursor.execute('''SELECT timezone FROM timezones WHERE server_id=?''', (guild_id,))
         data = await data.fetchone()
 
-        await cursor.close()
-        if data[0] is None:
-            return 'UTC+03:00'
+        if data is None:
+            data = 'UTC+03:00'
+        elif data[0] is None:
+            data = 'UTC+03:00'
         else:
-            return data[0]
+            data = data[0]
+
+        await cursor.close()
+        return data
 
     async def guild_timezone_is_set(self, guild_id: int) -> bool:
         if guild_id is None:
