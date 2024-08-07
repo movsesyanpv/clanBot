@@ -1078,7 +1078,7 @@ class D2data:
                     is_interesting = True
                     cat_number = 9
                     data_index = 2
-                elif item['displayCategoryIndex'] == 1 and item['itemHash'] not in [827183327, 2125251645]:
+                elif item['displayCategoryIndex'] == 1 and item['itemHash'] not in [827183327, 2125251645, 2642369485]:
                     is_interesting = True
                     cat_number = 1
                     data_index = 3
