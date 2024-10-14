@@ -1084,7 +1084,7 @@ class D2data:
                     data_index = 3
                 if is_interesting:
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    if len(item['currencies']) > 0:
+                    if len(item['currencies']) > 0 and 'itemHash' in item['currencies'][0].keys():
                         currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
                                                                        language=lang)
                     else:
@@ -1691,6 +1691,14 @@ class D2data:
 
             db_data = []
             activities_json = activities_resp
+            for activity in activities_json['Response']['activities']['data']['availableActivityInteractables']:
+                interactable_def = await self.destiny.decode_hash(activity['activityInteractableHash'],
+                                                                  'DestinyActivityInteractableDefinition', 'en')
+                activity_def = await self.destiny.decode_hash(interactable_def['entries'][0]['activityHash'],
+                                                              'DestinyActivityDefinition', 'en')
+                if activity_def['activityTypeHash'] == 3652020199:
+                    pass
+                    break
             strikes = await self.destiny.decode_hash(743628305, 'DestinyActivityDefinition', language=lang)
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
@@ -3195,7 +3203,7 @@ class D2data:
 
         if vanguard_resp:
             for cat in vanguard_resp['Response']['categories']['data']['categories']:
-                if cat['displayCategoryIndex'] == 1:
+                if cat['displayCategoryIndex'] == 2:
                     pass
                     sales = set(vanguard_resp['Response']['sales']['data'].keys()).intersection(set(map(str, cat['itemIndexes'])))
                     for item in sales:
