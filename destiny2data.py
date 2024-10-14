@@ -1513,7 +1513,7 @@ class D2data:
                                 if len(s['reusablePlugItems']) > 0 and s['plugSources'] == 2:
                                     plugs.append(s['reusablePlugItems'][0]['plugItemHash'])
 
-                            if item_resp['summaryItemHash'] in [715326750, 2673424576]:
+                            if item_resp['equippingBlock']['uniqueLabelHash'] in [761097285, 4017842899]:
                                 if item_hash not in [3654674561, 3856705927]:
                                     exotic['value'] = '{}\n{}'.format(exotic['value'], item_name)
                                 for item in cat_sales[1]:
@@ -1534,7 +1534,7 @@ class D2data:
                     item_resp = await self.destiny.decode_hash(item_hash, definition, language=lang)
                     item_name = item_resp['displayProperties']['name']
                     if item_resp['itemType'] not in [0, 1, 8, 19]:
-                        if item_resp['summaryItemHash'] in [715326750, 2673424576]:
+                        if item_resp['equippingBlock']['uniqueLabelHash'] in [761097285, 4017842899]:
                             i = 0
                             for item in self.data[lang]['xur']['fields']:
                                 if item['name'] == self.translations[lang]['msg']['weapon'] and item_hash not in [3654674561, 3856705927]:
