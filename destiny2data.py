@@ -1169,7 +1169,6 @@ class D2data:
             await self.write_to_db(locale, 'weekly_eververse', sales, name=self.translations[locale]['site']['bd'], order=0,
                                    template='vendor_items.html', annotations=[], size='tall', type='weekly')
 
-
     async def write_to_db(self, lang: str, id: str, response: list, size: str = '', name: str = '',
                             template: str = 'table_items.html', order: int = 0, type: str = 'daily',
                             annotations: list = []) -> None:
@@ -2658,6 +2657,14 @@ class D2data:
             await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN lastSeen TEXT''')
         except aiosqlite.OperationalError:
             pass
+        try:
+            await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN clanId INTEGER''')
+        except aiosqlite.OperationalError:
+            pass
+        try:
+            await cursor.execute('''ALTER TABLE playermetrics ADD COLUMN clanTag TEXT''')
+        except aiosqlite.OperationalError:
+            pass
 
         for metric in metric_list[0]['metrics'].keys():
             try:
@@ -2672,8 +2679,8 @@ class D2data:
             await cursor.execute('''INSERT OR IGNORE INTO playermetrics (membershipId, timestamp) VALUES (?,?)''',
                                  (member['membershipId'], member['timestamp']))
             if member['valid']:
-                await cursor.execute('''UPDATE playermetrics SET name=?, timestamp=?, membershipType=?, lastSeen=? WHERE membershipId=?''',
-                                     (member['name'], member['timestamp'], member['membershipType'], member['lastSeen'], member['membershipId']))
+                await cursor.execute('''UPDATE playermetrics SET name=?, timestamp=?, membershipType=?, lastSeen=?, clanId=? , clanTag=? WHERE membershipId=?''',
+                                     (member['name'], member['timestamp'], member['membershipType'], member['lastSeen'], member['clanId'], member['clanTag'], member['membershipId']))
                 if len(member['metrics'].keys()) > 0:
                     trans_string = 'UPDATE playermetrics SET '
                     metric_values = []
@@ -2719,15 +2726,16 @@ class D2data:
                 #                                  member['destinyUserInfo']['membershipId'], name)
                 for member in clan_json['Response']['results']:
                     if member['destinyUserInfo']['bungieGlobalDisplayName'] != '':
-                        name = '{} [{}]'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
+                        name = '{}'.format(member['destinyUserInfo']['bungieGlobalDisplayName'], tag)
                     else:
-                        name = '{} [{}]'.format(member['destinyUserInfo']['LastSeenDisplayName'], tag)
+                        name = '{}'.format(member['destinyUserInfo']['LastSeenDisplayName'], tag)
                     # if member['destinyUserInfo']['crossSaveOverride'] != 0:
                     #     m_type = member['destinyUserInfo']['crossSaveOverride']
                     # else:
                     #     m_type = member['destinyUserInfo']['membershipType']
                     result.append(await self.fetch_player_metrics(member['destinyUserInfo']['membershipType'],
-                                                                  member['destinyUserInfo']['membershipId'], name))
+                                                                  member['destinyUserInfo']['membershipId'], name, clan_id=clan_id,
+                                                                  clan_tag=clan_json['Response']['detail']['clanInfo']['clanCallsign']))
             except KeyError:
                 pass
         else:
@@ -2779,13 +2787,15 @@ class D2data:
 
         return len(results) - unfixed
 
-    async def fetch_player_metrics(self, membership_type: str, membership_id: str, name: str, from_clan: bool = False):
+    async def fetch_player_metrics(self, membership_type: str, membership_id: str, name: str, from_clan: bool = False, clan_id: int = 0, clan_tag: str = ''):
         player = {
             'membershipId': membership_id,
             'membershipType': membership_type,
             'timestamp': datetime.utcnow().isoformat(),
             'lastSeen': '',
             'name': name,
+            'clanId': clan_id,
+            'clanTag': clan_tag,
             'valid': True
         }
         if name is None and not from_clan:
@@ -2884,6 +2894,22 @@ class D2data:
             return 1
         else:
             return 0
+
+    async def search_manifest(self, input_str: str, table: str):
+        manifest_url = 'https://www.bungie.net/Platform/Destiny2/Manifest/'
+        manifest_resp = await self.get_cached_json('manifest', 'manifest', manifest_url, self.vendor_params, force=True)
+        hashes = []
+        if manifest_resp:
+            manifest_file = manifest_resp['Response']['mobileWorldContentPaths']['en'].split('/')[-1]
+            manifest_db = await aiosqlite.connect(manifest_file)
+            manifest_cursor = await manifest_db.cursor()
+            data = await manifest_cursor.execute('SELECT id from {} WHERE json like ?'.format(table), ('%{}%'.format(input_str),))
+            data = await data.fetchall()
+            for entry in data:
+                hashes.append(entry[0] & 0xffffffff)
+            await manifest_cursor.close()
+            await manifest_db.close()
+        return hashes
 
     async def get_osiris_predictions(self, langs: List[str], forceget: bool = False, force_info: Optional[list] = None):
         win3_rotation = ['?', '?', 'gloves', '?', '?', 'chest', '?', '?', 'boots', '?', '?', 'helmet', '?', '?', 'class']
