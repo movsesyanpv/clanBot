@@ -2712,7 +2712,7 @@ class D2data:
         except TypeError:
             code = 0
         if code == 1:
-            tag = clan_json['Response']['detail']['clanInfo']['clanCallsign']
+            tag = '[{}]'.format(clan_json['Response']['detail']['clanInfo']['clanCallsign'])
         else:
             tag = ''
 
@@ -3049,13 +3049,13 @@ class D2data:
                 ls_hash = activity_def['hash']
                 break
 
-        season_start = await self.get_season_start()
-        season_number = await self.get_season_number()
-        day_n = datetime.now(tz=timezone.utc) - season_start
+        # season_start = await self.get_season_start()
+        # season_number = await self.get_season_number()
+        # day_n = datetime.now(tz=timezone.utc) - season_start
         if ls_hash == 0:
-            if season_number in lost_sector_order.keys():
-                ls_hash = lost_sector_order[season_number][int(day_n.days % len(lost_sector_order[season_number]))]
-                ls_loot = '?'  # loot_order[season_number][day_n.days % len(loot_order[season_number])]
+            # if season_number in lost_sector_order.keys():
+            #     ls_hash = lost_sector_order[season_number][int(day_n.days % len(lost_sector_order[season_number]))]
+            ls_loot = '?'  # loot_order[season_number][day_n.days % len(loot_order[season_number])]
 
         for lang in langs:
             db_data = []
@@ -3369,29 +3369,29 @@ class D2data:
         leaderboard = []
 
         if is_time or is_ranking:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND lastSeen>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}`, clanTag FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}`, clanTag FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND lastSeen>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_time:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    leaderboard.append([raw_leaderboard[index][0], str(timedelta(minutes=(int(raw_leaderboard[index][1]) / 60000))).split('.')[0]])
+                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], raw_leaderboard[index][2]), str(timedelta(minutes=(int(raw_leaderboard[index][1]) / 60000))).split('.')[0]])
             if is_ranking:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    leaderboard.append([raw_leaderboard[index][0], raw_leaderboard[index][1]])
+                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], raw_leaderboard[index][2]), raw_leaderboard[index][1]])
         else:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}` FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}` FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND lastSeen>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}`, clanTag FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}`, clanTag FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND lastSeen>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_kda:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    leaderboard.append([raw_leaderboard[index][0], raw_leaderboard[index][1] / 100])
+                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], raw_leaderboard[index][2]), raw_leaderboard[index][1] / 100])
             else:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    leaderboard.append([raw_leaderboard[index][0], raw_leaderboard[index][1]])
+                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], raw_leaderboard[index][2]), raw_leaderboard[index][1]])
         await cursor.close()
 
         if len(leaderboard) > 0:
