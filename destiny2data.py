@@ -2734,8 +2734,8 @@ class D2data:
                     # else:
                     #     m_type = member['destinyUserInfo']['membershipType']
                     result.append(await self.fetch_player_metrics(member['destinyUserInfo']['membershipType'],
-                                                                  member['destinyUserInfo']['membershipId'], name, clan_id=clan_id,
-                                                                  clan_tag=clan_json['Response']['detail']['clanInfo']['clanCallsign']))
+                                                                  member['destinyUserInfo']['membershipId'], name,
+                                                                  clan_id=clan_id, clan_tag=tag))
             except KeyError:
                 pass
         else:
