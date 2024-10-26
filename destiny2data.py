@@ -2733,9 +2733,14 @@ class D2data:
                     #     m_type = member['destinyUserInfo']['crossSaveOverride']
                     # else:
                     #     m_type = member['destinyUserInfo']['membershipType']
-                    result.append(await self.fetch_player_metrics(member['destinyUserInfo']['membershipType'],
+                    task = asyncio.ensure_future(self.fetch_player_metrics(member['destinyUserInfo']['membershipType'],
                                                                   member['destinyUserInfo']['membershipId'], name,
                                                                   clan_id=clan_id, clan_tag=tag))
+                    tasks.append(task)
+                    # result.append(await self.fetch_player_metrics(member['destinyUserInfo']['membershipType'],
+                    #                                               member['destinyUserInfo']['membershipId'], name,
+                    #                                               clan_id=clan_id, clan_tag=tag))
+                result = await asyncio.gather(*tasks)
             except KeyError:
                 pass
         else:
@@ -3363,35 +3368,57 @@ class D2data:
         return response_json
 
     async def get_global_leaderboard(self, metric: int, number: int, is_time: bool = False,
-                                     is_kda: bool = False, is_ranking: bool = False) -> list:
+                                     is_kda: bool = False, is_ranking: bool = False, clan_ids: list = []) -> list:
         cursor = await self.bot_data_db.cursor()
 
         leaderboard = []
 
+        if len(clan_ids) == 0:
+            clans = ''
+        elif len(clan_ids) > 1:
+            clans = ' AND clanId IN {}'.format(tuple(clan_ids))
+        else:
+            clans = ' AND clanId={}'.format(clan_ids[0])
         if is_time or is_ranking:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}`, clanTag FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}`, clanTag FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND lastSeen>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}`, clanTag FROM (SELECT RANK () OVER (ORDER BY `{}` ASC) place, name, `{}`, clanTag FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND lastSeen>=\'2024-06-04\' AND name IS NOT NULL{} ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric, clans), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_time:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], raw_leaderboard[index][2]), str(timedelta(minutes=(int(raw_leaderboard[index][1]) / 60000))).split('.')[0]])
+                    if raw_leaderboard[index][2] is None or len(clan_ids) <= 1:
+                        tag = ''
+                    else:
+                        tag = raw_leaderboard[index][2]
+                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], tag), str(timedelta(minutes=(int(raw_leaderboard[index][1]) / 60000))).split('.')[0]])
             if is_ranking:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], raw_leaderboard[index][2]), raw_leaderboard[index][1]])
+                    if raw_leaderboard[index][2] is None or len(clan_ids) <= 1:
+                        tag = ''
+                    else:
+                        tag = raw_leaderboard[index][2]
+                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], tag), raw_leaderboard[index][1]])
         else:
-            raw_leaderboard = await cursor.execute('''SELECT name, `{}`, clanTag FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}`, clanTag FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND lastSeen>=\'2024-06-04\' AND name IS NOT NULL ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric), (number,))
+            raw_leaderboard = await cursor.execute('''SELECT name, `{}`, clanTag FROM (SELECT RANK () OVER (ORDER BY `{}` DESC) place, name, `{}`, clanTag FROM playermetrics WHERE `{}`>0 AND timestamp>=\'2024-06-04\' AND lastSeen>=\'2024-06-04\' AND name IS NOT NULL{} ORDER BY place ASC) WHERE place<=?'''.format(metric, metric, metric, metric, clans), (number,))
             raw_leaderboard = await raw_leaderboard.fetchall()
 
             if is_kda:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], raw_leaderboard[index][2]), raw_leaderboard[index][1] / 100])
+                    if raw_leaderboard[index][2] is None or len(clan_ids) <= 1:
+                        tag = ''
+                    else:
+                        tag = raw_leaderboard[index][2]
+                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], tag), raw_leaderboard[index][1] / 100])
             else:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], raw_leaderboard[index][2]), raw_leaderboard[index][1]])
+                    if raw_leaderboard[index][2] is None or len(clan_ids) <= 1:
+                        tag = ''
+                    else:
+                        tag = raw_leaderboard[index][2]
+                    leaderboard.append(['{} {}'.format(raw_leaderboard[index][0], tag), raw_leaderboard[index][1]])
         await cursor.close()
 
         if len(leaderboard) > 0:
@@ -3421,81 +3448,11 @@ class D2data:
     async def get_clan_leaderboard(self, clan_ids: list, metric: int, number: int, is_time: bool = False,
                                    is_kda: bool = False, is_ranking: bool = False, is_global: bool = False) -> list:
         metric_list = []
-        for clan_id in clan_ids:
-            url = 'https://www.bungie.net/Platform/GroupV2/{}/Members/'.format(clan_id)
+        await self.update_clan_metrics(clan_ids)
+        clan_list = await self.get_global_leaderboard(metric, number, is_time, is_kda, is_ranking, clan_ids)
+        metric_list = [*metric_list, *clan_list]
 
-            clan_members_resp = await self.get_cached_json('clanmembers_{}'.format(clan_id), 'clan members', url, change_msg=False,
-                                                           cache_only=is_global)
-
-            url = 'https://www.bungie.net/Platform/GroupV2/{}/'.format(clan_id)
-            clan_resp = await self.get_cached_json('clan_{}'.format(clan_id), 'clan info', url)
-            clan_json = clan_resp
-            try:
-                code = clan_json['ErrorCode']
-            except KeyError:
-                code = 0
-            except TypeError:
-                code = 0
-            if code == 1:
-                tag = clan_json['Response']['detail']['clanInfo']['clanCallsign']
-            else:
-                tag = ''
-
-            if clan_members_resp and type(clan_json) == dict:
-                clan_json = clan_members_resp
-                if 'Response' in clan_json.keys():
-                    if 'results' in clan_json['Response'].keys():
-                        tasks = []
-                        for member in clan_json['Response']['results']:
-                            task = asyncio.ensure_future(self.get_member_metric_wrapper(member, metric, is_global, tag))
-                            tasks.append(task)
-                        results = await asyncio.gather(*tasks)
-                        metric_list = [*metric_list, *results]
-
-        if len(metric_list) > 0:
-            try:
-                if is_time or is_ranking:
-                    metric_list.sort(reverse=False, key=lambda x: x[1])
-                    while metric_list[0][1] <= 0:
-                        metric_list.pop(0)
-                else:
-                    metric_list.sort(reverse=True, key=lambda x: x[1])
-                    while metric_list[-1][1] <= 0:
-                        metric_list.pop(-1)
-            except IndexError:
-                return []
-
-            for place in metric_list[1:]:
-                delta = 0
-                try:
-                    index = metric_list.index(place)
-                except ValueError:
-                    continue
-                if metric_list[index][1] == metric_list[index - 1][1]:
-                    metric_list[index][0] = '{}\n{}'.format(metric_list[index - 1][0], metric_list[index][0])
-                    metric_list.pop(index - 1)
-
-            indexed_list = metric_list.copy()
-            i = 1
-            for place in indexed_list:
-                old_i = i
-                index = indexed_list.index(place)
-                indexed_list[index] = [i, *indexed_list[index]]
-                i = i + len(indexed_list[index][1].splitlines())
-            while indexed_list[-1][0] > number:
-                indexed_list.pop(-1)
-            if is_time:
-                for place in indexed_list:
-                    index = indexed_list.index(place)
-                    indexed_list[index][2] = str(timedelta(minutes=(indexed_list[index][2] / 60000))).split('.')[0]
-            if is_kda:
-                for place in indexed_list:
-                    index = indexed_list.index(place)
-                    indexed_list[index][2] = indexed_list[index][2] / 100
-
-            return indexed_list[:old_i]
-        else:
-            return metric_list
+        return metric_list
 
     async def get_last_activity(self, member: dict, lang: str):
         status_change = datetime.fromtimestamp(float(member['lastOnlineStatusChange']))
