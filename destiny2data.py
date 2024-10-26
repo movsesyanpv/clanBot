@@ -3386,7 +3386,7 @@ class D2data:
             if is_time:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    if raw_leaderboard[index][2] is None or len(clan_ids) <= 1:
+                    if raw_leaderboard[index][2] is None or len(clan_ids) == 1:
                         tag = ''
                     else:
                         tag = raw_leaderboard[index][2]
@@ -3394,7 +3394,7 @@ class D2data:
             if is_ranking:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    if raw_leaderboard[index][2] is None or len(clan_ids) <= 1:
+                    if raw_leaderboard[index][2] is None or len(clan_ids) == 1:
                         tag = ''
                     else:
                         tag = raw_leaderboard[index][2]
@@ -3406,7 +3406,7 @@ class D2data:
             if is_kda:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    if raw_leaderboard[index][2] is None or len(clan_ids) <= 1:
+                    if raw_leaderboard[index][2] is None or len(clan_ids) == 1:
                         tag = ''
                     else:
                         tag = raw_leaderboard[index][2]
@@ -3414,7 +3414,7 @@ class D2data:
             else:
                 for place in raw_leaderboard:
                     index = raw_leaderboard.index(place)
-                    if raw_leaderboard[index][2] is None or len(clan_ids) <= 1:
+                    if raw_leaderboard[index][2] is None or len(clan_ids) == 1:
                         tag = ''
                     else:
                         tag = raw_leaderboard[index][2]
