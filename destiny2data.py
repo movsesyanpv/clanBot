@@ -2900,7 +2900,7 @@ class D2data:
         else:
             return 0
 
-    async def search_manifest(self, input_str: str, table: str):
+    async def search_manifest(self, input_str: str, table: str, json_place: str = '$.displayProperties.name') -> List:
         manifest_url = 'https://www.bungie.net/Platform/Destiny2/Manifest/'
         manifest_resp = await self.get_cached_json('manifest', 'manifest', manifest_url, self.vendor_params, force=True)
         hashes = []
@@ -2908,7 +2908,7 @@ class D2data:
             manifest_file = manifest_resp['Response']['mobileWorldContentPaths']['en'].split('/')[-1]
             manifest_db = await aiosqlite.connect(manifest_file)
             manifest_cursor = await manifest_db.cursor()
-            data = await manifest_cursor.execute('SELECT id from {} WHERE json like ?'.format(table), ('%{}%'.format(input_str),))
+            data = await manifest_cursor.execute('SELECT id FROM {} WHERE json_extract(json, ?) LIKE ?'.format(table), (json_place, '%{}%'.format(input_str),))
             data = await data.fetchall()
             for entry in data:
                 hashes.append(entry[0] & 0xffffffff)

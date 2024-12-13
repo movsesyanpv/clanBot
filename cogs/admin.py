@@ -144,8 +144,8 @@ class Admin(commands.Cog):
         description='Set Trials of Osiris info'
     )
     async def osiris(self, ctx, curr_map):
-        banned_maps = [1699058902, 3734723183, 265600452, 2295195925, 2759161422, 2769402771, 2779855432, 3221077909]
-        map_resp = await self.bot.data.search_manifest(curr_map, 'DestinyActivityDefinition')
+        banned_maps = [1699058902, 3734723183, 265600452, 2295195925]
+        map_resp = await self.bot.data.search_manifest(curr_map, 'DestinyActivityDefinition', '$.displayProperties.name')
         if len(map_resp) > 0:
             if map_resp[0] not in banned_maps:
                 curr_map = map_resp[0]
