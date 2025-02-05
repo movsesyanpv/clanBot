@@ -783,7 +783,7 @@ class D2data:
                 definition = 'DestinyInventoryItemDefinition'
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                 try:
-                    if 'item.ghost_hologram' in item_def['traitIds']:
+                    if 'item.ghost_hologram' in item_def['traitIds'] or 'item.spawnfx' in item_def['traitIds']:
                         nweeks += 1
                 except KeyError:
                     pass
