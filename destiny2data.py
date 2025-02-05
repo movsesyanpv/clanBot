@@ -1312,15 +1312,15 @@ class D2data:
         for locale in lang:
             banshee_def = await self.destiny.decode_hash(672118013, 'DestinyVendorDefinition', language=locale)
 
-            items_to_get = banshee_cats[2]['itemIndexes']
+            items_to_get = banshee_cats[4]['itemIndexes']
 
             sales = []
             banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468, 2979281381])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
             sales.append({'name': "", "items": banshee_sales[1], "template": cat_templates['6']})
-            items_to_get = banshee_cats[3]['itemIndexes']
-            banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468])
-            sales.append({'name': "", "items": banshee_sales[1], "template": cat_templates['0']})
+            # items_to_get = banshee_cats[3]['itemIndexes']
+            # banshee_sales = await self.get_vendor_sales(locale, banshee_resp, items_to_get, [1812969468])
+            # sales.append({'name': "", "items": banshee_sales[1], "template": cat_templates['0']})
             await self.write_to_db(locale, 'banshee_mods', sales, name=banshee_def['displayProperties']['name'], order=5,
                                    template='vendor_items.html', annotations=[])
                              # size='tall')
@@ -2134,6 +2134,8 @@ class D2data:
             activities_json = activities_resp
             for key in activities_json['Response']['activities']['data']['availableActivities']:
                 item_hash = key['activityHash']
+                if item_hash in [2396377129]:
+                    continue
                 definition = 'DestinyActivityDefinition'
                 r_json = await self.destiny.decode_hash(item_hash, definition, language=lang)
                 if r_json['activityTypeHash'] == 4110605575:
