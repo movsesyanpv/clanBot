@@ -934,6 +934,32 @@ class D2data:
             curr_slot.append(item)
             n_items += 1
         slots.append(list.copy(curr_slot))
+        if str(start) == '2025-02-04 17:00:00+00:00' and len(slots[4]) < nweeks: # A hack to insert a missing item placeholder
+            slots[1].insert(16, {
+                        'id': 'placeholder',
+                        'icon': ' ',
+                        'tooltip_id': 'placeholder_tooltip',
+                        'hash': '',
+                        'name': 'xxx',
+                        'screenshot': '',
+                        'costs': [
+                            {
+                                'currency_icon': '',
+                                'cost': 0,
+                                'currency_name': ''
+                            }],
+                        'classType': 3,
+                        'itemTypeDisplayName': 'placeholder'
+                    })
+            tmp_slot = slots[1][-1].copy()
+            slots[1].pop()
+            slots[2].insert(0, tmp_slot)
+            tmp_slot = slots[2][-1].copy()
+            slots[2].pop()
+            slots[3].insert(0, tmp_slot)
+            tmp_slot = slots[3][-1].copy()
+            slots[3].pop()
+            slots[4].insert(0, tmp_slot)
         indexes = [0] * len(slots)
         for i in range(0, nweeks):
             curr_week = []
