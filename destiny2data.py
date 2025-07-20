@@ -1568,6 +1568,17 @@ class D2data:
                             for item in cat_sales[1]:
                                 if item['hash'] == item_hash:
                                     sales[1]['items'].append(item)
+                    elif item_resp['itemType'] == 19:
+                        i = 0
+                        for item in self.data[lang]['xur']['fields']:
+                            if item['name'] == self.translations[lang]['msg']['catalyst'] and item_hash not in [
+                                3654674561, 3856705927]:
+                                self.data[lang]['xur']['fields'][i]['value'] = '{}\n{}'.format(
+                                    self.data[lang]['xur']['fields'][i]['value'], item_name)
+                            i += 1
+                        for item in cat_sales[1]:
+                            if item['hash'] == item_hash:
+                                sales[0]['items'].append(item)
                 self.data[lang]['xur']['fields'].append(exotic)
             else:
                 loc_field = {
