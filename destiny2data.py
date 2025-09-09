@@ -880,9 +880,11 @@ class D2data:
                                                                               3187955025, 2638689062, 1277605939]:
                 definition = 'DestinyInventoryItemDefinition'
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                if 'item.ghost_hologram' in item_def['traitIds'] or 'item.spawnfx' in item_def['traitIds']:
-                    nweeks += 1
+                try:
+                    if 'item.ghost_hologram' in item_def['traitIds'] or 'item.spawnfx' in item_def['traitIds']:
+                        nweeks += 1
+                except KeyError:
+                    pass
                 if len(item['currencies']) > 0:
                     currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
                                                                    language=lang)
@@ -1030,7 +1032,7 @@ class D2data:
 
     async def make_ev_predictions(self, langs: List[str], start: datetime) -> None:
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
-        week_n = int(week_n.days / 7)
+        week_n = int(week_n.days / 7) - 8
         for locale in langs:
             data = []
             bd = await self.get_seasonal_bd(locale, start)
