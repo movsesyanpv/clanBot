@@ -143,7 +143,7 @@ class Admin(commands.Cog):
     @commands.command(
         description='Set Trials of Osiris info'
     )
-    async def osiris(self, ctx, curr_map):
+    async def osiris(self, ctx, curr_map, gun):
         banned_maps = [1699058902, 3734723183, 265600452, 2295195925]
         map_resp = await self.bot.data.search_manifest(curr_map, 'DestinyActivityDefinition', '$.displayProperties.name')
         if len(map_resp) > 0:
@@ -154,7 +154,11 @@ class Admin(commands.Cog):
                     if activity not in banned_maps:
                         curr_map = activity
                         break
-        await self.bot.data.get_osiris_predictions(self.bot.langs, force_info=[curr_map, '?'])
+        gun_resp = await self.bot.data.search_manifest(gun, 'DestinyInventoryItemDefinition', '$.displayProperties.name')
+        curr_gun = '?'
+        if len(gun_resp) > 0:
+            curr_gun = gun_resp[0]
+        await self.bot.data.get_osiris_predictions(self.bot.langs, force_info=[curr_map, curr_gun])
         await ctx.bot.force_update('osiris', get=False, channels=None, forceget=False)
         await ctx.channel.send('done')
 

@@ -2969,11 +2969,11 @@ class D2data:
         mod_rotation = ['?', '?', '?']
 
         def find_adept(saint_resp):
-            flawless = '?'
+            flawless = []
             for item in saint_resp['Response']['sales']['data']:
                 for cost in saint_resp['Response']['sales']['data'][item]['costs']:
-                    if cost['quantity'] == 50000:
-                        flawless = saint_resp['Response']['sales']['data'][item]['itemHash']
+                    if cost['quantity'] == 25000:
+                        flawless.append(saint_resp['Response']['sales']['data'][item]['itemHash'])
             return flawless
 
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
@@ -2985,14 +2985,14 @@ class D2data:
 
         if force_info is not None:
             if force_info[1] != '?':
-                flawless = force_info[1]
+                flawless = [force_info[1]]
             else:
                 flawless = find_adept(saint_resp)
         else:
             flawless = find_adept(saint_resp)
 
         modifiers = {}
-        if flawless == '?':
+        if len(flawless) == 0:
             trials_are_active = False
         else:
             trials_are_active = True
@@ -3022,13 +3022,20 @@ class D2data:
             if not trials_are_active:
                 continue
             locale = self.translations[lang]['osiris']
-            if flawless != '?':
-                flawless_def = await self.destiny.decode_hash(flawless, 'DestinyInventoryItemDefinition', language=lang)
+            flawless_def = []
+            value_str = ''
+            if len(flawless) > 0:
+                for gun_hash in flawless:
+                    flawless_def.append(await self.destiny.decode_hash(gun_hash, 'DestinyInventoryItemDefinition', language=lang))
+                for item in flawless_def:
+                    value_str =  '{}{} ({})\n'.format(value_str, item['displayProperties']['name'], item['itemTypeDisplayName'])
+                value_str = value_str[:-1]
             else:
-                flawless_def = {
+                flawless_def = [{
                     'displayProperties': {'name': '?'},
                     'itemTypeDisplayName': '?'
-                }
+                }]
+                value_str ='{} ({})'.format(flawless_def[0]['displayProperties']['name'], flawless_def[0]['itemTypeDisplayName'])
             if force_info is None:
                 self.data[lang]['osiris']['fields'] = [
                     {
@@ -3037,7 +3044,7 @@ class D2data:
                     },
                     {
                         'name': locale['flawless'],
-                        'value': '{} ({})'.format(flawless_def['displayProperties']['name'], flawless_def['itemTypeDisplayName'])
+                        'value': value_str
                     }
                 ]
             else:
@@ -3068,7 +3075,7 @@ class D2data:
                     },
                     {
                         'name': locale['flawless'],
-                        'value': '{} ({})'.format(flawless_def['displayProperties']['name'], flawless_def['itemTypeDisplayName'])
+                        'value': value_str
                     }
                 ]
             if modifiers:
@@ -3077,7 +3084,7 @@ class D2data:
             for field in self.data[lang]['osiris']['fields']:
                 db_data.append({
                     'name': field['name'],
-                    'description': field['value']
+                    'description': field['value'].replace('\n', '<br>')
                 })
             await self.write_to_db(lang, 'trials_of_osiris', db_data, order=6,
                                    name=self.translations[lang]['site']['osiris'])
