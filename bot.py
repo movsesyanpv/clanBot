@@ -38,8 +38,8 @@ class ClanBot(commands.Bot):
     version = ''
     cog_list = ['cogs.admin', 'cogs.public', 'cogs.group', 'cogs.serveradmin']
     langs = ['en', 'de', 'es', 'es-mx', 'fr', 'it', 'ja', 'ko', 'pl', 'pt-br', 'ru', 'zh-cht', 'zh-chs']
-    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'wsummary', 'daily', 'strikes', 'banshee', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']  # 'spider'
-    daily_rotations = ('strikes', 'banshee', 'ada', 'lostsector')  # 'spider',
+    all_types = ['weekly', 'nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'wsummary', 'daily', 'strikes', 'ada', 'mods', 'lostsector', 'xur', 'osiris', 'alerts', 'events', 'gambit']  # 'spider'
+    daily_rotations = ('strikes', 'ada', 'lostsector')  # 'spider',
     weekly_rotations = ('nightmares', 'crucible', 'raids', 'ordeal', 'evweekly', 'empire', 'mods', 'wsummary')
     embeds_with_img = ['events']
 

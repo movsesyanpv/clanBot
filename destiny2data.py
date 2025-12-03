@@ -778,7 +778,7 @@ class D2data:
         class_items = 0
         n_order = 0
         for i, item in enumerate(tess_def['itemList']):
-            if item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+            if item['displayCategoryIndex'] == 2 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
                                                                               3187955025, 2638689062]:
                 definition = 'DestinyInventoryItemDefinition'
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
@@ -876,8 +876,8 @@ class D2data:
             #     n_items = 0
             #     curr_week = []
             #     class_items = 0
-            if item['displayCategoryIndex'] == 2 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                              3187955025, 2638689062, 1277605939]:
+            if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                              3187955025, 2638689062, 1277605939, 2715650945]:
                 definition = 'DestinyInventoryItemDefinition'
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                 try:
@@ -1032,7 +1032,7 @@ class D2data:
 
     async def make_ev_predictions(self, langs: List[str], start: datetime) -> None:
         week_n = datetime.now(tz=timezone.utc) - await self.get_season_start()
-        week_n = int(week_n.days / 7) - 8
+        week_n = int(week_n.days / 7) # - 8
         for locale in langs:
             data = []
             bd = await self.get_seasonal_bd(locale, start)
@@ -1096,12 +1096,12 @@ class D2data:
                     is_interesting = True
                     cat_number = 2
                     data_index = 0
-                elif item['displayCategoryIndex'] == 9 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                elif item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
                                                                                     3187955025, 2638689062]:
                     is_interesting = True
                     cat_number = 7
                     data_index = 1
-                elif item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                elif item['displayCategoryIndex'] == 11 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
                                                                                      3187955025, 2638689062]:
                     is_interesting = True
                     cat_number = 9
@@ -1118,9 +1118,13 @@ class D2data:
                     else:
                         currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
                         item['currencies'] = [{'quantity': ''}]
+                    if 'icon' in item_def['displayProperties'].keys():
+                        icon = item_def['displayProperties']['icon']
+                    else:
+                        icon = ''
                     data[data_index]['items'].append({
                         'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
-                        'icon': item_def['displayProperties']['icon'],
+                        'icon': icon,
                         'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
                         'hash': item['itemHash'],
                         'name': item_def['displayProperties']['name'],
@@ -1181,14 +1185,14 @@ class D2data:
             cat_sales = []
             for tess_resp in tess_resps:
                 for cat in tess_resp['Response']['categories']['data']['categories']:
-                    if cat['displayCategoryIndex'] == 9:
+                    if cat['displayCategoryIndex'] == 10:
                         items_to_get = cat['itemIndexes']
                 ada_sales = await self.get_vendor_sales(locale, tess_resp, items_to_get, [1812969468, 353932628, 3187955025])
                 cat_sales += ada_sales[1]
             cat_sales = list(dict((item["id"], item) for item in cat_sales).values())
             sales += cat_sales
             for cat in tess_cats:
-                if cat['displayCategoryIndex'] == 10:
+                if cat['displayCategoryIndex'] == 11:
                     items_to_get = cat['itemIndexes']
             ada_sales = await self.get_vendor_sales(locale, tess_resps[0], items_to_get, [1812969468, 2979281381, 353932628, 3187955025])
             # self.data[locale]['spider']['fields'] = self.data[locale]['spider']['fields'] + banshee_sales[0]
@@ -1196,6 +1200,7 @@ class D2data:
             sales = [{'name': "", "items": sales, "template": 'contract_item.html'}]
             await self.write_to_db(locale, 'weekly_eververse', sales, name=self.translations[locale]['site']['bd'], order=0,
                                    template='vendor_items.html', annotations=[], size='tall', type='weekly')
+        return
 
     async def write_to_db(self, lang: str, id: str, response: list, size: str = '', name: str = '',
                             template: str = 'table_items.html', order: int = 0, type: str = 'daily',
@@ -2954,7 +2959,7 @@ class D2data:
             for entry in data:
                 hashes.append(entry[0] & 0xffffffff)
             await manifest_cursor.close()
-            await manifest_db.close()
+        await manifest_db.close()
         return hashes
 
     async def get_osiris_predictions(self, langs: List[str], forceget: bool = False, force_info: Optional[list] = None):
