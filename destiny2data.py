@@ -877,7 +877,7 @@ class D2data:
             #     curr_week = []
             #     class_items = 0
             if item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                              3187955025, 2638689062, 1277605939, 2715650945]:
+                                                                              3187955025, 2638689062, 1277605939]:
                 definition = 'DestinyInventoryItemDefinition'
                 item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
                 try:
