@@ -3096,7 +3096,7 @@ class D2data:
         await self.write_bot_data('osiris', langs)
 
     async def get_lost_sector(self, langs: List[str], forceget: bool = False, force_info: Optional[list] = None) -> None:
-        ls_hash = 0
+        ls_hashes = []
         ls_loot = '?'
 
         ls_resp = await self.get_activities_response('lostsector', string='lost sector', force=forceget)
@@ -3104,13 +3104,12 @@ class D2data:
             interactable_def = await self.destiny.decode_hash(activity['activityInteractableHash'], 'DestinyActivityInteractableDefinition', 'en')
             activity_def = await self.destiny.decode_hash(interactable_def['entries'][0]['activityHash'], 'DestinyActivityDefinition', 'en')
             if activity_def['activityTypeHash'] == 103143560:
-                ls_hash = activity_def['hash']
-                break
+                ls_hashes.append(activity_def['hash'])
 
         # season_start = await self.get_season_start()
         # season_number = await self.get_season_number()
         # day_n = datetime.now(tz=timezone.utc) - season_start
-        if ls_hash == 0:
+        if len(ls_hashes) == 0:
             # if season_number in lost_sector_order.keys():
             #     ls_hash = lost_sector_order[season_number][int(day_n.days % len(lost_sector_order[season_number]))]
             ls_loot = '?'  # loot_order[season_number][day_n.days % len(loot_order[season_number])]
@@ -3129,22 +3128,31 @@ class D2data:
                 'footer': {'text': self.translations[lang]['msg']['resp_time']},
                 'timestamp': datetime.utcnow().isoformat()
             }
-            if ls_hash != 0:
-                ls_def = await self.destiny.decode_hash(ls_hash, 'DestinyActivityDefinition', lang)
-                dest_def = await self.destiny.decode_hash(ls_def['destinationHash'], 'DestinyDestinationDefinition', lang)
-                dest_str = dest_def['displayProperties']['name']
+            if len(ls_hashes) != 0:
+                for ls_hash in ls_hashes:
+                    ls_def = await self.destiny.decode_hash(ls_hash, 'DestinyActivityDefinition', lang)
+                    dest_def = await self.destiny.decode_hash(ls_def['destinationHash'], 'DestinyDestinationDefinition', lang)
+                    dest_str = dest_def['displayProperties']['name']
+                    ls_dict = {'name': ls_def['displayProperties']['name'].split(':')[0], 'value': '{}'.format(dest_str)}
+                    if ls_dict not in self.data[lang]['lostsector']['fields']:
+                        self.data[lang]['lostsector']['fields'].append(ls_dict)
+                        db_data.append({
+                            'name': ls_def['displayProperties']['name'].split(':')[0],
+                            # 'description': '{}<br>{}'.format(loot_str, dest_str)
+                            'description': '{}'.format(dest_str)
+                        })
             else:
                 ls_def = {'displayProperties': {'name': self.translations[lang]['osiris']['?']}}
                 dest_str = '?'
-            loot_str = self.translations[lang]['osiris'][ls_loot]
+            # loot_str = self.translations[lang]['osiris'][ls_loot]
 
             # self.data[lang]['lostsector']['fields'].append({'name': ls_def['displayProperties']['name'].split(':')[0], 'value': '{}\n{}'.format(loot_str, dest_str)})
-            self.data[lang]['lostsector']['fields'].append({'name': ls_def['displayProperties']['name'].split(':')[0], 'value': '{}'.format(dest_str)})
-            db_data.append({
-                'name': ls_def['displayProperties']['name'].split(':')[0],
-                # 'description': '{}<br>{}'.format(loot_str, dest_str)
-                'description': '{}'.format(dest_str)
-            })
+                self.data[lang]['lostsector']['fields'].append({'name': ls_def['displayProperties']['name'].split(':')[0], 'value': '{}'.format(dest_str)})
+                db_data.append({
+                    'name': ls_def['displayProperties']['name'].split(':')[0],
+                    # 'description': '{}<br>{}'.format(loot_str, dest_str)
+                    'description': '{}'.format(dest_str)
+                })
             await self.write_to_db(lang, 'lost_sector', db_data, order=6,
                                    name=self.translations[lang]['site']['lostsector'])
         await self.write_bot_data('lostsector', langs)
