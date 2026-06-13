@@ -2130,15 +2130,17 @@ class D2data:
                         else:
                             info['value'] = self.data[lang]['api_is_down']['fields'][0]['name']
                         if mods['displayProperties']['name']:
-                            db_data.append({
-                                'name': info['name'],
-                                'description': info['value'].replace('\n', '<br>').replace('**', '')
-                            })
-                            self.data[lang]['raids']['fields'].append(info)
+                            if 'challenges' in key.keys():
+                                db_data.append({
+                                    'name': info['name'],
+                                    'description': info['value'].replace('\n', '<br>').replace('**', '')
+                                })
+                                self.data[lang]['raids']['fields'].append(info)
             self.data[lang]['raids']['timestamp'] = resp_time
             await self.write_to_db(lang, 'raid_challenges', db_data, 'tall',
                                    self.translations[lang]['msg']['raids'], order=1, type='weekly')
         await self.write_bot_data('raids', langs)
+        return True
 
     async def get_ordeal(self, langs: List[str], forceget: bool = False) -> Union[bool, None]:
         activities_resp = await self.get_activities_response('ordeal', force=forceget)
@@ -3287,6 +3289,7 @@ class D2data:
             if not self.data[lang]['wsummary']['fields'][3]['value']:
                 self.data[lang]['wsummary']['fields'].pop(3)
         await self.write_bot_data('wsummary', langs)
+        return True
 
     async def get_nightfall_weapon_hash(self, forceget: bool = False) -> int:
         vanguard_url = 'https://www.bungie.net/platform/Destiny2/{}/Profile/{}/Character/{}/Vendors/2232145065/'. \
