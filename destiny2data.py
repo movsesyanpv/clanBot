@@ -1055,90 +1055,125 @@ class D2data:
                                    template='evweekly.html', annotations=[], size='', type='weekly_ev')
 
     async def make_seasonal_ev(self, langs: List[str]) -> None:
-        tess_def = await self.destiny.decode_hash(3361454721, 'DestinyVendorDefinition')
+
+        tess_ids = [#3361454721,# tower.eververse
+                    #993381886,# tower.eververse_archive
+                    2031393824,# tower.eververse_bright_dust_rotator_exotic_and_legendary_armor_ornaments
+                    3118972542,# tower.eververse_bright_dust_rotator_exotic_emotes
+                    3702989297,# tower.eververse_bright_dust_rotator_exotic_ghosts
+                    4020265966,# tower.eververse_bright_dust_rotator_exotic_ships
+                    1105106638,# tower.eververse_bright_dust_rotator_exotic_vehicles
+                    2168194999,# tower.eververse_bright_dust_rotator_exotic_weapon_ornaments
+                    2184482416,# tower.eververse_bright_dust_rotator_legendary_and_rare_emotes_and_finishers
+                    1446296883,# tower.eververse_bright_dust_rotator_legendary_and_rare_ghost_projections
+                    2041776156,# tower.eververse_bright_dust_rotator_legendary_shaders
+                    213864513,# tower.eververse_bright_dust_rotator_legendary_spawnfx
+                    #272996357,# tower.eververse_campaigns
+                    #1153491246,# tower.eververse_featured_carousels
+                    #1994053016,# tower.eververse_featured_slots
+                    #3704609633,# tower.eververse_featured_synthweave
+                    #50228367,# tower.eververse_focused
+                    #53711194,# tower.eververse_partner
+                    #2924135972,# tower.eververse_seasonal
+                    #3445703438,# tower.eververse_silver_rotator_exotic_emotes
+                    #3358239265,# tower.eververse_silver_rotator_exotic_ghosts
+                    #1400187966,# tower.eververse_silver_rotator_exotic_ships
+                    #2739911710,# tower.eververse_silver_rotator_exotic_vehicles
+                    #4228941413,# tower.eververse_silver_rotator_legendary_emotes
+                    #249262409,# tower.eververse_silver_rotator_legendary_finishers
+        ]
 
         for lang in langs:
             data = [
-                {
-                    'name': self.translations[lang]['site']['featured_bd'],
-                    'items': []
-                },
-                {
-                    'name': self.translations[lang]['site']['bright_dust'],
-                    'items': []
-                },
-                {
-                    'name': self.translations[lang]['site']['consumables'],
-                    'items': []
-                },
                 # {
-                #     'name': 'Яркие энграммы',
+                #     'name': self.translations[lang]['site']['featured_bd'],
                 #     'items': []
                 # },
-                {
-                    'name': self.translations[lang]['site']['featured_silver'],
-                    'items': []
-                }]
+                # {
+                #     'name': self.translations[lang]['site']['bright_dust'],
+                #     'items': []
+                # },
+                # {
+                #     'name': self.translations[lang]['site']['consumables'],
+                #     'items': []
+                # },
+                # # {
+                # #     'name': 'Яркие энграммы',
+                # #     'items': []
+                # # },
+                # {
+                #     'name': self.translations[lang]['site']['featured_silver'],
+                #     'items': []
+            ]
+            for vendor_id in tess_ids:
+                tess_def = await self.destiny.decode_hash(vendor_id, 'DestinyVendorDefinition', language=lang)
 
-            # lang = 'ru'
-            n_order = 0
-            for i, item in enumerate(tess_def['itemList']):
-                definition = 'DestinyInventoryItemDefinition'
-                item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                if 'screenshot' in item_def.keys():
-                    screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
-                                 'loading="lazy">'.format(item_def['screenshot'])
-                else:
-                    screenshot = ''
-                is_interesting = False
-                if item['displayCategoryIndex'] == 2 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                                  3187955025, 2638689062]:
-                    is_interesting = True
-                    cat_number = 2
-                    data_index = 0
-                elif item['displayCategoryIndex'] == 10 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                                    3187955025, 2638689062]:
-                    is_interesting = True
-                    cat_number = 7
-                    data_index = 1
-                elif item['displayCategoryIndex'] == 11 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
-                                                                                     3187955025, 2638689062]:
-                    is_interesting = True
-                    cat_number = 9
-                    data_index = 2
-                elif item['displayCategoryIndex'] == 1 and item['itemHash'] not in [827183327, 2125251645, 2642369485]:
-                    is_interesting = True
-                    cat_number = 1
-                    data_index = 3
-                if is_interesting:
+                data.append({
+                    'name': tess_def['vendorIdentifier'],
+                    'items': []
+                })
+
+                # lang = 'ru'
+                n_order = 0
+                for i, item in enumerate(tess_def['itemList']):
+                    definition = 'DestinyInventoryItemDefinition'
                     item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
-                    if len(item['currencies']) > 0 and 'itemHash' in item['currencies'][0].keys():
-                        currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
-                                                                       language=lang)
+                    if 'screenshot' in item_def.keys():
+                        screenshot = '<img alt="Screenshot" class="screenshot_hover" src="https://bungie.net{}"' \
+                                     'loading="lazy">'.format(item_def['screenshot'])
                     else:
-                        currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
-                        item['currencies'] = [{'quantity': ''}]
-                    if 'icon' in item_def['displayProperties'].keys():
-                        icon = item_def['displayProperties']['icon']
-                    else:
-                        icon = ''
-                    data[data_index]['items'].append({
-                        'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
-                        'icon': icon,
-                        'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
-                        'hash': item['itemHash'],
-                        'name': item_def['displayProperties']['name'],
-                        'screenshot': screenshot,
-                        'costs': [
-                            {
-                                'currency_icon': currency_resp['displayProperties']['icon'],
-                                'cost': item['currencies'][0]['quantity'],
-                                'currency_name': currency_resp['displayProperties']['name']
-                            }]
-                    })
-                    n_order += 1
+                        screenshot = ''
+                    is_interesting = True
+                    cat_number = 'nn'
+                    if item['displayCategoryIndex'] == 0 and item['itemHash'] not in [353932628, 3260482534, 3536420626, #cat 16: bright dusted snowballs
+                                                                                      3187955025, 2638689062]:
+                        is_interesting = True
+                        cat_number = 2
+                        data_index = 0
+                    elif item['displayCategoryIndex'] == 16 and item['itemHash'] not in [353932628, 3260482534, 3536420626, #cat 17 some sets for old dlcs
+                                                                                        3187955025, 2638689062]:
+                        is_interesting = True
+                        cat_number = 7
+                        data_index = 1
+                    elif item['displayCategoryIndex'] == 17 and item['itemHash'] not in [353932628, 3260482534, 3536420626,
+                                                                                         3187955025, 2638689062]:
+                        is_interesting = True
+                        cat_number = 9
+                        data_index = 2
+                    elif item['displayCategoryIndex'] == 31 and item['itemHash'] not in [827183327, 2125251645, 2642369485]:
+                        is_interesting = True
+                        cat_number = 1
+                        data_index = 3
+                    if is_interesting:
+                        item_def = await self.destiny.decode_hash(item['itemHash'], definition, language=lang)
+                        if len(item['currencies']) > 0 and 'itemHash' in item['currencies'][0].keys():
+                            currency_resp = await self.destiny.decode_hash(item['currencies'][0]['itemHash'], definition,
+                                                                           language=lang)
+                        else:
+                            currency_resp = {'displayProperties': {'icon': '', 'name': ''}}
+                            item['currencies'] = [{'quantity': ''}]
+                        if 'icon' in item_def['displayProperties'].keys():
+                            icon = item_def['displayProperties']['icon']
+                        else:
+                            icon = ''
+                        data[-1]['items'].append({
+                            'id': '{}_{}_{}'.format(item['itemHash'], cat_number, n_order),
+                            'icon': icon,
+                            'tooltip_id': '{}_{}_{}_tooltip'.format(item['itemHash'], cat_number, n_order),
+                            'hash': item['itemHash'],
+                            'name': item_def['displayProperties']['name'],
+                            'screenshot': screenshot,
+                            'costs': [
+                                {
+                                    'currency_icon': currency_resp['displayProperties']['icon'],
+                                    'cost': item['currencies'][0]['quantity'],
+                                    'currency_name': currency_resp['displayProperties']['name']
+                                }]
+                        })
+                        n_order += 1
+
             await self.write_to_db(lang, 'seasonal_eververse', data, name=self.translations[lang]['site']['bd'], order=0,
-                                   template='ev.html', annotations=[], size='', type='season_ev')
+                               template='ev.html', annotations=[], size='', type='season_ev')
 
     async def get_weekly_eververse(self, langs: List[str]) -> None:
         data = []
@@ -1173,6 +1208,7 @@ class D2data:
             sales = []
 
             cat_sales = []
+            items_to_get = []
             for tess_resp in tess_resps:
                 for cat in tess_resp['Response']['categories']['data']['categories']:
                     if cat['displayCategoryIndex'] == 2:

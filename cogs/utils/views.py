@@ -1,3 +1,5 @@
+import logging
+
 import discord
 from cogs.utils.converters import locale_2_lang, CtxLocale
 from datetime import datetime, timedelta, timezone
@@ -697,6 +699,7 @@ class LFGModal(discord.ui.Modal):
         lang = self.bot_loc.bot.guild_lang(interaction.guild.id)
         if not self.is_edit:
             group = await self.send_initial_lfg(lang, args, channel)
+            logging.info(str(group))
             await self.bot_loc.bot.raid.add(group, args=args)
             await self.bot_loc.bot.raid.set_owner(interaction.user, group.id)
         else:
