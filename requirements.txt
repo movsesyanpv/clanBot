@@ -34,7 +34,7 @@ babel
 mariadb>=1.0.9
 aiomysql
 topggpy
-dateparser>=1.1.0
+dateparser>=1.4.3
 aiosqlite
 pytz
 aiolimiter
