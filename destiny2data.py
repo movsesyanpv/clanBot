@@ -4,6 +4,8 @@ import itertools
 import json
 import time
 from urllib.parse import quote
+
+import dateparser
 import pydest
 from bs4 import BeautifulSoup
 from bungied2auth import BungieOAuth
@@ -714,11 +716,13 @@ class D2data:
                 continue
             self.data[lang]['alerts'].clear()
             for alert in alert_json['Response']:
+                timestamp = dateparser.parse('{}+00:00'.format(alert['AlertTimestamp'][:-1]))
                 alert_embed = {
                     'color': 0xff0000,
                     'type': "rich",
                     'description': alert['AlertHtml'],
-                    'timestamp': '{}+00:00'.format(alert['AlertTimestamp'][:-1]),
+                    'timestamp': timestamp.isoformat(),
+                    # 'timestamp': '{}+00:00'.format(alert['AlertTimestamp'][:-1]),
                     'author': {
                         'name': 'Bungie Help',
                         'url': alert['AlertLink'],
